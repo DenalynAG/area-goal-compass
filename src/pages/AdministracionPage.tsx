@@ -1,7 +1,9 @@
-import { mockActivityLog } from '@/data/mockData';
+import { useActivityLog } from '@/hooks/useSupabaseData';
 import { Settings, Clock, User } from 'lucide-react';
 
 export default function AdministracionPage() {
+  const { data: activityLog = [], isLoading } = useActivityLog();
+
   return (
     <div className="animate-fade-in space-y-6">
       <div className="page-header">
@@ -19,7 +21,7 @@ export default function AdministracionPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div className="flex items-center justify-between py-2 border-b">
               <span className="text-muted-foreground">Período actual</span>
-              <span className="font-medium">2024-Q2</span>
+              <span className="font-medium">2026-Q1</span>
             </div>
             <div className="flex items-center justify-between py-2 border-b">
               <span className="text-muted-foreground">Frecuencia de revisión</span>
@@ -44,7 +46,11 @@ export default function AdministracionPage() {
           <h3 className="font-semibold">Registro de Auditoría</h3>
         </div>
         <div className="divide-y">
-          {mockActivityLog.map(log => (
+          {isLoading ? (
+            <div className="px-5 py-8 text-center text-muted-foreground">Cargando registros...</div>
+          ) : activityLog.length === 0 ? (
+            <div className="px-5 py-8 text-center text-muted-foreground">No hay registros de auditoría</div>
+          ) : activityLog.map(log => (
             <div key={log.id} className="flex items-center gap-4 px-5 py-3 hover:bg-muted/30 transition-colors">
               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                 <User className="w-4 h-4 text-primary" />
@@ -55,7 +61,7 @@ export default function AdministracionPage() {
                   {' '}<span className="text-muted-foreground">{log.action}</span>
                   {' '}<span className="font-medium">{log.entity}</span>
                 </p>
-                <p className="text-xs text-muted-foreground">{log.timestamp}</p>
+                <p className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleString()}</p>
               </div>
             </div>
           ))}

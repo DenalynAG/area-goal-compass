@@ -1,25 +1,42 @@
 import { useState } from 'react';
-import { mockCollaborators, getAreaName, getSubareaName } from '@/data/mockData';
+import { useProfiles, useMemberships, useUserRoles, useAreas, useSubareas, getAreaNameFromList, getSubareaNameFromList } from '@/hooks/useSupabaseData';
 import { getRoleLabel } from '@/types';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, Mail, Phone } from 'lucide-react';
+import type { Enums } from '@/integrations/supabase/types';
 
 export default function ColaboradoresPage() {
+  const { data: profiles = [], isLoading } = useProfiles();
+  const { data: memberships = [] } = useMemberships();
+  const { data: userRoles = [] } = useUserRoles();
+  const { data: areas = [] } = useAreas();
+  const { data: subareas = [] } = useSubareas();
   const [search, setSearch] = useState('');
-  const filtered = mockCollaborators.filter(c =>
+
+  const getRole = (userId: string): Enums<'app_role'> | null => {
+    return userRoles.find(r => r.user_id === userId)?.role ?? null;
+  };
+
+  const getMembership = (userId: string) => {
+    return memberships.find(m => m.user_id === userId);
+  };
+
+  const filtered = profiles.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
     c.email.toLowerCase().includes(search.toLowerCase()) ||
-    c.position.toLowerCase().includes(search.toLowerCase())
+    (c.position ?? '').toLowerCase().includes(search.toLowerCase())
   );
+
+  if (isLoading) return <div className="flex items-center justify-center py-20 text-muted-foreground">Cargando colaboradores...</div>;
 
   return (
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between page-header flex-wrap gap-3">
         <div>
           <h1 className="page-title">Colaboradores</h1>
-          <p className="page-subtitle">{mockCollaborators.length} colaboradores registrados</p>
+          <p className="page-subtitle">{profiles.length} colaboradores registrados</p>
         </div>
         <Button><Plus className="w-4 h-4 mr-2" />Nuevo Colaborador</Button>
       </div>
@@ -39,38 +56,45 @@ export default function ColaboradoresPage() {
                 <th className="text-left px-5 py-3 font-medium text-muted-foreground">Área</th>
                 <th className="text-left px-5 py-3 font-medium text-muted-foreground">Subárea</th>
                 <th className="text-left px-5 py-3 font-medium text-muted-foreground">Rol</th>
-                <th className="text-left px-5 py-3 font-medium text-muted-foreground">Estado</th>
                 <th className="text-left px-5 py-3 font-medium text-muted-foreground">Contacto</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map(c => (
-                <tr key={c.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
-                  <td className="px-5 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary">
-                        {c.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+              {filtered.map(c => {
+                const membership = getMembership(c.id);
+                const role = getRole(c.id);
+                return (
+                  <tr key={c.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                    <td className="px-5 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary">
+                          {c.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                        </div>
+                        <span className="font-medium">{c.name}</span>
                       </div>
-                      <span className="font-medium">{c.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-5 py-3 text-muted-foreground">{c.position}</td>
-                  <td className="px-5 py-3">{getAreaName(c.area_id)}</td>
-                  <td className="px-5 py-3 text-muted-foreground">{c.subarea_id ? getSubareaName(c.subarea_id) : '—'}</td>
-                  <td className="px-5 py-3">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary">
-                      {getRoleLabel(c.role)}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3"><StatusBadge status={c.status} /></td>
-                  <td className="px-5 py-3">
-                    <div className="flex items-center gap-2">
-                      <a href={`mailto:${c.email}`} className="text-muted-foreground hover:text-accent" title={c.email}><Mail className="w-4 h-4" /></a>
-                      <a href={`tel:${c.phone}`} className="text-muted-foreground hover:text-accent" title={c.phone}><Phone className="w-4 h-4" /></a>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="px-5 py-3 text-muted-foreground">{c.position || '—'}</td>
+                    <td className="px-5 py-3">{membership ? getAreaNameFromList(areas, membership.area_id) : '—'}</td>
+                    <td className="px-5 py-3 text-muted-foreground">{membership?.subarea_id ? getSubareaNameFromList(subareas, membership.subarea_id) : '—'}</td>
+                    <td className="px-5 py-3">
+                      {role ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary">
+                          {getRoleLabel(role)}
+                        </span>
+                      ) : <span className="text-muted-foreground text-xs">Sin rol</span>}
+                    </td>
+                    <td className="px-5 py-3">
+                      <div className="flex items-center gap-2">
+                        <a href={`mailto:${c.email}`} className="text-muted-foreground hover:text-accent" title={c.email}><Mail className="w-4 h-4" /></a>
+                        {c.phone && <a href={`tel:${c.phone}`} className="text-muted-foreground hover:text-accent" title={c.phone}><Phone className="w-4 h-4" /></a>}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+              {filtered.length === 0 && (
+                <tr><td colSpan={6} className="px-5 py-8 text-center text-muted-foreground">No se encontraron colaboradores</td></tr>
+              )}
             </tbody>
           </table>
         </div>

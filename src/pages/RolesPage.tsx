@@ -1,24 +1,36 @@
-import { mockRoles } from '@/data/mockData';
 import { Shield, Check, X } from 'lucide-react';
+import { getRoleLabel } from '@/types';
+import type { Enums } from '@/integrations/supabase/types';
+import { Constants } from '@/integrations/supabase/types';
 
-const modules = ['Dashboard', 'Estructura', 'Colaboradores', 'Objetivos', 'Indicadores', 'Reportes', 'Administración'];
+const modules = ['Dashboard', 'Estructura', 'Colaboradores', 'Objetivos', 'Indicadores', 'Reportes', 'Evaluaciones', 'Administración'];
 const actions = ['Ver', 'Crear', 'Editar', 'Eliminar'];
+
+const rolesList = Constants.public.Enums.app_role;
 
 const permMatrix: Record<string, Record<string, string[]>> = {
   super_admin: Object.fromEntries(modules.map(m => [m, actions])),
   admin_area: {
     Dashboard: ['Ver'], Estructura: ['Ver', 'Crear', 'Editar'], Colaboradores: ['Ver', 'Crear', 'Editar'],
-    Objetivos: actions, Indicadores: actions, Reportes: ['Ver'], Administración: [],
+    Objetivos: actions, Indicadores: actions, Reportes: ['Ver'], Evaluaciones: actions, Administración: [],
   },
   lider_subarea: {
     Dashboard: ['Ver'], Estructura: ['Ver'], Colaboradores: ['Ver'],
-    Objetivos: ['Ver', 'Crear', 'Editar'], Indicadores: ['Ver', 'Crear', 'Editar'], Reportes: ['Ver'], Administración: [],
+    Objetivos: ['Ver', 'Crear', 'Editar'], Indicadores: ['Ver', 'Crear', 'Editar'], Reportes: ['Ver'], Evaluaciones: ['Ver', 'Crear', 'Editar'], Administración: [],
   },
   colaborador: {
     Dashboard: ['Ver'], Estructura: ['Ver'], Colaboradores: ['Ver'],
-    Objetivos: ['Ver'], Indicadores: ['Ver', 'Editar'], Reportes: ['Ver'], Administración: [],
+    Objetivos: ['Ver'], Indicadores: ['Ver', 'Editar'], Reportes: ['Ver'], Evaluaciones: ['Ver'], Administración: [],
   },
   solo_lectura: Object.fromEntries(modules.map(m => [m, ['Ver']])),
+};
+
+const roleDescriptions: Record<string, string> = {
+  super_admin: 'Acceso total a todas las áreas y módulos',
+  admin_area: 'Gestión completa de su área asignada',
+  lider_subarea: 'Gestión de su subárea y visibilidad del área',
+  colaborador: 'Acceso a objetivos y KPIs asignados',
+  solo_lectura: 'Visualización sin edición',
 };
 
 export default function RolesPage() {
@@ -30,15 +42,15 @@ export default function RolesPage() {
       </div>
 
       <div className="space-y-6">
-        {mockRoles.map(role => {
-          const perms = permMatrix[role.code] || {};
+        {rolesList.map(roleCode => {
+          const perms = permMatrix[roleCode] || {};
           return (
-            <div key={role.id} className="bg-card rounded-xl border shadow-sm overflow-hidden">
+            <div key={roleCode} className="bg-card rounded-xl border shadow-sm overflow-hidden">
               <div className="px-5 py-4 border-b flex items-center gap-3">
                 <Shield className="w-5 h-5 text-accent" />
                 <div>
-                  <h3 className="font-semibold">{role.name}</h3>
-                  <p className="text-xs text-muted-foreground">{role.description}</p>
+                  <h3 className="font-semibold">{getRoleLabel(roleCode)}</h3>
+                  <p className="text-xs text-muted-foreground">{roleDescriptions[roleCode] ?? ''}</p>
                 </div>
               </div>
               <div className="overflow-x-auto">

@@ -1,16 +1,22 @@
 import { useState } from 'react';
-import { mockAreas, mockSubareas, getUserName } from '@/data/mockData';
+import { useAreas, useSubareas, useProfiles, getProfileName } from '@/hooks/useSupabaseData';
 import { StatusBadge } from '@/components/StatusBadge';
 import { ChevronDown, ChevronRight, Plus, Edit, Building2, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Organigrama from '@/components/Organigrama';
 
 export default function EstructuraPage() {
-  const [expanded, setExpanded] = useState<Record<string, boolean>>(
-    Object.fromEntries(mockAreas.map(a => [a.id, true]))
-  );
+  const { data: areas = [], isLoading: loadingAreas } = useAreas();
+  const { data: subareas = [] } = useSubareas();
+  const { data: profiles = [] } = useProfiles();
 
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const toggle = (id: string) => setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
+
+  // Auto-expand all areas on first load
+  const getExpanded = (areaId: string) => expanded[areaId] ?? true;
+
+  if (loadingAreas) return <div className="flex items-center justify-center py-20 text-muted-foreground">Cargando estructura...</div>;
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -25,9 +31,9 @@ export default function EstructuraPage() {
       <Organigrama />
 
       <div className="space-y-3">
-        {mockAreas.map(area => {
-          const subareas = mockSubareas.filter(s => s.area_id === area.id);
-          const isOpen = expanded[area.id];
+        {areas.map(area => {
+          const areaSubs = subareas.filter(s => s.area_id === area.id);
+          const isOpen = getExpanded(area.id);
           return (
             <div key={area.id} className="bg-card rounded-xl border shadow-sm overflow-hidden">
               <button
@@ -41,14 +47,14 @@ export default function EstructuraPage() {
                     <h3 className="font-semibold">{area.name}</h3>
                     <StatusBadge status={area.status} />
                   </div>
-                  <p className="text-xs text-muted-foreground">{area.description} — Líder: {getUserName(area.leader_user_id)}</p>
+                  <p className="text-xs text-muted-foreground">{area.description} — Líder: {getProfileName(profiles, area.leader_user_id)}</p>
                 </div>
-                <span className="text-xs text-muted-foreground">{subareas.length} subáreas</span>
+                <span className="text-xs text-muted-foreground">{areaSubs.length} subáreas</span>
               </button>
 
-              {isOpen && subareas.length > 0 && (
+              {isOpen && areaSubs.length > 0 && (
                 <div className="border-t bg-muted/20">
-                  {subareas.map(sub => (
+                  {areaSubs.map(sub => (
                     <div key={sub.id} className="flex items-center gap-4 px-5 py-3 pl-14 border-b last:border-0 hover:bg-muted/30 transition-colors">
                       <Layers className="w-4 h-4 text-muted-foreground" />
                       <div className="flex-1 min-w-0">
@@ -56,7 +62,7 @@ export default function EstructuraPage() {
                           <span className="font-medium text-sm">{sub.name}</span>
                           <StatusBadge status={sub.status} />
                         </div>
-                        <p className="text-xs text-muted-foreground">{sub.description} — Líder: {getUserName(sub.leader_user_id)}</p>
+                        <p className="text-xs text-muted-foreground">{sub.description} — Líder: {getProfileName(profiles, sub.leader_user_id)}</p>
                       </div>
                       <Button variant="ghost" size="icon" className="shrink-0"><Edit className="w-4 h-4" /></Button>
                     </div>

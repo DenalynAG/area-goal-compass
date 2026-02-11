@@ -1,9 +1,16 @@
-import { mockAreas, mockSubareas, mockObjectives, mockKPIs } from '@/data/mockData';
+import { useAreas, useSubareas, useObjectives, useKPIs } from '@/hooks/useSupabaseData';
 import { getTrafficLight } from '@/types';
-import { StatusBadge, TrafficLightBadge, ProgressBar } from '@/components/StatusBadge';
-import { FileText, Building2 } from 'lucide-react';
+import { ProgressBar } from '@/components/StatusBadge';
+import { Building2 } from 'lucide-react';
 
 export default function ReportesPage() {
+  const { data: areas = [], isLoading } = useAreas();
+  const { data: subareas = [] } = useSubareas();
+  const { data: objectives = [] } = useObjectives();
+  const { data: kpis = [] } = useKPIs();
+
+  if (isLoading) return <div className="flex items-center justify-center py-20 text-muted-foreground">Cargando reportes...</div>;
+
   return (
     <div className="animate-fade-in space-y-6">
       <div className="page-header">
@@ -12,14 +19,14 @@ export default function ReportesPage() {
       </div>
 
       <div className="space-y-5">
-        {mockAreas.map(area => {
-          const subareas = mockSubareas.filter(s => s.area_id === area.id);
-          const areaObjs = mockObjectives.filter(o =>
+        {areas.map(area => {
+          const areaSubs = subareas.filter(s => s.area_id === area.id);
+          const areaObjs = objectives.filter(o =>
             (o.scope_type === 'area' && o.scope_id === area.id) ||
-            (o.scope_type === 'subarea' && subareas.some(s => s.id === o.scope_id))
+            (o.scope_type === 'subarea' && areaSubs.some(s => s.id === o.scope_id))
           );
-          const kpis = mockKPIs.filter(k => areaObjs.some(o => o.id === k.objective_id));
-          const kpisRojo = kpis.filter(k => getTrafficLight(k) === 'rojo').length;
+          const areaKpis = kpis.filter(k => areaObjs.some(o => o.id === k.objective_id));
+          const kpisRojo = areaKpis.filter(k => getTrafficLight(k as any) === 'rojo').length;
           const avgProgress = areaObjs.length ? Math.round(areaObjs.reduce((s, o) => s + o.progress_percent, 0) / areaObjs.length) : 0;
 
           return (
@@ -28,7 +35,7 @@ export default function ReportesPage() {
                 <Building2 className="w-5 h-5 text-accent" />
                 <div>
                   <h3 className="font-semibold">{area.name}</h3>
-                  <p className="text-xs text-muted-foreground">{subareas.length} subáreas · {areaObjs.length} objetivos · {kpis.length} KPIs</p>
+                  <p className="text-xs text-muted-foreground">{areaSubs.length} subáreas · {areaObjs.length} objetivos · {areaKpis.length} KPIs</p>
                 </div>
               </div>
               <div className="px-5 py-4 space-y-3">
@@ -51,6 +58,9 @@ export default function ReportesPage() {
             </div>
           );
         })}
+        {areas.length === 0 && (
+          <div className="text-center py-12 text-muted-foreground">No hay áreas registradas</div>
+        )}
       </div>
     </div>
   );
