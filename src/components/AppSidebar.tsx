@@ -21,7 +21,7 @@ const navItems = [
 ];
 
 export default function AppSidebar() {
-  const { user, logout } = useAuth();
+  const { user, profile, roles, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
@@ -73,12 +73,12 @@ export default function AppSidebar() {
       <div className="border-t border-sidebar-border px-3 py-3">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-full bg-sidebar-accent flex items-center justify-center text-sm font-semibold text-sidebar-accent-foreground shrink-0">
-            {user.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+            {(profile?.name ?? user?.email ?? '?').split(' ').map(n => n[0]).join('').slice(0, 2)}
           </div>
           {!collapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{user.name}</p>
-              <p className="text-[10px] text-sidebar-foreground/50 truncate">{getRoleLabel(user.role)}</p>
+              <p className="text-sm font-medium truncate">{profile?.name ?? user?.email}</p>
+              <p className="text-[10px] text-sidebar-foreground/50 truncate">{roles[0] ? getRoleLabel(roles[0] as any) : 'Sin rol'}</p>
             </div>
           )}
           <button onClick={logout} className="shrink-0 p-1.5 rounded-md hover:bg-sidebar-accent text-sidebar-foreground/50 transition-colors" title="Cerrar sesión">
