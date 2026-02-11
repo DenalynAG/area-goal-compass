@@ -14,6 +14,7 @@ import ObjetivosPage from "@/pages/ObjetivosPage";
 import IndicadoresPage from "@/pages/IndicadoresPage";
 import ReportesPage from "@/pages/ReportesPage";
 import AdministracionPage from "@/pages/AdministracionPage";
+import EvaluacionesPage from "@/pages/EvaluacionesPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ function ProtectedRoutes() {
         <Route path="/objetivos" element={<ObjetivosPage />} />
         <Route path="/indicadores" element={<IndicadoresPage />} />
         <Route path="/reportes" element={<ReportesPage />} />
+        <Route path="/evaluaciones" element={<EvaluacionesPage />} />
         <Route path="/administracion" element={<AdministracionPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

@@ -8,6 +8,7 @@ import {
   Target,
   BarChart3,
   FileText,
+  ClipboardCheck,
   Settings,
   LogOut,
   ChevronLeft,
@@ -27,6 +28,7 @@ const navItems = [
   { to: "/objetivos", icon: Target, label: "Objetivos" },
   { to: "/indicadores", icon: BarChart3, label: "Indicadores" },
   { to: "/reportes", icon: FileText, label: "Reportes" },
+  { to: "/evaluaciones", icon: ClipboardCheck, label: "Evaluaciones" },
   { to: "/administracion", icon: Settings, label: "Administración" },
 ];
 
