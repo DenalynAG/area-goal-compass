@@ -4,6 +4,9 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { ChevronDown, ChevronRight, Plus, Edit, Building2, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Organigrama from '@/components/Organigrama';
+import AreaFormDialog from '@/components/AreaFormDialog';
+import SubareaFormDialog from '@/components/SubareaFormDialog';
+import type { Tables } from '@/integrations/supabase/types';
 
 export default function EstructuraPage() {
   const { data: areas = [], isLoading: loadingAreas } = useAreas();
@@ -12,9 +15,21 @@ export default function EstructuraPage() {
 
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const toggle = (id: string) => setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
-
-  // Auto-expand all areas on first load
   const getExpanded = (areaId: string) => expanded[areaId] ?? true;
+
+  // Area dialog
+  const [areaDialogOpen, setAreaDialogOpen] = useState(false);
+  const [editingArea, setEditingArea] = useState<Tables<'areas'> | null>(null);
+
+  // Subarea dialog
+  const [subareaDialogOpen, setSubareaDialogOpen] = useState(false);
+  const [editingSubarea, setEditingSubarea] = useState<Tables<'subareas'> | null>(null);
+  const [subareaParentId, setSubareaParentId] = useState('');
+
+  const openNewArea = () => { setEditingArea(null); setAreaDialogOpen(true); };
+  const openEditArea = (a: Tables<'areas'>) => { setEditingArea(a); setAreaDialogOpen(true); };
+  const openNewSubarea = (areaId: string) => { setEditingSubarea(null); setSubareaParentId(areaId); setSubareaDialogOpen(true); };
+  const openEditSubarea = (s: Tables<'subareas'>) => { setEditingSubarea(s); setSubareaParentId(s.area_id); setSubareaDialogOpen(true); };
 
   if (loadingAreas) return <div className="flex items-center justify-center py-20 text-muted-foreground">Cargando estructura...</div>;
 
@@ -25,7 +40,7 @@ export default function EstructuraPage() {
           <h1 className="page-title">Estructura Organizacional</h1>
           <p className="page-subtitle">Áreas y subáreas de la empresa</p>
         </div>
-        <Button><Plus className="w-4 h-4 mr-2" />Nueva Área</Button>
+        <Button onClick={openNewArea}><Plus className="w-4 h-4 mr-2" />Nueva Área</Button>
       </div>
 
       <Organigrama />
@@ -36,23 +51,26 @@ export default function EstructuraPage() {
           const isOpen = getExpanded(area.id);
           return (
             <div key={area.id} className="bg-card rounded-xl border shadow-sm overflow-hidden">
-              <button
-                onClick={() => toggle(area.id)}
-                className="w-full flex items-center gap-4 px-5 py-4 hover:bg-muted/30 transition-colors text-left"
-              >
-                {isOpen ? <ChevronDown className="w-5 h-5 text-muted-foreground" /> : <ChevronRight className="w-5 h-5 text-muted-foreground" />}
-                <Building2 className="w-5 h-5 text-accent" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3">
-                    <h3 className="font-semibold">{area.name}</h3>
-                    <StatusBadge status={area.status} />
+              <div className="flex items-center">
+                <button
+                  onClick={() => toggle(area.id)}
+                  className="flex-1 flex items-center gap-4 px-5 py-4 hover:bg-muted/30 transition-colors text-left"
+                >
+                  {isOpen ? <ChevronDown className="w-5 h-5 text-muted-foreground" /> : <ChevronRight className="w-5 h-5 text-muted-foreground" />}
+                  <Building2 className="w-5 h-5 text-accent" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3">
+                      <h3 className="font-semibold">{area.name}</h3>
+                      <StatusBadge status={area.status} />
+                    </div>
+                    <p className="text-xs text-muted-foreground">{area.description} — Líder: {getProfileName(profiles, area.leader_user_id)}</p>
                   </div>
-                  <p className="text-xs text-muted-foreground">{area.description} — Líder: {getProfileName(profiles, area.leader_user_id)}</p>
-                </div>
-                <span className="text-xs text-muted-foreground">{areaSubs.length} subáreas</span>
-              </button>
+                  <span className="text-xs text-muted-foreground">{areaSubs.length} subáreas</span>
+                </button>
+                <Button variant="ghost" size="icon" className="shrink-0 mr-2" onClick={() => openEditArea(area)}><Edit className="w-4 h-4" /></Button>
+              </div>
 
-              {isOpen && areaSubs.length > 0 && (
+              {isOpen && (
                 <div className="border-t bg-muted/20">
                   {areaSubs.map(sub => (
                     <div key={sub.id} className="flex items-center gap-4 px-5 py-3 pl-14 border-b last:border-0 hover:bg-muted/30 transition-colors">
@@ -64,11 +82,11 @@ export default function EstructuraPage() {
                         </div>
                         <p className="text-xs text-muted-foreground">{sub.description} — Líder: {getProfileName(profiles, sub.leader_user_id)}</p>
                       </div>
-                      <Button variant="ghost" size="icon" className="shrink-0"><Edit className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="icon" className="shrink-0" onClick={() => openEditSubarea(sub)}><Edit className="w-4 h-4" /></Button>
                     </div>
                   ))}
                   <div className="px-5 py-2 pl-14">
-                    <Button variant="ghost" size="sm" className="text-accent"><Plus className="w-4 h-4 mr-1" />Agregar subárea</Button>
+                    <Button variant="ghost" size="sm" className="text-accent" onClick={() => openNewSubarea(area.id)}><Plus className="w-4 h-4 mr-1" />Agregar subárea</Button>
                   </div>
                 </div>
               )}
@@ -76,6 +94,9 @@ export default function EstructuraPage() {
           );
         })}
       </div>
+
+      <AreaFormDialog open={areaDialogOpen} onOpenChange={setAreaDialogOpen} area={editingArea} profiles={profiles} />
+      <SubareaFormDialog open={subareaDialogOpen} onOpenChange={setSubareaDialogOpen} subarea={editingSubarea} areaId={subareaParentId} profiles={profiles} />
     </div>
   );
 }
