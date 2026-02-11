@@ -51,8 +51,8 @@ export default function AppSidebar() {
         />
         {!collapsed && (
           <div className="overflow-hidden">
-            <h1 className="text-sm font-display font-extrabold truncate">OSHOME</h1>
-            <p className="text-[10px] text-sidebar-foreground/50">Bienvenidos..!</p>
+            <h1 className="text-sm font-display font-extrabold truncate">Bienvenidos..!</h1>
+            <p className="text-[10px] text-sidebar-foreground/50">OSH Hotels</p>
           </div>
         )}
         <button
