@@ -101,6 +101,17 @@ export function useActivityLog() {
   });
 }
 
+export function usePositions() {
+  return useQuery({
+    queryKey: ['positions'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('positions').select('*').order('name');
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+}
+
 export function useNewsletterPosts() {
   return useQuery({
     queryKey: ['newsletter_posts'],

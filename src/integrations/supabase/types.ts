@@ -353,6 +353,27 @@ export type Database = {
           },
         ]
       }
+      positions: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          status?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar: string | null
