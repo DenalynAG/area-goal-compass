@@ -1,13 +1,22 @@
+import { useState } from 'react';
 import { useProfiles, useNewsletterPosts, useAreas, useMemberships, getAreaNameFromList } from '@/hooks/useSupabaseData';
-import { Award, Cake, Megaphone, Users } from 'lucide-react';
+import { Award, Cake, Megaphone, Users, Plus, Pencil } from 'lucide-react';
 import { format, isSameMonth, isSameDay, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
+import NewsletterPostFormDialog from '@/components/NewsletterPostFormDialog';
 
 export default function NewsletterPortalPage() {
   const { data: profiles = [], isLoading } = useProfiles();
   const { data: posts = [] } = useNewsletterPosts();
   const { data: areas = [] } = useAreas();
   const { data: memberships = [] } = useMemberships();
+  const { hasRole } = useAuth();
+  const canManage = hasRole('super_admin') || hasRole('admin_area');
+
+  const [postDialogOpen, setPostDialogOpen] = useState(false);
+  const [editingPost, setEditingPost] = useState<any>(null);
 
   const today = new Date();
 
@@ -31,9 +40,16 @@ export default function NewsletterPortalPage() {
 
   return (
     <div className="animate-fade-in space-y-8">
-      <div className="page-header">
-        <h1 className="page-title">Portal Newsletter</h1>
-        <p className="page-subtitle">Reconocimientos, cumpleaños y novedades de la organización</p>
+      <div className="page-header flex items-center justify-between">
+        <div>
+          <h1 className="page-title">Portal Newsletter</h1>
+          <p className="page-subtitle">Reconocimientos, cumpleaños y novedades de la organización</p>
+        </div>
+        {canManage && (
+          <Button onClick={() => { setEditingPost(null); setPostDialogOpen(true); }}>
+            <Plus className="w-4 h-4 mr-1" /> Nueva Publicación
+          </Button>
+        )}
       </div>
 
       {/* Quick stats */}
@@ -100,7 +116,14 @@ export default function NewsletterPortalPage() {
               const target = profiles.find(p => p.id === post.target_user_id);
               return (
                 <div key={post.id} className="p-3 rounded-lg border bg-[hsl(var(--success)/0.04)] hover:bg-[hsl(var(--success)/0.08)] transition-colors">
-                  <p className="text-sm font-semibold">{post.title}</p>
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm font-semibold">{post.title}</p>
+                    {canManage && (
+                      <button onClick={() => { setEditingPost(post); setPostDialogOpen(true); }} className="text-muted-foreground hover:text-foreground shrink-0">
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
                   {target && <p className="text-xs text-[hsl(var(--success))] font-medium mt-0.5">🏆 {target.name}</p>}
                   <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{post.content}</p>
                   <p className="text-[10px] text-muted-foreground/60 mt-2">
@@ -123,7 +146,14 @@ export default function NewsletterPortalPage() {
               <p className="text-sm text-muted-foreground text-center py-6">No hay noticias publicadas</p>
             ) : generalPosts.map(post => (
               <div key={post.id} className="p-3 rounded-lg border hover:bg-muted/50 transition-colors">
-                <p className="text-sm font-semibold">{post.title}</p>
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-sm font-semibold">{post.title}</p>
+                  {canManage && (
+                    <button onClick={() => { setEditingPost(post); setPostDialogOpen(true); }} className="text-muted-foreground hover:text-foreground shrink-0">
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
                 <p className="text-xs text-muted-foreground mt-1 line-clamp-3">{post.content}</p>
                 <p className="text-[10px] text-muted-foreground/60 mt-2">
                   {format(new Date(post.created_at), "d MMM yyyy", { locale: es })}
@@ -133,6 +163,12 @@ export default function NewsletterPortalPage() {
           </div>
         </div>
       </div>
+      <NewsletterPostFormDialog
+        open={postDialogOpen}
+        onOpenChange={setPostDialogOpen}
+        profiles={profiles}
+        post={editingPost}
+      />
     </div>
   );
 }
