@@ -4,7 +4,9 @@ import { getTrafficLight } from '@/types';
 import { StatusBadge, PriorityBadge, ProgressBar, TrafficLightBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, Target, ChevronDown, ChevronRight } from 'lucide-react';
+import { Plus, Search, Target, ChevronDown, ChevronRight, Edit } from 'lucide-react';
+import type { Tables } from '@/integrations/supabase/types';
+import ObjetivoFormDialog from '@/components/ObjetivoFormDialog';
 
 export default function ObjetivosPage() {
   const { data: objectives = [], isLoading } = useObjectives();
@@ -14,6 +16,12 @@ export default function ObjetivosPage() {
   const { data: profiles = [] } = useProfiles();
   const [search, setSearch] = useState('');
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingObj, setEditingObj] = useState<Tables<'objectives'> | null>(null);
+
+  const openNew = () => { setEditingObj(null); setDialogOpen(true); };
+  const openEdit = (o: Tables<'objectives'>) => { setEditingObj(o); setDialogOpen(true); };
 
   const toggle = (id: string) => setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
 
@@ -36,7 +44,7 @@ export default function ObjetivosPage() {
           <h1 className="page-title">Objetivos</h1>
           <p className="page-subtitle">{objectives.length} objetivos registrados</p>
         </div>
-        <Button><Plus className="w-4 h-4 mr-2" />Nuevo Objetivo</Button>
+        <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" />Nuevo Objetivo</Button>
       </div>
 
       <div className="relative max-w-sm">
@@ -70,6 +78,9 @@ export default function ObjetivosPage() {
                       <span className="text-sm font-medium">{obj.progress_percent}%</span>
                     </div>
                   </div>
+                  <Button variant="ghost" size="icon" className="shrink-0" onClick={() => openEdit(obj)}>
+                    <Edit className="w-4 h-4" />
+                  </Button>
                 </div>
 
                 {objKpis.length > 0 && (
@@ -111,6 +122,15 @@ export default function ObjetivosPage() {
           <div className="text-center py-12 text-muted-foreground">No hay objetivos registrados</div>
         )}
       </div>
+
+      <ObjetivoFormDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        objective={editingObj}
+        areas={areas}
+        subareas={subareas}
+        profiles={profiles}
+      />
     </div>
   );
 }
