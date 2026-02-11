@@ -14,16 +14,389 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      activity_log: {
+        Row: {
+          action: string
+          created_at: string
+          entity: string
+          entity_id: string | null
+          id: string
+          user_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          entity: string
+          entity_id?: string | null
+          id?: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          entity?: string
+          entity_id?: string | null
+          id?: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Relationships: []
+      }
+      areas: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          leader_user_id: string | null
+          name: string
+          status: Database["public"]["Enums"]["entity_status"]
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          leader_user_id?: string | null
+          name: string
+          status?: Database["public"]["Enums"]["entity_status"]
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          leader_user_id?: string | null
+          name?: string
+          status?: Database["public"]["Enums"]["entity_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "areas_leader_user_id_fkey"
+            columns: ["leader_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kpi_measurements: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          kpi_id: string
+          notes: string | null
+          period_date: string
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kpi_id: string
+          notes?: string | null
+          period_date: string
+          value?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kpi_id?: string
+          notes?: string | null
+          period_date?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kpi_measurements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kpi_measurements_kpi_id_fkey"
+            columns: ["kpi_id"]
+            isOneToOne: false
+            referencedRelation: "kpis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kpis: {
+        Row: {
+          baseline: number
+          created_at: string
+          current_value: number
+          definition: string | null
+          frequency: Database["public"]["Enums"]["kpi_frequency"]
+          id: string
+          name: string
+          objective_id: string
+          target: number
+          threshold_green: number
+          threshold_red: number
+          threshold_yellow: number
+          unit: string | null
+        }
+        Insert: {
+          baseline?: number
+          created_at?: string
+          current_value?: number
+          definition?: string | null
+          frequency?: Database["public"]["Enums"]["kpi_frequency"]
+          id?: string
+          name: string
+          objective_id: string
+          target?: number
+          threshold_green?: number
+          threshold_red?: number
+          threshold_yellow?: number
+          unit?: string | null
+        }
+        Update: {
+          baseline?: number
+          created_at?: string
+          current_value?: number
+          definition?: string | null
+          frequency?: Database["public"]["Enums"]["kpi_frequency"]
+          id?: string
+          name?: string
+          objective_id?: string
+          target?: number
+          threshold_green?: number
+          threshold_red?: number
+          threshold_yellow?: number
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kpis_objective_id_fkey"
+            columns: ["objective_id"]
+            isOneToOne: false
+            referencedRelation: "objectives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      memberships: {
+        Row: {
+          area_id: string
+          created_at: string
+          id: string
+          subarea_id: string | null
+          user_id: string
+        }
+        Insert: {
+          area_id: string
+          created_at?: string
+          id?: string
+          subarea_id?: string | null
+          user_id: string
+        }
+        Update: {
+          area_id?: string
+          created_at?: string
+          id?: string
+          subarea_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memberships_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "memberships_subarea_id_fkey"
+            columns: ["subarea_id"]
+            isOneToOne: false
+            referencedRelation: "subareas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      objectives: {
+        Row: {
+          created_at: string
+          description: string | null
+          end_date: string | null
+          id: string
+          owner_user_id: string | null
+          period: string | null
+          priority: Database["public"]["Enums"]["priority_level"]
+          progress_percent: number
+          scope_id: string
+          scope_type: string
+          start_date: string | null
+          status: Database["public"]["Enums"]["objective_status"]
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          owner_user_id?: string | null
+          period?: string | null
+          priority?: Database["public"]["Enums"]["priority_level"]
+          progress_percent?: number
+          scope_id: string
+          scope_type: string
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["objective_status"]
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          owner_user_id?: string | null
+          period?: string | null
+          priority?: Database["public"]["Enums"]["priority_level"]
+          progress_percent?: number
+          scope_id?: string
+          scope_type?: string
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["objective_status"]
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "objectives_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar: string | null
+          created_at: string
+          email: string
+          id: string
+          name: string
+          phone: string | null
+          position: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar?: string | null
+          created_at?: string
+          email: string
+          id: string
+          name: string
+          phone?: string | null
+          position?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          position?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      subareas: {
+        Row: {
+          area_id: string
+          created_at: string
+          description: string | null
+          id: string
+          leader_user_id: string | null
+          name: string
+          status: Database["public"]["Enums"]["entity_status"]
+        }
+        Insert: {
+          area_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          leader_user_id?: string | null
+          name: string
+          status?: Database["public"]["Enums"]["entity_status"]
+        }
+        Update: {
+          area_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          leader_user_id?: string | null
+          name?: string
+          status?: Database["public"]["Enums"]["entity_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subareas_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subareas_leader_user_id_fkey"
+            columns: ["leader_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_area_id: { Args: { _user_id: string }; Returns: string }
+      get_user_subarea_id: { Args: { _user_id: string }; Returns: string }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role:
+        | "super_admin"
+        | "admin_area"
+        | "lider_subarea"
+        | "colaborador"
+        | "solo_lectura"
+      entity_status: "activo" | "inactivo"
+      kpi_frequency: "semanal" | "mensual" | "trimestral"
+      objective_status: "borrador" | "activo" | "en_riesgo" | "cerrado"
+      priority_level: "alta" | "media" | "baja"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +523,18 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: [
+        "super_admin",
+        "admin_area",
+        "lider_subarea",
+        "colaborador",
+        "solo_lectura",
+      ],
+      entity_status: ["activo", "inactivo"],
+      kpi_frequency: ["semanal", "mensual", "trimestral"],
+      objective_status: ["borrador", "activo", "en_riesgo", "cerrado"],
+      priority_level: ["alta", "media", "baja"],
+    },
   },
 } as const
