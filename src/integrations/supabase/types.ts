@@ -264,6 +264,39 @@ export type Database = {
           },
         ]
       }
+      newsletter_posts: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          image_url: string | null
+          target_user_id: string | null
+          title: string
+          type: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string | null
+          target_user_id?: string | null
+          title: string
+          type: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string | null
+          target_user_id?: string | null
+          title?: string
+          type?: string
+        }
+        Relationships: []
+      }
       objectives: {
         Row: {
           created_at: string
@@ -323,6 +356,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar: string | null
+          birthday: string | null
           created_at: string
           email: string
           id: string
@@ -333,6 +367,7 @@ export type Database = {
         }
         Insert: {
           avatar?: string | null
+          birthday?: string | null
           created_at?: string
           email: string
           id: string
@@ -343,6 +378,7 @@ export type Database = {
         }
         Update: {
           avatar?: string | null
+          birthday?: string | null
           created_at?: string
           email?: string
           id?: string

@@ -101,6 +101,17 @@ export function useActivityLog() {
   });
 }
 
+export function useNewsletterPosts() {
+  return useQuery({
+    queryKey: ['newsletter_posts'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('newsletter_posts').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+}
+
 // Helper to get name from profiles array
 export function getProfileName(profiles: Tables<'profiles'>[], userId: string | null): string {
   if (!userId) return 'N/A';

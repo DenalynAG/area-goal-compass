@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  LayoutDashboard,
+  Newspaper,
   Building2,
   Users,
   Shield,
@@ -21,7 +21,7 @@ import { getRoleLabel } from "@/types";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
-  { to: "/", icon: LayoutDashboard, label: "Dashboard" },
+  { to: "/", icon: Newspaper, label: "Portal Newsletter" },
   { to: "/estructura", icon: Building2, label: "Estructura" },
   { to: "/colaboradores", icon: Users, label: "Colaboradores" },
   { to: "/roles", icon: Shield, label: "Roles y Accesos" },
