@@ -44,12 +44,14 @@ export default function AppSidebar() {
     <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 h-16 border-b border-sidebar-border">
-        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-sidebar-primary shrink-0">
-          <Building2 className="w-5 h-5 text-sidebar-primary-foreground" />
-        </div>
+        <img
+          src="https://dnifnjmiqbrtnmeqjizw.supabase.co/storage/v1/object/public/OSH-B/OSH-B.png"
+          alt="OSHOME logo"
+          className="w-9 h-9 rounded-lg object-contain shrink-0"
+        />
         {!collapsed && (
           <div className="overflow-hidden">
-            <h1 className="text-sm font-bold truncate">OSHOME</h1>
+            <h1 className="text-sm font-display font-extrabold truncate">OSHOME</h1>
             <p className="text-[10px] text-sidebar-foreground/50">Bienvenidos..!</p>
           </div>
         )}
