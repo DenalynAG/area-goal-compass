@@ -1,56 +1,16 @@
-import { mockCollaborators, mockAreas, mockSubareas } from '@/data/mockData';
+import { useAreas, useSubareas, useProfiles, useMemberships } from '@/hooks/useSupabaseData';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Building2, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import type { Tables } from '@/integrations/supabase/types';
 
 interface OrgNode {
   id: string;
   name: string;
   position: string;
-  avatar?: string;
+  avatar?: string | null;
   children: OrgNode[];
-}
-
-function buildOrgTree(): OrgNode {
-  const superAdmin = mockCollaborators.find(c => c.role === 'super_admin');
-
-  const root: OrgNode = {
-    id: superAdmin?.id ?? 'root',
-    name: superAdmin?.name ?? 'Dirección General',
-    position: superAdmin?.position ?? 'Administrador General',
-    avatar: superAdmin?.avatar,
-    children: [],
-  };
-
-  // Area leaders as direct reports
-  mockAreas.forEach(area => {
-    const leader = mockCollaborators.find(c => c.id === area.leader_user_id);
-    const areaNode: OrgNode = {
-      id: area.id,
-      name: leader?.name ?? area.name,
-      position: leader?.position ?? `Líder de ${area.name}`,
-      avatar: leader?.avatar,
-      children: [],
-    };
-
-    // Subarea leaders under each area
-    const subareas = mockSubareas.filter(s => s.area_id === area.id);
-    subareas.forEach(sub => {
-      const subLeader = mockCollaborators.find(c => c.id === sub.leader_user_id);
-      areaNode.children.push({
-        id: sub.id,
-        name: subLeader?.name ?? sub.name,
-        position: subLeader?.position ?? `Líder de ${sub.name}`,
-        avatar: subLeader?.avatar,
-        children: [],
-      });
-    });
-
-    root.children.push(areaNode);
-  });
-
-  return root;
 }
 
 function getInitials(name: string) {
@@ -80,14 +40,13 @@ function PersonCard({ node, isRoot }: { node: OrgNode; isRoot?: boolean }) {
   );
 }
 
-function OrgLevel({ nodes, label }: { nodes: OrgNode[]; label?: string }) {
+function OrgLevel({ nodes }: { nodes: OrgNode[] }) {
   const [expanded, setExpanded] = useState(true);
 
   if (nodes.length === 0) return null;
 
   return (
     <div className="flex flex-col items-center gap-1">
-      {/* Toggle button */}
       <Button
         variant="outline"
         size="sm"
@@ -100,7 +59,6 @@ function OrgLevel({ nodes, label }: { nodes: OrgNode[]; label?: string }) {
 
       {expanded && (
         <>
-          {/* Connector lines */}
           <div className="flex flex-col items-center">
             <div className="w-px h-4 bg-border" />
             {nodes.length > 1 && (
@@ -115,7 +73,6 @@ function OrgLevel({ nodes, label }: { nodes: OrgNode[]; label?: string }) {
             )}
           </div>
 
-          {/* Cards */}
           <div className="flex flex-wrap justify-center gap-6">
             {nodes.map(node => (
               <div key={node.id} className="flex flex-col items-center gap-2">
@@ -136,15 +93,54 @@ function OrgLevel({ nodes, label }: { nodes: OrgNode[]; label?: string }) {
 }
 
 export default function Organigrama() {
-  const tree = buildOrgTree();
+  const { data: areas = [], isLoading } = useAreas();
+  const { data: subareas = [] } = useSubareas();
+  const { data: profiles = [] } = useProfiles();
+
+  if (isLoading) return <div className="bg-card rounded-xl border shadow-sm p-6 text-center text-muted-foreground">Cargando organigrama...</div>;
+
+  const getProfile = (userId: string | null) => profiles.find(p => p.id === userId);
+
+  // Build tree: root -> area leaders -> subarea leaders
+  const root: OrgNode = {
+    id: 'root',
+    name: 'Dirección General',
+    position: 'Organigrama',
+    children: [],
+  };
+
+  areas.forEach(area => {
+    const leader = getProfile(area.leader_user_id);
+    const areaNode: OrgNode = {
+      id: area.id,
+      name: leader?.name ?? area.name,
+      position: leader?.position ?? `Líder de ${area.name}`,
+      avatar: leader?.avatar,
+      children: [],
+    };
+
+    const areaSubs = subareas.filter(s => s.area_id === area.id);
+    areaSubs.forEach(sub => {
+      const subLeader = getProfile(sub.leader_user_id);
+      areaNode.children.push({
+        id: sub.id,
+        name: subLeader?.name ?? sub.name,
+        position: subLeader?.position ?? `Líder de ${sub.name}`,
+        avatar: subLeader?.avatar,
+        children: [],
+      });
+    });
+
+    root.children.push(areaNode);
+  });
 
   return (
     <div className="bg-card rounded-xl border shadow-sm p-6 overflow-x-auto">
       <h2 className="text-lg font-semibold mb-6">Organigrama</h2>
       <div className="flex flex-col items-center gap-2 min-w-max pb-4">
-        <PersonCard node={tree} isRoot />
+        <PersonCard node={root} isRoot />
         <div className="w-px h-4 bg-border" />
-        <OrgLevel nodes={tree.children} />
+        <OrgLevel nodes={root.children} />
       </div>
     </div>
   );

@@ -1,24 +1,30 @@
-import { mockKPIs, mockObjectives, mockMeasurements } from '@/data/mockData';
+import { useKPIs, useObjectives, useKPIMeasurements } from '@/hooks/useSupabaseData';
 import { getTrafficLight } from '@/types';
 import { TrafficLightBadge, ProgressBar } from '@/components/StatusBadge';
-import { BarChart3, TrendingUp } from 'lucide-react';
+import { BarChart3 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function IndicadoresPage() {
+  const { data: kpis = [], isLoading } = useKPIs();
+  const { data: objectives = [] } = useObjectives();
+  const { data: measurements = [] } = useKPIMeasurements();
+
+  if (isLoading) return <div className="flex items-center justify-center py-20 text-muted-foreground">Cargando indicadores...</div>;
+
   return (
     <div className="animate-fade-in space-y-6">
       <div className="page-header">
         <h1 className="page-title">Indicadores (KPIs)</h1>
-        <p className="page-subtitle">{mockKPIs.length} indicadores definidos</p>
+        <p className="page-subtitle">{kpis.length} indicadores definidos</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {mockKPIs.map(kpi => {
-          const obj = mockObjectives.find(o => o.id === kpi.objective_id);
-          const measurements = mockMeasurements.filter(m => m.kpi_id === kpi.id);
-          const chartData = measurements.map(m => ({ period: m.period_date, valor: m.value }));
-          const light = getTrafficLight(kpi);
-          const progress = Math.round((kpi.current_value / kpi.target) * 100);
+        {kpis.map(kpi => {
+          const obj = objectives.find(o => o.id === kpi.objective_id);
+          const kpiMeasurements = measurements.filter(m => m.kpi_id === kpi.id);
+          const chartData = kpiMeasurements.map(m => ({ period: m.period_date, valor: m.value }));
+          const light = getTrafficLight(kpi as any);
+          const progress = kpi.target > 0 ? Math.round((kpi.current_value / kpi.target) * 100) : 0;
 
           return (
             <div key={kpi.id} className="bg-card rounded-xl border shadow-sm overflow-hidden">
@@ -28,7 +34,7 @@ export default function IndicadoresPage() {
                     <BarChart3 className="w-5 h-5 text-accent" />
                     <div>
                       <h3 className="font-semibold">{kpi.name}</h3>
-                      <p className="text-xs text-muted-foreground">{obj?.title}</p>
+                      <p className="text-xs text-muted-foreground">{obj?.title ?? '—'}</p>
                     </div>
                   </div>
                   <TrafficLightBadge light={light} />
@@ -83,6 +89,9 @@ export default function IndicadoresPage() {
             </div>
           );
         })}
+        {kpis.length === 0 && (
+          <div className="col-span-2 text-center py-12 text-muted-foreground">No hay indicadores definidos</div>
+        )}
       </div>
     </div>
   );

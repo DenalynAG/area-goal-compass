@@ -1,33 +1,40 @@
 import { useState } from 'react';
-import { mockObjectives, mockKPIs, mockSubareas, getAreaName, getSubareaName, getUserName } from '@/data/mockData';
-import { getStatusLabel, getTrafficLight } from '@/types';
+import { useObjectives, useKPIs, useAreas, useSubareas, useProfiles, getProfileName, getAreaNameFromList, getSubareaNameFromList } from '@/hooks/useSupabaseData';
+import { getTrafficLight } from '@/types';
 import { StatusBadge, PriorityBadge, ProgressBar, TrafficLightBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, Target, ChevronDown, ChevronRight } from 'lucide-react';
 
 export default function ObjetivosPage() {
+  const { data: objectives = [], isLoading } = useObjectives();
+  const { data: kpis = [] } = useKPIs();
+  const { data: areas = [] } = useAreas();
+  const { data: subareas = [] } = useSubareas();
+  const { data: profiles = [] } = useProfiles();
   const [search, setSearch] = useState('');
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   const toggle = (id: string) => setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
 
-  const filtered = mockObjectives.filter(o =>
+  const filtered = objectives.filter(o =>
     o.title.toLowerCase().includes(search.toLowerCase()) ||
-    o.description.toLowerCase().includes(search.toLowerCase())
+    (o.description ?? '').toLowerCase().includes(search.toLowerCase())
   );
 
-  const getScopeName = (o: typeof mockObjectives[0]) => {
-    if (o.scope_type === 'area') return getAreaName(o.scope_id);
-    return getSubareaName(o.scope_id);
+  const getScopeName = (obj: typeof objectives[0]) => {
+    if (obj.scope_type === 'area') return getAreaNameFromList(areas, obj.scope_id);
+    return getSubareaNameFromList(subareas, obj.scope_id);
   };
+
+  if (isLoading) return <div className="flex items-center justify-center py-20 text-muted-foreground">Cargando objetivos...</div>;
 
   return (
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between page-header flex-wrap gap-3">
         <div>
           <h1 className="page-title">Objetivos</h1>
-          <p className="page-subtitle">{mockObjectives.length} objetivos registrados</p>
+          <p className="page-subtitle">{objectives.length} objetivos registrados</p>
         </div>
         <Button><Plus className="w-4 h-4 mr-2" />Nuevo Objetivo</Button>
       </div>
@@ -39,7 +46,7 @@ export default function ObjetivosPage() {
 
       <div className="space-y-3">
         {filtered.map(obj => {
-          const kpis = mockKPIs.filter(k => k.objective_id === obj.id);
+          const objKpis = kpis.filter(k => k.objective_id === obj.id);
           const isOpen = expanded[obj.id];
           return (
             <div key={obj.id} className="bg-card rounded-xl border shadow-sm overflow-hidden">
@@ -54,9 +61,9 @@ export default function ObjetivosPage() {
                     <p className="text-sm text-muted-foreground">{obj.description}</p>
                     <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
                       <span>📍 {getScopeName(obj)}</span>
-                      <span>👤 {getUserName(obj.owner_user_id)}</span>
-                      <span>📅 {obj.start_date} → {obj.end_date}</span>
-                      <span>🔄 {obj.period}</span>
+                      <span>👤 {getProfileName(profiles, obj.owner_user_id)}</span>
+                      <span>📅 {obj.start_date ?? '—'} → {obj.end_date ?? '—'}</span>
+                      <span>🔄 {obj.period || '—'}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <ProgressBar value={obj.progress_percent} className="flex-1 max-w-xs" />
@@ -65,15 +72,15 @@ export default function ObjetivosPage() {
                   </div>
                 </div>
 
-                {kpis.length > 0 && (
+                {objKpis.length > 0 && (
                   <button onClick={() => toggle(obj.id)} className="mt-3 flex items-center gap-1 text-xs text-accent font-medium hover:underline">
                     {isOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                    {kpis.length} indicadores
+                    {objKpis.length} indicadores
                   </button>
                 )}
               </div>
 
-              {isOpen && kpis.length > 0 && (
+              {isOpen && objKpis.length > 0 && (
                 <div className="border-t bg-muted/20 px-5 py-3">
                   <table className="w-full text-sm">
                     <thead>
@@ -85,12 +92,12 @@ export default function ObjetivosPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {kpis.map(k => (
+                      {objKpis.map(k => (
                         <tr key={k.id} className="border-t border-border/50">
                           <td className="py-2 font-medium">{k.name}</td>
                           <td className="py-2">{k.target} {k.unit}</td>
                           <td className="py-2">{k.current_value} {k.unit}</td>
-                          <td className="py-2"><TrafficLightBadge light={getTrafficLight(k)} /></td>
+                          <td className="py-2"><TrafficLightBadge light={getTrafficLight(k as any)} /></td>
                         </tr>
                       ))}
                     </tbody>
@@ -100,6 +107,9 @@ export default function ObjetivosPage() {
             </div>
           );
         })}
+        {filtered.length === 0 && (
+          <div className="text-center py-12 text-muted-foreground">No hay objetivos registrados</div>
+        )}
       </div>
     </div>
   );
