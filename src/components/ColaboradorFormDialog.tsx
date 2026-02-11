@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { usePositions } from '@/hooks/useSupabaseData';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +24,7 @@ interface Props {
 export default function ColaboradorFormDialog({ open, onOpenChange, profile, areas, subareas, membership }: Props) {
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
+  const { data: positions = [] } = usePositions();
   const [saving, setSaving] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -276,7 +278,12 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label>Cargo</Label>
-                <Input value={position} onChange={e => setPosition(e.target.value)} maxLength={100} />
+                <Select value={position} onValueChange={setPosition}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar cargo" /></SelectTrigger>
+                  <SelectContent>
+                    {positions.map((p: any) => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1.5">
                 <Label>Fecha de Ingreso</Label>
