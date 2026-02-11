@@ -67,15 +67,15 @@
 
     --radius: 0.5rem;
 
-    --sidebar-background: 215 65% 22%;
-    --sidebar-foreground: 210 40% 92%;
-    --sidebar-primary: 185 72% 50%;
+    --sidebar-background: 210 20% 98%;
+    --sidebar-foreground: 220 30% 15%;
+    --sidebar-primary: 116 21% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 215 55% 28%;
-    --sidebar-accent-foreground: 210 40% 95%;
-    --sidebar-border: 215 50% 30%;
-    --sidebar-ring: 185 72% 50%;
-    --sidebar-muted: 215 40% 35%;
+    --sidebar-accent: 214 20% 92%;
+    --sidebar-accent-foreground: 220 30% 15%;
+    --sidebar-border: 214 20% 89%;
+    --sidebar-ring: 116 21% 45%;
+    --sidebar-muted: 215 15% 50%;
 
     --chart-1: 215 65% 22%;
     --chart-2: 185 72% 40%;
