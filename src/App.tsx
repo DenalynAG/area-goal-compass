@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import AppLayout from "@/components/AppLayout";
 import LoginPage from "@/pages/LoginPage";
-import DashboardPage from "@/pages/DashboardPage";
+import NewsletterPortalPage from "@/pages/NewsletterPortalPage";
 import EstructuraPage from "@/pages/EstructuraPage";
 import ColaboradoresPage from "@/pages/ColaboradoresPage";
 import RolesPage from "@/pages/RolesPage";
@@ -27,7 +27,7 @@ function ProtectedRoutes() {
   return (
     <AppLayout>
       <Routes>
-        <Route path="/" element={<DashboardPage />} />
+        <Route path="/" element={<NewsletterPortalPage />} />
         <Route path="/estructura" element={<EstructuraPage />} />
         <Route path="/colaboradores" element={<ColaboradoresPage />} />
         <Route path="/roles" element={<RolesPage />} />
