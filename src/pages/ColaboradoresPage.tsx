@@ -74,9 +74,13 @@ export default function ColaboradoresPage() {
                   <tr key={c.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary">
-                          {c.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                        </div>
+                        {(c as any).avatar ? (
+                          <img src={(c as any).avatar} alt={c.name} className="w-8 h-8 rounded-full object-cover" />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary">
+                            {c.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                          </div>
+                        )}
                         <span className="font-medium">{c.name}</span>
                       </div>
                     </td>

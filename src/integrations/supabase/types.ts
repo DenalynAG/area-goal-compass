@@ -357,34 +357,73 @@ export type Database = {
         Row: {
           avatar: string | null
           birthday: string | null
+          correo_personal: string | null
           created_at: string
+          direccion: string | null
           email: string
+          entidad_salud: string | null
+          fecha_ingreso: string | null
+          fondo_cesantias: string | null
+          fondo_pensiones: string | null
           id: string
+          identificacion: string | null
+          municipio: string | null
           name: string
           phone: string | null
           position: string | null
+          sexo: string | null
+          talla_camisa: string | null
+          talla_pantalon: string | null
+          talla_zapatos: string | null
+          tipo_contrato: string | null
           updated_at: string
         }
         Insert: {
           avatar?: string | null
           birthday?: string | null
+          correo_personal?: string | null
           created_at?: string
+          direccion?: string | null
           email: string
+          entidad_salud?: string | null
+          fecha_ingreso?: string | null
+          fondo_cesantias?: string | null
+          fondo_pensiones?: string | null
           id: string
+          identificacion?: string | null
+          municipio?: string | null
           name: string
           phone?: string | null
           position?: string | null
+          sexo?: string | null
+          talla_camisa?: string | null
+          talla_pantalon?: string | null
+          talla_zapatos?: string | null
+          tipo_contrato?: string | null
           updated_at?: string
         }
         Update: {
           avatar?: string | null
           birthday?: string | null
+          correo_personal?: string | null
           created_at?: string
+          direccion?: string | null
           email?: string
+          entidad_salud?: string | null
+          fecha_ingreso?: string | null
+          fondo_cesantias?: string | null
+          fondo_pensiones?: string | null
           id?: string
+          identificacion?: string | null
+          municipio?: string | null
           name?: string
           phone?: string | null
           position?: string | null
+          sexo?: string | null
+          talla_camisa?: string | null
+          talla_pantalon?: string | null
+          talla_zapatos?: string | null
+          tipo_contrato?: string | null
           updated_at?: string
         }
         Relationships: []

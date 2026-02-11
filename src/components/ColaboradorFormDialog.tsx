@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { Camera } from 'lucide-react';
 import type { Tables } from '@/integrations/supabase/types';
 
 interface Props {
@@ -20,12 +22,36 @@ interface Props {
 
 export default function ColaboradorFormDialog({ open, onOpenChange, profile, areas, subareas, membership }: Props) {
   const qc = useQueryClient();
+  const fileRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+
+  // Basic fields
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [identificacion, setIdentificacion] = useState('');
   const [phone, setPhone] = useState('');
   const [position, setPosition] = useState('');
   const [birthday, setBirthday] = useState('');
+  const [sexo, setSexo] = useState('');
+  const [municipio, setMunicipio] = useState('');
+  const [direccion, setDireccion] = useState('');
+  const [fechaIngreso, setFechaIngreso] = useState('');
+  const [correoPersonal, setCorreoPersonal] = useState('');
+  const [tipoContrato, setTipoContrato] = useState('');
+
+  // Tallas
+  const [tallaPantalon, setTallaPantalon] = useState('');
+  const [tallaCamisa, setTallaCamisa] = useState('');
+  const [tallaZapatos, setTallaZapatos] = useState('');
+
+  // Seguridad social
+  const [entidadSalud, setEntidadSalud] = useState('');
+  const [fondoPensiones, setFondoPensiones] = useState('');
+  const [fondoCesantias, setFondoCesantias] = useState('');
+
+  // Membership
   const [areaId, setAreaId] = useState('');
   const [subareaId, setSubareaId] = useState('');
 
@@ -34,21 +60,60 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
 
   useEffect(() => {
     if (profile) {
-      setName(profile.name);
-      setEmail(profile.email);
-      setPhone(profile.phone ?? '');
-      setPosition(profile.position ?? '');
-      setBirthday((profile as any).birthday ?? '');
+      const p = profile as any;
+      setName(p.name ?? '');
+      setEmail(p.email ?? '');
+      setIdentificacion(p.identificacion ?? '');
+      setPhone(p.phone ?? '');
+      setPosition(p.position ?? '');
+      setBirthday(p.birthday ?? '');
+      setSexo(p.sexo ?? '');
+      setMunicipio(p.municipio ?? '');
+      setDireccion(p.direccion ?? '');
+      setFechaIngreso(p.fecha_ingreso ?? '');
+      setCorreoPersonal(p.correo_personal ?? '');
+      setTipoContrato(p.tipo_contrato ?? '');
+      setTallaPantalon(p.talla_pantalon ?? '');
+      setTallaCamisa(p.talla_camisa ?? '');
+      setTallaZapatos(p.talla_zapatos ?? '');
+      setEntidadSalud(p.entidad_salud ?? '');
+      setFondoPensiones(p.fondo_pensiones ?? '');
+      setFondoCesantias(p.fondo_cesantias ?? '');
+      setAvatarPreview(p.avatar || null);
       setAreaId(membership?.area_id ?? '');
       setSubareaId(membership?.subarea_id ?? '');
     } else {
-      setName(''); setEmail(''); setPhone(''); setPosition(''); setBirthday(''); setAreaId(''); setSubareaId('');
+      setName(''); setEmail(''); setIdentificacion(''); setPhone(''); setPosition('');
+      setBirthday(''); setSexo(''); setMunicipio(''); setDireccion('');
+      setFechaIngreso(''); setCorreoPersonal(''); setTipoContrato('');
+      setTallaPantalon(''); setTallaCamisa(''); setTallaZapatos('');
+      setEntidadSalud(''); setFondoPensiones(''); setFondoCesantias('');
+      setAvatarPreview(null); setAvatarFile(null);
+      setAreaId(''); setSubareaId('');
     }
   }, [profile, membership, open]);
 
   useEffect(() => {
     if (!filteredSubareas.find(s => s.id === subareaId)) setSubareaId('');
   }, [areaId]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { toast.error('La imagen no debe superar 2MB'); return; }
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
+  };
+
+  const uploadAvatar = async (userId: string): Promise<string | null> => {
+    if (!avatarFile) return null;
+    const ext = avatarFile.name.split('.').pop();
+    const path = `${userId}/avatar.${ext}`;
+    const { error } = await supabase.storage.from('avatars').upload(path, avatarFile, { upsert: true });
+    if (error) { toast.error('Error subiendo foto: ' + error.message); return null; }
+    const { data } = supabase.storage.from('avatars').getPublicUrl(path);
+    return data.publicUrl;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,64 +124,60 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
 
     setSaving(true);
 
-    if (isEditing) {
-      // Update profile
-      const { error } = await supabase.from('profiles').update({
-        name: trimmedName,
-        phone: phone.trim() || null,
-        position: position.trim() || null,
-        birthday: birthday || null,
-      } as any).eq('id', profile!.id);
+    const profilePayload: any = {
+      name: trimmedName,
+      phone: phone.trim() || null,
+      position: position.trim() || null,
+      birthday: birthday || null,
+      identificacion: identificacion.trim() || null,
+      sexo: sexo || null,
+      municipio: municipio.trim() || null,
+      direccion: direccion.trim() || null,
+      fecha_ingreso: fechaIngreso || null,
+      correo_personal: correoPersonal.trim() || null,
+      tipo_contrato: tipoContrato || null,
+      talla_pantalon: tallaPantalon.trim() || null,
+      talla_camisa: tallaCamisa.trim() || null,
+      talla_zapatos: tallaZapatos.trim() || null,
+      entidad_salud: entidadSalud.trim() || null,
+      fondo_pensiones: fondoPensiones.trim() || null,
+      fondo_cesantias: fondoCesantias.trim() || null,
+    };
 
+    if (isEditing) {
+      const avatarUrl = await uploadAvatar(profile!.id);
+      if (avatarUrl) profilePayload.avatar = avatarUrl;
+
+      const { error } = await supabase.from('profiles').update(profilePayload).eq('id', profile!.id);
       if (error) { toast.error(error.message); setSaving(false); return; }
 
-      // Update membership
       if (areaId) {
         if (membership) {
-          await supabase.from('memberships').update({
-            area_id: areaId,
-            subarea_id: subareaId || null,
-          }).eq('id', membership.id);
+          await supabase.from('memberships').update({ area_id: areaId, subarea_id: subareaId || null }).eq('id', membership.id);
         } else {
-          await supabase.from('memberships').insert({
-            user_id: profile!.id,
-            area_id: areaId,
-            subarea_id: subareaId || null,
-          });
+          await supabase.from('memberships').insert({ user_id: profile!.id, area_id: areaId, subarea_id: subareaId || null });
         }
       }
-
       toast.success('Colaborador actualizado');
     } else {
-      // Create new user via auth, then profile is auto-created by trigger
       const tempPassword = crypto.randomUUID().slice(0, 12) + 'A1!';
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: trimmedEmail,
         password: tempPassword,
         options: { data: { name: trimmedName } },
       });
-
       if (authError) { toast.error(authError.message); setSaving(false); return; }
       if (!authData.user) { toast.error('No se pudo crear el usuario'); setSaving(false); return; }
 
       const userId = authData.user.id;
+      const avatarUrl = await uploadAvatar(userId);
+      if (avatarUrl) profilePayload.avatar = avatarUrl;
 
-      // Update profile with extra fields
-      await supabase.from('profiles').update({
-        phone: phone.trim() || null,
-        position: position.trim() || null,
-        birthday: birthday || null,
-      } as any).eq('id', userId);
+      await supabase.from('profiles').update(profilePayload).eq('id', userId);
 
-      // Create membership
       if (areaId) {
-        await supabase.from('memberships').insert({
-          user_id: userId,
-          area_id: areaId,
-          subarea_id: subareaId || null,
-        });
+        await supabase.from('memberships').insert({ user_id: userId, area_id: areaId, subarea_id: subareaId || null });
       }
-
       toast.success('Colaborador creado. Se envió invitación por correo.');
     }
 
@@ -126,60 +187,174 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
     onOpenChange(false);
   };
 
+  const SectionTitle = ({ children }: { children: React.ReactNode }) => (
+    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider pt-3 pb-1 border-b border-border">{children}</h3>
+  );
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] p-0">
+        <DialogHeader className="px-6 pt-6 pb-2">
           <DialogTitle>{isEditing ? 'Editar Colaborador' : 'Nuevo Colaborador'}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2 col-span-2">
-              <Label>Nombre completo *</Label>
-              <Input value={name} onChange={e => setName(e.target.value)} maxLength={100} required />
+        <ScrollArea className="max-h-[calc(90vh-120px)] px-6 pb-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Avatar */}
+            <div className="flex items-center gap-4">
+              <div
+                className="relative w-20 h-20 rounded-full bg-muted flex items-center justify-center overflow-hidden cursor-pointer border-2 border-dashed border-border hover:border-primary transition-colors"
+                onClick={() => fileRef.current?.click()}
+              >
+                {avatarPreview ? (
+                  <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <Camera className="w-6 h-6 text-muted-foreground" />
+                )}
+              </div>
+              <div className="text-sm text-muted-foreground">
+                <p className="font-medium text-foreground">Foto de perfil</p>
+                <p>JPG, PNG. Máximo 2MB</p>
+              </div>
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
             </div>
-            <div className="space-y-2 col-span-2">
-              <Label>Correo electrónico *</Label>
-              <Input type="email" value={email} onChange={e => setEmail(e.target.value)} maxLength={255} required disabled={isEditing} />
+
+            {/* Información Personal */}
+            <SectionTitle>Información Personal</SectionTitle>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label>Nombre completo *</Label>
+                <Input value={name} onChange={e => setName(e.target.value)} maxLength={100} required />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Identificación</Label>
+                <Input value={identificacion} onChange={e => setIdentificacion(e.target.value)} maxLength={30} placeholder="Cédula / NIT" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Sexo</Label>
+                <Select value={sexo} onValueChange={setSexo}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="masculino">Masculino</SelectItem>
+                    <SelectItem value="femenino">Femenino</SelectItem>
+                    <SelectItem value="otro">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Cumpleaños</Label>
+                <Input type="date" value={birthday} onChange={e => setBirthday(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Municipio</Label>
+                <Input value={municipio} onChange={e => setMunicipio(e.target.value)} maxLength={100} />
+              </div>
+              <div className="space-y-1.5 col-span-2">
+                <Label>Dirección</Label>
+                <Input value={direccion} onChange={e => setDireccion(e.target.value)} maxLength={200} />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Teléfono</Label>
-              <Input value={phone} onChange={e => setPhone(e.target.value)} maxLength={20} />
+
+            {/* Contacto */}
+            <SectionTitle>Contacto</SectionTitle>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label>Correo Corporativo *</Label>
+                <Input type="email" value={email} onChange={e => setEmail(e.target.value)} maxLength={255} required disabled={isEditing} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Correo Personal</Label>
+                <Input type="email" value={correoPersonal} onChange={e => setCorreoPersonal(e.target.value)} maxLength={255} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Teléfono Particular</Label>
+                <Input value={phone} onChange={e => setPhone(e.target.value)} maxLength={20} />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Cargo</Label>
-              <Input value={position} onChange={e => setPosition(e.target.value)} maxLength={100} />
+
+            {/* Información Laboral */}
+            <SectionTitle>Información Laboral</SectionTitle>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label>Cargo</Label>
+                <Input value={position} onChange={e => setPosition(e.target.value)} maxLength={100} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Fecha de Ingreso</Label>
+                <Input type="date" value={fechaIngreso} onChange={e => setFechaIngreso(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Tipo de Contrato</Label>
+                <Select value={tipoContrato} onValueChange={setTipoContrato}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="indefinido">Indefinido</SelectItem>
+                    <SelectItem value="fijo">Término Fijo</SelectItem>
+                    <SelectItem value="obra_labor">Obra o Labor</SelectItem>
+                    <SelectItem value="prestacion_servicios">Prestación de Servicios</SelectItem>
+                    <SelectItem value="aprendizaje">Aprendizaje</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Área</Label>
+                <Select value={areaId} onValueChange={setAreaId}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar área" /></SelectTrigger>
+                  <SelectContent>
+                    {areas.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Subárea</Label>
+                <Select value={subareaId} onValueChange={setSubareaId} disabled={!areaId}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar subárea" /></SelectTrigger>
+                  <SelectContent>
+                    {filteredSubareas.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Cumpleaños</Label>
-              <Input type="date" value={birthday} onChange={e => setBirthday(e.target.value)} />
+
+            {/* Tallas de Uniformes */}
+            <SectionTitle>Tallas de Uniformes</SectionTitle>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-1.5">
+                <Label>Pantalón</Label>
+                <Input value={tallaPantalon} onChange={e => setTallaPantalon(e.target.value)} maxLength={10} placeholder="Ej: 32" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Camisa</Label>
+                <Input value={tallaCamisa} onChange={e => setTallaCamisa(e.target.value)} maxLength={10} placeholder="Ej: M" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Zapatos</Label>
+                <Input value={tallaZapatos} onChange={e => setTallaZapatos(e.target.value)} maxLength={10} placeholder="Ej: 42" />
+              </div>
             </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Área</Label>
-              <Select value={areaId} onValueChange={setAreaId}>
-                <SelectTrigger><SelectValue placeholder="Seleccionar área" /></SelectTrigger>
-                <SelectContent>
-                  {areas.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
+
+            {/* Seguridad Social */}
+            <SectionTitle>Seguridad Social</SectionTitle>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label>Entidad de Salud (EPS)</Label>
+                <Input value={entidadSalud} onChange={e => setEntidadSalud(e.target.value)} maxLength={100} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Fondo de Pensiones</Label>
+                <Input value={fondoPensiones} onChange={e => setFondoPensiones(e.target.value)} maxLength={100} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Fondo de Cesantías</Label>
+                <Input value={fondoCesantias} onChange={e => setFondoCesantias(e.target.value)} maxLength={100} />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Subárea</Label>
-              <Select value={subareaId} onValueChange={setSubareaId} disabled={!areaId}>
-                <SelectTrigger><SelectValue placeholder="Seleccionar subárea" /></SelectTrigger>
-                <SelectContent>
-                  {filteredSubareas.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+              <Button type="submit" disabled={saving}>{saving ? 'Guardando...' : 'Guardar'}</Button>
             </div>
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-            <Button type="submit" disabled={saving}>{saving ? 'Guardando...' : 'Guardar'}</Button>
-          </div>
-        </form>
+          </form>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
