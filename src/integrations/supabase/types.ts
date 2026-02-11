@@ -79,6 +79,51 @@ export type Database = {
           },
         ]
       }
+      evaluations: {
+        Row: {
+          collaborator_user_id: string
+          created_at: string
+          description: string | null
+          evaluation_date: string
+          evaluator_user_id: string
+          id: string
+          notes: string | null
+          period: string | null
+          score: number | null
+          title: string
+          type: Database["public"]["Enums"]["evaluation_type"]
+          updated_at: string
+        }
+        Insert: {
+          collaborator_user_id: string
+          created_at?: string
+          description?: string | null
+          evaluation_date?: string
+          evaluator_user_id: string
+          id?: string
+          notes?: string | null
+          period?: string | null
+          score?: number | null
+          title: string
+          type: Database["public"]["Enums"]["evaluation_type"]
+          updated_at?: string
+        }
+        Update: {
+          collaborator_user_id?: string
+          created_at?: string
+          description?: string | null
+          evaluation_date?: string
+          evaluator_user_id?: string
+          id?: string
+          notes?: string | null
+          period?: string | null
+          score?: number | null
+          title?: string
+          type?: Database["public"]["Enums"]["evaluation_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       kpi_measurements: {
         Row: {
           created_at: string
@@ -394,6 +439,7 @@ export type Database = {
         | "colaborador"
         | "solo_lectura"
       entity_status: "activo" | "inactivo"
+      evaluation_type: "feedback" | "desempeno" | "performance" | "one_to_one"
       kpi_frequency: "semanal" | "mensual" | "trimestral"
       objective_status: "borrador" | "activo" | "en_riesgo" | "cerrado"
       priority_level: "alta" | "media" | "baja"
@@ -532,6 +578,7 @@ export const Constants = {
         "solo_lectura",
       ],
       entity_status: ["activo", "inactivo"],
+      evaluation_type: ["feedback", "desempeno", "performance", "one_to_one"],
       kpi_frequency: ["semanal", "mensual", "trimestral"],
       objective_status: ["borrador", "activo", "en_riesgo", "cerrado"],
       priority_level: ["alta", "media", "baja"],
