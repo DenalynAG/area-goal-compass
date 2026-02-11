@@ -3,6 +3,7 @@ import { mockAreas, mockSubareas, getUserName } from '@/data/mockData';
 import { StatusBadge } from '@/components/StatusBadge';
 import { ChevronDown, ChevronRight, Plus, Edit, Building2, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import Organigrama from '@/components/Organigrama';
 
 export default function EstructuraPage() {
   const [expanded, setExpanded] = useState<Record<string, boolean>>(
@@ -20,6 +21,8 @@ export default function EstructuraPage() {
         </div>
         <Button><Plus className="w-4 h-4 mr-2" />Nueva Área</Button>
       </div>
+
+      <Organigrama />
 
       <div className="space-y-3">
         {mockAreas.map(area => {
