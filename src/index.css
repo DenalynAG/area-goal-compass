@@ -123,7 +123,6 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
   }
-  }
 }
 
 @layer components {
@@ -150,7 +149,6 @@
   }
   .page-title {
     @apply text-2xl font-display font-extrabold tracking-tight text-foreground;
-  }
   }
   .page-subtitle {
     @apply text-sm text-muted-foreground mt-1;
