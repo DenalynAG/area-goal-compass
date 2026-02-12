@@ -11,7 +11,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import Organigrama from '@/components/Organigrama';
+
 import AreaFormDialog from '@/components/AreaFormDialog';
 import SubareaFormDialog from '@/components/SubareaFormDialog';
 import ColaboradorFormDialog from '@/components/ColaboradorFormDialog';
@@ -129,7 +129,7 @@ export default function EstructuraPage() {
         <Button onClick={openNewArea}><Plus className="w-4 h-4 mr-2" />Nueva Área</Button>
       </div>
 
-      <Organigrama />
+      
 
       <div className="space-y-3">
         {areas.map(area => {
