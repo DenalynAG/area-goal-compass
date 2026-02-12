@@ -29,6 +29,7 @@ const navItems = [
   { to: "/indicadores", icon: BarChart3, label: "Indicadores" },
   { to: "/reportes", icon: FileText, label: "Reportes" },
   { to: "/evaluaciones", icon: ClipboardCheck, label: "Evaluaciones" },
+  { to: "/organigrama", icon: Building2, label: "Organigrama" },
   { to: "/administracion", icon: Settings, label: "Administración" },
 ];
 
