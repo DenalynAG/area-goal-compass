@@ -21,7 +21,7 @@ import { getRoleLabel } from "@/types";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
-  { to: "/", icon: Newspaper, label: "Portal Newsletter" },
+  { to: "/", icon: Newspaper, label: "Portal OSH" },
   { to: "/estructura", icon: Building2, label: "Estructura" },
   { to: "/colaboradores", icon: Users, label: "Colaboradores" },
   { to: "/roles", icon: Shield, label: "Roles y Accesos" },
