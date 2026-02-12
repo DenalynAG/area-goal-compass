@@ -23,9 +23,11 @@ interface Props {
   subareas: Tables<'subareas'>[];
   membership?: Tables<'memberships'> | null;
   userRole?: Enums<'app_role'> | null;
+  defaultAreaId?: string;
+  defaultSubareaId?: string;
 }
 
-export default function ColaboradorFormDialog({ open, onOpenChange, profile, areas, subareas, membership, userRole }: Props) {
+export default function ColaboradorFormDialog({ open, onOpenChange, profile, areas, subareas, membership, userRole, defaultAreaId, defaultSubareaId }: Props) {
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const { data: positions = [] } = usePositions();
@@ -97,7 +99,7 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
       setTallaPantalon(''); setTallaCamisa(''); setTallaZapatos('');
       setEntidadSalud(''); setFondoPensiones(''); setFondoCesantias('');
       setAvatarPreview(null); setAvatarFile(null);
-      setAreaId(''); setSubareaId(''); setRole('');
+      setAreaId(defaultAreaId || ''); setSubareaId(defaultSubareaId || ''); setRole('');
     }
   }, [profile, membership, open]);
 
