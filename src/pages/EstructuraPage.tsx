@@ -54,6 +54,10 @@ export default function EstructuraPage() {
   const [deleteSubareaId, setDeleteSubareaId] = useState<string | null>(null);
   const deleteSubareaName = subareas.find(s => s.id === deleteSubareaId)?.name ?? '';
 
+  // Delete collaborator state
+  const [deleteColabId, setDeleteColabId] = useState<string | null>(null);
+  const deleteColabName = profiles.find(p => p.id === deleteColabId)?.name ?? '';
+
   const confirmDeleteSubarea = async () => {
     if (!deleteSubareaId) return;
     const { error } = await supabase.from('subareas').delete().eq('id', deleteSubareaId);
@@ -61,6 +65,22 @@ export default function EstructuraPage() {
     toast.success('Subárea eliminada');
     qc.invalidateQueries({ queryKey: ['subareas'] });
     setDeleteSubareaId(null);
+  };
+
+  const confirmDeleteColab = async () => {
+    if (!deleteColabId) return;
+    // Remove membership first, then profile
+    const { error: memError } = await supabase.from('memberships').delete().eq('user_id', deleteColabId);
+    if (memError) { toast.error(memError.message); return; }
+    const { error: roleError } = await supabase.from('user_roles').delete().eq('user_id', deleteColabId);
+    if (roleError) { toast.error(roleError.message); return; }
+    const { error: profError } = await supabase.from('profiles').delete().eq('id', deleteColabId);
+    if (profError) { toast.error(profError.message); return; }
+    toast.success('Colaborador eliminado');
+    qc.invalidateQueries({ queryKey: ['memberships'] });
+    qc.invalidateQueries({ queryKey: ['profiles'] });
+    qc.invalidateQueries({ queryKey: ['user_roles'] });
+    setDeleteColabId(null);
   };
 
   const getRole = (userId: string): Enums<'app_role'> | null => userRoles.find(r => r.user_id === userId)?.role ?? null;
@@ -114,6 +134,11 @@ export default function EstructuraPage() {
       <Button variant="ghost" size="icon" className="shrink-0 h-7 w-7" onClick={() => openEditColab(p)}>
         <Edit className="w-3.5 h-3.5" />
       </Button>
+      {isSuperAdmin && (
+        <Button variant="ghost" size="icon" className="shrink-0 h-7 w-7 text-destructive" onClick={() => setDeleteColabId(p.id)}>
+          <Trash2 className="w-3.5 h-3.5" />
+        </Button>
+      )}
     </div>
   );
 
@@ -259,6 +284,23 @@ export default function EstructuraPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDeleteSubarea} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!deleteColabId} onOpenChange={(open) => !open && setDeleteColabId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar colaborador?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Estás a punto de eliminar al colaborador <strong>{deleteColabName}</strong>. Se eliminarán su perfil, membresía y rol asignado. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteColab} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Eliminar
             </AlertDialogAction>
           </AlertDialogFooter>
