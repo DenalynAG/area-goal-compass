@@ -121,6 +121,7 @@ export default function ColaboradoresPage() {
         areas={areas}
         subareas={subareas}
         membership={editingMembership}
+        userRole={editingProfile ? getRole(editingProfile.id) : null}
       />
     </div>
   );

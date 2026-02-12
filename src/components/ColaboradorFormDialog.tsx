@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { usePositions } from '@/hooks/useSupabaseData';
+import { getRoleLabel } from '@/types';
+import type { Enums } from '@/integrations/supabase/types';
+import { Constants } from '@/integrations/supabase/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,9 +22,10 @@ interface Props {
   areas: Tables<'areas'>[];
   subareas: Tables<'subareas'>[];
   membership?: Tables<'memberships'> | null;
+  userRole?: Enums<'app_role'> | null;
 }
 
-export default function ColaboradorFormDialog({ open, onOpenChange, profile, areas, subareas, membership }: Props) {
+export default function ColaboradorFormDialog({ open, onOpenChange, profile, areas, subareas, membership, userRole }: Props) {
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const { data: positions = [] } = usePositions();
@@ -53,9 +57,10 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
   const [fondoPensiones, setFondoPensiones] = useState('');
   const [fondoCesantias, setFondoCesantias] = useState('');
 
-  // Membership
+  // Membership & Role
   const [areaId, setAreaId] = useState('');
   const [subareaId, setSubareaId] = useState('');
+  const [role, setRole] = useState('');
 
   const isEditing = !!profile;
   const filteredSubareas = subareas.filter(s => s.area_id === areaId);
@@ -84,6 +89,7 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
       setAvatarPreview(p.avatar || null);
       setAreaId(membership?.area_id ?? '');
       setSubareaId(membership?.subarea_id ?? '');
+      setRole(userRole ?? '');
     } else {
       setName(''); setEmail(''); setIdentificacion(''); setPhone(''); setPosition('');
       setBirthday(''); setSexo(''); setMunicipio(''); setDireccion('');
@@ -91,7 +97,7 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
       setTallaPantalon(''); setTallaCamisa(''); setTallaZapatos('');
       setEntidadSalud(''); setFondoPensiones(''); setFondoCesantias('');
       setAvatarPreview(null); setAvatarFile(null);
-      setAreaId(''); setSubareaId('');
+      setAreaId(''); setSubareaId(''); setRole('');
     }
   }, [profile, membership, open]);
 
@@ -160,6 +166,15 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
           await supabase.from('memberships').insert({ user_id: profile!.id, area_id: areaId, subarea_id: subareaId || null });
         }
       }
+      // Upsert role
+      if (role) {
+        const { data: existingRole } = await supabase.from('user_roles').select('id').eq('user_id', profile!.id).maybeSingle();
+        if (existingRole) {
+          await supabase.from('user_roles').update({ role: role as Enums<'app_role'> }).eq('id', existingRole.id);
+        } else {
+          await supabase.from('user_roles').insert({ user_id: profile!.id, role: role as Enums<'app_role'> });
+        }
+      }
       toast.success('Colaborador actualizado');
     } else {
       // Use edge function so admin session is preserved
@@ -184,12 +199,17 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
       if (areaId) {
         await supabase.from('memberships').insert({ user_id: userId, area_id: areaId, subarea_id: subareaId || null });
       }
+      // Assign role
+      if (role) {
+        await supabase.from('user_roles').insert({ user_id: userId, role: role as Enums<'app_role'> });
+      }
       toast.success('Colaborador creado exitosamente.');
     }
 
     setSaving(false);
     qc.invalidateQueries({ queryKey: ['profiles'] });
     qc.invalidateQueries({ queryKey: ['memberships'] });
+    qc.invalidateQueries({ queryKey: ['user_roles'] });
     onOpenChange(false);
   };
 
@@ -321,6 +341,17 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
                   <SelectTrigger><SelectValue placeholder="Seleccionar subárea" /></SelectTrigger>
                   <SelectContent>
                     {filteredSubareas.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Rol del Sistema</Label>
+                <Select value={role} onValueChange={setRole}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar rol" /></SelectTrigger>
+                  <SelectContent>
+                    {Constants.public.Enums.app_role.map(r => (
+                      <SelectItem key={r} value={r}>{getRoleLabel(r)}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
