@@ -1,8 +1,12 @@
 import { useState } from 'react';
 import { useAreas, useSubareas, useProfiles, useMemberships, useUserRoles, getProfileName } from '@/hooks/useSupabaseData';
+import { useAuth } from '@/contexts/AuthContext';
 import { StatusBadge } from '@/components/StatusBadge';
-import { ChevronDown, ChevronRight, Plus, Edit, Building2, Layers, User, Briefcase } from 'lucide-react';
+import { ChevronDown, ChevronRight, Plus, Edit, Trash2, Building2, Layers, User, Briefcase } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import Organigrama from '@/components/Organigrama';
 import AreaFormDialog from '@/components/AreaFormDialog';
 import SubareaFormDialog from '@/components/SubareaFormDialog';
@@ -15,6 +19,8 @@ export default function EstructuraPage() {
   const { data: profiles = [] } = useProfiles();
   const { data: memberships = [] } = useMemberships();
   const { data: userRoles = [] } = useUserRoles();
+  const { isSuperAdmin } = useAuth();
+  const qc = useQueryClient();
 
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const toggle = (id: string) => setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
@@ -40,6 +46,14 @@ export default function EstructuraPage() {
   const openEditArea = (a: Tables<'areas'>) => { setEditingArea(a); setAreaDialogOpen(true); };
   const openNewSubarea = (areaId: string) => { setEditingSubarea(null); setSubareaParentId(areaId); setSubareaDialogOpen(true); };
   const openEditSubarea = (s: Tables<'subareas'>) => { setEditingSubarea(s); setSubareaParentId(s.area_id); setSubareaDialogOpen(true); };
+
+  const handleDeleteSubarea = async (id: string) => {
+    if (!confirm('¿Estás seguro de eliminar esta subárea?')) return;
+    const { error } = await supabase.from('subareas').delete().eq('id', id);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Subárea eliminada');
+    qc.invalidateQueries({ queryKey: ['subareas'] });
+  };
 
   const getRole = (userId: string): Enums<'app_role'> | null => userRoles.find(r => r.user_id === userId)?.role ?? null;
   const getMembership = (userId: string) => memberships.find(m => m.user_id === userId);
@@ -164,6 +178,9 @@ export default function EstructuraPage() {
                             <p className="text-xs text-muted-foreground">{sub.description} — Líder: {getProfileName(profiles, sub.leader_user_id)}</p>
                           </div>
                           <Button variant="ghost" size="icon" className="shrink-0" onClick={() => openEditSubarea(sub)}><Edit className="w-4 h-4" /></Button>
+                          {isSuperAdmin && (
+                            <Button variant="ghost" size="icon" className="shrink-0 text-destructive" onClick={() => handleDeleteSubarea(sub.id)}><Trash2 className="w-4 h-4" /></Button>
+                          )}
                         </div>
                         {subExpanded && (
                           <div>
