@@ -162,16 +162,20 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
       }
       toast.success('Colaborador actualizado');
     } else {
-      const tempPassword = crypto.randomUUID().slice(0, 12) + 'A1!';
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: trimmedEmail,
-        password: tempPassword,
-        options: { data: { name: trimmedName } },
+      // Use edge function so admin session is preserved
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ email: trimmedEmail, name: trimmedName }),
       });
-      if (authError) { toast.error(authError.message); setSaving(false); return; }
-      if (!authData.user) { toast.error('No se pudo crear el usuario'); setSaving(false); return; }
+      const result = await res.json();
+      if (!res.ok) { toast.error(result.error || 'Error creando usuario'); setSaving(false); return; }
 
-      const userId = authData.user.id;
+      const userId = result.user_id;
       const avatarUrl = await uploadAvatar(userId);
       if (avatarUrl) profilePayload.avatar = avatarUrl;
 
@@ -180,7 +184,7 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
       if (areaId) {
         await supabase.from('memberships').insert({ user_id: userId, area_id: areaId, subarea_id: subareaId || null });
       }
-      toast.success('Colaborador creado. Se envió invitación por correo.');
+      toast.success('Colaborador creado exitosamente.');
     }
 
     setSaving(false);
