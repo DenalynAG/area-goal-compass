@@ -4,6 +4,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { StatusBadge } from '@/components/StatusBadge';
 import { ChevronDown, ChevronRight, Plus, Edit, Trash2, Building2, Layers, User, Briefcase } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -47,12 +51,16 @@ export default function EstructuraPage() {
   const openNewSubarea = (areaId: string) => { setEditingSubarea(null); setSubareaParentId(areaId); setSubareaDialogOpen(true); };
   const openEditSubarea = (s: Tables<'subareas'>) => { setEditingSubarea(s); setSubareaParentId(s.area_id); setSubareaDialogOpen(true); };
 
-  const handleDeleteSubarea = async (id: string) => {
-    if (!confirm('¿Estás seguro de eliminar esta subárea?')) return;
-    const { error } = await supabase.from('subareas').delete().eq('id', id);
+  const [deleteSubareaId, setDeleteSubareaId] = useState<string | null>(null);
+  const deleteSubareaName = subareas.find(s => s.id === deleteSubareaId)?.name ?? '';
+
+  const confirmDeleteSubarea = async () => {
+    if (!deleteSubareaId) return;
+    const { error } = await supabase.from('subareas').delete().eq('id', deleteSubareaId);
     if (error) { toast.error(error.message); return; }
     toast.success('Subárea eliminada');
     qc.invalidateQueries({ queryKey: ['subareas'] });
+    setDeleteSubareaId(null);
   };
 
   const getRole = (userId: string): Enums<'app_role'> | null => userRoles.find(r => r.user_id === userId)?.role ?? null;
@@ -179,7 +187,7 @@ export default function EstructuraPage() {
                           </div>
                           <Button variant="ghost" size="icon" className="shrink-0" onClick={() => openEditSubarea(sub)}><Edit className="w-4 h-4" /></Button>
                           {isSuperAdmin && (
-                            <Button variant="ghost" size="icon" className="shrink-0 text-destructive" onClick={() => handleDeleteSubarea(sub.id)}><Trash2 className="w-4 h-4" /></Button>
+                            <Button variant="ghost" size="icon" className="shrink-0 text-destructive" onClick={() => setDeleteSubareaId(sub.id)}><Trash2 className="w-4 h-4" /></Button>
                           )}
                         </div>
                         {subExpanded && (
@@ -239,6 +247,23 @@ export default function EstructuraPage() {
         defaultAreaId={presetAreaId}
         defaultSubareaId={presetSubareaId}
       />
+
+      <AlertDialog open={!!deleteSubareaId} onOpenChange={(open) => !open && setDeleteSubareaId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar subárea?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Estás a punto de eliminar la subárea <strong>{deleteSubareaName}</strong>. Esta acción no se puede deshacer y se perderán todos los datos asociados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteSubarea} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
