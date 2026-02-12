@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Building2, Lock, Mail, User } from 'lucide-react';
+import { Lock, Mail, User } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function LoginPage() {
@@ -39,14 +39,16 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-primary p-4">
+    <div className="min-h-screen flex items-center justify-center bg-sidebar p-4">
       <div className="w-full max-w-md animate-fade-in">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-accent mb-4">
-            <Building2 className="w-8 h-8 text-accent-foreground" />
-          </div>
-          <h1 className="text-2xl font-bold text-primary-foreground">Gestión de Áreas y Objetivos</h1>
-          <p className="text-primary-foreground/60 mt-1">Inicia sesión o regístrate para continuar</p>
+          <img
+            src="https://dnifnjmiqbrtnmeqjizw.supabase.co/storage/v1/object/public/OSH-B/OSH-B.png"
+            alt="OSHOME logo"
+            className="w-20 h-20 rounded-2xl object-contain mx-auto mb-4"
+          />
+          <h1 className="text-2xl font-display font-extrabold text-sidebar-foreground">Bienvenidos..!</h1>
+          <p className="text-sidebar-foreground/50 mt-1 text-sm">OSH Hotels · Inicia sesión o regístrate</p>
         </div>
 
         <div className="bg-card rounded-2xl shadow-2xl p-8">
