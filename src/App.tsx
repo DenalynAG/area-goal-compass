@@ -9,7 +9,7 @@ import LoginPage from "@/pages/LoginPage";
 import NewsletterPortalPage from "@/pages/NewsletterPortalPage";
 import EstructuraPage from "@/pages/EstructuraPage";
 import ColaboradoresPage from "@/pages/ColaboradoresPage";
-import RolesPage from "@/pages/RolesPage";
+
 import ObjetivosPage from "@/pages/ObjetivosPage";
 import IndicadoresPage from "@/pages/IndicadoresPage";
 import ReportesPage from "@/pages/ReportesPage";
@@ -31,7 +31,7 @@ function ProtectedRoutes() {
         <Route path="/" element={<NewsletterPortalPage />} />
         <Route path="/estructura" element={<EstructuraPage />} />
         <Route path="/colaboradores" element={<ColaboradoresPage />} />
-        <Route path="/roles" element={<RolesPage />} />
+        
         <Route path="/objetivos" element={<ObjetivosPage />} />
         <Route path="/indicadores" element={<IndicadoresPage />} />
         <Route path="/reportes" element={<ReportesPage />} />
