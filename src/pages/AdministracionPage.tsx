@@ -325,7 +325,7 @@ export default function AdministracionPage() {
       </div>
 
       {/* Roles y Accesos */}
-      <RolesSection canEdit={isSuperAdmin || hasRole('admin_area')} />
+      <RolesSection canEdit={isSuperAdmin} />
 
       {/* Audit log */}
       <div className="bg-card rounded-xl border shadow-sm">
