@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
-import { Plus, Star, MessageSquare, ClipboardCheck, Users2, Calendar, Pencil } from 'lucide-react';
+import { Plus, Star, MessageSquare, ClipboardCheck, Users2, Calendar, Pencil, Briefcase } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 import type { Tables } from '@/integrations/supabase/types';
 import EvaluacionFormDialog from '@/components/EvaluacionFormDialog';
 
@@ -107,6 +108,52 @@ export default function EvaluacionesPage() {
           );
         })}
       </div>
+
+      {/* Evaluaciones por Cargo */}
+      {(() => {
+        const cargoMap = new Map<string, { count: number; totalScore: number; scored: number }>();
+        evaluations.forEach(ev => {
+          const profile = profiles.find(p => p.id === ev.collaborator_user_id);
+          const cargo = profile?.position || 'Sin cargo';
+          const entry = cargoMap.get(cargo) || { count: 0, totalScore: 0, scored: 0 };
+          entry.count++;
+          if (ev.score) { entry.totalScore += ev.score; entry.scored++; }
+          cargoMap.set(cargo, entry);
+        });
+        const cargoEntries = Array.from(cargoMap.entries()).sort((a, b) => b[1].count - a[1].count);
+        if (cargoEntries.length === 0) return null;
+        const maxCount = Math.max(...cargoEntries.map(([, v]) => v.count));
+        return (
+          <div className="bg-card rounded-xl border p-5 space-y-4">
+            <div className="flex items-center gap-2">
+              <Briefcase className="w-5 h-5 text-primary" />
+              <h2 className="font-semibold text-base">Evaluaciones por Cargo</h2>
+              <span className="text-xs text-muted-foreground ml-auto">{cargoEntries.length} cargos</span>
+            </div>
+            <div className="space-y-3">
+              {cargoEntries.map(([cargo, { count, totalScore, scored }]) => {
+                const avg = scored > 0 ? (totalScore / scored) : 0;
+                return (
+                  <div key={cargo} className="space-y-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium truncate max-w-[200px]">{cargo}</span>
+                      <div className="flex items-center gap-3">
+                        {scored > 0 && (
+                          <span className="text-xs text-muted-foreground flex items-center gap-0.5">
+                            <Star className="w-3 h-3 fill-primary text-primary" /> {avg.toFixed(1)}
+                          </span>
+                        )}
+                        <span className="text-xs text-muted-foreground">{count} eval.</span>
+                      </div>
+                    </div>
+                    <Progress value={(count / maxCount) * 100} className="h-2" />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Filters */}
       <div className="flex items-center gap-2">
