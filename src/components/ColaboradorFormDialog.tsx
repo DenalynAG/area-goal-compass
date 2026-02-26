@@ -130,7 +130,6 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
     const trimmedName = name.trim();
     const trimmedEmail = email.trim();
     if (!trimmedName) { toast.error('El nombre es obligatorio'); return; }
-    if (!trimmedEmail) { toast.error('El correo es obligatorio'); return; }
 
     setSaving(true);
 
@@ -179,29 +178,45 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
       }
       toast.success('Colaborador actualizado');
     } else {
-      // Use edge function so admin session is preserved
-      const { data: { session } } = await supabase.auth.getSession();
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-user`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`,
-        },
-        body: JSON.stringify({ email: trimmedEmail, name: trimmedName }),
-      });
-      const result = await res.json();
-      if (!res.ok) { toast.error(result.error || 'Error creando usuario'); setSaving(false); return; }
+      let userId: string;
 
-      const userId = result.user_id;
+      if (trimmedEmail) {
+        // Create auth user via edge function
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-user`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({ email: trimmedEmail, name: trimmedName }),
+        });
+        const result = await res.json();
+        if (!res.ok) { toast.error(result.error || 'Error creando usuario'); setSaving(false); return; }
+        userId = result.user_id;
+      } else {
+        // Create profile-only (no auth account)
+        userId = crypto.randomUUID();
+        profilePayload.id = userId;
+        profilePayload.email = `sin-correo-${userId.slice(0, 8)}@placeholder.local`;
+        const { error } = await supabase.from('profiles').insert(profilePayload);
+        if (error) { toast.error(error.message); setSaving(false); return; }
+      }
+
       const avatarUrl = await uploadAvatar(userId);
       if (avatarUrl) profilePayload.avatar = avatarUrl;
 
-      await supabase.from('profiles').update(profilePayload).eq('id', userId);
+      if (trimmedEmail) {
+        // Update the profile created by auth trigger
+        await supabase.from('profiles').update(profilePayload).eq('id', userId);
+      } else if (avatarUrl) {
+        // Only update avatar for profile-only
+        await supabase.from('profiles').update({ avatar: avatarUrl }).eq('id', userId);
+      }
 
       if (areaId) {
         await supabase.from('memberships').insert({ user_id: userId, area_id: areaId, subarea_id: subareaId || null });
       }
-      // Assign role
       if (role) {
         await supabase.from('user_roles').insert({ user_id: userId, role: role as Enums<'app_role'> });
       }
@@ -286,8 +301,8 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
             <SectionTitle>Contacto</SectionTitle>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label>Correo Corporativo *</Label>
-                <Input type="email" value={email} onChange={e => setEmail(e.target.value)} maxLength={255} required disabled={isEditing} />
+                <Label>Correo Corporativo</Label>
+                <Input type="email" value={email} onChange={e => setEmail(e.target.value)} maxLength={255} disabled={isEditing} placeholder="Opcional" />
               </div>
               <div className="space-y-1.5">
                 <Label>Correo Personal</Label>

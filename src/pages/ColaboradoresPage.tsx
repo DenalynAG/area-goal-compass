@@ -57,18 +57,30 @@ export default function ColaboradoresPage() {
       for (const row of rows) {
         const name = (row['Nombre'] || row['Nombre completo'] || '').toString().trim();
         const email = (row['Correo'] || row['Email'] || row['Correo Corporativo'] || '').toString().trim();
-        if (!name || !email) { errors++; continue; }
+        if (!name) { errors++; continue; }
 
-        // Create user via edge function
-        const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-user`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-          body: JSON.stringify({ email, name }),
-        });
-        const result = await res.json();
-        if (!res.ok) { errors++; continue; }
+        let userId: string;
 
-        const userId = result.user_id;
+        if (email) {
+          // Create auth user via edge function
+          const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-user`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+            body: JSON.stringify({ email, name }),
+          });
+          const result = await res.json();
+          if (!res.ok) { errors++; continue; }
+          userId = result.user_id;
+        } else {
+          // Profile-only (no auth account)
+          userId = crypto.randomUUID();
+          const { error } = await supabase.from('profiles').insert({
+            id: userId,
+            name,
+            email: `sin-correo-${userId.slice(0, 8)}@placeholder.local`,
+          });
+          if (error) { errors++; continue; }
+        }
 
         // Update profile with extra fields
         const profileUpdate: any = {};
