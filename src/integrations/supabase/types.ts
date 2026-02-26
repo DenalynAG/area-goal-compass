@@ -276,6 +276,77 @@ export type Database = {
           },
         ]
       }
+      leader_pass_activities: {
+        Row: {
+          created_at: string
+          description: string | null
+          frequency: string
+          id: string
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          frequency: string
+          id?: string
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          frequency?: string
+          id?: string
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      leader_pass_records: {
+        Row: {
+          activity_id: string
+          completed: boolean
+          completed_at: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          period: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_id: string
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          period: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_id?: string
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          period?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leader_pass_records_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "leader_pass_activities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       memberships: {
         Row: {
           area_id: string
