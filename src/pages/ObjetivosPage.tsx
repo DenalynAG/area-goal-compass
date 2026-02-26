@@ -73,6 +73,12 @@ export default function ObjetivosPage() {
   if (selectedArea) {
     const areaObjs = getAreaObjectives(selectedArea.id);
     const areaKpisList = getAreaKpis(selectedArea.id);
+    const areaSubareas = subareas.filter(s => s.area_id === selectedArea.id);
+
+    // Objectives directly on the area (not subarea)
+    const directAreaObjs = objectives.filter(o => o.scope_type === 'area' && o.scope_id === selectedArea.id);
+    // Objectives per subarea
+    const getSubareaObjs = (subId: string) => objectives.filter(o => o.scope_type === 'subarea' && o.scope_id === subId);
 
     return (
       <div className="animate-fade-in space-y-6">
@@ -82,36 +88,65 @@ export default function ObjetivosPage() {
           </Button>
           <div>
             <h1 className="page-title">Objetivos — {selectedArea.name}</h1>
-            <p className="page-subtitle">{areaObjs.length} objetivos · {areaKpisList.length} indicadores</p>
+            <p className="page-subtitle">
+              {selectedArea.leader_user_id && `Líder: ${getProfileName(profiles, selectedArea.leader_user_id)} · `}
+              {areaObjs.length} objetivos · {areaKpisList.length} indicadores
+            </p>
           </div>
           <div className="ml-auto">
             <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" />Nuevo Objetivo</Button>
           </div>
         </div>
 
-        <div className="space-y-3">
-          {areaObjs.map((obj, idx) => {
-            const objKpis = kpis.filter(k => k.objective_id === obj.id);
-            const isOpen = expandedObj[obj.id];
-            return (
-              <ObjectiveCard
-                key={obj.id}
-                obj={obj}
-                index={idx + 1}
-                objKpis={objKpis}
-                isOpen={isOpen}
-                onToggle={() => toggleObj(obj.id)}
-                onEdit={() => openEdit(obj)}
-                profiles={profiles}
-                areas={areas}
-                subareas={subareas}
-              />
-            );
-          })}
-          {areaObjs.length === 0 && (
-            <div className="text-center py-12 text-muted-foreground">No hay objetivos registrados para esta área</div>
-          )}
-        </div>
+        {/* Direct area objectives */}
+        {directAreaObjs.length > 0 && (
+          <div className="space-y-3">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Objetivos del Área</h2>
+            {directAreaObjs.map((obj, idx) => {
+              const objKpis = kpis.filter(k => k.objective_id === obj.id);
+              const isOpen = expandedObj[obj.id];
+              return (
+                <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis} isOpen={isOpen}
+                  onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} profiles={profiles} areas={areas} subareas={subareas} />
+              );
+            })}
+          </div>
+        )}
+
+        {/* Subarea sections */}
+        {areaSubareas.map(sub => {
+          const subObjs = getSubareaObjs(sub.id);
+          const subKpis = kpis.filter(k => subObjs.some(o => o.id === k.objective_id));
+          const subProgress = subObjs.length > 0 ? Math.round(subObjs.reduce((s, o) => s + o.progress_percent, 0) / subObjs.length) : 0;
+
+          return (
+            <div key={sub.id} className="space-y-3">
+              <div className="flex items-center justify-between border-b pb-2">
+                <div>
+                  <h2 className="text-sm font-semibold">{sub.name}</h2>
+                  <p className="text-xs text-muted-foreground">
+                    {sub.leader_user_id ? `Responsable: ${getProfileName(profiles, sub.leader_user_id)}` : 'Sin responsable'} · {subObjs.length} objetivos · {subKpis.length} indicadores · {subProgress}%
+                  </p>
+                </div>
+              </div>
+              {subObjs.map((obj, idx) => {
+                const objKpis = kpis.filter(k => k.objective_id === obj.id);
+                const isOpen = expandedObj[obj.id];
+                return (
+                  <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis} isOpen={isOpen}
+                    onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} profiles={profiles} areas={areas} subareas={subareas} />
+                );
+              })}
+              {subObjs.length === 0 && (
+                <div className="text-center py-6 text-sm text-muted-foreground bg-muted/30 rounded-lg">Sin objetivos registrados</div>
+              )}
+            </div>
+          );
+        })}
+
+        {areaObjs.length === 0 && areaSubareas.length === 0 && (
+          <div className="text-center py-12 text-muted-foreground">No hay objetivos registrados para esta área</div>
+        )}
 
         <ObjetivoFormDialog open={dialogOpen} onOpenChange={setDialogOpen} objective={editingObj} areas={areas} subareas={subareas} profiles={profiles} />
       </div>
@@ -170,6 +205,7 @@ export default function ObjetivosPage() {
             const areaObjs = getAreaObjectives(area.id);
             const areaKpisList = getAreaKpis(area.id);
             const progress = getAreaProgress(area.id);
+            const areaSubareas = subareas.filter(s => s.area_id === area.id);
 
             return (
               <button
@@ -190,10 +226,24 @@ export default function ObjetivosPage() {
 
                 <ProgressBar value={progress} className="my-3" />
 
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
                   <span>{areaKpisList.length} indicadores</span>
                   <span className="font-semibold text-foreground">{progress}%</span>
                 </div>
+
+                {areaSubareas.length > 0 && (
+                  <div className="border-t pt-2 space-y-1">
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Subáreas</p>
+                    {areaSubareas.map(sub => (
+                      <div key={sub.id} className="flex items-center justify-between text-xs">
+                        <span className="text-foreground">{sub.name}</span>
+                        {sub.leader_user_id && (
+                          <span className="text-muted-foreground truncate ml-2 max-w-[50%] text-right">{getProfileName(profiles, sub.leader_user_id)}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </button>
             );
           })}
