@@ -78,10 +78,10 @@ export default function CargoFormDialog({ open, onOpenChange, position }: Props)
           {filteredSubareas.length > 0 && (
             <div>
               <Label>Subárea (opcional)</Label>
-              <Select value={subareaId} onValueChange={setSubareaId}>
+              <Select value={subareaId || '__none__'} onValueChange={v => setSubareaId(v === '__none__' ? '' : v)}>
                 <SelectTrigger><SelectValue placeholder="Seleccionar subárea" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Ninguna</SelectItem>
+                  <SelectItem value="__none__">Ninguna</SelectItem>
                   {filteredSubareas.map(s => (
                     <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                   ))}
