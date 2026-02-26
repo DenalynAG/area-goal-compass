@@ -112,6 +112,17 @@ export function usePositions() {
   });
 }
 
+export function useSystemParameters() {
+  return useQuery({
+    queryKey: ['system_parameters'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('system_parameters').select('*').order('key');
+      if (error) throw error;
+      return data as { key: string; value: string; label: string; updated_at: string }[];
+    },
+  });
+}
+
 export function useNewsletterPosts() {
   return useQuery({
     queryKey: ['newsletter_posts'],
