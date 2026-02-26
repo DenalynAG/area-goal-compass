@@ -1,11 +1,15 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useProfiles, useMemberships, useUserRoles, useAreas, useSubareas, getAreaNameFromList, getSubareaNameFromList } from '@/hooks/useSupabaseData';
 import { getRoleLabel } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, Mail, Phone, Edit } from 'lucide-react';
+import { Plus, Search, Mail, Phone, Edit, Upload } from 'lucide-react';
 import type { Enums, Tables } from '@/integrations/supabase/types';
 import ColaboradorFormDialog from '@/components/ColaboradorFormDialog';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
 
 export default function ColaboradoresPage() {
   const { data: profiles = [], isLoading } = useProfiles();
@@ -13,7 +17,10 @@ export default function ColaboradoresPage() {
   const { data: userRoles = [] } = useUserRoles();
   const { data: areas = [] } = useAreas();
   const { data: subareas = [] } = useSubareas();
+  const qc = useQueryClient();
   const [search, setSearch] = useState('');
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState<Tables<'profiles'> | null>(null);
@@ -27,6 +34,93 @@ export default function ColaboradoresPage() {
     setEditingProfile(p);
     setEditingMembership(getMembership(p.id) ?? null);
     setDialogOpen(true);
+  };
+
+  const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    try {
+      const data = await file.arrayBuffer();
+      const wb = XLSX.read(data);
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows: any[] = XLSX.utils.sheet_to_json(ws);
+
+      if (rows.length === 0) { toast.error('El archivo está vacío'); setImporting(false); return; }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { toast.error('Debes iniciar sesión'); setImporting(false); return; }
+
+      let imported = 0;
+      let errors = 0;
+
+      for (const row of rows) {
+        const name = (row['Nombre'] || row['Nombre completo'] || '').toString().trim();
+        const email = (row['Correo'] || row['Email'] || row['Correo Corporativo'] || '').toString().trim();
+        if (!name || !email) { errors++; continue; }
+
+        // Create user via edge function
+        const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-user`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+          body: JSON.stringify({ email, name }),
+        });
+        const result = await res.json();
+        if (!res.ok) { errors++; continue; }
+
+        const userId = result.user_id;
+
+        // Update profile with extra fields
+        const profileUpdate: any = {};
+        if (row['Identificación'] || row['Identificacion']) profileUpdate.identificacion = (row['Identificación'] || row['Identificacion']).toString().trim();
+        if (row['Teléfono'] || row['Telefono']) profileUpdate.phone = (row['Teléfono'] || row['Telefono']).toString().trim();
+        if (row['Cargo']) profileUpdate.position = row['Cargo'].toString().trim();
+        if (row['Municipio']) profileUpdate.municipio = row['Municipio'].toString().trim();
+        if (row['Dirección'] || row['Direccion']) profileUpdate.direccion = (row['Dirección'] || row['Direccion']).toString().trim();
+        if (row['Fecha de Ingreso'] || row['Fecha Ingreso']) profileUpdate.fecha_ingreso = (row['Fecha de Ingreso'] || row['Fecha Ingreso']).toString().trim();
+        if (row['Correo Personal']) profileUpdate.correo_personal = row['Correo Personal'].toString().trim();
+        if (row['Tipo Contrato']) profileUpdate.tipo_contrato = row['Tipo Contrato'].toString().trim();
+        if (row['Sexo']) profileUpdate.sexo = row['Sexo'].toString().trim().toLowerCase();
+
+        if (Object.keys(profileUpdate).length > 0) {
+          await supabase.from('profiles').update(profileUpdate).eq('id', userId);
+        }
+
+        // Assign area/subarea membership
+        const areaName = (row['Área'] || row['Area'] || '').toString().trim();
+        if (areaName) {
+          const foundArea = areas.find(a => a.name.toLowerCase() === areaName.toLowerCase());
+          if (foundArea) {
+            const subareaName = (row['Subárea'] || row['Subarea'] || row['Sub Área'] || '').toString().trim();
+            const foundSub = subareaName ? subareas.find(s => s.area_id === foundArea.id && s.name.toLowerCase() === subareaName.toLowerCase()) : null;
+            await supabase.from('memberships').insert({ user_id: userId, area_id: foundArea.id, subarea_id: foundSub?.id || null });
+          }
+        }
+
+        // Assign role
+        const roleName = (row['Rol'] || '').toString().trim().toLowerCase();
+        const roleMap: Record<string, string> = {
+          'super admin': 'super_admin', 'admin de área': 'admin_area', 'admin area': 'admin_area',
+          'líder de subárea': 'lider_subarea', 'lider subarea': 'lider_subarea',
+          'colaborador': 'colaborador', 'solo lectura': 'solo_lectura',
+        };
+        const mappedRole = roleMap[roleName];
+        if (mappedRole) {
+          await supabase.from('user_roles').insert({ user_id: userId, role: mappedRole as Enums<'app_role'> });
+        }
+
+        imported++;
+      }
+
+      toast.success(`Importación completada: ${imported} colaboradores creados${errors > 0 ? `, ${errors} errores` : ''}`);
+      qc.invalidateQueries({ queryKey: ['profiles'] });
+      qc.invalidateQueries({ queryKey: ['memberships'] });
+      qc.invalidateQueries({ queryKey: ['user_roles'] });
+    } catch (err) {
+      toast.error('Error al leer el archivo Excel');
+    }
+    setImporting(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const filtered = profiles.filter(c =>
@@ -44,7 +138,14 @@ export default function ColaboradoresPage() {
           <h1 className="page-title">Colaboradores</h1>
           <p className="page-subtitle">{profiles.length} colaboradores registrados</p>
         </div>
-        <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" />Nuevo Colaborador</Button>
+        <div className="flex gap-2">
+          <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleImportExcel} />
+          <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={importing}>
+            <Upload className="w-4 h-4 mr-2" />
+            {importing ? 'Importando...' : 'Importar Excel'}
+          </Button>
+          <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" />Nuevo Colaborador</Button>
+        </div>
       </div>
 
       <div className="relative max-w-sm">
@@ -112,6 +213,12 @@ export default function ColaboradoresPage() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      <div className="bg-muted/30 rounded-lg px-4 py-3">
+        <p className="text-xs text-muted-foreground">
+          📋 Para importar, usa un archivo Excel con columnas: <strong>Nombre</strong>, <strong>Correo</strong> (obligatorios), y opcionalmente: <strong>Identificación</strong>, <strong>Teléfono</strong>, <strong>Cargo</strong>, <strong>Área</strong>, <strong>Subárea</strong>, <strong>Rol</strong>, <strong>Sexo</strong>, <strong>Municipio</strong>, <strong>Dirección</strong>, <strong>Fecha de Ingreso</strong>, <strong>Tipo Contrato</strong>, <strong>Correo Personal</strong>.
+        </p>
       </div>
 
       <ColaboradorFormDialog
