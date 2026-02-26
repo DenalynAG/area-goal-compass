@@ -3,9 +3,10 @@ import { useObjectives, useKPIs, useAreas, useSubareas, useProfiles, getProfileN
 import { getTrafficLight } from '@/types';
 import { StatusBadge, ProgressBar, TrafficLightBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
-import { Plus, Target, ChevronRight, ChevronDown, Edit, TrendingUp, Settings, ArrowLeft } from 'lucide-react';
+import { Plus, Target, ChevronRight, ChevronDown, Edit, TrendingUp, Settings, ArrowLeft, BarChart3 } from 'lucide-react';
 import type { Tables } from '@/integrations/supabase/types';
 import ObjetivoFormDialog from '@/components/ObjetivoFormDialog';
+import KPIFormDialog from '@/components/KPIFormDialog';
 
 export default function ObjetivosPage() {
   const { data: objectives = [], isLoading } = useObjectives();
@@ -19,9 +20,25 @@ export default function ObjetivosPage() {
   const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null);
   const [expandedObj, setExpandedObj] = useState<Record<string, boolean>>({});
 
+  // KPI dialog state
+  const [kpiDialogOpen, setKpiDialogOpen] = useState(false);
+  const [editingKPI, setEditingKPI] = useState<Tables<'kpis'> | null>(null);
+  const [preselectedObjectiveId, setPreselectedObjectiveId] = useState<string | null>(null);
+
   const openNew = () => { setEditingObj(null); setDialogOpen(true); };
   const openEdit = (o: Tables<'objectives'>) => { setEditingObj(o); setDialogOpen(true); };
   const toggleObj = (id: string) => setExpandedObj(prev => ({ ...prev, [id]: !prev[id] }));
+
+  const openNewKPI = (objectiveId: string) => {
+    setEditingKPI(null);
+    setPreselectedObjectiveId(objectiveId);
+    setKpiDialogOpen(true);
+  };
+  const openEditKPI = (k: Tables<'kpis'>) => {
+    setEditingKPI(k);
+    setPreselectedObjectiveId(null);
+    setKpiDialogOpen(true);
+  };
 
   const direccionGeneral = areas.find(a => a.name === 'Dirección General');
   const otherAreas = areas.filter(a => a.name !== 'Dirección General');
@@ -107,7 +124,8 @@ export default function ObjetivosPage() {
               const isOpen = expandedObj[obj.id];
               return (
                 <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis} isOpen={isOpen}
-                  onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} profiles={profiles} areas={areas} subareas={subareas} />
+                  onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={() => openNewKPI(obj.id)} onEditKPI={openEditKPI}
+                  profiles={profiles} areas={areas} subareas={subareas} />
               );
             })}
           </div>
@@ -133,8 +151,9 @@ export default function ObjetivosPage() {
                 const objKpis = kpis.filter(k => k.objective_id === obj.id);
                 const isOpen = expandedObj[obj.id];
                 return (
-                  <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis} isOpen={isOpen}
-                    onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} profiles={profiles} areas={areas} subareas={subareas} />
+                <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis} isOpen={isOpen}
+                  onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={() => openNewKPI(obj.id)} onEditKPI={openEditKPI}
+                  profiles={profiles} areas={areas} subareas={subareas} />
                 );
               })}
               {subObjs.length === 0 && (
@@ -149,6 +168,7 @@ export default function ObjetivosPage() {
         )}
 
         <ObjetivoFormDialog open={dialogOpen} onOpenChange={setDialogOpen} objective={editingObj} areas={areas} subareas={subareas} profiles={profiles} />
+        <KPIFormDialog open={kpiDialogOpen} onOpenChange={setKpiDialogOpen} kpi={editingKPI} objectives={objectives} areas={areas} subareas={subareas} preselectedObjectiveId={preselectedObjectiveId} />
       </div>
     );
   }
@@ -179,6 +199,8 @@ export default function ObjetivosPage() {
                 isOpen={isOpen}
                 onToggle={() => toggleObj(obj.id)}
                 onEdit={() => openEdit(obj)}
+                onNewKPI={() => openNewKPI(obj.id)}
+                onEditKPI={openEditKPI}
                 profiles={profiles}
                 areas={areas}
                 subareas={subareas}
@@ -251,13 +273,14 @@ export default function ObjetivosPage() {
       </section>
 
       <ObjetivoFormDialog open={dialogOpen} onOpenChange={setDialogOpen} objective={editingObj} areas={areas} subareas={subareas} profiles={profiles} />
+      <KPIFormDialog open={kpiDialogOpen} onOpenChange={setKpiDialogOpen} kpi={editingKPI} objectives={objectives} areas={areas} subareas={subareas} preselectedObjectiveId={preselectedObjectiveId} />
     </div>
   );
 }
 
 // Reusable objective card with circular progress
 function ObjectiveCard({
-  obj, index, objKpis, isOpen, onToggle, onEdit, profiles, areas, subareas, showAreaTags, otherAreas,
+  obj, index, objKpis, isOpen, onToggle, onEdit, onNewKPI, onEditKPI, profiles, areas, subareas, showAreaTags, otherAreas,
 }: {
   obj: Tables<'objectives'>;
   index: number;
@@ -265,6 +288,8 @@ function ObjectiveCard({
   isOpen: boolean;
   onToggle: () => void;
   onEdit: () => void;
+  onNewKPI: () => void;
+  onEditKPI: (k: Tables<'kpis'>) => void;
   profiles: Tables<'profiles'>[];
   areas: Tables<'areas'>[];
   subareas: Tables<'subareas'>[];
@@ -307,12 +332,17 @@ function ObjectiveCard({
             </div>
           )}
 
-          {objKpis.length > 0 && (
-            <button onClick={onToggle} className="flex items-center gap-1 text-xs text-accent font-medium hover:underline">
-              {isOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-              {objKpis.length} indicadores
+          <div className="flex items-center gap-2">
+            {objKpis.length > 0 && (
+              <button onClick={onToggle} className="flex items-center gap-1 text-xs text-accent font-medium hover:underline">
+                {isOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                {objKpis.length} indicadores
+              </button>
+            )}
+            <button onClick={onNewKPI} className="flex items-center gap-1 text-xs text-primary font-medium hover:underline">
+              <Plus className="w-3 h-3" /> Indicador
             </button>
-          )}
+          </div>
         </div>
 
         {/* Circular progress */}
@@ -347,6 +377,7 @@ function ObjectiveCard({
                 <th className="text-left py-1">Meta</th>
                 <th className="text-left py-1">Actual</th>
                 <th className="text-left py-1">Semáforo</th>
+                <th className="text-right py-1"></th>
               </tr>
             </thead>
             <tbody>
@@ -356,6 +387,11 @@ function ObjectiveCard({
                   <td className="py-2">{k.target} {k.unit}</td>
                   <td className="py-2">{k.current_value} {k.unit}</td>
                   <td className="py-2"><TrafficLightBadge light={getTrafficLight(k as any)} /></td>
+                  <td className="py-2 text-right">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEditKPI(k)}>
+                      <Edit className="w-3 h-3" />
+                    </Button>
+                  </td>
                 </tr>
               ))}
             </tbody>
