@@ -355,24 +355,45 @@ export type Database = {
       }
       positions: {
         Row: {
+          area_id: string | null
           created_at: string
           id: string
           name: string
           status: string
+          subarea_id: string | null
         }
         Insert: {
+          area_id?: string | null
           created_at?: string
           id?: string
           name: string
           status?: string
+          subarea_id?: string | null
         }
         Update: {
+          area_id?: string | null
           created_at?: string
           id?: string
           name?: string
           status?: string
+          subarea_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "positions_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "positions_subarea_id_fkey"
+            columns: ["subarea_id"]
+            isOneToOne: false
+            referencedRelation: "subareas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
