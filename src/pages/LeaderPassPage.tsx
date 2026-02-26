@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { CheckCircle2, Circle, ClipboardList, MessageSquare, Save } from 'lucide-react';
+import { CheckCircle2, Circle, ClipboardList, MessageSquare, Save, Paperclip } from 'lucide-react';
+import EvidencePanel from '@/components/EvidencePanel';
 
 interface Activity {
   id: string;
@@ -99,6 +100,7 @@ export default function LeaderPassPage() {
   const [notesDialog, setNotesDialog] = useState<{ activityId: string; activityName: string } | null>(null);
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
+  const [evidenceActivity, setEvidenceActivity] = useState<{ id: string; name: string } | null>(null);
 
   const periods = useMemo(() => getPeriodOptions(), []);
 
@@ -280,6 +282,15 @@ export default function LeaderPassPage() {
                   <MessageSquare className="w-3 h-3" />
                   {record?.notes ? 'Ver notas' : 'Agregar notas'}
                 </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs gap-1"
+                  onClick={() => setEvidenceActivity({ id: act.id, name: act.name })}
+                >
+                  <Paperclip className="w-3 h-3" />
+                  Evidencias
+                </Button>
                 {isCompleted && record?.completed_at && (
                   <span className="text-[10px] text-muted-foreground ml-auto">
                     {new Date(record.completed_at).toLocaleDateString('es')}
@@ -316,6 +327,17 @@ export default function LeaderPassPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Evidence panel */}
+      {evidenceActivity && (
+        <EvidencePanel
+          entityType="leader_pass"
+          entityId={evidenceActivity.id}
+          entityName={evidenceActivity.name}
+          open={!!evidenceActivity}
+          onOpenChange={open => { if (!open) setEvidenceActivity(null); }}
+        />
+      )}
     </div>
   );
 }
