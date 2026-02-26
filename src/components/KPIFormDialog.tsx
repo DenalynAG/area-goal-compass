@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,9 +15,11 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   kpi?: Tables<'kpis'> | null;
   objectives: Tables<'objectives'>[];
+  areas?: Tables<'areas'>[];
+  subareas?: Tables<'subareas'>[];
 }
 
-export default function KPIFormDialog({ open, onOpenChange, kpi, objectives }: Props) {
+export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, areas = [], subareas = [] }: Props) {
   const qc = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState('');
@@ -31,6 +33,29 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives }: P
   const [thresholdGreen, setThresholdGreen] = useState(0);
   const [thresholdYellow, setThresholdYellow] = useState(0);
   const [thresholdRed, setThresholdRed] = useState(0);
+  const [filterAreaId, setFilterAreaId] = useState('all');
+  const [filterSubareaId, setFilterSubareaId] = useState('all');
+
+  const filteredSubareas = useMemo(() =>
+    filterAreaId && filterAreaId !== 'all'
+      ? subareas.filter(s => s.area_id === filterAreaId)
+      : subareas,
+    [subareas, filterAreaId]
+  );
+
+  const filteredObjectives = useMemo(() => {
+    let result = objectives;
+    if (filterAreaId && filterAreaId !== 'all') {
+      result = result.filter(o =>
+        (o.scope_type === 'area' && o.scope_id === filterAreaId) ||
+        (o.scope_type === 'subarea' && subareas.some(s => s.id === o.scope_id && s.area_id === filterAreaId))
+      );
+    }
+    if (filterSubareaId && filterSubareaId !== 'all') {
+      result = result.filter(o => o.scope_type === 'subarea' && o.scope_id === filterSubareaId);
+    }
+    return result;
+  }, [objectives, filterAreaId, filterSubareaId, subareas]);
 
   useEffect(() => {
     if (kpi) {
@@ -45,10 +70,23 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives }: P
       setThresholdGreen(kpi.threshold_green);
       setThresholdYellow(kpi.threshold_yellow);
       setThresholdRed(kpi.threshold_red);
+      // Set filters based on existing objective
+      const obj = objectives.find(o => o.id === kpi.objective_id);
+      if (obj) {
+        if (obj.scope_type === 'area') {
+          setFilterAreaId(obj.scope_id);
+          setFilterSubareaId('all');
+        } else if (obj.scope_type === 'subarea') {
+          const sub = subareas.find(s => s.id === obj.scope_id);
+          setFilterAreaId(sub?.area_id ?? 'all');
+          setFilterSubareaId(obj.scope_id);
+        }
+      }
     } else {
       setName(''); setDefinition(''); setObjectiveId(''); setUnit('');
       setFrequency('mensual'); setBaseline(0); setTarget(0); setCurrentValue(0);
       setThresholdGreen(0); setThresholdYellow(0); setThresholdRed(0);
+      setFilterAreaId('all'); setFilterSubareaId('all');
     }
   }, [kpi, open]);
 
@@ -101,13 +139,38 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives }: P
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
+              <Label>Área</Label>
+              <Select value={filterAreaId} onValueChange={v => { setFilterAreaId(v); setFilterSubareaId('all'); setObjectiveId(''); }}>
+                <SelectTrigger><SelectValue placeholder="Todas" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas las áreas</SelectItem>
+                  {areas.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Subárea</Label>
+              <Select value={filterSubareaId} onValueChange={v => { setFilterSubareaId(v); setObjectiveId(''); }}>
+                <SelectTrigger><SelectValue placeholder="Todas" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas las subáreas</SelectItem>
+                  {filteredSubareas.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
               <Label>Objetivo *</Label>
               <Select value={objectiveId} onValueChange={setObjectiveId}>
                 <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
                 <SelectContent>
-                  {objectives.map(o => <SelectItem key={o.id} value={o.id}>{o.title}</SelectItem>)}
+                  {filteredObjectives.map(o => <SelectItem key={o.id} value={o.id}>{o.title}</SelectItem>)}
                 </SelectContent>
               </Select>
+              {filteredObjectives.length === 0 && (
+                <p className="text-xs text-muted-foreground">No hay objetivos para el filtro seleccionado</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label>Frecuencia</Label>

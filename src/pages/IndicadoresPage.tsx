@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useKPIs, useObjectives, useKPIMeasurements } from '@/hooks/useSupabaseData';
+import { useKPIs, useObjectives, useKPIMeasurements, useAreas, useSubareas } from '@/hooks/useSupabaseData';
 import { getTrafficLight } from '@/types';
 import { TrafficLightBadge, ProgressBar } from '@/components/StatusBadge';
 import { BarChart3, Plus, Edit } from 'lucide-react';
@@ -12,6 +12,8 @@ export default function IndicadoresPage() {
   const { data: kpis = [], isLoading } = useKPIs();
   const { data: objectives = [] } = useObjectives();
   const { data: measurements = [] } = useKPIMeasurements();
+  const { data: areas = [] } = useAreas();
+  const { data: subareas = [] } = useSubareas();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingKPI, setEditingKPI] = useState<Tables<'kpis'> | null>(null);
@@ -117,6 +119,8 @@ export default function IndicadoresPage() {
         onOpenChange={setDialogOpen}
         kpi={editingKPI}
         objectives={objectives}
+        areas={areas}
+        subareas={subareas}
       />
     </div>
   );
