@@ -17,9 +17,10 @@ interface Props {
   objectives: Tables<'objectives'>[];
   areas?: Tables<'areas'>[];
   subareas?: Tables<'subareas'>[];
+  preselectedObjectiveId?: string | null;
 }
 
-export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, areas = [], subareas = [] }: Props) {
+export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, areas = [], subareas = [], preselectedObjectiveId }: Props) {
   const qc = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState('');
@@ -83,10 +84,27 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, are
         }
       }
     } else {
-      setName(''); setDefinition(''); setObjectiveId(''); setUnit('');
+      setName(''); setDefinition(''); setUnit('');
       setFrequency('mensual'); setBaseline(0); setTarget(0); setCurrentValue(0);
       setThresholdGreen(0); setThresholdYellow(0); setThresholdRed(0);
-      setFilterAreaId('all'); setFilterSubareaId('all');
+      // Pre-select objective if provided
+      if (preselectedObjectiveId) {
+        setObjectiveId(preselectedObjectiveId);
+        const obj = objectives.find(o => o.id === preselectedObjectiveId);
+        if (obj) {
+          if (obj.scope_type === 'area') {
+            setFilterAreaId(obj.scope_id);
+            setFilterSubareaId('all');
+          } else if (obj.scope_type === 'subarea') {
+            const sub = subareas.find(s => s.id === obj.scope_id);
+            setFilterAreaId(sub?.area_id ?? 'all');
+            setFilterSubareaId(obj.scope_id);
+          }
+        }
+      } else {
+        setObjectiveId('');
+        setFilterAreaId('all'); setFilterSubareaId('all');
+      }
     }
   }, [kpi, open]);
 
