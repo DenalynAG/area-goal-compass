@@ -180,6 +180,9 @@ export default function ObjetivosPage() {
                 <div className="flex items-start justify-between mb-1">
                   <div>
                     <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">{area.name}</h3>
+                    {area.leader_user_id && (
+                      <p className="text-xs text-muted-foreground">Líder: {getProfileName(profiles, area.leader_user_id)}</p>
+                    )}
                     <p className="text-xs text-muted-foreground">{areaObjs.length} objetivo{areaObjs.length !== 1 ? 's' : ''}</p>
                   </div>
                   <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors mt-1" />
@@ -235,6 +238,12 @@ function ObjectiveCard({
 
         <div className="flex-1 min-w-0 space-y-2">
           <h3 className="font-semibold">{index}. {obj.title}</h3>
+          {obj.owner_user_id && (
+            <p className="text-xs text-muted-foreground">Responsable: {getProfileName(profiles, obj.owner_user_id)}</p>
+          )}
+          {!obj.owner_user_id && obj.scope_type === 'area' && (
+            <p className="text-xs text-muted-foreground">Responsable: {getProfileName(profiles, areas.find(a => a.id === obj.scope_id)?.leader_user_id ?? null)}</p>
+          )}
           {obj.description && <p className="text-sm text-muted-foreground leading-relaxed">{obj.description}</p>}
 
           {showAreaTags && otherAreas && otherAreas.length > 0 && (
