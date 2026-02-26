@@ -1,8 +1,9 @@
 import { useState, useRef } from 'react';
-import { useActivityLog, usePositions, useAreas, useSubareas } from '@/hooks/useSupabaseData';
+import { useActivityLog, usePositions, useAreas, useSubareas, useSystemParameters } from '@/hooks/useSupabaseData';
 import { useAuth } from '@/contexts/AuthContext';
-import { Settings, Clock, User, Briefcase, Plus, Pencil, Trash2, Upload, ChevronDown, ChevronRight, Building2, FolderOpen } from 'lucide-react';
+import { Settings, Clock, User, Briefcase, Plus, Pencil, Trash2, Upload, ChevronDown, ChevronRight, Building2, FolderOpen, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -14,15 +15,19 @@ export default function AdministracionPage() {
   const { data: positions = [], isLoading: loadingPositions } = usePositions();
   const { data: areas = [] } = useAreas();
   const { data: subareas = [] } = useSubareas();
+  const { data: systemParams = [], isLoading: loadingParams } = useSystemParameters();
   const { hasRole } = useAuth();
   const qc = useQueryClient();
   const canManage = hasRole('super_admin') || hasRole('admin_area');
+  const isSuperAdmin = hasRole('super_admin');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [cargoOpen, setCargoOpen] = useState(false);
   const [editingCargo, setEditingCargo] = useState<any>(null);
   const [expandedAreas, setExpandedAreas] = useState<Record<string, boolean>>({});
   const [importing, setImporting] = useState(false);
+  const [editingParam, setEditingParam] = useState<string | null>(null);
+  const [editParamValue, setEditParamValue] = useState('');
 
   const toggleArea = (areaId: string) => {
     setExpandedAreas(prev => ({ ...prev, [areaId]: !prev[areaId] }));
@@ -140,24 +145,56 @@ export default function AdministracionPage() {
           <h3 className="font-semibold">Parámetros del Sistema</h3>
         </div>
         <div className="px-5 py-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div className="flex items-center justify-between py-2 border-b">
-              <span className="text-muted-foreground">Período actual</span>
-              <span className="font-medium">2026-Q1</span>
+          {loadingParams ? (
+            <div className="py-4 text-center text-muted-foreground text-sm">Cargando...</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              {systemParams.map(param => (
+                <div key={param.key} className="flex items-center justify-between py-2 border-b gap-3">
+                  <span className="text-muted-foreground whitespace-nowrap">{param.label}</span>
+                  {editingParam === param.key ? (
+                    <div className="flex items-center gap-1.5">
+                      <Input
+                        value={editParamValue}
+                        onChange={e => setEditParamValue(e.target.value)}
+                        className="h-8 text-sm w-48"
+                        autoFocus
+                        onKeyDown={async e => {
+                          if (e.key === 'Enter') {
+                            const { error } = await supabase.from('system_parameters').update({ value: editParamValue, updated_at: new Date().toISOString() }).eq('key', param.key);
+                            if (error) toast.error(error.message);
+                            else { toast.success('Parámetro actualizado'); qc.invalidateQueries({ queryKey: ['system_parameters'] }); }
+                            setEditingParam(null);
+                          }
+                          if (e.key === 'Escape') setEditingParam(null);
+                        }}
+                      />
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={async () => {
+                        const { error } = await supabase.from('system_parameters').update({ value: editParamValue, updated_at: new Date().toISOString() }).eq('key', param.key);
+                        if (error) toast.error(error.message);
+                        else { toast.success('Parámetro actualizado'); qc.invalidateQueries({ queryKey: ['system_parameters'] }); }
+                        setEditingParam(null);
+                      }}>
+                        <Check className="w-3.5 h-3.5 text-green-600" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingParam(null)}>
+                        <X className="w-3.5 h-3.5 text-destructive" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 group">
+                      <span className="font-medium">{param.value}</span>
+                      {isSuperAdmin && (
+                        <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => { setEditingParam(param.key); setEditParamValue(param.value); }}>
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
-            <div className="flex items-center justify-between py-2 border-b">
-              <span className="text-muted-foreground">Frecuencia de revisión</span>
-              <span className="font-medium">Mensual</span>
-            </div>
-            <div className="flex items-center justify-between py-2 border-b">
-              <span className="text-muted-foreground">Prioridades</span>
-              <span className="font-medium">Alta, Media, Baja</span>
-            </div>
-            <div className="flex items-center justify-between py-2 border-b">
-              <span className="text-muted-foreground">Estados de objetivo</span>
-              <span className="font-medium">Borrador, Activo, En Riesgo, Cerrado</span>
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
