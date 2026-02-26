@@ -3,10 +3,11 @@ import { useObjectives, useKPIs, useAreas, useSubareas, useProfiles, getProfileN
 import { getTrafficLight } from '@/types';
 import { StatusBadge, ProgressBar, TrafficLightBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
-import { Plus, Target, ChevronRight, ChevronDown, Edit, TrendingUp, Settings, ArrowLeft, BarChart3 } from 'lucide-react';
+import { Plus, Target, ChevronRight, ChevronDown, Edit, TrendingUp, Settings, ArrowLeft, BarChart3, Paperclip } from 'lucide-react';
 import type { Tables } from '@/integrations/supabase/types';
 import ObjetivoFormDialog from '@/components/ObjetivoFormDialog';
 import KPIFormDialog from '@/components/KPIFormDialog';
+import EvidencePanel from '@/components/EvidencePanel';
 
 export default function ObjetivosPage() {
   const { data: objectives = [], isLoading } = useObjectives();
@@ -296,6 +297,9 @@ function ObjectiveCard({
   showAreaTags?: boolean;
   otherAreas?: Tables<'areas'>[];
 }) {
+  const [evidenceOpen, setEvidenceOpen] = useState(false);
+  const [kpiEvidenceId, setKpiEvidenceId] = useState<string | null>(null);
+  const [kpiEvidenceName, setKpiEvidenceName] = useState('');
   const circumference = 2 * Math.PI * 28;
   const strokeDashoffset = circumference - (obj.progress_percent / 100) * circumference;
   const progressColor = obj.progress_percent >= 70 ? 'hsl(var(--success))' : obj.progress_percent >= 40 ? 'hsl(var(--warning))' : 'hsl(var(--destructive))';
@@ -341,6 +345,9 @@ function ObjectiveCard({
             )}
             <button onClick={onNewKPI} className="flex items-center gap-1 text-xs text-primary font-medium hover:underline">
               <Plus className="w-3 h-3" /> Indicador
+            </button>
+            <button onClick={() => setEvidenceOpen(true)} className="flex items-center gap-1 text-xs text-muted-foreground font-medium hover:underline hover:text-foreground">
+              <Paperclip className="w-3 h-3" /> Evidencias
             </button>
           </div>
         </div>
@@ -388,15 +395,38 @@ function ObjectiveCard({
                   <td className="py-2">{k.current_value} {k.unit}</td>
                   <td className="py-2"><TrafficLightBadge light={getTrafficLight(k as any)} /></td>
                   <td className="py-2 text-right">
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEditKPI(k)}>
-                      <Edit className="w-3 h-3" />
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setKpiEvidenceId(k.id); setKpiEvidenceName(k.name); }}>
+                        <Paperclip className="w-3 h-3" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEditKPI(k)}>
+                        <Edit className="w-3 h-3" />
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* Evidence dialogs */}
+      <EvidencePanel
+        entityType="objective"
+        entityId={obj.id}
+        entityName={obj.title}
+        open={evidenceOpen}
+        onOpenChange={setEvidenceOpen}
+      />
+      {kpiEvidenceId && (
+        <EvidencePanel
+          entityType="kpi"
+          entityId={kpiEvidenceId}
+          entityName={kpiEvidenceName}
+          open={!!kpiEvidenceId}
+          onOpenChange={(open) => { if (!open) setKpiEvidenceId(null); }}
+        />
       )}
     </div>
   );

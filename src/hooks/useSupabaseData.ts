@@ -134,6 +134,37 @@ export function useNewsletterPosts() {
   });
 }
 
+export interface Evidence {
+  id: string;
+  entity_type: string;
+  entity_id: string;
+  file_name: string;
+  file_path: string;
+  file_type: string | null;
+  file_size: number | null;
+  uploaded_by: string;
+  uploaded_by_name: string | null;
+  status: string;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  review_notes: string | null;
+  created_at: string;
+}
+
+export function useEvidences(entityType?: string, entityId?: string) {
+  return useQuery({
+    queryKey: ['evidences', entityType, entityId],
+    queryFn: async () => {
+      let q = supabase.from('evidences').select('*').order('created_at', { ascending: false });
+      if (entityType) q = q.eq('entity_type', entityType);
+      if (entityId) q = q.eq('entity_id', entityId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data as Evidence[];
+    },
+  });
+}
+
 // Helper to get name from profiles array
 export function getProfileName(profiles: Tables<'profiles'>[], userId: string | null): string {
   if (!userId) return 'N/A';
