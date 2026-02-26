@@ -64,27 +64,6 @@ export default function NewsletterPortalPage() {
         )}
       </div>
 
-      {/* Quick stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: "Colaboradores", value: profiles.length, icon: Users, accent: "text-primary" },
-          { label: "Áreas", value: areas.length, icon: Megaphone, accent: "text-accent" },
-          { label: "Reconocimientos", value: recognitions.length, icon: Award, accent: "text-[hsl(var(--success))]" },
-          {
-            label: "Cumpleaños del Mes",
-            value: birthdaysThisMonth.length,
-            icon: Cake,
-            accent: "text-[hsl(var(--warning))]",
-          },
-        ].map((m) => (
-          <div key={m.label} className="metric-card text-center">
-            <m.icon className={`w-6 h-6 ${m.accent} mx-auto mb-2`} />
-            <p className="text-2xl font-bold">{m.value}</p>
-            <p className="text-xs text-muted-foreground">{m.label}</p>
-          </div>
-        ))}
-      </div>
-
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Birthdays */}
         <div className="bg-card rounded-xl border shadow-sm">
