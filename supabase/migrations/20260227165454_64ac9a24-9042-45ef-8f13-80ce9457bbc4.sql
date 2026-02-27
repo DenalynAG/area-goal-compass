@@ -1,0 +1,1 @@
+ALTER TABLE public.evaluations DROP CONSTRAINT IF EXISTS evaluations_score_check;
