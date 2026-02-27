@@ -256,10 +256,10 @@ export default function LeaderPassPage() {
       </div>
 
       {/* Info Banner */}
-      <div className="border rounded-xl overflow-hidden">
+      <div className="border rounded-xl overflow-hidden shadow-sm">
         <button
           onClick={() => setShowBanner(v => !v)}
-          className="w-full flex items-center justify-between px-5 py-3 bg-[hsl(25,90%,48%)] text-white font-semibold text-sm hover:bg-[hsl(25,90%,42%)] transition-colors"
+          className="w-full flex items-center justify-between px-5 py-3.5 bg-accent text-accent-foreground font-semibold text-sm hover:brightness-95 transition-all"
         >
           <div className="flex items-center gap-2">
             <Info className="w-4 h-4" />
@@ -268,37 +268,57 @@ export default function LeaderPassPage() {
           {showBanner ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
         {showBanner && (
-          <div className="overflow-x-auto">
-            <div className="grid grid-cols-9 min-w-[1200px]">
-              {/* Headers */}
+          <>
+            {/* Desktop: horizontal table */}
+            <div className="hidden lg:block overflow-x-auto">
+              <div className="grid grid-cols-9 min-w-[1200px]">
+                {LEADER_PASS_INFO.map((item, i) => (
+                  <div
+                    key={`h-${i}`}
+                    className={`p-3 text-xs font-bold text-center border-r border-b last:border-r-0 ${
+                      i % 2 === 0
+                        ? 'bg-muted text-foreground'
+                        : 'bg-accent/80 text-accent-foreground'
+                    }`}
+                  >
+                    <div className="leading-tight">{item.title}</div>
+                    <div className="font-medium mt-1.5 opacity-80 text-[10px] uppercase tracking-wide">{item.frequency}</div>
+                  </div>
+                ))}
+                {LEADER_PASS_INFO.map((item, i) => (
+                  <div
+                    key={`d-${i}`}
+                    className={`p-3 text-[11px] leading-relaxed border-r last:border-r-0 ${
+                      i % 2 === 0
+                        ? 'bg-accent/5 text-foreground'
+                        : 'bg-muted/50 text-foreground'
+                    }`}
+                  >
+                    {item.description}
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Mobile/Tablet: vertical cards */}
+            <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-0">
               {LEADER_PASS_INFO.map((item, i) => (
                 <div
-                  key={`h-${i}`}
-                  className={`p-3 text-xs font-bold text-center border-r border-b last:border-r-0 ${
-                    i % 2 === 0
-                      ? 'bg-[hsl(0,0%,55%)] text-white'
-                      : 'bg-[hsl(25,90%,48%)] text-white'
+                  key={i}
+                  className={`p-4 border-b sm:odd:border-r ${
+                    i % 2 === 0 ? 'bg-accent/5' : 'bg-muted/40'
                   }`}
                 >
-                  <div>{item.title}</div>
-                  <div className="font-medium mt-1 opacity-90">{item.frequency}</div>
-                </div>
-              ))}
-              {/* Descriptions */}
-              {LEADER_PASS_INFO.map((item, i) => (
-                <div
-                  key={`d-${i}`}
-                  className={`p-3 text-[11px] leading-relaxed border-r last:border-r-0 ${
-                    i % 2 === 0
-                      ? 'bg-[hsl(25,90%,48%)]/10 text-foreground'
-                      : 'bg-[hsl(0,0%,55%)]/10 text-foreground'
-                  }`}
-                >
-                  {item.description}
+                  <div className="flex items-start justify-between gap-2 mb-1.5">
+                    <h4 className="text-sm font-bold text-foreground leading-tight">{item.title}</h4>
+                    <span className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-accent text-accent-foreground">
+                      {item.frequency}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{item.description}</p>
                 </div>
               ))}
             </div>
-          </div>
+          </>
         )}
       </div>
 
