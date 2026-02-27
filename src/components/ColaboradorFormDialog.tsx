@@ -66,6 +66,9 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
 
   const isEditing = !!profile;
   const filteredSubareas = subareas.filter(s => s.area_id === areaId);
+  const filteredPositions = positions.filter((p: any) =>
+    (!areaId || p.area_id === areaId) && (!subareaId || !p.subarea_id || p.subarea_id === subareaId)
+  );
 
   useEffect(() => {
     if (profile) {
@@ -105,7 +108,18 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
 
   useEffect(() => {
     if (!filteredSubareas.find(s => s.id === subareaId)) setSubareaId('');
+    // Reset position when area changes if current position doesn't belong to new area
+    const posForArea = positions.filter((p: any) => !areaId || p.area_id === areaId);
+    if (position && !posForArea.find((p: any) => p.name === position)) setPosition('');
   }, [areaId]);
+
+  useEffect(() => {
+    // Reset position when subarea changes if current position doesn't match
+    const posForSub = positions.filter((p: any) =>
+      (!areaId || p.area_id === areaId) && (!subareaId || !p.subarea_id || p.subarea_id === subareaId)
+    );
+    if (position && !posForSub.find((p: any) => p.name === position)) setPosition('');
+  }, [subareaId]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -322,7 +336,7 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
                 <Select value={position} onValueChange={setPosition}>
                   <SelectTrigger><SelectValue placeholder="Seleccionar cargo" /></SelectTrigger>
                   <SelectContent>
-                    {positions.map((p: any) => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}
+                    {filteredPositions.map((p: any) => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
