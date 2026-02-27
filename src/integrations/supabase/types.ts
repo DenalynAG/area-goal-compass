@@ -79,6 +79,75 @@ export type Database = {
           },
         ]
       }
+      evaluation_criteria: {
+        Row: {
+          created_at: string
+          criterion_name: string
+          id: string
+          is_comment: boolean
+          position_name: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          criterion_name: string
+          id?: string
+          is_comment?: boolean
+          position_name: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          criterion_name?: string
+          id?: string
+          is_comment?: boolean
+          position_name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      evaluation_scores: {
+        Row: {
+          comment: string | null
+          created_at: string
+          criterion_id: string
+          evaluation_id: string
+          id: string
+          score: number | null
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          criterion_id: string
+          evaluation_id: string
+          id?: string
+          score?: number | null
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          criterion_id?: string
+          evaluation_id?: string
+          id?: string
+          score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluation_scores_criterion_id_fkey"
+            columns: ["criterion_id"]
+            isOneToOne: false
+            referencedRelation: "evaluation_criteria"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evaluation_scores_evaluation_id_fkey"
+            columns: ["evaluation_id"]
+            isOneToOne: false
+            referencedRelation: "evaluations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       evaluations: {
         Row: {
           collaborator_user_id: string
