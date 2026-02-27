@@ -2,13 +2,16 @@ import { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAreas, useSubareas, usePositions } from '@/hooks/useSupabaseData';
-import { ClipboardList, Plus, Pencil, Trash2, ChevronDown, ChevronRight, Building2, FolderOpen, Briefcase, GripVertical, MessageSquare } from 'lucide-react';
+import { ClipboardList, Plus, Pencil, Trash2, ChevronDown, ChevronRight, Building2, FolderOpen, Briefcase, GripVertical, MessageSquare, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
 
@@ -48,7 +51,30 @@ export default function EvaluacionCriteriaSection({ canManage }: { canManage: bo
   const [formSortOrder, setFormSortOrder] = useState(0);
   const [saving, setSaving] = useState(false);
 
-  // Filter subareas by area
+  // Preview state
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewPosition, setPreviewPosition] = useState('');
+  const [previewScores, setPreviewScores] = useState<Record<string, number | null>>({});
+  const [previewComments, setPreviewComments] = useState<Record<string, string>>({});
+
+  const previewCriteria = useMemo(() =>
+    criteria.filter(c => c.position_name === previewPosition).sort((a, b) => a.sort_order - b.sort_order),
+    [criteria, previewPosition]
+  );
+
+  const previewAvg = useMemo(() => {
+    const scores = Object.values(previewScores).filter((s): s is number => s !== null);
+    return scores.length > 0 ? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1) : null;
+  }, [previewScores]);
+
+  const openPreview = (positionName: string) => {
+    setPreviewPosition(positionName);
+    setPreviewScores({});
+    setPreviewComments({});
+    setPreviewOpen(true);
+  };
+
+  
   const filteredSubareas = useMemo(() =>
     filterAreaId ? subareas.filter(s => s.area_id === filterAreaId) : subareas,
     [filterAreaId, subareas]
@@ -238,6 +264,17 @@ export default function EvaluacionCriteriaSection({ canManage }: { canManage: bo
                     <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                       {items.length} indicador{items.length !== 1 ? 'es' : ''}
                     </span>
+                    {items.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        title="Vista previa del formulario"
+                        onClick={e => { e.stopPropagation(); openPreview(positionName); }}
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                      </Button>
+                    )}
                     {canManage && (
                       <Button
                         variant="ghost"
@@ -329,6 +366,107 @@ export default function EvaluacionCriteriaSection({ canManage }: { canManage: bo
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
             <Button onClick={handleSave} disabled={saving}>{saving ? 'Guardando...' : 'Guardar'}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Preview Dialog */}
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="w-5 h-5 text-primary" />
+              Vista Previa — {previewPosition}
+            </DialogTitle>
+            <p className="text-xs text-muted-foreground">Así se verá el formulario de evaluación para este cargo</p>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {/* Simulated header fields */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-muted-foreground text-xs">Colaborador</Label>
+                <div className="h-9 border rounded-md bg-muted/30 flex items-center px-3 text-sm text-muted-foreground">Nombre del colaborador</div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground text-xs">Fecha</Label>
+                <div className="h-9 border rounded-md bg-muted/30 flex items-center px-3 text-sm text-muted-foreground">{new Date().toLocaleDateString()}</div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Criteria */}
+            <div>
+              <h4 className="font-semibold text-sm mb-3">Indicadores de Evaluación</h4>
+              {previewCriteria.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">No hay indicadores configurados</p>
+              ) : (
+                <div className="space-y-3">
+                  {previewCriteria.map((c, idx) => (
+                    <div key={c.id} className="border rounded-lg p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs font-medium text-muted-foreground">{idx + 1}.</span>
+                        <span className="text-sm font-medium">{c.criterion_name}</span>
+                        {c.is_comment && <Badge variant="outline" className="text-[10px] h-4">Comentario</Badge>}
+                      </div>
+                      {c.is_comment ? (
+                        <Textarea
+                          placeholder="Escribir comentario..."
+                          className="text-sm"
+                          value={previewComments[c.id] || ''}
+                          onChange={e => setPreviewComments(prev => ({ ...prev, [c.id]: e.target.value }))}
+                        />
+                      ) : (
+                        <div className="flex gap-2">
+                          {[
+                            { value: 1, label: 'Bajo', cls: 'border-destructive/50 text-destructive hover:bg-destructive/10' },
+                            { value: 2, label: 'Medio', cls: 'border-yellow-500/50 text-yellow-600 hover:bg-yellow-500/10' },
+                            { value: 3, label: 'Alto', cls: 'border-green-500/50 text-green-600 hover:bg-green-500/10' },
+                          ].map(opt => (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              onClick={() => setPreviewScores(prev => ({ ...prev, [c.id]: prev[c.id] === opt.value ? null : opt.value }))}
+                              className={`flex-1 py-1.5 rounded-md border text-xs font-medium transition-colors ${
+                                previewScores[c.id] === opt.value
+                                  ? opt.value === 1 ? 'bg-destructive text-destructive-foreground border-destructive'
+                                    : opt.value === 2 ? 'bg-yellow-500 text-white border-yellow-500'
+                                    : 'bg-green-600 text-white border-green-600'
+                                  : opt.cls
+                              }`}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Average */}
+            {previewAvg && (
+              <>
+                <Separator />
+                <div className="flex items-center justify-between bg-muted/30 rounded-lg p-3">
+                  <span className="text-sm font-medium">Promedio General</span>
+                  <Badge variant="secondary" className="text-base px-3 py-1">{previewAvg} / 3</Badge>
+                </div>
+              </>
+            )}
+
+            {/* Notes */}
+            <div>
+              <Label className="text-muted-foreground text-xs">Observaciones generales</Label>
+              <Textarea placeholder="Notas adicionales..." className="text-sm" />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPreviewOpen(false)}>Cerrar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
