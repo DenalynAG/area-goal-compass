@@ -35,15 +35,11 @@ const typeBadgeVariant: Record<EvalType, 'default' | 'secondary' | 'outline' | '
   one_to_one: 'default',
 };
 
-function ScoreStars({ score }: { score: number | null }) {
+function ScoreLabel({ score }: { score: number | null }) {
   if (!score) return <span className="text-muted-foreground text-xs">Sin puntaje</span>;
-  return (
-    <div className="flex gap-0.5">
-      {[1, 2, 3, 4, 5].map(i => (
-        <Star key={i} className={`w-4 h-4 ${i <= score ? 'fill-primary text-primary' : 'text-muted-foreground/30'}`} />
-      ))}
-    </div>
-  );
+  const label = score <= 1.5 ? 'Bajo' : score <= 2.5 ? 'Medio' : 'Alto';
+  const color = score <= 1.5 ? 'bg-destructive/10 text-destructive' : score <= 2.5 ? 'bg-yellow-500/10 text-yellow-700' : 'bg-green-500/10 text-green-700';
+  return <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${color}`}>{label}</span>;
 }
 
 export default function EvaluacionesPage() {
@@ -139,8 +135,8 @@ export default function EvaluacionesPage() {
                       <span className="font-medium truncate max-w-[200px]">{cargo}</span>
                       <div className="flex items-center gap-3">
                         {scored > 0 && (
-                          <span className="text-xs text-muted-foreground flex items-center gap-0.5">
-                            <Star className="w-3 h-3 fill-primary text-primary" /> {avg.toFixed(1)}
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${avg <= 1.5 ? 'bg-destructive/10 text-destructive' : avg <= 2.5 ? 'bg-yellow-500/10 text-yellow-700' : 'bg-green-500/10 text-green-700'}`}>
+                            {avg <= 1.5 ? 'Bajo' : avg <= 2.5 ? 'Medio' : 'Alto'}
                           </span>
                         )}
                         <span className="text-xs text-muted-foreground">{count} eval.</span>
@@ -195,7 +191,7 @@ export default function EvaluacionesPage() {
                   </TableCell>
                   <TableCell className="font-medium">{ev.title}</TableCell>
                   <TableCell>{getCollaboratorName(ev.collaborator_user_id)}</TableCell>
-                  <TableCell><ScoreStars score={ev.score} /></TableCell>
+                  <TableCell><ScoreLabel score={ev.score} /></TableCell>
                   <TableCell className="text-muted-foreground">
                     <div className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{ev.evaluation_date}</div>
                   </TableCell>
