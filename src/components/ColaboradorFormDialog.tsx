@@ -143,7 +143,11 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
     e.preventDefault();
     const trimmedName = name.trim();
     const trimmedEmail = email.trim();
+    const trimmedCorreoPersonal = correoPersonal.trim();
+    const loginEmail = trimmedEmail || trimmedCorreoPersonal;
     if (!trimmedName) { toast.error('El nombre es obligatorio'); return; }
+    if (!identificacion.trim()) { toast.error('La identificación es obligatoria'); return; }
+    if (!loginEmail && !isEditing) { toast.error('Debe ingresar al menos un correo (corporativo o personal)'); return; }
 
     setSaving(true);
 
@@ -194,8 +198,8 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
     } else {
       let userId: string;
 
-      if (trimmedEmail) {
-        // Create auth user via edge function
+      if (loginEmail) {
+        // Create auth user via edge function using the available email
         const { data: { session } } = await supabase.auth.getSession();
         const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-user`, {
           method: 'POST',
@@ -203,11 +207,13 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${session?.access_token}`,
           },
-          body: JSON.stringify({ email: trimmedEmail, name: trimmedName }),
+          body: JSON.stringify({ email: loginEmail, name: trimmedName }),
         });
         const result = await res.json();
         if (!res.ok) { toast.error(result.error || 'Error creando usuario'); setSaving(false); return; }
         userId = result.user_id;
+        // Store the login email as the profile email
+        profilePayload.email = loginEmail;
       } else {
         // Create profile-only (no auth account)
         userId = crypto.randomUUID();
@@ -283,8 +289,8 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
                 <Input value={name} onChange={e => setName(e.target.value)} maxLength={100} required />
               </div>
               <div className="space-y-1.5">
-                <Label>Identificación</Label>
-                <Input value={identificacion} onChange={e => setIdentificacion(e.target.value)} maxLength={30} placeholder="Cédula / NIT" />
+                <Label>Identificación *</Label>
+                <Input value={identificacion} onChange={e => setIdentificacion(e.target.value)} maxLength={30} placeholder="Cédula / Pasaporte" required />
               </div>
               <div className="space-y-1.5">
                 <Label>Sexo</Label>
@@ -316,47 +322,26 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label>Correo Corporativo</Label>
-                <Input type="email" value={email} onChange={e => setEmail(e.target.value)} maxLength={255} disabled={isEditing} placeholder="Opcional" />
+                <Input type="email" value={email} onChange={e => setEmail(e.target.value)} maxLength={255} disabled={isEditing} placeholder="Para login (si no hay personal)" />
               </div>
               <div className="space-y-1.5">
                 <Label>Correo Personal</Label>
-                <Input type="email" value={correoPersonal} onChange={e => setCorreoPersonal(e.target.value)} maxLength={255} />
+                <Input type="email" value={correoPersonal} onChange={e => setCorreoPersonal(e.target.value)} maxLength={255} placeholder="Para login (si no hay corporativo)" />
               </div>
               <div className="space-y-1.5">
                 <Label>Teléfono Particular</Label>
                 <Input value={phone} onChange={e => setPhone(e.target.value)} maxLength={20} />
               </div>
+              {!isEditing && (
+                <div className="col-span-2">
+                  <p className="text-xs text-muted-foreground">📧 Se usará el correo corporativo para crear la cuenta de acceso. Si no tiene, se usará el correo personal.</p>
+                </div>
+              )}
             </div>
 
             {/* Información Laboral */}
             <SectionTitle>Información Laboral</SectionTitle>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label>Cargo</Label>
-                <Select value={position} onValueChange={setPosition}>
-                  <SelectTrigger><SelectValue placeholder="Seleccionar cargo" /></SelectTrigger>
-                  <SelectContent>
-                    {filteredPositions.map((p: any) => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label>Fecha de Ingreso</Label>
-                <Input type="date" value={fechaIngreso} onChange={e => setFechaIngreso(e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Tipo de Contrato</Label>
-                <Select value={tipoContrato} onValueChange={setTipoContrato}>
-                  <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="indefinido">Indefinido</SelectItem>
-                    <SelectItem value="fijo">Término Fijo</SelectItem>
-                    <SelectItem value="obra_labor">Obra o Labor</SelectItem>
-                    <SelectItem value="prestacion_servicios">Prestación de Servicios</SelectItem>
-                    <SelectItem value="aprendizaje">Aprendizaje</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
               <div className="space-y-1.5">
                 <Label>Área</Label>
                 <Select value={areaId} onValueChange={setAreaId}>
@@ -376,6 +361,15 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
                 </Select>
               </div>
               <div className="space-y-1.5">
+                <Label>Cargo</Label>
+                <Select value={position} onValueChange={setPosition}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar cargo" /></SelectTrigger>
+                  <SelectContent>
+                    {filteredPositions.map((p: any) => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
                 <Label>Rol del Sistema</Label>
                 <Select value={role} onValueChange={setRole}>
                   <SelectTrigger><SelectValue placeholder="Seleccionar rol" /></SelectTrigger>
@@ -385,6 +379,23 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Tipo de Contrato</Label>
+                <Select value={tipoContrato} onValueChange={setTipoContrato}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="indefinido">Indefinido</SelectItem>
+                    <SelectItem value="fijo">Término Fijo</SelectItem>
+                    <SelectItem value="obra_labor">Obra o Labor</SelectItem>
+                    <SelectItem value="prestacion_servicios">Prestación de Servicios</SelectItem>
+                    <SelectItem value="aprendizaje">Aprendizaje</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Fecha de Ingreso</Label>
+                <Input type="date" value={fechaIngreso} onChange={e => setFechaIngreso(e.target.value)} />
               </div>
             </div>
 
