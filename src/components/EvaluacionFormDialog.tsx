@@ -153,9 +153,10 @@ export default function EvaluacionFormDialog({ open, onOpenChange, evaluation }:
     e.preventDefault();
     setSaving(true);
 
-    // Calculate average score from criteria scores
+    // Calculate average score as percentage (B=80%, M=100%, A=120%)
+    const scoreToPercent: Record<number, number> = { 1: 80, 2: 100, 3: 120 };
     const scoredValues = Object.values(criteriaScores).filter((v): v is number => v !== null && v !== undefined);
-    const avgScore = scoredValues.length > 0 ? Math.round(scoredValues.reduce((a, b) => a + b, 0) / scoredValues.length) : null;
+    const avgScore = scoredValues.length > 0 ? Math.round(scoredValues.reduce((a, v) => a + (scoreToPercent[v] || 0), 0) / scoredValues.length) : null;
 
     const payload = {
       collaborator_user_id: form.collaborator_user_id,
@@ -286,11 +287,11 @@ export default function EvaluacionFormDialog({ open, onOpenChange, evaluation }:
                   )}
                 </div>
 
-                <div className="rounded-md border border-border bg-background px-3 py-2 text-xs flex flex-wrap gap-x-4 gap-y-0.5">
-                  <span className="font-semibold">Criterios:</span>
-                  <span><span className="font-bold text-green-700">A</span> Excede (120%)</span>
-                  <span><span className="font-bold text-yellow-700">M</span> Cumple (100%)</span>
-                  <span><span className="font-bold text-destructive">B</span> No alcanza</span>
+                <div className="rounded-md border border-border bg-background px-3 py-2 space-y-0.5 text-sm">
+                  <p className="font-semibold mb-1">Criterios de Evaluación</p>
+                  <p><span className="font-bold text-green-700">A(Alto):</span> Excede su desempeño. WOW. Calificación: 120%</p>
+                  <p><span className="font-bold text-yellow-700">M(Medio):</span> Cumple su desempeño. Calificación 100%</p>
+                  <p><span className="font-bold text-destructive">B (Bajo):</span> No alcanza el cumplimiento del 100% del desempeño.</p>
                 </div>
 
                 {noMatchingPosition && (
@@ -344,14 +345,15 @@ export default function EvaluacionFormDialog({ open, onOpenChange, evaluation }:
                 )}
 
                 {hasPositionCriteria && (() => {
+                  const scoreToPercent: Record<number, number> = { 1: 80, 2: 100, 3: 120 };
                   const scored = Object.values(criteriaScores).filter((v): v is number => v !== null && v !== undefined);
                   if (scored.length === 0) return null;
-                  const avg = scored.reduce((a, b) => a + b, 0) / scored.length;
-                  const avgLabel = avg <= 1.5 ? 'Bajo' : avg <= 2.5 ? 'Medio' : 'Alto';
+                  const avgPercent = scored.reduce((a, v) => a + (scoreToPercent[v] || 0), 0) / scored.length;
+                  const avgLabel = avgPercent < 100 ? 'Bajo' : avgPercent === 100 ? 'Medio' : 'Alto';
                   return (
                     <div className="flex items-center justify-end gap-2 pt-1 border-t text-sm">
                       <span className="font-medium">Promedio:</span>
-                      <span className="font-bold">{avgLabel} ({avg.toFixed(1)})</span>
+                      <span className="font-bold">{avgLabel} ({avgPercent.toFixed(0)}%)</span>
                     </div>
                   );
                 })()}
