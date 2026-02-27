@@ -358,14 +358,18 @@ export default function EvaluacionFormDialog({ open, onOpenChange, evaluation }:
               </div>
             )}
 
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">Notas generales</label>
-              <Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={2} />
-            </div>
+            {form.type !== 'desempeno' && (
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Notas generales</label>
+                <Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={2} />
+              </div>
+            )}
 
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-              <Button type="submit" disabled={saving}>{saving ? 'Guardando...' : 'Guardar'}</Button>
+              <Button type="submit" disabled={saving}>
+                {saving ? 'Guardando...' : form.type === 'desempeno' ? 'Guardar Evaluación' : 'Guardar'}
+              </Button>
             </div>
           </form>
         </ScrollArea>
