@@ -2,13 +2,13 @@ import { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useProfiles, useAreas, useMemberships, getProfileName } from '@/hooks/useSupabaseData';
+import { useProfiles, useAreas, useSubareas, useMemberships, getProfileName } from '@/hooks/useSupabaseData';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { CheckCircle2, Circle, ClipboardList, MessageSquare, Save, Paperclip } from 'lucide-react';
+import { CheckCircle2, Circle, ClipboardList, MessageSquare, Save, Paperclip, Filter } from 'lucide-react';
 import EvidencePanel from '@/components/EvidencePanel';
 
 interface Activity {
@@ -90,6 +90,7 @@ export default function LeaderPassPage() {
   const { data: activities = [], isLoading: loadingActs } = useLeaderPassActivities();
   const { data: profiles = [] } = useProfiles();
   const { data: areas = [] } = useAreas();
+  const { data: subareas = [] } = useSubareas();
   const { data: memberships = [] } = useMemberships();
   const qc = useQueryClient();
 
@@ -102,11 +103,16 @@ export default function LeaderPassPage() {
   const [saving, setSaving] = useState(false);
   const [evidenceActivity, setEvidenceActivity] = useState<{ id: string; name: string } | null>(null);
 
+  // Filters
+  const [filterAreaId, setFilterAreaId] = useState<string>('all');
+  const [filterSubareaId, setFilterSubareaId] = useState<string>('all');
+  const [filterCargo, setFilterCargo] = useState<string>('all');
+
   const periods = useMemo(() => getPeriodOptions(), []);
 
   // For super admin / admin_area, show a user selector
   const canViewOthers = isSuperAdmin || hasRole('admin_area');
-  const viewableProfiles = useMemo(() => {
+  const baseProfiles = useMemo(() => {
     if (isSuperAdmin) return profiles;
     if (hasRole('admin_area')) {
       const myAreas = memberships.filter(m => m.user_id === user?.id).map(m => m.area_id);
@@ -115,6 +121,40 @@ export default function LeaderPassPage() {
     }
     return profiles.filter(p => p.id === user?.id);
   }, [profiles, memberships, user, isSuperAdmin, hasRole]);
+
+  // Available filter options based on baseProfiles
+  const availableAreas = useMemo(() => {
+    const userIds = new Set(baseProfiles.map(p => p.id));
+    const areaIds = new Set(memberships.filter(m => userIds.has(m.user_id)).map(m => m.area_id));
+    return areas.filter(a => areaIds.has(a.id));
+  }, [baseProfiles, memberships, areas]);
+
+  const filteredSubareas = useMemo(() => {
+    if (filterAreaId === 'all') return [];
+    return subareas.filter(s => s.area_id === filterAreaId);
+  }, [subareas, filterAreaId]);
+
+  const availableCargos = useMemo(() => {
+    const cargos = new Set(baseProfiles.map(p => p.position).filter(Boolean));
+    return Array.from(cargos).sort() as string[];
+  }, [baseProfiles]);
+
+  // Apply filters to profiles
+  const viewableProfiles = useMemo(() => {
+    let filtered = baseProfiles;
+    if (filterAreaId !== 'all') {
+      const areaUserIds = new Set(memberships.filter(m => m.area_id === filterAreaId).map(m => m.user_id));
+      filtered = filtered.filter(p => areaUserIds.has(p.id));
+    }
+    if (filterSubareaId !== 'all') {
+      const subUserIds = new Set(memberships.filter(m => m.subarea_id === filterSubareaId).map(m => m.user_id));
+      filtered = filtered.filter(p => subUserIds.has(p.id));
+    }
+    if (filterCargo !== 'all') {
+      filtered = filtered.filter(p => p.position === filterCargo);
+    }
+    return filtered;
+  }, [baseProfiles, memberships, filterAreaId, filterSubareaId, filterCargo]);
 
   const targetUserId = canViewOthers ? selectedUserId : (user?.id ?? '');
   const { data: records = [], isLoading: loadingRecs } = useLeaderPassRecords(selectedPeriod, targetUserId || undefined);
@@ -189,18 +229,6 @@ export default function LeaderPassPage() {
           <p className="page-subtitle">Plan de desarrollo y seguimiento de actividades de liderazgo</p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
-          {canViewOthers && (
-            <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Seleccionar líder..." />
-              </SelectTrigger>
-              <SelectContent>
-                {viewableProfiles.map(p => (
-                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
           <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
             <SelectTrigger className="w-[140px]">
               <SelectValue />
@@ -213,6 +241,58 @@ export default function LeaderPassPage() {
           </Select>
         </div>
       </div>
+
+      {/* Filters */}
+      {canViewOthers && (
+        <div className="flex items-center gap-3 flex-wrap bg-card border rounded-xl p-4">
+          <Filter className="w-4 h-4 text-muted-foreground shrink-0" />
+          <Select value={filterAreaId} onValueChange={v => { setFilterAreaId(v); setFilterSubareaId('all'); setSelectedUserId(''); }}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Todas las áreas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas las áreas</SelectItem>
+              {availableAreas.map(a => (
+                <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {filteredSubareas.length > 0 && (
+            <Select value={filterSubareaId} onValueChange={v => { setFilterSubareaId(v); setSelectedUserId(''); }}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Todas las subáreas" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas las subáreas</SelectItem>
+                {filteredSubareas.map(s => (
+                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Select value={filterCargo} onValueChange={v => { setFilterCargo(v); setSelectedUserId(''); }}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Todos los cargos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los cargos</SelectItem>
+              {availableCargos.map(c => (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Seleccionar líder..." />
+            </SelectTrigger>
+            <SelectContent>
+              {viewableProfiles.map(p => (
+                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {/* Progress summary */}
       <div className="bg-card border rounded-xl p-5">
