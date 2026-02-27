@@ -8,8 +8,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { CheckCircle2, Circle, ClipboardList, MessageSquare, Save, Paperclip, Filter } from 'lucide-react';
+import { CheckCircle2, Circle, ClipboardList, MessageSquare, Save, Paperclip, Filter, ChevronDown, ChevronUp, Info } from 'lucide-react';
 import EvidencePanel from '@/components/EvidencePanel';
+
+const LEADER_PASS_INFO = [
+  { title: 'One to One (Feedback Consciente)', frequency: 'Mensual', description: 'Cumplir con One to One mensual de toda el área asignada. Equipos de más de 20 personas realizar el 10% y para equipos de 1-12 personas, 1 persona mensual' },
+  { title: 'Evaluación de Performance', frequency: 'Diario / Anual', description: 'Oper: en el mes se deben evaluar el 100% de los colab. (Mínimo 22 días). Admón: Anual' },
+  { title: 'Desarrollo del equipo (IDP admón. o Cronograma de Capacitación)', frequency: 'Mensual', description: 'Toda el área o personal a cargo admón. debe tener el 100% IDPs en Buk. Para los colab. operativos el 90% de Cumpl. OSH University' },
+  { title: 'People Review & Planes de Sucesión', frequency: 'Trimestral', description: '1 Trimestral (oper.) / 1 Semestral (adm.) — decisiones documentadas' },
+  { title: 'ADN OSH', frequency: 'Semanal / Mensual', description: '100% Briefing Semanal y STAR mensual' },
+  { title: 'Upward Feedback', frequency: 'Semestral', description: '100% del Upward Feedback 2 veces al año' },
+  { title: 'Programa OSH People', frequency: 'Mensual', description: 'Reconocer 1 persona por mes del programa de forma correcta y consciente hacia otras áreas' },
+  { title: 'Misión CerOSH', frequency: 'Mensual', description: 'Proponer 1 acción preventiva de su área al mes' },
+  { title: 'Orden y Limpieza', frequency: 'Mensual', description: 'Gestión de una jornada de Orden y Limpieza mensual de su área' },
+];
 
 interface Activity {
   id: string;
@@ -102,6 +114,7 @@ export default function LeaderPassPage() {
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
   const [evidenceActivity, setEvidenceActivity] = useState<{ id: string; name: string } | null>(null);
+  const [showBanner, setShowBanner] = useState(false);
 
   // Filters
   const [filterAreaId, setFilterAreaId] = useState<string>('all');
@@ -240,6 +253,53 @@ export default function LeaderPassPage() {
             </SelectContent>
           </Select>
         </div>
+      </div>
+
+      {/* Info Banner */}
+      <div className="border rounded-xl overflow-hidden">
+        <button
+          onClick={() => setShowBanner(v => !v)}
+          className="w-full flex items-center justify-between px-5 py-3 bg-[hsl(25,90%,48%)] text-white font-semibold text-sm hover:bg-[hsl(25,90%,42%)] transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <Info className="w-4 h-4" />
+            <span>Programa Leader Pass — Guía de Actividades</span>
+          </div>
+          {showBanner ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
+        {showBanner && (
+          <div className="overflow-x-auto">
+            <div className="grid grid-cols-9 min-w-[1200px]">
+              {/* Headers */}
+              {LEADER_PASS_INFO.map((item, i) => (
+                <div
+                  key={`h-${i}`}
+                  className={`p-3 text-xs font-bold text-center border-r border-b last:border-r-0 ${
+                    i % 2 === 0
+                      ? 'bg-[hsl(0,0%,55%)] text-white'
+                      : 'bg-[hsl(25,90%,48%)] text-white'
+                  }`}
+                >
+                  <div>{item.title}</div>
+                  <div className="font-medium mt-1 opacity-90">{item.frequency}</div>
+                </div>
+              ))}
+              {/* Descriptions */}
+              {LEADER_PASS_INFO.map((item, i) => (
+                <div
+                  key={`d-${i}`}
+                  className={`p-3 text-[11px] leading-relaxed border-r last:border-r-0 ${
+                    i % 2 === 0
+                      ? 'bg-[hsl(25,90%,48%)]/10 text-foreground'
+                      : 'bg-[hsl(0,0%,55%)]/10 text-foreground'
+                  }`}
+                >
+                  {item.description}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Filters */}
