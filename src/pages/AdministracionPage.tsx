@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import CargoFormDialog from '@/components/CargoFormDialog';
+import EvaluacionCriteriaSection from '@/components/EvaluacionCriteriaSection';
 import * as XLSX from 'xlsx';
 
 export default function AdministracionPage() {
@@ -323,6 +324,9 @@ export default function AdministracionPage() {
           </div>
         )}
       </div>
+
+      {/* Indicadores de Evaluación */}
+      <EvaluacionCriteriaSection canManage={canManage} />
 
       {/* Roles y Accesos */}
       <RolesSection canEdit={isSuperAdmin} />
