@@ -305,40 +305,40 @@ export default function EvaluacionFormDialog({ open, onOpenChange, evaluation }:
                         rows={2}
                       />
                     ) : (
-                      <div className="flex items-center gap-1">
-                        {[1, 2, 3, 4, 5].map(s => (
+                      <div className="flex items-center gap-2">
+                        {([
+                          { value: 1, label: 'Bajo', color: 'bg-destructive/10 text-destructive border-destructive/30' },
+                          { value: 2, label: 'Medio', color: 'bg-yellow-500/10 text-yellow-700 border-yellow-500/30' },
+                          { value: 3, label: 'Alto', color: 'bg-green-500/10 text-green-700 border-green-500/30' },
+                        ] as const).map(opt => (
                           <button
-                            key={s}
+                            key={opt.value}
                             type="button"
-                            onClick={() => setCriteriaScores(prev => ({ ...prev, [criterion.id]: prev[criterion.id] === s ? null : s }))}
-                            className="p-0.5 transition-transform hover:scale-110"
+                            onClick={() => setCriteriaScores(prev => ({ ...prev, [criterion.id]: prev[criterion.id] === opt.value ? null : opt.value }))}
+                            className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${
+                              criteriaScores[criterion.id] === opt.value
+                                ? opt.color + ' ring-2 ring-offset-1 ring-current'
+                                : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
+                            }`}
                           >
-                            <Star className={`w-5 h-5 ${
-                              (criteriaScores[criterion.id] ?? 0) >= s
-                                ? 'fill-primary text-primary'
-                                : 'text-muted-foreground/30'
-                            }`} />
+                            {opt.label}
                           </button>
                         ))}
-                        <span className="text-xs text-muted-foreground ml-2">
-                          {criteriaScores[criterion.id] ? `${criteriaScores[criterion.id]}/5` : '—'}
-                        </span>
                       </div>
                     )}
                   </div>
                 ))}
 
                 {hasPositionCriteria && (() => {
+                  const scoreLabels: Record<number, string> = { 1: 'Bajo', 2: 'Medio', 3: 'Alto' };
                   const scored = Object.values(criteriaScores).filter((v): v is number => v !== null && v !== undefined);
                   if (scored.length === 0) return null;
-                  const avg = (scored.reduce((a, b) => a + b, 0) / scored.length).toFixed(1);
+                  const avg = scored.reduce((a, b) => a + b, 0) / scored.length;
+                  const avgLabel = avg <= 1.5 ? 'Bajo' : avg <= 2.5 ? 'Medio' : 'Alto';
                   return (
                     <div className="flex items-center justify-end gap-2 pt-2 border-t">
                       <span className="text-sm font-medium">Promedio:</span>
-                      <div className="flex items-center gap-1">
-                        <Star className="w-4 h-4 fill-primary text-primary" />
-                        <span className="font-bold">{avg}</span>
-                      </div>
+                      <span className="font-bold">{avgLabel} ({avg.toFixed(1)})</span>
                     </div>
                   );
                 })()}
