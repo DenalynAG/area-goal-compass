@@ -284,6 +284,13 @@ export default function EvaluacionFormDialog({ open, onOpenChange, evaluation }:
                   )}
                 </div>
 
+                <div className="rounded-md border border-border bg-background p-3 space-y-1 text-xs">
+                  <p className="font-semibold text-sm mb-1">Criterios de Evaluación</p>
+                  <p><span className="font-bold text-green-700">A (Alto):</span> Excede su desempeño. WOW. Calificación: 120%</p>
+                  <p><span className="font-bold text-yellow-700">M (Medio):</span> Cumple su desempeño. Calificación: 100%</p>
+                  <p><span className="font-bold text-destructive">B (Bajo):</span> No alcanza el cumplimiento del 100% del desempeño.</p>
+                </div>
+
                 {noMatchingPosition && (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
                     <AlertCircle className="w-4 h-4" />
