@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
-import { useProfiles, useAreas, useSubareas, useMemberships } from '@/hooks/useSupabaseData';
+import { useProfiles } from '@/hooks/useSupabaseData';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,7 +13,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Search, AlertCircle } from 'lucide-react';
+import { Star, AlertCircle } from 'lucide-react';
 import type { Tables } from '@/integrations/supabase/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -44,16 +44,7 @@ export default function EvaluacionFormDialog({ open, onOpenChange, evaluation }:
   const { user } = useAuth();
   const qc = useQueryClient();
   const { data: profiles = [] } = useProfiles();
-  const { data: areas = [] } = useAreas();
-  const { data: subareas = [] } = useSubareas();
-  const { data: memberships = [] } = useMemberships();
   const [saving, setSaving] = useState(false);
-
-  // Filters for collaborator selection
-  const [filterAreaId, setFilterAreaId] = useState('');
-  const [filterSubareaId, setFilterSubareaId] = useState('');
-  const [filterCargo, setFilterCargo] = useState('');
-  const [searchCollab, setSearchCollab] = useState('');
 
   const [form, setForm] = useState({
     collaborator_user_id: '',
@@ -116,48 +107,6 @@ export default function EvaluacionFormDialog({ open, onOpenChange, evaluation }:
     return [...new Set(allCriteria.map(c => c.position_name))];
   }, [allCriteria]);
 
-  // Filtered subareas based on selected area
-  const filteredSubareas = useMemo(() => {
-    if (!filterAreaId) return subareas;
-    return subareas.filter(s => s.area_id === filterAreaId);
-  }, [filterAreaId, subareas]);
-
-  // Unique cargos from profiles, filtered by area/subarea
-  const filteredCargos = useMemo(() => {
-    let relevantProfiles = profiles;
-    if (filterAreaId) {
-      const userIds = memberships.filter(m => m.area_id === filterAreaId).map(m => m.user_id);
-      relevantProfiles = relevantProfiles.filter(p => userIds.includes(p.id));
-    }
-    if (filterSubareaId) {
-      const userIds = memberships.filter(m => m.subarea_id === filterSubareaId).map(m => m.user_id);
-      relevantProfiles = relevantProfiles.filter(p => userIds.includes(p.id));
-    }
-    const cargos = relevantProfiles.map(p => p.position).filter((v): v is string => !!v && v !== '');
-    return [...new Set(cargos)].sort();
-  }, [profiles, memberships, filterAreaId, filterSubareaId]);
-
-  // Filtered collaborator profiles
-  const filteredProfiles = useMemo(() => {
-    let result = profiles;
-    if (filterAreaId) {
-      const userIds = memberships.filter(m => m.area_id === filterAreaId).map(m => m.user_id);
-      result = result.filter(p => userIds.includes(p.id));
-    }
-    if (filterSubareaId) {
-      const userIds = memberships.filter(m => m.subarea_id === filterSubareaId).map(m => m.user_id);
-      result = result.filter(p => userIds.includes(p.id));
-    }
-    if (filterCargo) {
-      result = result.filter(p => p.position === filterCargo);
-    }
-    if (searchCollab.trim()) {
-      const q = searchCollab.toLowerCase();
-      result = result.filter(p => p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q));
-    }
-    return result;
-  }, [profiles, memberships, filterAreaId, filterSubareaId, filterCargo, searchCollab]);
-
   useEffect(() => {
     if (evaluation) {
       setForm({
@@ -183,10 +132,6 @@ export default function EvaluacionFormDialog({ open, onOpenChange, evaluation }:
       });
       setCriteriaScores({});
       setCriteriaComments({});
-      setFilterAreaId('');
-      setFilterSubareaId('');
-      setFilterCargo('');
-      setSearchCollab('');
     }
   }, [evaluation, open]);
 
@@ -273,79 +218,35 @@ export default function EvaluacionFormDialog({ open, onOpenChange, evaluation }:
         </DialogHeader>
         <ScrollArea className="flex-1 pr-4">
           <form onSubmit={handleSubmit} className="space-y-4 pb-2">
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">Tipo</label>
-              <Select value={form.type} onValueChange={v => setForm(f => ({ ...f, type: v as EvalType }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {(Object.keys(typeLabels) as EvalType[]).map(t => (
-                    <SelectItem key={t} value={t}>{typeLabels[t]}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Filters for collaborator */}
-            <div className="space-y-2 border rounded-lg p-3 bg-muted/30">
-              <h3 className="text-sm font-semibold">Seleccionar Colaborador</h3>
-              <div className="grid grid-cols-3 gap-3">
-                <div className="space-y-1">
-                  <label className="text-xs text-muted-foreground">Área</label>
-                  <Select value={filterAreaId} onValueChange={v => { setFilterAreaId(v === '__all__' ? '' : v); setFilterSubareaId(''); setFilterCargo(''); }}>
-                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Todas" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__all__">Todas</SelectItem>
-                      {areas.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs text-muted-foreground">Subárea</label>
-                  <Select value={filterSubareaId} onValueChange={v => { setFilterSubareaId(v === '__all__' ? '' : v); setFilterCargo(''); }}>
-                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Todas" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__all__">Todas</SelectItem>
-                      {filteredSubareas.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs text-muted-foreground">Cargo</label>
-                  <Select value={filterCargo} onValueChange={v => setFilterCargo(v === '__all__' ? '' : v)}>
-                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Todos" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__all__">Todos</SelectItem>
-                      {filteredCargos.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Tipo</label>
+                <Select value={form.type} onValueChange={v => setForm(f => ({ ...f, type: v as EvalType }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(typeLabels) as EvalType[]).map(t => (
+                      <SelectItem key={t} value={t}>{typeLabels[t]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar colaborador por nombre o correo..."
-                  value={searchCollab}
-                  onChange={e => setSearchCollab(e.target.value)}
-                  className="pl-8 h-8 text-xs"
-                />
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Colaborador</label>
+                <Select value={form.collaborator_user_id} onValueChange={v => {
+                  setForm(f => ({ ...f, collaborator_user_id: v }));
+                  setCriteriaScores({});
+                  setCriteriaComments({});
+                }}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
+                  <SelectContent>
+                    {profiles.map(p => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name} {p.position ? `(${p.position})` : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <Select value={form.collaborator_user_id} onValueChange={v => {
-                setForm(f => ({ ...f, collaborator_user_id: v }));
-                setCriteriaScores({});
-                setCriteriaComments({});
-              }}>
-                <SelectTrigger><SelectValue placeholder="Seleccionar colaborador..." /></SelectTrigger>
-                <SelectContent>
-                  {filteredProfiles.map(p => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.name} {p.position ? `(${p.position})` : ''}
-                    </SelectItem>
-                  ))}
-                  {filteredProfiles.length === 0 && (
-                    <div className="px-2 py-3 text-sm text-muted-foreground text-center">Sin resultados</div>
-                  )}
-                </SelectContent>
-              </Select>
             </div>
 
             {form.type !== 'desempeno' && (
