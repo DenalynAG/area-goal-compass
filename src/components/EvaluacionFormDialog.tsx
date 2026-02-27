@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { useProfiles } from '@/hooks/useSupabaseData';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +13,9 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { Star, AlertCircle } from 'lucide-react';
 import type { Tables } from '@/integrations/supabase/types';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 type EvalType = 'feedback' | 'desempeno' | 'performance' | 'one_to_one';
 
@@ -30,6 +32,14 @@ interface Props {
   evaluation?: Tables<'evaluations'> | null;
 }
 
+interface CriterionRow {
+  id: string;
+  position_name: string;
+  criterion_name: string;
+  sort_order: number;
+  is_comment: boolean;
+}
+
 export default function EvaluacionFormDialog({ open, onOpenChange, evaluation }: Props) {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -38,7 +48,7 @@ export default function EvaluacionFormDialog({ open, onOpenChange, evaluation }:
 
   const [form, setForm] = useState({
     collaborator_user_id: '',
-    type: 'feedback' as EvalType,
+    type: 'desempeno' as EvalType,
     title: '',
     description: '',
     score: '',
@@ -46,6 +56,56 @@ export default function EvaluacionFormDialog({ open, onOpenChange, evaluation }:
     period: '',
     notes: '',
   });
+
+  // Scores per criterion: { criterionId: score (1-5) }
+  const [criteriaScores, setCriteriaScores] = useState<Record<string, number | null>>({});
+  const [criteriaComments, setCriteriaComments] = useState<Record<string, string>>({});
+
+  // Fetch all criteria
+  const { data: allCriteria = [] } = useQuery({
+    queryKey: ['evaluation_criteria'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('evaluation_criteria' as any)
+        .select('*')
+        .order('sort_order');
+      if (error) throw error;
+      return data as unknown as CriterionRow[];
+    },
+  });
+
+  // Fetch existing scores when editing
+  const { data: existingScores = [] } = useQuery({
+    queryKey: ['evaluation_scores', evaluation?.id],
+    queryFn: async () => {
+      if (!evaluation?.id) return [];
+      const { data, error } = await supabase
+        .from('evaluation_scores' as any)
+        .select('*')
+        .eq('evaluation_id', evaluation.id);
+      if (error) throw error;
+      return data as any[];
+    },
+    enabled: !!evaluation?.id,
+  });
+
+  // Get the selected collaborator's position
+  const selectedPosition = useMemo(() => {
+    if (!form.collaborator_user_id) return null;
+    const profile = profiles.find(p => p.id === form.collaborator_user_id);
+    return profile?.position || null;
+  }, [form.collaborator_user_id, profiles]);
+
+  // Filter criteria for the selected position
+  const positionCriteria = useMemo(() => {
+    if (!selectedPosition) return [];
+    return allCriteria.filter(c => c.position_name === selectedPosition);
+  }, [selectedPosition, allCriteria]);
+
+  // Available positions in criteria
+  const availablePositions = useMemo(() => {
+    return [...new Set(allCriteria.map(c => c.position_name))];
+  }, [allCriteria]);
 
   useEffect(() => {
     if (evaluation) {
@@ -62,7 +122,7 @@ export default function EvaluacionFormDialog({ open, onOpenChange, evaluation }:
     } else {
       setForm({
         collaborator_user_id: '',
-        type: 'feedback',
+        type: 'desempeno',
         title: '',
         description: '',
         score: '',
@@ -70,113 +130,232 @@ export default function EvaluacionFormDialog({ open, onOpenChange, evaluation }:
         period: '',
         notes: '',
       });
+      setCriteriaScores({});
+      setCriteriaComments({});
     }
   }, [evaluation, open]);
+
+  // Load existing scores into state when editing
+  useEffect(() => {
+    if (existingScores.length > 0) {
+      const scores: Record<string, number | null> = {};
+      const comments: Record<string, string> = {};
+      existingScores.forEach((s: any) => {
+        scores[s.criterion_id] = s.score;
+        comments[s.criterion_id] = s.comment || '';
+      });
+      setCriteriaScores(scores);
+      setCriteriaComments(comments);
+    }
+  }, [existingScores]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+
+    // Calculate average score from criteria scores
+    const scoredValues = Object.values(criteriaScores).filter((v): v is number => v !== null && v !== undefined);
+    const avgScore = scoredValues.length > 0 ? Math.round(scoredValues.reduce((a, b) => a + b, 0) / scoredValues.length) : null;
+
     const payload = {
       collaborator_user_id: form.collaborator_user_id,
       type: form.type,
       title: form.title,
       description: form.description,
-      score: form.score ? parseInt(form.score) : null,
+      score: avgScore,
       evaluation_date: form.evaluation_date,
       period: form.period,
       notes: form.notes,
     };
 
-    const { error } = evaluation
-      ? await supabase.from('evaluations').update(payload).eq('id', evaluation.id)
-      : await supabase.from('evaluations').insert({ ...payload, evaluator_user_id: user!.id });
+    let evalId = evaluation?.id;
+
+    if (evaluation) {
+      const { error } = await supabase.from('evaluations').update(payload).eq('id', evaluation.id);
+      if (error) { toast.error(error.message); setSaving(false); return; }
+    } else {
+      const { data, error } = await supabase.from('evaluations').insert({ ...payload, evaluator_user_id: user!.id }).select('id').single();
+      if (error) { toast.error(error.message); setSaving(false); return; }
+      evalId = data.id;
+    }
+
+    // Save criteria scores
+    if (evalId && positionCriteria.length > 0) {
+      // Delete existing scores first
+      await (supabase.from('evaluation_scores' as any) as any).delete().eq('evaluation_id', evalId);
+
+      const scoreRows = positionCriteria.map(c => ({
+        evaluation_id: evalId!,
+        criterion_id: c.id,
+        score: c.is_comment ? null : (criteriaScores[c.id] ?? null),
+        comment: criteriaComments[c.id] || '',
+      }));
+
+      const { error: scoreError } = await (supabase.from('evaluation_scores' as any) as any).insert(scoreRows);
+      if (scoreError) { toast.error('Error guardando puntajes: ' + scoreError.message); }
+    }
 
     setSaving(false);
-    if (error) { toast.error(error.message); return; }
     toast.success(evaluation ? 'Evaluación actualizada' : 'Evaluación registrada');
     qc.invalidateQueries({ queryKey: ['evaluations'] });
+    qc.invalidateQueries({ queryKey: ['evaluation_scores'] });
     onOpenChange(false);
   };
 
   const isEditing = !!evaluation;
+  const hasPositionCriteria = positionCriteria.length > 0;
+  const noMatchingPosition = selectedPosition && !hasPositionCriteria;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Editar Evaluación' : 'Registrar Evaluación'}</DialogTitle>
           <DialogDescription>
             {isEditing ? 'Modifica los datos de la evaluación.' : 'Completa los campos para registrar una nueva evaluación.'}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">Tipo</label>
-              <Select value={form.type} onValueChange={v => setForm(f => ({ ...f, type: v as EvalType }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {(Object.keys(typeLabels) as EvalType[]).map(t => (
-                    <SelectItem key={t} value={t}>{typeLabels[t]}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        <ScrollArea className="flex-1 pr-4">
+          <form onSubmit={handleSubmit} className="space-y-4 pb-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Tipo</label>
+                <Select value={form.type} onValueChange={v => setForm(f => ({ ...f, type: v as EvalType }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(typeLabels) as EvalType[]).map(t => (
+                      <SelectItem key={t} value={t}>{typeLabels[t]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Colaborador</label>
+                <Select value={form.collaborator_user_id} onValueChange={v => {
+                  setForm(f => ({ ...f, collaborator_user_id: v }));
+                  setCriteriaScores({});
+                  setCriteriaComments({});
+                }}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
+                  <SelectContent>
+                    {profiles.map(p => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name} {p.position ? `(${p.position})` : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">Colaborador</label>
-              <Select value={form.collaborator_user_id} onValueChange={v => setForm(f => ({ ...f, collaborator_user_id: v }))}>
-                <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
-                <SelectContent>
-                  {profiles.map(p => (
-                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Título</label>
+                <Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} required />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Período</label>
+                <Input placeholder="Q1 2026" value={form.period} onChange={e => setForm(f => ({ ...f, period: e.target.value }))} />
+              </div>
             </div>
-          </div>
 
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium">Título</label>
-            <Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} required />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium">Descripción</label>
-            <Textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={3} />
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">Puntaje (1-5)</label>
-              <Select value={form.score} onValueChange={v => setForm(f => ({ ...f, score: v }))}>
-                <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                <SelectContent>
-                  {['1','2','3','4','5'].map(v => (
-                    <SelectItem key={v} value={v}>{v} ⭐</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Fecha</label>
+                <Input type="date" value={form.evaluation_date} onChange={e => setForm(f => ({ ...f, evaluation_date: e.target.value }))} required />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Descripción</label>
+                <Input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">Fecha</label>
-              <Input type="date" value={form.evaluation_date} onChange={e => setForm(f => ({ ...f, evaluation_date: e.target.value }))} required />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">Período</label>
-              <Input placeholder="Q1 2026" value={form.period} onChange={e => setForm(f => ({ ...f, period: e.target.value }))} />
-            </div>
-          </div>
 
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium">Notas</label>
-            <Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={2} />
-          </div>
+            {/* Position-specific criteria */}
+            {selectedPosition && (
+              <div className="space-y-3 border rounded-lg p-4 bg-muted/30">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold">
+                    Indicadores — {selectedPosition}
+                  </h3>
+                  {hasPositionCriteria && (
+                    <span className="text-xs text-muted-foreground">
+                      {positionCriteria.filter(c => !c.is_comment).length} indicadores
+                    </span>
+                  )}
+                </div>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-            <Button type="submit" disabled={saving}>{saving ? 'Guardando...' : 'Guardar'}</Button>
-          </div>
-        </form>
+                {noMatchingPosition && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                    <AlertCircle className="w-4 h-4" />
+                    <span>No hay indicadores configurados para "{selectedPosition}". Cargos disponibles: {availablePositions.join(', ')}</span>
+                  </div>
+                )}
+
+                {hasPositionCriteria && positionCriteria.map(criterion => (
+                  <div key={criterion.id} className="space-y-1.5">
+                    <label className="text-sm font-medium flex items-center gap-1">
+                      <span className="text-muted-foreground text-xs">{criterion.sort_order}.</span>
+                      {criterion.criterion_name}
+                    </label>
+                    {criterion.is_comment ? (
+                      <Textarea
+                        placeholder="Escribe un comentario..."
+                        value={criteriaComments[criterion.id] || ''}
+                        onChange={e => setCriteriaComments(prev => ({ ...prev, [criterion.id]: e.target.value }))}
+                        rows={2}
+                      />
+                    ) : (
+                      <div className="flex items-center gap-1">
+                        {[1, 2, 3, 4, 5].map(s => (
+                          <button
+                            key={s}
+                            type="button"
+                            onClick={() => setCriteriaScores(prev => ({ ...prev, [criterion.id]: prev[criterion.id] === s ? null : s }))}
+                            className="p-0.5 transition-transform hover:scale-110"
+                          >
+                            <Star className={`w-5 h-5 ${
+                              (criteriaScores[criterion.id] ?? 0) >= s
+                                ? 'fill-primary text-primary'
+                                : 'text-muted-foreground/30'
+                            }`} />
+                          </button>
+                        ))}
+                        <span className="text-xs text-muted-foreground ml-2">
+                          {criteriaScores[criterion.id] ? `${criteriaScores[criterion.id]}/5` : '—'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {hasPositionCriteria && (() => {
+                  const scored = Object.values(criteriaScores).filter((v): v is number => v !== null && v !== undefined);
+                  if (scored.length === 0) return null;
+                  const avg = (scored.reduce((a, b) => a + b, 0) / scored.length).toFixed(1);
+                  return (
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t">
+                      <span className="text-sm font-medium">Promedio:</span>
+                      <div className="flex items-center gap-1">
+                        <Star className="w-4 h-4 fill-primary text-primary" />
+                        <span className="font-bold">{avg}</span>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Notas generales</label>
+              <Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={2} />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+              <Button type="submit" disabled={saving}>{saving ? 'Guardando...' : 'Guardar'}</Button>
+            </div>
+          </form>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
