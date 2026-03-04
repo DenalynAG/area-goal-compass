@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfiles, useAreas, useSubareas, useMemberships, getProfileName } from '@/hooks/useSupabaseData';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
@@ -242,16 +242,14 @@ export default function LeaderPassPage() {
           <p className="page-subtitle">Plan de desarrollo y seguimiento de actividades de liderazgo</p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
-          <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {periods.map(p => (
-                <SelectItem key={p} value={p}>{formatPeriod(p)}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <SearchableSelect
+            value={selectedPeriod}
+            onValueChange={setSelectedPeriod}
+            options={periods.map(p => ({ value: p, label: formatPeriod(p) }))}
+            placeholder="Periodo"
+            searchPlaceholder="Buscar periodo..."
+            className="w-[160px]"
+          />
         </div>
       </div>
 
@@ -326,51 +324,40 @@ export default function LeaderPassPage() {
       {canViewOthers && (
         <div className="flex items-center gap-3 flex-wrap bg-card border rounded-xl p-4">
           <Filter className="w-4 h-4 text-muted-foreground shrink-0" />
-          <Select value={filterAreaId} onValueChange={v => { setFilterAreaId(v); setFilterSubareaId('all'); setSelectedUserId(''); }}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Todas las áreas" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas las áreas</SelectItem>
-              {availableAreas.map(a => (
-                <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <SearchableSelect
+            value={filterAreaId}
+            onValueChange={v => { setFilterAreaId(v); setFilterSubareaId('all'); setSelectedUserId(''); }}
+            options={[{ value: 'all', label: 'Todas las áreas' }, ...availableAreas.map(a => ({ value: a.id, label: a.name }))]}
+            placeholder="Todas las áreas"
+            searchPlaceholder="Buscar área..."
+            className="w-[180px]"
+          />
           {filteredSubareas.length > 0 && (
-            <Select value={filterSubareaId} onValueChange={v => { setFilterSubareaId(v); setSelectedUserId(''); }}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Todas las subáreas" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas las subáreas</SelectItem>
-                {filteredSubareas.map(s => (
-                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SearchableSelect
+              value={filterSubareaId}
+              onValueChange={v => { setFilterSubareaId(v); setSelectedUserId(''); }}
+              options={[{ value: 'all', label: 'Todas las subáreas' }, ...filteredSubareas.map(s => ({ value: s.id, label: s.name }))]}
+              placeholder="Todas las subáreas"
+              searchPlaceholder="Buscar subárea..."
+              className="w-[180px]"
+            />
           )}
-          <Select value={filterCargo} onValueChange={v => { setFilterCargo(v); setSelectedUserId(''); }}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Todos los cargos" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los cargos</SelectItem>
-              {availableCargos.map(c => (
-                <SelectItem key={c} value={c}>{c}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Seleccionar líder..." />
-            </SelectTrigger>
-            <SelectContent>
-              {viewableProfiles.map(p => (
-                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <SearchableSelect
+            value={filterCargo}
+            onValueChange={v => { setFilterCargo(v); setSelectedUserId(''); }}
+            options={[{ value: 'all', label: 'Todos los cargos' }, ...availableCargos.map(c => ({ value: c, label: c }))]}
+            placeholder="Todos los cargos"
+            searchPlaceholder="Buscar cargo..."
+            className="w-[180px]"
+          />
+          <SearchableSelect
+            value={selectedUserId}
+            onValueChange={setSelectedUserId}
+            options={viewableProfiles.map(p => ({ value: p.id, label: p.name }))}
+            placeholder="Seleccionar líder..."
+            searchPlaceholder="Buscar líder..."
+            className="w-[220px]"
+          />
         </div>
       )}
 
