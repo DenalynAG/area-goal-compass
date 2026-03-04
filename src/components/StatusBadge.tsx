@@ -12,6 +12,8 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
     borrador: { class: 'status-muted', label: 'Borrador' },
     en_riesgo: { class: 'status-danger', label: 'En Riesgo' },
     cerrado: { class: 'status-muted', label: 'Cerrado' },
+    cumplido: { class: 'status-active', label: 'Cumplido' },
+    no_cumplido: { class: 'status-danger', label: 'No Cumplido' },
     inactivo: { class: 'status-muted', label: 'Inactivo' },
   };
   const c = config[status] ?? config.activo;

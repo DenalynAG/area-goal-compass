@@ -770,7 +770,13 @@ export type Database = {
       entity_status: "activo" | "inactivo"
       evaluation_type: "feedback" | "desempeno" | "performance" | "one_to_one"
       kpi_frequency: "semanal" | "mensual" | "trimestral"
-      objective_status: "borrador" | "activo" | "en_riesgo" | "cerrado"
+      objective_status:
+        | "borrador"
+        | "activo"
+        | "en_riesgo"
+        | "cerrado"
+        | "cumplido"
+        | "no_cumplido"
       priority_level: "alta" | "media" | "baja"
     }
     CompositeTypes: {
@@ -909,7 +915,14 @@ export const Constants = {
       entity_status: ["activo", "inactivo"],
       evaluation_type: ["feedback", "desempeno", "performance", "one_to_one"],
       kpi_frequency: ["semanal", "mensual", "trimestral"],
-      objective_status: ["borrador", "activo", "en_riesgo", "cerrado"],
+      objective_status: [
+        "borrador",
+        "activo",
+        "en_riesgo",
+        "cerrado",
+        "cumplido",
+        "no_cumplido",
+      ],
       priority_level: ["alta", "media", "baja"],
     },
   },
