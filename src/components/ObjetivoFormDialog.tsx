@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { useSystemParameters } from '@/hooks/useSupabaseData';
 import type { Tables } from '@/integrations/supabase/types';
 
 interface Props {
@@ -21,6 +22,7 @@ interface Props {
 
 export default function ObjetivoFormDialog({ open, onOpenChange, objective, areas, subareas, profiles }: Props) {
   const qc = useQueryClient();
+  const { data: systemParams = [] } = useSystemParameters();
   const [saving, setSaving] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -28,11 +30,31 @@ export default function ObjetivoFormDialog({ open, onOpenChange, objective, area
   const [scopeId, setScopeId] = useState('');
   const [ownerUserId, setOwnerUserId] = useState('');
   const [priority, setPriority] = useState<'alta' | 'media' | 'baja'>('media');
-  const [status, setStatus] = useState<'borrador' | 'activo' | 'en_riesgo' | 'cerrado'>('borrador');
+  const [status, setStatus] = useState('borrador');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [period, setPeriod] = useState('');
   const [progressPercent, setProgressPercent] = useState(0);
+
+  // Derive status options and default period from system parameters
+  const statusOptions = useMemo(() => {
+    const param = systemParams.find(p => p.key === 'estados_objetivo');
+    if (!param) return [
+      { value: 'borrador', label: 'Borrador' },
+      { value: 'activo', label: 'Activo' },
+      { value: 'en_riesgo', label: 'En Riesgo' },
+      { value: 'cerrado', label: 'Cerrado' },
+    ];
+    return param.value.split(',').map(s => {
+      const label = s.trim();
+      const value = label.toLowerCase().replace(/ /g, '_');
+      return { value, label };
+    });
+  }, [systemParams]);
+
+  const defaultPeriod = useMemo(() => {
+    return systemParams.find(p => p.key === 'periodo_actual')?.value ?? '';
+  }, [systemParams]);
 
   const scopeOptions = scopeType === 'area' ? areas : subareas;
 
@@ -51,10 +73,10 @@ export default function ObjetivoFormDialog({ open, onOpenChange, objective, area
       setProgressPercent(objective.progress_percent);
     } else {
       setTitle(''); setDescription(''); setScopeType('area'); setScopeId('');
-      setOwnerUserId(''); setPriority('media'); setStatus('borrador');
-      setStartDate(''); setEndDate(''); setPeriod(''); setProgressPercent(0);
+      setOwnerUserId(''); setPriority('media'); setStatus(statusOptions[0]?.value ?? 'borrador');
+      setStartDate(''); setEndDate(''); setPeriod(defaultPeriod); setProgressPercent(0);
     }
-  }, [objective, open]);
+  }, [objective, open, defaultPeriod, statusOptions]);
 
   useEffect(() => {
     if (!scopeOptions.find((s: any) => s.id === scopeId)) setScopeId('');
@@ -74,7 +96,7 @@ export default function ObjetivoFormDialog({ open, onOpenChange, objective, area
       scope_id: scopeId,
       owner_user_id: ownerUserId || null,
       priority,
-      status,
+      status: status as any,
       start_date: startDate || null,
       end_date: endDate || null,
       period: period.trim() || null,
@@ -153,19 +175,18 @@ export default function ObjetivoFormDialog({ open, onOpenChange, objective, area
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Estado</Label>
-              <Select value={status} onValueChange={v => setStatus(v as any)}>
+              <Select value={status} onValueChange={setStatus}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="borrador">Borrador</SelectItem>
-                  <SelectItem value="activo">Activo</SelectItem>
-                  <SelectItem value="en_riesgo">En Riesgo</SelectItem>
-                  <SelectItem value="cerrado">Cerrado</SelectItem>
+                  {statusOptions.map(opt => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
               <Label>Período</Label>
-              <Input value={period} onChange={e => setPeriod(e.target.value)} placeholder="Ej: Q1 2025" maxLength={50} />
+              <Input value={period} onChange={e => setPeriod(e.target.value)} placeholder={defaultPeriod || 'Ej: Q1 2025'} maxLength={50} />
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">

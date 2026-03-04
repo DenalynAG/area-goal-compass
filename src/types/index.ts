@@ -1,6 +1,6 @@
 export type AppRole = 'super_admin' | 'admin_area' | 'lider_subarea' | 'colaborador' | 'solo_lectura';
 
-export type ObjectiveStatus = 'borrador' | 'activo' | 'en_riesgo' | 'cerrado';
+export type ObjectiveStatus = 'borrador' | 'activo' | 'en_riesgo' | 'cerrado' | 'cumplido' | 'no_cumplido';
 export type Priority = 'alta' | 'media' | 'baja';
 export type EntityStatus = 'activo' | 'inactivo';
 export type KPIFrequency = 'semanal' | 'mensual' | 'trimestral';
@@ -107,6 +107,8 @@ export function getStatusLabel(status: ObjectiveStatus): string {
     activo: 'Activo',
     en_riesgo: 'En Riesgo',
     cerrado: 'Cerrado',
+    cumplido: 'Cumplido',
+    no_cumplido: 'No Cumplido',
   };
   return map[status];
 }
