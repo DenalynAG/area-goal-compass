@@ -428,7 +428,7 @@ export default function LeaderPassPage() {
                 </div>
               </div>
 
-              {/* Notes & completed info */}
+              {/* Actions row */}
               <div className="mt-3 flex items-center gap-2">
                 <Button
                   variant="ghost"
@@ -440,7 +440,7 @@ export default function LeaderPassPage() {
                   }}
                 >
                   <MessageSquare className="w-3 h-3" />
-                  {record?.notes ? 'Ver notas' : 'Agregar notas'}
+                  Agregar notas
                 </Button>
                 <Button
                   variant="ghost"
@@ -457,6 +457,24 @@ export default function LeaderPassPage() {
                   </span>
                 )}
               </div>
+
+              {/* Notes list visible on card */}
+              {record?.notes && record.notes.trim() && (
+                <div className="mt-3 border-t pt-3 space-y-1.5">
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                    <MessageSquare className="w-3 h-3" />
+                    Notas
+                  </p>
+                  <div className="space-y-1">
+                    {record.notes.trim().split('\n').filter(line => line.trim()).map((line, i) => (
+                      <div key={i} className="flex items-start gap-1.5 text-xs text-foreground/80">
+                        <span className="shrink-0 mt-1.5 w-1 h-1 rounded-full bg-primary/50" />
+                        <span className="leading-relaxed">{line.trim()}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}
