@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useAreas, useSubareas, useProfiles, useMemberships, useUserRoles, getProfileName } from '@/hooks/useSupabaseData';
 import { useAuth } from '@/contexts/AuthContext';
 import { StatusBadge } from '@/components/StatusBadge';
-import { ChevronDown, ChevronRight, Plus, Edit, Trash2, Building2, Layers, User, Briefcase } from 'lucide-react';
+import { ChevronDown, ChevronRight, Plus, Edit, Trash2, Building2, Layers, User, Briefcase, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -28,7 +29,22 @@ export default function EstructuraPage() {
 
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const toggle = (id: string) => setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
-  const getExpanded = (id: string) => expanded[id] ?? true;
+  const getExpanded = (id: string) => expanded[id] ?? false;
+
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredAreas = useMemo(() => {
+    if (!searchQuery.trim()) return areas;
+    const q = searchQuery.toLowerCase();
+    return areas.filter(area => {
+      if (area.name.toLowerCase().includes(q)) return true;
+      const areaSubs = subareas.filter(s => s.area_id === area.id);
+      if (areaSubs.some(s => s.name.toLowerCase().includes(q))) return true;
+      const areaMembers = memberships.filter(m => m.area_id === area.id).map(m => m.user_id);
+      if (profiles.some(p => areaMembers.includes(p.id) && (p.name.toLowerCase().includes(q) || p.position?.toLowerCase().includes(q)))) return true;
+      return false;
+    });
+  }, [areas, subareas, memberships, profiles, searchQuery]);
 
   // Area dialog
   const [areaDialogOpen, setAreaDialogOpen] = useState(false);
@@ -151,13 +167,22 @@ export default function EstructuraPage() {
           <h1 className="page-title">Estructura Organizacional</h1>
           <p className="page-subtitle">Áreas y subáreas de la empresa</p>
         </div>
-        <Button onClick={openNewArea}><Plus className="w-4 h-4 mr-2" />Nueva Área</Button>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Buscar colaborador, área, subárea..."
+              className="pl-9 w-[280px]"
+            />
+          </div>
+          <Button onClick={openNewArea}><Plus className="w-4 h-4 mr-2" />Nueva Área</Button>
+        </div>
       </div>
 
-      
-
       <div className="space-y-3">
-        {areas.map(area => {
+        {filteredAreas.map(area => {
           const areaSubs = subareas.filter(s => s.area_id === area.id);
           const isOpen = getExpanded(area.id);
           const directCollabs = getAreaDirectCollabs(area.id);
