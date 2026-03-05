@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -153,12 +154,14 @@ export default function ObjetivoFormDialog({ open, onOpenChange, objective, area
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Responsable</Label>
-              <Select value={ownerUserId} onValueChange={setOwnerUserId}>
-                <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
-                <SelectContent>
-                  {profiles.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <SearchableSelect
+                value={ownerUserId}
+                onValueChange={setOwnerUserId}
+                options={profiles.map(p => ({ value: p.id, label: p.name }))}
+                placeholder="Seleccionar..."
+                searchPlaceholder="Buscar responsable..."
+                className="w-full"
+              />
             </div>
             <div className="space-y-2">
               <Label>Prioridad</Label>
