@@ -67,12 +67,21 @@ export default function EstructuraPage() {
   const openNewSubarea = (areaId: string) => { setEditingSubarea(null); setSubareaParentId(areaId); setSubareaDialogOpen(true); };
   const openEditSubarea = (s: Tables<'subareas'>) => { setEditingSubarea(s); setSubareaParentId(s.area_id); setSubareaDialogOpen(true); };
 
+  // Delete area state
+  const [deleteAreaId, setDeleteAreaId] = useState<string | null>(null);
+  const deleteAreaName = areas.find(a => a.id === deleteAreaId)?.name ?? '';
+
+  const confirmDeleteArea = async () => {
+    if (!deleteAreaId) return;
+    const { error } = await supabase.from('areas').delete().eq('id', deleteAreaId);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Área eliminada');
+    qc.invalidateQueries({ queryKey: ['areas'] });
+    setDeleteAreaId(null);
+  };
+
   const [deleteSubareaId, setDeleteSubareaId] = useState<string | null>(null);
   const deleteSubareaName = subareas.find(s => s.id === deleteSubareaId)?.name ?? '';
-
-  // Delete collaborator state
-  const [deleteColabId, setDeleteColabId] = useState<string | null>(null);
-  const deleteColabName = profiles.find(p => p.id === deleteColabId)?.name ?? '';
 
   const confirmDeleteSubarea = async () => {
     if (!deleteSubareaId) return;
@@ -82,6 +91,10 @@ export default function EstructuraPage() {
     qc.invalidateQueries({ queryKey: ['subareas'] });
     setDeleteSubareaId(null);
   };
+
+  // Delete collaborator state
+  const [deleteColabId, setDeleteColabId] = useState<string | null>(null);
+  const deleteColabName = profiles.find(p => p.id === deleteColabId)?.name ?? '';
 
   const confirmDeleteColab = async () => {
     if (!deleteColabId) return;
@@ -211,7 +224,10 @@ export default function EstructuraPage() {
                     }</span>
                   </div>
                 </button>
-                <Button variant="ghost" size="icon" className="shrink-0 mr-2" onClick={() => openEditArea(area)}><Edit className="w-4 h-4" /></Button>
+                <Button variant="ghost" size="icon" className="shrink-0" onClick={() => openEditArea(area)}><Edit className="w-4 h-4" /></Button>
+                {isSuperAdmin && (
+                  <Button variant="ghost" size="icon" className="shrink-0 mr-2 text-destructive" onClick={() => setDeleteAreaId(area.id)}><Trash2 className="w-4 h-4" /></Button>
+                )}
               </div>
 
               {isOpen && (
@@ -326,6 +342,23 @@ export default function EstructuraPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDeleteColab} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!deleteAreaId} onOpenChange={(open) => !open && setDeleteAreaId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar área?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Estás a punto de eliminar el área <strong>{deleteAreaName}</strong>. Se eliminarán todas las subáreas y membresías asociadas. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteArea} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Eliminar
             </AlertDialogAction>
           </AlertDialogFooter>
