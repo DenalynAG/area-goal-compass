@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -180,12 +181,14 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, are
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Objetivo *</Label>
-              <Select value={objectiveId} onValueChange={setObjectiveId}>
-                <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
-                <SelectContent>
-                  {filteredObjectives.map(o => <SelectItem key={o.id} value={o.id}>{o.title}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <SearchableSelect
+                value={objectiveId}
+                onValueChange={setObjectiveId}
+                options={filteredObjectives.map(o => ({ value: o.id, label: o.title }))}
+                placeholder="Seleccionar..."
+                searchPlaceholder="Buscar objetivo..."
+                className="w-full"
+              />
               {filteredObjectives.length === 0 && (
                 <p className="text-xs text-muted-foreground">No hay objetivos para el filtro seleccionado</p>
               )}
