@@ -140,7 +140,7 @@ export default function AuditoriasPage() {
   const [expandedPlanId, setExpandedPlanId] = useState<string | null>(null);
 
   // ─── Plan CRUD ───
-  const [planForm, setPlanForm] = useState({ title: "", description: "", area_id: "", responsible_user_id: "", auditor_user_id: "", planned_date: "", status: "pendiente" });
+  const [planForm, setPlanForm] = useState({ title: "", description: "", area_id: "", responsible_user_id: "", auditor_user_id: "", planned_date: "", status: "pendiente" as "pendiente" | "en_proceso" | "cumple" | "no_cumple" | "pendiente_cierre" });
 
   const openPlanDialog = (plan?: AuditPlan) => {
     if (plan) {
