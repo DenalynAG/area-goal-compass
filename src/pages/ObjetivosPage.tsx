@@ -455,6 +455,30 @@ function ObjectiveCard({
                 </tr>
               ))}
             </tbody>
+            <tfoot>
+              <tr className="border-t-2 border-border">
+                <td colSpan={2} className="py-2 text-right font-semibold text-sm">Promedio General:</td>
+                <td className="py-2 font-bold text-sm">
+                  {(() => {
+                    const avg = objKpis.length > 0
+                      ? Math.round(objKpis.reduce((sum, k) => sum + (k.target > 0 ? (k.current_value / k.target) * 100 : 0), 0) / objKpis.length)
+                      : 0;
+                    return `${avg}%`;
+                  })()}
+                </td>
+                <td className="py-2">
+                  {(() => {
+                    const avg = objKpis.length > 0
+                      ? Math.round(objKpis.reduce((sum, k) => sum + (k.target > 0 ? (k.current_value / k.target) * 100 : 0), 0) / objKpis.length)
+                      : 0;
+                    const label = avg >= 100 ? 'Alto' : avg >= 80 ? 'Medio' : 'Bajo';
+                    const color = avg >= 100 ? 'text-green-600 bg-green-50' : avg >= 80 ? 'text-yellow-600 bg-yellow-50' : 'text-red-600 bg-red-50';
+                    return <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${color}`}>{label} ({avg}%)</span>;
+                  })()}
+                </td>
+                <td></td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       )}
