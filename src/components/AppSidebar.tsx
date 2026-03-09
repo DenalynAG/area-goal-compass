@@ -30,7 +30,12 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { to: "/", icon: Newspaper, label: "Portal OSH" },
-  { to: "/estructura", icon: Building2, label: "Estructura" },
+  {
+    to: "/estructura",
+    icon: Building2,
+    label: "Estructura",
+    children: [{ to: "/organigrama", label: "Organigrama" }],
+  },
   { to: "/colaboradores", icon: Users, label: "Colaboradores" },
   { to: "/objetivos", icon: Target, label: "Objetivos" },
   { to: "/leader-pass", icon: ClipboardList, label: "Leader Pass" },
@@ -42,7 +47,6 @@ const navItems: NavItem[] = [
   },
   { to: "/reportes", icon: FileText, label: "Reportes" },
   { to: "/evaluaciones", icon: ClipboardCheck, label: "Evaluaciones" },
-  { to: "/organigrama", icon: Building2, label: "Organigrama" },
   { to: "/administracion", icon: Settings, label: "Administración" },
 ];
 
