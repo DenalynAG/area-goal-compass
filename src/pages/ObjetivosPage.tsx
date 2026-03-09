@@ -89,8 +89,8 @@ export default function ObjetivosPage() {
 
   const globalProgress = useMemo(() => {
     if (globalObjectives.length === 0) return 0;
-    return Math.round(globalObjectives.reduce((sum, o) => sum + o.progress_percent, 0) / globalObjectives.length);
-  }, [globalObjectives]);
+    return Math.round(globalObjectives.reduce((sum, o) => sum + getObjProgress(o), 0) / globalObjectives.length);
+  }, [globalObjectives, kpis]);
 
   // Get areas that the objectives reference (as tags)
   const getObjectiveAreaTags = (obj: Tables<'objectives'>) => {
