@@ -12,6 +12,7 @@ import EvidencePanel from '@/components/EvidencePanel';
 export default function ObjetivosPage() {
   const { data: objectives = [], isLoading } = useObjectives();
   const { data: kpis = [] } = useKPIs();
+  const { data: measurements = [] } = useKPIMeasurements();
   const { data: areas = [] } = useAreas();
   const { data: subareas = [] } = useSubareas();
   const { data: profiles = [] } = useProfiles();
