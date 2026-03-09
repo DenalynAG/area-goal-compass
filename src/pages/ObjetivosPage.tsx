@@ -309,6 +309,7 @@ export default function ObjetivosPage() {
                           profiles={profiles}
                           areas={areas}
                           subareas={subareas}
+                          measurements={measurements}
                         />
                       );
                     })}
