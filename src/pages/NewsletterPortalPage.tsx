@@ -202,17 +202,77 @@ export default function NewsletterPortalPage() {
           <h1 className="page-title">Portal OSH</h1>
           <p className="page-subtitle">Tu feed de novedades y reconocimientos</p>
         </div>
-        {canManage && (
-          <Button
-            onClick={() => {
-              setEditingPost(null);
-              setPostDialogOpen(true);
-            }}
-            className="rounded-full"
-          >
-            <Plus className="w-4 h-4 mr-1" /> Publicar
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {/* Notification bell */}
+          <div ref={bellRef} className="relative">
+            <button
+              onClick={() => setBellOpen((v) => !v)}
+              className="relative p-2 rounded-full hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+            >
+              <Bell className="w-5 h-5" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {bellOpen && (
+              <div className="absolute right-0 top-full mt-2 w-80 bg-popover border rounded-xl shadow-xl z-50 overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b">
+                  <span className="text-sm font-semibold">Notificaciones</span>
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={markAllRead}
+                      className="text-xs text-primary hover:underline flex items-center gap-1"
+                    >
+                      <Check className="w-3 h-3" /> Marcar todo leído
+                    </button>
+                  )}
+                </div>
+                <div className="max-h-80 overflow-y-auto">
+                  {notifications.length === 0 ? (
+                    <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+                      Sin notificaciones
+                    </div>
+                  ) : (
+                    notifications.map((n) => (
+                      <div
+                        key={n.id}
+                        className={`px-4 py-3 border-b last:border-0 transition-colors ${
+                          n.is_read ? "opacity-60" : "bg-primary/5"
+                        }`}
+                      >
+                        <div className="flex items-start gap-2.5">
+                          <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${n.is_read ? "bg-muted-foreground/30" : "bg-primary"}`} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-semibold">{n.title}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{n.body}</p>
+                            <p className="text-[10px] text-muted-foreground mt-1">
+                              {formatDistanceToNow(new Date(n.created_at), { addSuffix: true, locale: es })}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {canManage && (
+            <Button
+              onClick={() => {
+                setEditingPost(null);
+                setPostDialogOpen(true);
+              }}
+              className="rounded-full"
+            >
+              <Plus className="w-4 h-4 mr-1" /> Publicar
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
