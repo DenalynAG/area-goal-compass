@@ -21,6 +21,8 @@ export default function ObjetivosPage() {
   const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null);
   const [expandedObj, setExpandedObj] = useState<Record<string, boolean>>({});
   const [globalExpanded, setGlobalExpanded] = useState(false);
+  const [expandedAreas, setExpandedAreas] = useState<Record<string, boolean>>({});
+  const toggleArea = (id: string) => setExpandedAreas(prev => ({ ...prev, [id]: !prev[id] }));
 
   // KPI dialog state
   const [kpiDialogOpen, setKpiDialogOpen] = useState(false);
@@ -237,54 +239,70 @@ export default function ObjetivosPage() {
       <section>
         <div className="mb-4">
           <h2 className="text-xl font-bold">Objetivos por Áreas:</h2>
-          <p className="text-sm text-muted-foreground">{otherAreas.length} departamentos · Haz clic para ver detalles</p>
+          <p className="text-sm text-muted-foreground">{otherAreas.length} departamentos · Haz clic para expandir o ver detalles</p>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="space-y-3">
           {otherAreas.map(area => {
             const areaObjs = getAreaObjectives(area.id);
             const areaKpisList = getAreaKpis(area.id);
             const progress = getAreaProgress(area.id);
             const areaSubareas = subareas.filter(s => s.area_id === area.id);
+            const isAreaExpanded = expandedAreas[area.id];
 
             return (
-              <button
-                key={area.id}
-                onClick={() => setSelectedAreaId(area.id)}
-                className="bg-card border rounded-xl p-4 text-left hover:shadow-md hover:border-primary/30 transition-all group"
-              >
-                <div className="flex items-start justify-between mb-1">
-                  <div>
-                    <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">{area.name}</h3>
-                    {area.leader_user_id && (
-                      <p className="text-xs text-muted-foreground">Líder: {getProfileName(profiles, area.leader_user_id)}</p>
-                    )}
-                    <p className="text-xs text-muted-foreground">{areaObjs.length} objetivo{areaObjs.length !== 1 ? 's' : ''}</p>
+              <div key={area.id} className="bg-card border rounded-xl shadow-sm overflow-hidden">
+                <button
+                  onClick={() => toggleArea(area.id)}
+                  className="w-full px-5 py-4 flex items-center gap-3 hover:bg-muted/30 transition-colors"
+                >
+                  {isAreaExpanded ? <ChevronDown className="w-5 h-5 text-muted-foreground" /> : <ChevronRight className="w-5 h-5 text-muted-foreground" />}
+                  <Target className="w-5 h-5 text-primary" />
+                  <div className="flex-1 text-left">
+                    <h3 className="text-base font-bold">{area.name}</h3>
+                    <p className="text-xs text-muted-foreground">
+                      {area.leader_user_id && `Líder: ${getProfileName(profiles, area.leader_user_id)} · `}
+                      {areaObjs.length} objetivo{areaObjs.length !== 1 ? 's' : ''} · {areaSubareas.length > 0 ? `${areaSubareas.length} subárea${areaSubareas.length !== 1 ? 's' : ''} · ` : ''}
+                      {progress}%
+                    </p>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors mt-1" />
-                </div>
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <span>{areaKpisList.length} indicadores</span>
+                    <StatusBadge status={area.status} />
+                  </div>
+                  <Button size="sm" variant="outline" className="ml-2" onClick={(e) => { e.stopPropagation(); setSelectedAreaId(area.id); }}>
+                    Ver detalle
+                  </Button>
+                </button>
 
-                <ProgressBar value={progress} className="my-3" />
-
-                <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-                  <span>{areaKpisList.length} indicadores</span>
-                  <span className="font-semibold text-foreground">{progress}%</span>
-                </div>
-
-                {areaSubareas.length > 0 && (
-                  <div className="border-t pt-2 space-y-1">
-                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Subáreas</p>
-                    {areaSubareas.map(sub => (
-                      <div key={sub.id} className="flex items-center justify-between text-xs">
-                        <span className="text-foreground">{sub.name}</span>
-                        {sub.leader_user_id && (
-                          <span className="text-muted-foreground truncate ml-2 max-w-[50%] text-right">{getProfileName(profiles, sub.leader_user_id)}</span>
-                        )}
-                      </div>
-                    ))}
+                {isAreaExpanded && (
+                  <div className="border-t px-5 py-4 space-y-3">
+                    {areaObjs.map((obj, idx) => {
+                      const objKpis = kpis.filter(k => k.objective_id === obj.id);
+                      const isOpen = expandedObj[obj.id];
+                      return (
+                        <ObjectiveCard
+                          key={obj.id}
+                          obj={obj}
+                          index={idx + 1}
+                          objKpis={objKpis}
+                          isOpen={isOpen}
+                          onToggle={() => toggleObj(obj.id)}
+                          onEdit={() => openEdit(obj)}
+                          onNewKPI={() => openNewKPI(obj.id)}
+                          onEditKPI={openEditKPI}
+                          profiles={profiles}
+                          areas={areas}
+                          subareas={subareas}
+                        />
+                      );
+                    })}
+                    {areaObjs.length === 0 && (
+                      <div className="text-center py-8 text-muted-foreground bg-muted/30 rounded-lg">No hay objetivos registrados para esta área</div>
+                    )}
                   </div>
                 )}
-              </button>
+              </div>
             );
           })}
         </div>
