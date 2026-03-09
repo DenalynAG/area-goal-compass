@@ -79,6 +79,138 @@ export type Database = {
           },
         ]
       }
+      audit_comments: {
+        Row: {
+          comment: string
+          created_at: string
+          finding_id: string
+          id: string
+          role_label: string
+          user_id: string
+          user_name: string | null
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          finding_id: string
+          id?: string
+          role_label?: string
+          user_id: string
+          user_name?: string | null
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          finding_id?: string
+          id?: string
+          role_label?: string
+          user_id?: string
+          user_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_comments_finding_id_fkey"
+            columns: ["finding_id"]
+            isOneToOne: false
+            referencedRelation: "audit_findings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_findings: {
+        Row: {
+          action_description: string | null
+          audit_plan_id: string
+          created_at: string
+          description: string
+          due_date: string | null
+          finding_type: Database["public"]["Enums"]["finding_status"]
+          id: string
+          responsible_user_id: string | null
+          severity: Database["public"]["Enums"]["finding_severity"]
+          updated_at: string
+        }
+        Insert: {
+          action_description?: string | null
+          audit_plan_id: string
+          created_at?: string
+          description: string
+          due_date?: string | null
+          finding_type?: Database["public"]["Enums"]["finding_status"]
+          id?: string
+          responsible_user_id?: string | null
+          severity?: Database["public"]["Enums"]["finding_severity"]
+          updated_at?: string
+        }
+        Update: {
+          action_description?: string | null
+          audit_plan_id?: string
+          created_at?: string
+          description?: string
+          due_date?: string | null
+          finding_type?: Database["public"]["Enums"]["finding_status"]
+          id?: string
+          responsible_user_id?: string | null
+          severity?: Database["public"]["Enums"]["finding_severity"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_findings_audit_plan_id_fkey"
+            columns: ["audit_plan_id"]
+            isOneToOne: false
+            referencedRelation: "audit_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_plans: {
+        Row: {
+          area_id: string
+          auditor_user_id: string
+          created_at: string
+          description: string | null
+          id: string
+          planned_date: string
+          responsible_user_id: string
+          status: Database["public"]["Enums"]["audit_plan_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          area_id: string
+          auditor_user_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          planned_date?: string
+          responsible_user_id: string
+          status?: Database["public"]["Enums"]["audit_plan_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          area_id?: string
+          auditor_user_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          planned_date?: string
+          responsible_user_id?: string
+          status?: Database["public"]["Enums"]["audit_plan_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_plans_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       evaluation_criteria: {
         Row: {
           created_at: string
@@ -767,8 +899,16 @@ export type Database = {
         | "lider_subarea"
         | "colaborador"
         | "solo_lectura"
+      audit_plan_status:
+        | "pendiente"
+        | "en_proceso"
+        | "cumple"
+        | "no_cumple"
+        | "pendiente_cierre"
       entity_status: "activo" | "inactivo"
       evaluation_type: "feedback" | "desempeno" | "performance" | "one_to_one"
+      finding_severity: "critico" | "leve" | "bajo"
+      finding_status: "abierta" | "cerrada"
       kpi_frequency: "semanal" | "mensual" | "trimestral"
       objective_status:
         | "borrador"
@@ -912,8 +1052,17 @@ export const Constants = {
         "colaborador",
         "solo_lectura",
       ],
+      audit_plan_status: [
+        "pendiente",
+        "en_proceso",
+        "cumple",
+        "no_cumple",
+        "pendiente_cierre",
+      ],
       entity_status: ["activo", "inactivo"],
       evaluation_type: ["feedback", "desempeno", "performance", "one_to_one"],
+      finding_severity: ["critico", "leve", "bajo"],
+      finding_status: ["abierta", "cerrada"],
       kpi_frequency: ["semanal", "mensual", "trimestral"],
       objective_status: [
         "borrador",
