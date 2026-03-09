@@ -405,9 +405,17 @@ export default function ObjetivosPage() {
 
       {/* Section 2: Objectives by Area */}
       <section>
-        <div className="mb-4">
-          <h2 className="text-xl font-bold">Objetivos por Áreas:</h2>
-          <p className="text-sm text-muted-foreground">{otherAreas.length} departamentos · Haz clic para expandir o ver detalles</p>
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold">Objetivos por Áreas:</h2>
+            <p className="text-sm text-muted-foreground">{otherAreas.length} departamentos · Haz clic para expandir o ver detalles</p>
+          </div>
+          <div>
+            <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleImportExcel} />
+            <Button variant="outline" size="sm" disabled={importing} onClick={() => fileInputRef.current?.click()}>
+              <Upload className="w-4 h-4 mr-2" />{importing ? 'Importando...' : 'Importar Excel'}
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-3">
