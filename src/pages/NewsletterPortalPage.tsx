@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   useProfiles,
@@ -7,7 +7,7 @@ import {
   useMemberships,
 } from "@/hooks/useSupabaseData";
 import { supabase } from "@/integrations/supabase/client";
-import { Award, Cake, Megaphone, Plus, Pencil, Heart, MessageCircle, Share2, Sparkles, PartyPopper, Send, Trash2, CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import { Award, Cake, Megaphone, Plus, Pencil, Heart, MessageCircle, Share2, Sparkles, PartyPopper, Send, Trash2, CalendarDays, ChevronLeft, ChevronRight, Bell, Check } from "lucide-react";
 import { format, parseISO, isSameDay, formatDistanceToNow, startOfMonth, endOfMonth, eachDayOfInterval, getDay } from "date-fns";
 import { es } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,37 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import NewsletterPostFormDialog from "@/components/NewsletterPostFormDialog";
+
+interface Notification {
+  id: string;
+  user_id: string;
+  type: string;
+  title: string;
+  body: string;
+  link: string;
+  is_read: boolean;
+  created_at: string;
+  created_by: string | null;
+}
+
+function useNotifications(userId?: string) {
+  return useQuery({
+    queryKey: ["notifications", userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(30);
+      if (error) throw error;
+      return data as Notification[];
+    },
+    enabled: !!userId,
+    refetchInterval: 15000, // poll every 15s
+  });
+}
 
 interface NewsletterComment {
   id: string;
@@ -44,6 +75,7 @@ export default function NewsletterPortalPage() {
   const { data: memberships = [] } = useMemberships();
   const { data: allComments = [] } = useNewsletterComments();
   const { user, profile, hasRole, isSuperAdmin } = useAuth();
+  const { data: notifications = [] } = useNotifications(user?.id);
   const qc = useQueryClient();
   const canManage = hasRole("super_admin") || hasRole("admin_area");
 
@@ -54,6 +86,26 @@ export default function NewsletterPortalPage() {
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(new Date());
+  const [bellOpen, setBellOpen] = useState(false);
+  const bellRef = useRef<HTMLDivElement>(null);
+
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
+
+  // Close bell dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (bellRef.current && !bellRef.current.contains(e.target as Node)) setBellOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const markAllRead = async () => {
+    const unread = notifications.filter((n) => !n.is_read);
+    if (unread.length === 0) return;
+    await supabase.from("notifications").update({ is_read: true } as any).eq("user_id", user!.id).eq("is_read", false);
+    qc.invalidateQueries({ queryKey: ["notifications"] });
+  };
 
   const today = new Date();
 
@@ -106,6 +158,19 @@ export default function NewsletterPortalPage() {
     if (error) { toast.error(error.message); return; }
     setCommentInputs((prev) => ({ ...prev, [postId]: "" }));
     qc.invalidateQueries({ queryKey: ["newsletter_comments"] });
+
+    // Send notification to post author
+    const post = posts.find((p) => p.id === postId);
+    if (post?.created_by && post.created_by !== user.id) {
+      await supabase.from("notifications").insert({
+        user_id: post.created_by,
+        type: "comment",
+        title: "Nuevo comentario",
+        body: `${profile?.name ?? "Alguien"} comentó en tu publicación "${post.title}"`,
+        link: "/",
+        created_by: user.id,
+      } as any);
+    }
   };
 
   const deleteComment = async (commentId: string) => {
@@ -137,17 +202,77 @@ export default function NewsletterPortalPage() {
           <h1 className="page-title">Portal OSH</h1>
           <p className="page-subtitle">Tu feed de novedades y reconocimientos</p>
         </div>
-        {canManage && (
-          <Button
-            onClick={() => {
-              setEditingPost(null);
-              setPostDialogOpen(true);
-            }}
-            className="rounded-full"
-          >
-            <Plus className="w-4 h-4 mr-1" /> Publicar
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {/* Notification bell */}
+          <div ref={bellRef} className="relative">
+            <button
+              onClick={() => setBellOpen((v) => !v)}
+              className="relative p-2 rounded-full hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+            >
+              <Bell className="w-5 h-5" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {bellOpen && (
+              <div className="absolute right-0 top-full mt-2 w-80 bg-popover border rounded-xl shadow-xl z-50 overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b">
+                  <span className="text-sm font-semibold">Notificaciones</span>
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={markAllRead}
+                      className="text-xs text-primary hover:underline flex items-center gap-1"
+                    >
+                      <Check className="w-3 h-3" /> Marcar todo leído
+                    </button>
+                  )}
+                </div>
+                <div className="max-h-80 overflow-y-auto">
+                  {notifications.length === 0 ? (
+                    <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+                      Sin notificaciones
+                    </div>
+                  ) : (
+                    notifications.map((n) => (
+                      <div
+                        key={n.id}
+                        className={`px-4 py-3 border-b last:border-0 transition-colors ${
+                          n.is_read ? "opacity-60" : "bg-primary/5"
+                        }`}
+                      >
+                        <div className="flex items-start gap-2.5">
+                          <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${n.is_read ? "bg-muted-foreground/30" : "bg-primary"}`} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-semibold">{n.title}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{n.body}</p>
+                            <p className="text-[10px] text-muted-foreground mt-1">
+                              {formatDistanceToNow(new Date(n.created_at), { addSuffix: true, locale: es })}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {canManage && (
+            <Button
+              onClick={() => {
+                setEditingPost(null);
+                setPostDialogOpen(true);
+              }}
+              className="rounded-full"
+            >
+              <Plus className="w-4 h-4 mr-1" /> Publicar
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
