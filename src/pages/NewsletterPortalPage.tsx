@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   useProfiles,
@@ -7,7 +7,7 @@ import {
   useMemberships,
 } from "@/hooks/useSupabaseData";
 import { supabase } from "@/integrations/supabase/client";
-import { Award, Cake, Megaphone, Plus, Pencil, Heart, MessageCircle, Share2, Sparkles, PartyPopper, Send, Trash2, CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import { Award, Cake, Megaphone, Plus, Pencil, Heart, MessageCircle, Share2, Sparkles, PartyPopper, Send, Trash2, CalendarDays, ChevronLeft, ChevronRight, Bell, Check } from "lucide-react";
 import { format, parseISO, isSameDay, formatDistanceToNow, startOfMonth, endOfMonth, eachDayOfInterval, getDay } from "date-fns";
 import { es } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,37 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import NewsletterPostFormDialog from "@/components/NewsletterPostFormDialog";
+
+interface Notification {
+  id: string;
+  user_id: string;
+  type: string;
+  title: string;
+  body: string;
+  link: string;
+  is_read: boolean;
+  created_at: string;
+  created_by: string | null;
+}
+
+function useNotifications(userId?: string) {
+  return useQuery({
+    queryKey: ["notifications", userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(30);
+      if (error) throw error;
+      return data as Notification[];
+    },
+    enabled: !!userId,
+    refetchInterval: 15000, // poll every 15s
+  });
+}
 
 interface NewsletterComment {
   id: string;
