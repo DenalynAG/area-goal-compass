@@ -148,7 +148,7 @@ export default function AuditoriasPage() {
       setPlanForm({
         title: plan.title, description: plan.description ?? "", area_id: plan.area_id,
         responsible_user_id: plan.responsible_user_id, auditor_user_id: plan.auditor_user_id,
-        planned_date: plan.planned_date, status: plan.status,
+        planned_date: plan.planned_date, status: plan.status as typeof planForm.status,
       });
     } else {
       setEditingPlan(null);
