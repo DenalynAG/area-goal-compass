@@ -361,13 +361,12 @@ function ObjectiveCard({
   const kpiIds = objKpis.map(k => k.id);
   const relevantMeasurements = (measurements ?? []).filter(m => kpiIds.includes(m.kpi_id));
   const currentYear = new Date().getFullYear();
-  const currentMonthIdx = new Date().getMonth(); // 0-based
   const availableMonths = useMemo(() => {
-    return Array.from({ length: currentMonthIdx + 1 }, (_, i) => {
+    return Array.from({ length: 12 }, (_, i) => {
       const mm = String(i + 1).padStart(2, '0');
       return `${currentYear}-${mm}`;
     });
-  }, [currentYear, currentMonthIdx]);
+  }, [currentYear]);
 
   const monthLabels: Record<string, string> = {
     '01': 'Ene', '02': 'Feb', '03': 'Mar', '04': 'Abr', '05': 'May', '06': 'Jun',
