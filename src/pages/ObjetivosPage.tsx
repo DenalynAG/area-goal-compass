@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useObjectives, useKPIs, useAreas, useSubareas, useProfiles, getProfileName, getAreaNameFromList } from '@/hooks/useSupabaseData';
+import { useObjectives, useKPIs, useKPIMeasurements, useAreas, useSubareas, useProfiles, getProfileName, getAreaNameFromList } from '@/hooks/useSupabaseData';
 import { getTrafficLight } from '@/types';
 import { StatusBadge, ProgressBar, TrafficLightBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
