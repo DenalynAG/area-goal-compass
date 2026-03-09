@@ -685,7 +685,7 @@ export default function AuditoriasPage() {
               </div>
               <div>
                 <Label>Severidad</Label>
-                <Select value={findingForm.severity} onValueChange={(v) => setFindingForm({ ...findingForm, severity: v })}>
+                <Select value={findingForm.severity} onValueChange={(v) => setFindingForm({ ...findingForm, severity: v as typeof findingForm.severity })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="critico">Crítico</SelectItem>
