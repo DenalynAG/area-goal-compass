@@ -189,7 +189,7 @@ export default function AuditoriasPage() {
       setEditingFinding(finding);
       setFindingForm({
         description: finding.description, action_description: finding.action_description ?? "",
-        finding_type: finding.finding_type, severity: finding.severity,
+        finding_type: finding.finding_type as typeof findingForm.finding_type, severity: finding.severity as typeof findingForm.severity,
         responsible_user_id: finding.responsible_user_id ?? "", due_date: finding.due_date ?? "",
       });
     } else {
