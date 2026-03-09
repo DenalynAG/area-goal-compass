@@ -188,12 +188,16 @@ export default function ObjetivosPage() {
         >
           {globalExpanded ? <ChevronDown className="w-5 h-5 text-muted-foreground" /> : <ChevronRight className="w-5 h-5 text-muted-foreground" />}
           <Target className="w-5 h-5 text-primary" />
-          <div className="flex-1 text-left">
+          <div className="flex-1 text-left min-w-0">
             <h1 className="text-base font-bold">Objetivos Globales — Dirección General</h1>
             <p className="text-xs text-muted-foreground">
               {direccionGeneral?.leader_user_id && `Líder: ${getProfileName(profiles, direccionGeneral.leader_user_id)} · `}
-              {globalObjectives.length} objetivo{globalObjectives.length !== 1 ? 's' : ''} estratégico{globalObjectives.length !== 1 ? 's' : ''}
+              {globalObjectives.length} objetivo{globalObjectives.length !== 1 ? 's' : ''} estratégico{globalObjectives.length !== 1 ? 's' : ''} · {globalProgress}%
             </p>
+            <div className="mt-2 flex items-center gap-2">
+              <ProgressBar value={globalProgress} className="flex-1" />
+              <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">{globalProgress}%</span>
+            </div>
           </div>
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
             <span>{globalKpis.length} indicadores</span>
