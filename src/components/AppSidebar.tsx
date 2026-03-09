@@ -90,6 +90,54 @@ export default function AppSidebar() {
       <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto text-primary">
         {navItems.map((item) => {
           const isActive = location.pathname === item.to || (item.to !== "/" && location.pathname.startsWith(item.to));
+
+          if (item.children) {
+            const isGroupExpanded = expandedGroups.has(item.to);
+            return (
+              <div key={item.to}>
+                <button
+                  onClick={() => toggleGroup(item.to)}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all w-full",
+                    isActive
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+                  )}
+                >
+                  <item.icon className="w-5 h-5 shrink-0" />
+                  {!collapsed && (
+                    <>
+                      <span className="truncate flex-1 text-left">{item.label}</span>
+                      <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", isGroupExpanded && "rotate-180")} />
+                    </>
+                  )}
+                </button>
+                {isGroupExpanded && !collapsed && (
+                  <div className="ml-5 pl-3 border-l border-sidebar-border space-y-0.5 mt-0.5">
+                    {item.children.map((child) => {
+                      const childActive = location.pathname === child.to;
+                      return (
+                        <NavLink
+                          key={child.to}
+                          to={child.to}
+                          onClick={() => setMobileOpen(false)}
+                          className={cn(
+                            "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all",
+                            childActive
+                              ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                              : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+                          )}
+                        >
+                          <span className="truncate">{child.label}</span>
+                        </NavLink>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          }
+
           return (
             <NavLink
               key={item.to}
