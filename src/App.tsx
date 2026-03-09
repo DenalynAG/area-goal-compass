@@ -37,6 +37,7 @@ function ProtectedRoutes() {
         <Route path="/objetivos" element={<ObjetivosPage />} />
         <Route path="/indicadores" element={<IndicadoresPage />} />
         <Route path="/leader-pass" element={<LeaderPassPage />} />
+        <Route path="/calidad/auditorias" element={<AuditoriasPage />} />
         <Route path="/reportes" element={<ReportesPage />} />
         <Route path="/evaluaciones" element={<EvaluacionesPage />} />
         <Route path="/organigrama" element={<OrganigramaPage />} />

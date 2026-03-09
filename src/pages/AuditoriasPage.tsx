@@ -181,7 +181,7 @@ export default function AuditoriasPage() {
   };
 
   // ─── Finding CRUD ───
-  const [findingForm, setFindingForm] = useState({ description: "", action_description: "", finding_type: "abierta", severity: "leve", responsible_user_id: "", due_date: "" });
+  const [findingForm, setFindingForm] = useState({ description: "", action_description: "", finding_type: "abierta" as "abierta" | "cerrada", severity: "leve" as "critico" | "leve" | "bajo", responsible_user_id: "", due_date: "" });
 
   const openFindingDialog = (planId: string, finding?: AuditFinding) => {
     setFindingPlanId(planId);
