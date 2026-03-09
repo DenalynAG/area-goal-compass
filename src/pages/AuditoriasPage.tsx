@@ -641,7 +641,7 @@ export default function AuditoriasPage() {
               </div>
               <div>
                 <Label>Estado</Label>
-                <Select value={planForm.status} onValueChange={(v) => setPlanForm({ ...planForm, status: v })}>
+                <Select value={planForm.status} onValueChange={(v) => setPlanForm({ ...planForm, status: v as typeof planForm.status })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {Object.entries(STATUS_CONFIG).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
