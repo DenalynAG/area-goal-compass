@@ -258,13 +258,17 @@ export default function ObjetivosPage() {
                 >
                   {isAreaExpanded ? <ChevronDown className="w-5 h-5 text-muted-foreground" /> : <ChevronRight className="w-5 h-5 text-muted-foreground" />}
                   <Target className="w-5 h-5 text-primary" />
-                  <div className="flex-1 text-left">
+                  <div className="flex-1 text-left min-w-0">
                     <h3 className="text-base font-bold">{area.name}</h3>
                     <p className="text-xs text-muted-foreground">
                       {area.leader_user_id && `Líder: ${getProfileName(profiles, area.leader_user_id)} · `}
                       {areaObjs.length} objetivo{areaObjs.length !== 1 ? 's' : ''} · {areaSubareas.length > 0 ? `${areaSubareas.length} subárea${areaSubareas.length !== 1 ? 's' : ''} · ` : ''}
                       {progress}%
                     </p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <ProgressBar value={progress} className="flex-1" />
+                      <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">{progress}%</span>
+                    </div>
                   </div>
                   <div className="flex items-center gap-3 text-sm text-muted-foreground">
                     <span>{areaKpisList.length} indicadores</span>
