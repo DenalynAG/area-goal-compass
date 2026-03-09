@@ -151,7 +151,7 @@ export default function ObjetivosPage() {
         {areaSubareas.map(sub => {
           const subObjs = getSubareaObjs(sub.id);
           const subKpis = kpis.filter(k => subObjs.some(o => o.id === k.objective_id));
-          const subProgress = subObjs.length > 0 ? Math.round(subObjs.reduce((s, o) => s + o.progress_percent, 0) / subObjs.length) : 0;
+          const subProgress = subObjs.length > 0 ? Math.round(subObjs.reduce((s, o) => s + getObjProgress(o), 0) / subObjs.length) : 0;
 
           return (
             <div key={sub.id} className="space-y-3">
