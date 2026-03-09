@@ -201,10 +201,6 @@ export default function ObjetivoFormDialog({ open, onOpenChange, objective, area
               <Label>Fecha Fin</Label>
               <Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
             </div>
-            <div className="space-y-2">
-              <Label>Avance %</Label>
-              <Input type="number" min={0} max={100} value={progressPercent} onChange={e => setProgressPercent(Number(e.target.value))} />
-            </div>
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
