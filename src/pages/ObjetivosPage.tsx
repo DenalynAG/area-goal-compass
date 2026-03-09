@@ -163,7 +163,7 @@ export default function ObjetivosPage() {
                 return (
                 <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis} isOpen={isOpen}
                   onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={() => openNewKPI(obj.id)} onEditKPI={openEditKPI}
-                  profiles={profiles} areas={areas} subareas={subareas} />
+                  profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} />
                 );
               })}
               {subObjs.length === 0 && (
