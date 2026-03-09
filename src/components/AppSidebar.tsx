@@ -93,7 +93,7 @@ export default function AppSidebar() {
       {/* Nav */}
       <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto text-primary">
         {navItems.map((item) => {
-          const isActive = location.pathname === item.to || (item.to !== "/" && location.pathname.startsWith(item.to));
+          const isActive = location.pathname === item.to || (item.to !== "/" && location.pathname.startsWith(item.to)) || (item.children?.some(c => location.pathname === c.to));
 
           if (item.children) {
             const isGroupExpanded = expandedGroups.has(item.to);
