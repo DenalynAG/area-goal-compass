@@ -17,6 +17,7 @@ import AdministracionPage from "@/pages/AdministracionPage";
 import EvaluacionesPage from "@/pages/EvaluacionesPage";
 import OrganigramaPage from "@/pages/OrganigramaPage";
 import LeaderPassPage from "@/pages/LeaderPassPage";
+import AuditoriasPage from "@/pages/AuditoriasPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

@@ -13,18 +13,33 @@ import {
   ChevronLeft,
   ChevronRight,
   Menu,
+  ShieldCheck,
+  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { getRoleLabel } from "@/types";
 import { Button } from "@/components/ui/button";
 
-const navItems = [
+interface NavItem {
+  to: string;
+  icon: typeof Newspaper;
+  label: string;
+  children?: { to: string; label: string }[];
+}
+
+const navItems: NavItem[] = [
   { to: "/", icon: Newspaper, label: "Portal OSH" },
   { to: "/estructura", icon: Building2, label: "Estructura" },
   { to: "/colaboradores", icon: Users, label: "Colaboradores" },
   { to: "/objetivos", icon: Target, label: "Objetivos" },
   { to: "/leader-pass", icon: ClipboardList, label: "Leader Pass" },
+  {
+    to: "/calidad",
+    icon: ShieldCheck,
+    label: "Calidad",
+    children: [{ to: "/calidad/auditorias", label: "Auditorías" }],
+  },
   { to: "/reportes", icon: FileText, label: "Reportes" },
   { to: "/evaluaciones", icon: ClipboardCheck, label: "Evaluaciones" },
   { to: "/organigrama", icon: Building2, label: "Organigrama" },
