@@ -50,7 +50,16 @@ export default function AppSidebar() {
   const { user, profile, roles, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(["/calidad"]));
   const location = useLocation();
+
+  const toggleGroup = (to: string) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(to)) next.delete(to); else next.add(to);
+      return next;
+    });
+  };
 
   if (!user) return null;
 
