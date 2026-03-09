@@ -130,7 +130,8 @@ export default function NewsletterPortalPage() {
     );
 
   return (
-    <div className="animate-fade-in max-w-2xl mx-auto space-y-6">
+    <div className="animate-fade-in max-w-5xl mx-auto">
+      <div className="flex flex-col lg:flex-row gap-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
