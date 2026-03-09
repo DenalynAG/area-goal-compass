@@ -460,7 +460,7 @@ function ObjectiveCard({
       {isOpen && objKpis.length > 0 && (
         <div className="border-t bg-muted/20 px-5 py-3">
           {/* Month tabs */}
-          {availableMonths.length > 0 && (
+          {objKpis.length > 0 && (
             <div className="flex items-center gap-1 mb-3 overflow-x-auto pb-1">
               <Calendar className="w-4 h-4 text-muted-foreground shrink-0 mr-1" />
               <button
