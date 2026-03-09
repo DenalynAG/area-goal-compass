@@ -152,7 +152,7 @@ export default function AuditoriasPage() {
       });
     } else {
       setEditingPlan(null);
-      setPlanForm({ title: "", description: "", area_id: "", responsible_user_id: "", auditor_user_id: "", planned_date: format(new Date(), "yyyy-MM-dd"), status: "pendiente" });
+      setPlanForm({ title: "", description: "", area_id: "", responsible_user_id: "", auditor_user_id: "", planned_date: format(new Date(), "yyyy-MM-dd"), status: "pendiente" as const });
     }
     setPlanDialogOpen(true);
   };
