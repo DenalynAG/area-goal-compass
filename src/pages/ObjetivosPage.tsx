@@ -3,7 +3,7 @@ import { useObjectives, useKPIs, useKPIMeasurements, useAreas, useSubareas, useP
 import { getTrafficLight } from '@/types';
 import { StatusBadge, ProgressBar, TrafficLightBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
-import { Plus, Target, ChevronRight, ChevronDown, Edit, TrendingUp, Settings, ArrowLeft, BarChart3, Paperclip, Calendar, Upload } from 'lucide-react';
+import { Plus, Target, ChevronRight, ChevronDown, Edit, TrendingUp, Settings, ArrowLeft, BarChart3, Paperclip, Calendar, Upload, Download } from 'lucide-react';
 import type { Tables } from '@/integrations/supabase/types';
 import ObjetivoFormDialog from '@/components/ObjetivoFormDialog';
 import KPIFormDialog from '@/components/KPIFormDialog';
@@ -410,7 +410,18 @@ export default function ObjetivosPage() {
             <h2 className="text-xl font-bold">Objetivos por Áreas:</h2>
             <p className="text-sm text-muted-foreground">{otherAreas.length} departamentos · Haz clic para expandir o ver detalles</p>
           </div>
-          <div>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => {
+              const headers = ['Objetivo', 'Indicador', 'Meta', 'Responsable', 'Área', 'Subárea', 'Unidad', 'Línea Base', 'Umbral Verde', 'Umbral Amarillo', 'Umbral Rojo', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+              const example = ['Incrementar ventas', 'Ventas mensuales', '100', 'Juan Pérez', 'Comercial', '', 'unidades', '50', '90', '70', '50', '55', '60', '65', '70', '75', '80', '85', '88', '90', '92', '95', '100'];
+              const ws = XLSX.utils.aoa_to_sheet([headers, example]);
+              ws['!cols'] = headers.map(() => ({ wch: 16 }));
+              const wb = XLSX.utils.book_new();
+              XLSX.utils.book_append_sheet(wb, ws, 'Plantilla');
+              XLSX.writeFile(wb, 'plantilla_objetivos.xlsx');
+            }}>
+              <Download className="w-4 h-4 mr-2" />Plantilla
+            </Button>
             <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleImportExcel} />
             <Button variant="outline" size="sm" disabled={importing} onClick={() => fileInputRef.current?.click()}>
               <Upload className="w-4 h-4 mr-2" />{importing ? 'Importando...' : 'Importar Excel'}
