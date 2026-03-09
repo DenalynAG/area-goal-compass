@@ -75,6 +75,7 @@ export default function NewsletterPortalPage() {
   const { data: memberships = [] } = useMemberships();
   const { data: allComments = [] } = useNewsletterComments();
   const { user, profile, hasRole, isSuperAdmin } = useAuth();
+  const { data: notifications = [] } = useNotifications(user?.id);
   const qc = useQueryClient();
   const canManage = hasRole("super_admin") || hasRole("admin_area");
 
@@ -85,6 +86,26 @@ export default function NewsletterPortalPage() {
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(new Date());
+  const [bellOpen, setBellOpen] = useState(false);
+  const bellRef = useRef<HTMLDivElement>(null);
+
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
+
+  // Close bell dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (bellRef.current && !bellRef.current.contains(e.target as Node)) setBellOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const markAllRead = async () => {
+    const unread = notifications.filter((n) => !n.is_read);
+    if (unread.length === 0) return;
+    await supabase.from("notifications").update({ is_read: true } as any).eq("user_id", user!.id).eq("is_read", false);
+    qc.invalidateQueries({ queryKey: ["notifications"] });
+  };
 
   const today = new Date();
 
@@ -137,6 +158,19 @@ export default function NewsletterPortalPage() {
     if (error) { toast.error(error.message); return; }
     setCommentInputs((prev) => ({ ...prev, [postId]: "" }));
     qc.invalidateQueries({ queryKey: ["newsletter_comments"] });
+
+    // Send notification to post author
+    const post = posts.find((p) => p.id === postId);
+    if (post?.created_by && post.created_by !== user.id) {
+      await supabase.from("notifications").insert({
+        user_id: post.created_by,
+        type: "comment",
+        title: "Nuevo comentario",
+        body: `${profile?.name ?? "Alguien"} comentó en tu publicación "${post.title}"`,
+        link: "/",
+        created_by: user.id,
+      } as any);
+    }
   };
 
   const deleteComment = async (commentId: string) => {
