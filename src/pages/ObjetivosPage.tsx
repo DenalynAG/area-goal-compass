@@ -353,9 +353,16 @@ function ObjectiveCard({
   const [kpiEvidenceId, setKpiEvidenceId] = useState<string | null>(null);
   const [kpiEvidenceName, setKpiEvidenceName] = useState('');
   const [selectedMonth, setSelectedMonth] = useState<string>('actual');
+  
+  // Progress computed from KPI average
+  const computedProgress = useMemo(() => {
+    if (objKpis.length === 0) return obj.progress_percent;
+    return Math.round(objKpis.reduce((sum, k) => sum + (k.target > 0 ? (k.current_value / k.target) * 100 : 0), 0) / objKpis.length);
+  }, [objKpis, obj.progress_percent]);
+
   const circumference = 2 * Math.PI * 28;
-  const strokeDashoffset = circumference - (obj.progress_percent / 100) * circumference;
-  const progressColor = obj.progress_percent >= 70 ? 'hsl(var(--success))' : obj.progress_percent >= 40 ? 'hsl(var(--warning))' : 'hsl(var(--destructive))';
+  const strokeDashoffset = circumference - (Math.min(computedProgress, 100) / 100) * circumference;
+  const progressColor = computedProgress >= 70 ? 'hsl(var(--success))' : computedProgress >= 40 ? 'hsl(var(--warning))' : 'hsl(var(--destructive))';
 
   // Build months for the current year
   const kpiIds = objKpis.map(k => k.id);
