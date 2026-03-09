@@ -20,6 +20,7 @@ export default function ObjetivosPage() {
   const [editingObj, setEditingObj] = useState<Tables<'objectives'> | null>(null);
   const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null);
   const [expandedObj, setExpandedObj] = useState<Record<string, boolean>>({});
+  const [globalExpanded, setGlobalExpanded] = useState(false);
 
   // KPI dialog state
   const [kpiDialogOpen, setKpiDialogOpen] = useState(false);
