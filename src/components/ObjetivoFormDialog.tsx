@@ -101,7 +101,7 @@ export default function ObjetivoFormDialog({ open, onOpenChange, objective, area
       start_date: startDate || null,
       end_date: endDate || null,
       period: period.trim() || null,
-      progress_percent: Math.min(100, Math.max(0, progressPercent)),
+      
     };
 
     const { error } = objective
