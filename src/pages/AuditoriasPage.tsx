@@ -675,7 +675,7 @@ export default function AuditoriasPage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Tipo de acción</Label>
-                <Select value={findingForm.finding_type} onValueChange={(v) => setFindingForm({ ...findingForm, finding_type: v })}>
+                <Select value={findingForm.finding_type} onValueChange={(v) => setFindingForm({ ...findingForm, finding_type: v as typeof findingForm.finding_type })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="abierta">Acción Abierta</SelectItem>
