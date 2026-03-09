@@ -69,10 +69,16 @@ export default function ObjetivosPage() {
     return kpis.filter(k => objIds.includes(k.objective_id));
   };
 
+  const getObjProgress = (obj: Tables<'objectives'>) => {
+    const objKpis = kpis.filter(k => k.objective_id === obj.id);
+    if (objKpis.length === 0) return obj.progress_percent;
+    return Math.round(objKpis.reduce((sum, k) => sum + (k.target > 0 ? (k.current_value / k.target) * 100 : 0), 0) / objKpis.length);
+  };
+
   const getAreaProgress = (areaId: string) => {
     const areaObjs = getAreaObjectives(areaId);
     if (areaObjs.length === 0) return 0;
-    return Math.round(areaObjs.reduce((sum, o) => sum + o.progress_percent, 0) / areaObjs.length);
+    return Math.round(areaObjs.reduce((sum, o) => sum + getObjProgress(o), 0) / areaObjs.length);
   };
 
   // Global KPIs for Dirección General objectives
@@ -83,8 +89,8 @@ export default function ObjetivosPage() {
 
   const globalProgress = useMemo(() => {
     if (globalObjectives.length === 0) return 0;
-    return Math.round(globalObjectives.reduce((sum, o) => sum + o.progress_percent, 0) / globalObjectives.length);
-  }, [globalObjectives]);
+    return Math.round(globalObjectives.reduce((sum, o) => sum + getObjProgress(o), 0) / globalObjectives.length);
+  }, [globalObjectives, kpis]);
 
   // Get areas that the objectives reference (as tags)
   const getObjectiveAreaTags = (obj: Tables<'objectives'>) => {
@@ -145,7 +151,7 @@ export default function ObjetivosPage() {
         {areaSubareas.map(sub => {
           const subObjs = getSubareaObjs(sub.id);
           const subKpis = kpis.filter(k => subObjs.some(o => o.id === k.objective_id));
-          const subProgress = subObjs.length > 0 ? Math.round(subObjs.reduce((s, o) => s + o.progress_percent, 0) / subObjs.length) : 0;
+          const subProgress = subObjs.length > 0 ? Math.round(subObjs.reduce((s, o) => s + getObjProgress(o), 0) / subObjs.length) : 0;
 
           return (
             <div key={sub.id} className="space-y-3">
@@ -353,21 +359,27 @@ function ObjectiveCard({
   const [kpiEvidenceId, setKpiEvidenceId] = useState<string | null>(null);
   const [kpiEvidenceName, setKpiEvidenceName] = useState('');
   const [selectedMonth, setSelectedMonth] = useState<string>('actual');
+  
+  // Progress computed from KPI average
+  const computedProgress = useMemo(() => {
+    if (objKpis.length === 0) return obj.progress_percent;
+    return Math.round(objKpis.reduce((sum, k) => sum + (k.target > 0 ? (k.current_value / k.target) * 100 : 0), 0) / objKpis.length);
+  }, [objKpis, obj.progress_percent]);
+
   const circumference = 2 * Math.PI * 28;
-  const strokeDashoffset = circumference - (obj.progress_percent / 100) * circumference;
-  const progressColor = obj.progress_percent >= 70 ? 'hsl(var(--success))' : obj.progress_percent >= 40 ? 'hsl(var(--warning))' : 'hsl(var(--destructive))';
+  const strokeDashoffset = circumference - (Math.min(computedProgress, 100) / 100) * circumference;
+  const progressColor = computedProgress >= 70 ? 'hsl(var(--success))' : computedProgress >= 40 ? 'hsl(var(--warning))' : 'hsl(var(--destructive))';
 
   // Build months for the current year
   const kpiIds = objKpis.map(k => k.id);
   const relevantMeasurements = (measurements ?? []).filter(m => kpiIds.includes(m.kpi_id));
   const currentYear = new Date().getFullYear();
-  const currentMonthIdx = new Date().getMonth(); // 0-based
   const availableMonths = useMemo(() => {
-    return Array.from({ length: currentMonthIdx + 1 }, (_, i) => {
+    return Array.from({ length: 12 }, (_, i) => {
       const mm = String(i + 1).padStart(2, '0');
       return `${currentYear}-${mm}`;
     });
-  }, [currentYear, currentMonthIdx]);
+  }, [currentYear]);
 
   const monthLabels: Record<string, string> = {
     '01': 'Ene', '02': 'Feb', '03': 'Mar', '04': 'Abr', '05': 'May', '06': 'Jun',
@@ -449,7 +461,7 @@ function ObjectiveCard({
               className="transition-all duration-500"
             />
           </svg>
-          <span className="text-lg font-bold -mt-11">{obj.progress_percent}%</span>
+          <span className="text-lg font-bold -mt-11">{computedProgress}%</span>
         </div>
 
         <Button variant="ghost" size="icon" className="shrink-0" onClick={onEdit}>

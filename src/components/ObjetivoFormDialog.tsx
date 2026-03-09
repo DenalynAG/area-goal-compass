@@ -101,7 +101,7 @@ export default function ObjetivoFormDialog({ open, onOpenChange, objective, area
       start_date: startDate || null,
       end_date: endDate || null,
       period: period.trim() || null,
-      progress_percent: Math.min(100, Math.max(0, progressPercent)),
+      
     };
 
     const { error } = objective
@@ -200,10 +200,6 @@ export default function ObjetivoFormDialog({ open, onOpenChange, objective, area
             <div className="space-y-2">
               <Label>Fecha Fin</Label>
               <Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>Avance %</Label>
-              <Input type="number" min={0} max={100} value={progressPercent} onChange={e => setProgressPercent(Number(e.target.value))} />
             </div>
           </div>
           <div className="flex justify-end gap-2 pt-2">
