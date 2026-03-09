@@ -80,6 +80,11 @@ export default function ObjetivosPage() {
     return kpis.filter(k => objIds.includes(k.objective_id));
   }, [kpis, globalObjectives]);
 
+  const globalProgress = useMemo(() => {
+    if (globalObjectives.length === 0) return 0;
+    return Math.round(globalObjectives.reduce((sum, o) => sum + o.progress_percent, 0) / globalObjectives.length);
+  }, [globalObjectives]);
+
   // Get areas that the objectives reference (as tags)
   const getObjectiveAreaTags = (obj: Tables<'objectives'>) => {
     // Show areas involved - for now show all other areas as tags
