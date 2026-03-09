@@ -1,29 +1,58 @@
 import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   useProfiles,
   useNewsletterPosts,
   useAreas,
   useMemberships,
-  getAreaNameFromList,
 } from "@/hooks/useSupabaseData";
-import { Award, Cake, Megaphone, Plus, Pencil, Heart, MessageCircle, Share2, Sparkles, PartyPopper } from "lucide-react";
-import { format, parseISO, isSameDay } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { Award, Cake, Megaphone, Plus, Pencil, Heart, MessageCircle, Share2, Sparkles, PartyPopper, Send, Trash2 } from "lucide-react";
+import { format, parseISO, isSameDay, formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 import NewsletterPostFormDialog from "@/components/NewsletterPostFormDialog";
+
+interface NewsletterComment {
+  id: string;
+  post_id: string;
+  user_id: string;
+  user_name: string;
+  avatar: string;
+  comment: string;
+  created_at: string;
+}
+
+function useNewsletterComments() {
+  return useQuery({
+    queryKey: ["newsletter_comments"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("newsletter_comments").select("*").order("created_at", { ascending: true });
+      if (error) throw error;
+      return data as NewsletterComment[];
+    },
+  });
+}
 
 export default function NewsletterPortalPage() {
   const { data: profiles = [], isLoading } = useProfiles();
   const { data: posts = [] } = useNewsletterPosts();
   const { data: areas = [] } = useAreas();
   const { data: memberships = [] } = useMemberships();
-  const { hasRole } = useAuth();
+  const { data: allComments = [] } = useNewsletterComments();
+  const { user, profile, hasRole, isSuperAdmin } = useAuth();
+  const qc = useQueryClient();
   const canManage = hasRole("super_admin") || hasRole("admin_area");
 
   const [postDialogOpen, setPostDialogOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<any>(null);
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
+  const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
+  const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
 
   const today = new Date();
 
@@ -50,6 +79,38 @@ export default function NewsletterPortalPage() {
       else next.add(id);
       return next;
     });
+  };
+
+  const toggleComments = (postId: string) => {
+    setExpandedComments((prev) => {
+      const next = new Set(prev);
+      if (next.has(postId)) next.delete(postId);
+      else next.add(postId);
+      return next;
+    });
+  };
+
+  const submitComment = async (postId: string) => {
+    const text = commentInputs[postId]?.trim();
+    if (!text || !user) return;
+    setSubmitting(true);
+    const { error } = await supabase.from("newsletter_comments").insert({
+      post_id: postId,
+      user_id: user.id,
+      user_name: profile?.name ?? "",
+      avatar: profile?.avatar ?? "",
+      comment: text,
+    });
+    setSubmitting(false);
+    if (error) { toast.error(error.message); return; }
+    setCommentInputs((prev) => ({ ...prev, [postId]: "" }));
+    qc.invalidateQueries({ queryKey: ["newsletter_comments"] });
+  };
+
+  const deleteComment = async (commentId: string) => {
+    const { error } = await supabase.from("newsletter_comments").delete().eq("id", commentId);
+    if (error) { toast.error(error.message); return; }
+    qc.invalidateQueries({ queryKey: ["newsletter_comments"] });
   };
 
   const getInitials = (name: string) =>
@@ -152,6 +213,9 @@ export default function NewsletterPortalPage() {
             const target = isRecognition ? getAvatar(post.target_user_id) : null;
             const author = getAvatar(post.created_by);
             const isLiked = likedPosts.has(post.id);
+            const postComments = allComments.filter((c) => c.post_id === post.id);
+            const isCommentsOpen = expandedComments.has(post.id);
+            const commentInput = commentInputs[post.id] ?? "";
 
             return (
               <article
@@ -245,21 +309,106 @@ export default function NewsletterPortalPage() {
                   >
                     <Heart className={`w-5 h-5 ${isLiked ? "fill-current" : ""}`} />
                   </button>
-                  <button className="p-2 rounded-full text-muted-foreground hover:text-foreground transition-colors">
-                    <MessageCircle className="w-5 h-5" />
+                  <button
+                    onClick={() => toggleComments(post.id)}
+                    className={`p-2 rounded-full transition-colors ${
+                      isCommentsOpen ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <MessageCircle className={`w-5 h-5 ${isCommentsOpen ? "fill-primary/20" : ""}`} />
                   </button>
                   <button className="p-2 rounded-full text-muted-foreground hover:text-foreground transition-colors">
                     <Share2 className="w-5 h-5" />
                   </button>
+                  {postComments.length > 0 && (
+                    <button
+                      onClick={() => toggleComments(post.id)}
+                      className="text-xs text-muted-foreground hover:text-foreground ml-1"
+                    >
+                      {postComments.length} comentario{postComments.length !== 1 ? "s" : ""}
+                    </button>
+                  )}
                 </div>
 
                 {/* Content */}
-                <div className="px-4 pb-4">
+                <div className="px-4 pb-3">
                   <h3 className="text-sm font-bold">{post.title}</h3>
                   <p className="text-sm text-muted-foreground mt-1 whitespace-pre-line leading-relaxed">
                     {post.content}
                   </p>
                 </div>
+
+                {/* Comments Section */}
+                {isCommentsOpen && (
+                  <div className="border-t px-4 py-3 space-y-3 bg-muted/20">
+                    {/* Existing comments */}
+                    {postComments.length > 0 && (
+                      <div className="space-y-2.5">
+                        {postComments.map((c) => (
+                          <div key={c.id} className="flex gap-2.5 group">
+                            <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
+                              {c.avatar ? (
+                                <img src={c.avatar} alt={c.user_name} className="w-full h-full object-cover rounded-full" />
+                              ) : (
+                                <span className="text-[9px] font-bold text-primary">
+                                  {getInitials(c.user_name || "?")}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="bg-card rounded-xl px-3 py-2 border">
+                                <p className="text-xs font-semibold">{c.user_name}</p>
+                                <p className="text-xs text-muted-foreground mt-0.5 whitespace-pre-line">{c.comment}</p>
+                              </div>
+                              <div className="flex items-center gap-2 mt-0.5 px-1">
+                                <span className="text-[10px] text-muted-foreground">
+                                  {formatDistanceToNow(new Date(c.created_at), { addSuffix: true, locale: es })}
+                                </span>
+                                {(c.user_id === user?.id || isSuperAdmin) && (
+                                  <button
+                                    onClick={() => deleteComment(c.id)}
+                                    className="text-[10px] text-destructive/60 hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                                  >
+                                    Eliminar
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Comment input */}
+                    {user && (
+                      <div className="flex gap-2 items-center">
+                        <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
+                          {profile?.avatar ? (
+                            <img src={profile.avatar} alt={profile.name} className="w-full h-full object-cover rounded-full" />
+                          ) : (
+                            <span className="text-[9px] font-bold text-primary">
+                              {getInitials(profile?.name ?? "?")}
+                            </span>
+                          )}
+                        </div>
+                        <Input
+                          placeholder="Escribe un comentario…"
+                          value={commentInput}
+                          onChange={(e) => setCommentInputs((prev) => ({ ...prev, [post.id]: e.target.value }))}
+                          onKeyDown={(e) => e.key === "Enter" && !submitting && submitComment(post.id)}
+                          className="h-8 text-xs rounded-full bg-muted border-0 focus-visible:ring-1"
+                        />
+                        <button
+                          onClick={() => submitComment(post.id)}
+                          disabled={submitting || !commentInput.trim()}
+                          className="text-primary disabled:text-muted-foreground p-1.5 shrink-0 hover:bg-primary/10 rounded-full transition-colors"
+                        >
+                          <Send className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </article>
             );
           })
