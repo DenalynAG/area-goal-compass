@@ -455,7 +455,7 @@ function ObjectiveCard({
               className="transition-all duration-500"
             />
           </svg>
-          <span className="text-lg font-bold -mt-11">{obj.progress_percent}%</span>
+          <span className="text-lg font-bold -mt-11">{computedProgress}%</span>
         </div>
 
         <Button variant="ghost" size="icon" className="shrink-0" onClick={onEdit}>
