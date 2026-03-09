@@ -53,6 +53,7 @@ export default function NewsletterPortalPage() {
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(new Date());
 
   const today = new Date();
 
