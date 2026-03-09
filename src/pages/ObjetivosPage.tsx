@@ -21,6 +21,10 @@ export default function ObjetivosPage() {
   const { data: subareas = [] } = useSubareas();
   const { data: profiles = [] } = useProfiles();
 
+  const qc = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importing, setImporting] = useState(false);
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingObj, setEditingObj] = useState<Tables<'objectives'> | null>(null);
   const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null);
@@ -51,6 +55,149 @@ export default function ObjetivosPage() {
 
   const direccionGeneral = areas.find(a => a.name === 'Dirección General');
   const otherAreas = areas.filter(a => a.name !== 'Dirección General');
+
+  // ───── Excel Import Handler ─────
+  const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+
+    try {
+      const data = await file.arrayBuffer();
+      const wb = XLSX.read(data);
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows: any[] = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+      if (rows.length === 0) { toast.error('El archivo está vacío'); return; }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { toast.error('Debes iniciar sesión'); return; }
+
+      // Normalize helpers
+      const normalize = (s: string) => (s || '').toString().trim().toLowerCase();
+      const findArea = (name: string) => areas.find(a => normalize(a.name) === normalize(name));
+      const findSubarea = (name: string, areaId: string) => subareas.find(s => normalize(s.name) === normalize(name) && s.area_id === areaId);
+      const findProfile = (name: string) => profiles.find(p => normalize(p.name) === normalize(name));
+
+      // Month columns mapping
+      const monthCols: Record<string, string> = {
+        'enero': '01', 'febrero': '02', 'marzo': '03', 'abril': '04',
+        'mayo': '05', 'junio': '06', 'julio': '07', 'agosto': '08',
+        'septiembre': '09', 'octubre': '10', 'noviembre': '11', 'diciembre': '12',
+        'ene': '01', 'feb': '02', 'mar': '03', 'abr': '04',
+        'may': '05', 'jun': '06', 'jul': '07', 'ago': '08',
+        'sep': '09', 'oct': '10', 'nov': '11', 'dic': '12',
+      };
+
+      const currentYear = new Date().getFullYear();
+      let created = 0, skipped = 0;
+
+      for (const row of rows) {
+        // Expected columns: Objetivo, Indicador, Meta, Responsable, Area, Subarea, Unidad, Linea Base, Umbral Verde, Umbral Amarillo, Umbral Rojo, Ene..Dic
+        const objTitle = (row['Objetivo'] || '').toString().trim();
+        const kpiName = (row['Indicador'] || row['KPI'] || '').toString().trim();
+        const target = parseFloat(row['Meta']) || 0;
+        const responsable = (row['Responsable'] || '').toString().trim();
+        const areaName = (row['Area'] || row['Área'] || '').toString().trim();
+        const subareaName = (row['Subarea'] || row['Subárea'] || '').toString().trim();
+        const unit = (row['Unidad'] || '').toString().trim();
+        const baseline = parseFloat(row['Linea Base'] || row['Línea Base'] || '0') || 0;
+        const thresholdGreen = parseFloat(row['Umbral Verde'] || '0') || 0;
+        const thresholdYellow = parseFloat(row['Umbral Amarillo'] || '0') || 0;
+        const thresholdRed = parseFloat(row['Umbral Rojo'] || '0') || 0;
+
+        if (!objTitle || !kpiName || !areaName) { skipped++; continue; }
+
+        const area = findArea(areaName);
+        if (!area) { skipped++; continue; }
+
+        const scopeType = subareaName ? 'subarea' : 'area';
+        const sub = subareaName ? findSubarea(subareaName, area.id) : null;
+        if (subareaName && !sub) { skipped++; continue; }
+        const scopeId = scopeType === 'subarea' ? sub!.id : area.id;
+
+        const ownerProfile = responsable ? findProfile(responsable) : null;
+
+        // Upsert objective (find existing by title + scope)
+        let objectiveId: string;
+        const existingObj = objectives.find(o => normalize(o.title) === normalize(objTitle) && o.scope_id === scopeId);
+        if (existingObj) {
+          objectiveId = existingObj.id;
+        } else {
+          const { data: newObj, error: objErr } = await supabase.from('objectives').insert({
+            title: objTitle,
+            scope_type: scopeType,
+            scope_id: scopeId,
+            owner_user_id: ownerProfile?.id ?? null,
+            status: 'activo',
+            priority: 'media',
+          }).select('id').single();
+          if (objErr || !newObj) { skipped++; continue; }
+          objectiveId = newObj.id;
+        }
+
+        // Get month values from row
+        const monthValues: { month: string; value: number }[] = [];
+        for (const [colName, colVal] of Object.entries(row)) {
+          const monthNum = monthCols[normalize(colName)];
+          if (monthNum && colVal !== '' && !isNaN(parseFloat(colVal as string))) {
+            monthValues.push({ month: monthNum, value: parseFloat(colVal as string) });
+          }
+        }
+
+        // Current value = last month with data or 0
+        const latestMonthValue = monthValues.length > 0 ? monthValues[monthValues.length - 1].value : 0;
+
+        // Upsert KPI
+        const existingKpi = kpis.find(k => normalize(k.name) === normalize(kpiName) && k.objective_id === objectiveId);
+        let kpiId: string;
+        if (existingKpi) {
+          kpiId = existingKpi.id;
+          await supabase.from('kpis').update({
+            target, baseline, unit, current_value: latestMonthValue,
+            threshold_green: thresholdGreen, threshold_yellow: thresholdYellow, threshold_red: thresholdRed,
+          }).eq('id', kpiId);
+        } else {
+          const { data: newKpi, error: kpiErr } = await supabase.from('kpis').insert({
+            name: kpiName,
+            objective_id: objectiveId,
+            target, baseline, unit,
+            current_value: latestMonthValue,
+            threshold_green: thresholdGreen, threshold_yellow: thresholdYellow, threshold_red: thresholdRed,
+          }).select('id').single();
+          if (kpiErr || !newKpi) { skipped++; continue; }
+          kpiId = newKpi.id;
+        }
+
+        // Insert monthly measurements
+        for (const mv of monthValues) {
+          const periodDate = `${currentYear}-${mv.month}-01`;
+          // Check if already exists
+          const { data: existing } = await supabase.from('kpi_measurements')
+            .select('id').eq('kpi_id', kpiId).eq('period_date', periodDate).maybeSingle();
+          if (existing) {
+            await supabase.from('kpi_measurements').update({ value: mv.value }).eq('id', existing.id);
+          } else {
+            await supabase.from('kpi_measurements').insert({
+              kpi_id: kpiId, period_date: periodDate, value: mv.value, created_by: session.user.id,
+            });
+          }
+        }
+
+        created++;
+      }
+
+      qc.invalidateQueries({ queryKey: ['objectives'] });
+      qc.invalidateQueries({ queryKey: ['kpis'] });
+      qc.invalidateQueries({ queryKey: ['kpi_measurements'] });
+      toast.success(`Importación completada: ${created} filas procesadas, ${skipped} omitidas`);
+    } catch (err: any) {
+      toast.error('Error al importar: ' + (err.message || err));
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   // Global objectives (Dirección General area)
   const globalObjectives = useMemo(() => {
