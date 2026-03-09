@@ -21,6 +21,8 @@ export default function ObjetivosPage() {
   const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null);
   const [expandedObj, setExpandedObj] = useState<Record<string, boolean>>({});
   const [globalExpanded, setGlobalExpanded] = useState(false);
+  const [expandedAreas, setExpandedAreas] = useState<Record<string, boolean>>({});
+  const toggleArea = (id: string) => setExpandedAreas(prev => ({ ...prev, [id]: !prev[id] }));
 
   // KPI dialog state
   const [kpiDialogOpen, setKpiDialogOpen] = useState(false);
