@@ -30,12 +30,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { to: "/", icon: Newspaper, label: "Portal OSH" },
-  {
-    to: "/estructura",
-    icon: Building2,
-    label: "Estructura",
-    children: [{ to: "/organigrama", label: "Organigrama" }],
-  },
+  { to: "/estructura", icon: Building2, label: "Estructura" },
   { to: "/colaboradores", icon: Users, label: "Colaboradores" },
   { to: "/objetivos", icon: Target, label: "Objetivos" },
   { to: "/leader-pass", icon: ClipboardList, label: "Leader Pass" },
@@ -47,6 +42,7 @@ const navItems: NavItem[] = [
   },
   { to: "/reportes", icon: FileText, label: "Reportes" },
   { to: "/evaluaciones", icon: ClipboardCheck, label: "Evaluaciones" },
+  { to: "/organigrama", icon: Building2, label: "Organigrama" },
   { to: "/administracion", icon: Settings, label: "Administración" },
 ];
 
@@ -54,7 +50,7 @@ export default function AppSidebar() {
   const { user, profile, roles, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(["/calidad", "/estructura"]));
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(["/calidad"]));
   const location = useLocation();
 
   const toggleGroup = (to: string) => {
@@ -93,7 +89,7 @@ export default function AppSidebar() {
       {/* Nav */}
       <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto text-primary">
         {navItems.map((item) => {
-          const isActive = location.pathname === item.to || (item.to !== "/" && location.pathname.startsWith(item.to)) || (item.children?.some(c => location.pathname === c.to));
+          const isActive = location.pathname === item.to || (item.to !== "/" && location.pathname.startsWith(item.to));
 
           if (item.children) {
             const isGroupExpanded = expandedGroups.has(item.to);
