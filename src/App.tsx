@@ -17,6 +17,7 @@ import AdministracionPage from "@/pages/AdministracionPage";
 import EvaluacionesPage from "@/pages/EvaluacionesPage";
 import OrganigramaPage from "@/pages/OrganigramaPage";
 import LeaderPassPage from "@/pages/LeaderPassPage";
+import AuditoriasPage from "@/pages/AuditoriasPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ function ProtectedRoutes() {
         <Route path="/objetivos" element={<ObjetivosPage />} />
         <Route path="/indicadores" element={<IndicadoresPage />} />
         <Route path="/leader-pass" element={<LeaderPassPage />} />
+        <Route path="/calidad/auditorias" element={<AuditoriasPage />} />
         <Route path="/reportes" element={<ReportesPage />} />
         <Route path="/evaluaciones" element={<EvaluacionesPage />} />
         <Route path="/organigrama" element={<OrganigramaPage />} />
