@@ -357,17 +357,17 @@ function ObjectiveCard({
   const strokeDashoffset = circumference - (obj.progress_percent / 100) * circumference;
   const progressColor = obj.progress_percent >= 70 ? 'hsl(var(--success))' : obj.progress_percent >= 40 ? 'hsl(var(--warning))' : 'hsl(var(--destructive))';
 
-  // Get unique months from measurements for this objective's KPIs
+  // Build months for the current year
   const kpiIds = objKpis.map(k => k.id);
   const relevantMeasurements = (measurements ?? []).filter(m => kpiIds.includes(m.kpi_id));
+  const currentYear = new Date().getFullYear();
+  const currentMonthIdx = new Date().getMonth(); // 0-based
   const availableMonths = useMemo(() => {
-    const monthSet = new Set<string>();
-    relevantMeasurements.forEach(m => {
-      const d = m.period_date;
-      if (d) monthSet.add(d.substring(0, 7)); // YYYY-MM
+    return Array.from({ length: currentMonthIdx + 1 }, (_, i) => {
+      const mm = String(i + 1).padStart(2, '0');
+      return `${currentYear}-${mm}`;
     });
-    return Array.from(monthSet).sort();
-  }, [relevantMeasurements]);
+  }, [currentYear, currentMonthIdx]);
 
   const monthLabels: Record<string, string> = {
     '01': 'Ene', '02': 'Feb', '03': 'Mar', '04': 'Abr', '05': 'May', '06': 'Jun',
