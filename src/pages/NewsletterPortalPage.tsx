@@ -7,8 +7,8 @@ import {
   useMemberships,
 } from "@/hooks/useSupabaseData";
 import { supabase } from "@/integrations/supabase/client";
-import { Award, Cake, Megaphone, Plus, Pencil, Heart, MessageCircle, Share2, Sparkles, PartyPopper, Send, Trash2 } from "lucide-react";
-import { format, parseISO, isSameDay, formatDistanceToNow } from "date-fns";
+import { Award, Cake, Megaphone, Plus, Pencil, Heart, MessageCircle, Share2, Sparkles, PartyPopper, Send, Trash2, CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import { format, parseISO, isSameDay, formatDistanceToNow, startOfMonth, endOfMonth, eachDayOfInterval, getDay } from "date-fns";
 import { es } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,6 +53,7 @@ export default function NewsletterPortalPage() {
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(new Date());
 
   const today = new Date();
 
@@ -200,7 +201,117 @@ export default function NewsletterPortalPage() {
         </div>
       )}
 
-      {/* Feed */}
+      {/* Birthday Calendar */}
+      {(() => {
+        const monthStart = startOfMonth(calendarMonth);
+        const monthEnd = endOfMonth(calendarMonth);
+        const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+        const startDayOfWeek = getDay(monthStart); // 0=Sun
+
+        // Map day-of-month → birthdays
+        const bdByDay: Record<number, typeof profiles> = {};
+        profiles.forEach((p) => {
+          if (!p.birthday) return;
+          const bd = parseISO(p.birthday);
+          if (bd.getMonth() === calendarMonth.getMonth()) {
+            const d = bd.getDate();
+            if (!bdByDay[d]) bdByDay[d] = [];
+            bdByDay[d].push(p);
+          }
+        });
+
+        const weekDays = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+
+        return (
+          <div className="bg-card rounded-2xl border shadow-sm p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <CalendarDays className="w-4 h-4 text-primary" />
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Calendario de cumpleaños
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setCalendarMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))}
+                  className="p-1 rounded-full hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="text-sm font-medium min-w-[120px] text-center capitalize">
+                  {format(calendarMonth, "MMMM yyyy", { locale: es })}
+                </span>
+                <button
+                  onClick={() => setCalendarMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
+                  className="p-1 rounded-full hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Week header */}
+            <div className="grid grid-cols-7 mb-1">
+              {weekDays.map((wd) => (
+                <div key={wd} className="text-[10px] font-semibold text-muted-foreground text-center py-1">
+                  {wd}
+                </div>
+              ))}
+            </div>
+
+            {/* Days grid */}
+            <div className="grid grid-cols-7 gap-px">
+              {/* Empty cells for offset */}
+              {Array.from({ length: startDayOfWeek }).map((_, i) => (
+                <div key={`empty-${i}`} className="aspect-square" />
+              ))}
+              {days.map((day) => {
+                const d = day.getDate();
+                const bds = bdByDay[d] || [];
+                const isToday = isSameDay(day, today);
+                return (
+                  <div
+                    key={d}
+                    className={`aspect-square rounded-lg flex flex-col items-center justify-center relative group transition-colors ${
+                      bds.length > 0
+                        ? "bg-[hsl(var(--warning)/0.1)] hover:bg-[hsl(var(--warning)/0.2)] cursor-pointer"
+                        : "hover:bg-muted/50"
+                    } ${isToday ? "ring-2 ring-primary ring-inset" : ""}`}
+                  >
+                    <span className={`text-xs ${bds.length > 0 ? "font-bold text-foreground" : "text-muted-foreground"} ${isToday ? "text-primary font-bold" : ""}`}>
+                      {d}
+                    </span>
+                    {bds.length > 0 && (
+                      <span className="text-[8px]">🎂</span>
+                    )}
+
+                    {/* Tooltip */}
+                    {bds.length > 0 && (
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block z-30 pointer-events-none">
+                        <div className="bg-popover border rounded-lg shadow-lg p-2 min-w-[140px]">
+                          {bds.map((p) => (
+                            <div key={p.id} className="flex items-center gap-2 py-0.5">
+                              <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
+                                {p.avatar ? (
+                                  <img src={p.avatar} alt={p.name} className="w-full h-full object-cover rounded-full" />
+                                ) : (
+                                  <span className="text-[8px] font-bold text-primary">{getInitials(p.name)}</span>
+                                )}
+                              </div>
+                              <span className="text-[11px] font-medium truncate">{p.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
+
       <div className="space-y-4">
         {allPosts.length === 0 ? (
           <div className="bg-card rounded-2xl border shadow-sm p-12 text-center">
