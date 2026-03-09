@@ -178,42 +178,58 @@ export default function ObjetivosPage() {
   return (
     <div className="animate-fade-in space-y-8">
       {/* Section 1: Global Objectives - Dirección General */}
-      <section>
-        <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
-          <div>
-            <h1 className="text-xl font-bold">Objetivos Globales Dirección General</h1>
-            <p className="text-sm text-muted-foreground">Dirección General · {globalObjectives.length} objetivos estratégicos</p>
+      <section className="bg-card border rounded-xl shadow-sm overflow-hidden">
+        <button
+          onClick={() => setGlobalExpanded(!globalExpanded)}
+          className="w-full px-5 py-4 flex items-center gap-3 hover:bg-muted/30 transition-colors"
+        >
+          {globalExpanded ? <ChevronDown className="w-5 h-5 text-muted-foreground" /> : <ChevronRight className="w-5 h-5 text-muted-foreground" />}
+          <Target className="w-5 h-5 text-primary" />
+          <div className="flex-1 text-left">
+            <h1 className="text-base font-bold">Objetivos Globales — Dirección General</h1>
+            <p className="text-xs text-muted-foreground">
+              {direccionGeneral?.leader_user_id && `Líder: ${getProfileName(profiles, direccionGeneral.leader_user_id)} · `}
+              {globalObjectives.length} objetivo{globalObjectives.length !== 1 ? 's' : ''} estratégico{globalObjectives.length !== 1 ? 's' : ''}
+            </p>
           </div>
-          <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" />Nuevo Objetivo</Button>
-        </div>
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+            <span>{globalKpis.length} indicadores</span>
+            <StatusBadge status="activo" />
+          </div>
+          <Button size="sm" variant="outline" className="ml-2" onClick={(e) => { e.stopPropagation(); openNew(); }}>
+            <Plus className="w-4 h-4 mr-1" />Nuevo
+          </Button>
+        </button>
 
-        <div className="space-y-3">
-          {globalObjectives.map((obj, idx) => {
-            const objKpis = kpis.filter(k => k.objective_id === obj.id);
-            const isOpen = expandedObj[obj.id];
-            return (
-              <ObjectiveCard
-                key={obj.id}
-                obj={obj}
-                index={idx + 1}
-                objKpis={objKpis}
-                isOpen={isOpen}
-                onToggle={() => toggleObj(obj.id)}
-                onEdit={() => openEdit(obj)}
-                onNewKPI={() => openNewKPI(obj.id)}
-                onEditKPI={openEditKPI}
-                profiles={profiles}
-                areas={areas}
-                subareas={subareas}
-                showAreaTags
-                otherAreas={otherAreas}
-              />
-            );
-          })}
-          {globalObjectives.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground border rounded-xl bg-card">No hay objetivos globales registrados</div>
-          )}
-        </div>
+        {globalExpanded && (
+          <div className="border-t px-5 py-4 space-y-3">
+            {globalObjectives.map((obj, idx) => {
+              const objKpis = kpis.filter(k => k.objective_id === obj.id);
+              const isOpen = expandedObj[obj.id];
+              return (
+                <ObjectiveCard
+                  key={obj.id}
+                  obj={obj}
+                  index={idx + 1}
+                  objKpis={objKpis}
+                  isOpen={isOpen}
+                  onToggle={() => toggleObj(obj.id)}
+                  onEdit={() => openEdit(obj)}
+                  onNewKPI={() => openNewKPI(obj.id)}
+                  onEditKPI={openEditKPI}
+                  profiles={profiles}
+                  areas={areas}
+                  subareas={subareas}
+                  showAreaTags
+                  otherAreas={otherAreas}
+                />
+              );
+            })}
+            {globalObjectives.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground bg-muted/30 rounded-lg">No hay objetivos globales registrados</div>
+            )}
+          </div>
+        )}
       </section>
 
       {/* Section 2: Objectives by Area */}
