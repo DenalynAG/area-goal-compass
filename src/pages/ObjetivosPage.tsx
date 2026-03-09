@@ -332,7 +332,7 @@ export default function ObjetivosPage() {
 
 // Reusable objective card with circular progress
 function ObjectiveCard({
-  obj, index, objKpis, isOpen, onToggle, onEdit, onNewKPI, onEditKPI, profiles, areas, subareas, showAreaTags, otherAreas,
+  obj, index, objKpis, isOpen, onToggle, onEdit, onNewKPI, onEditKPI, profiles, areas, subareas, measurements, showAreaTags, otherAreas,
 }: {
   obj: Tables<'objectives'>;
   index: number;
@@ -345,15 +345,46 @@ function ObjectiveCard({
   profiles: Tables<'profiles'>[];
   areas: Tables<'areas'>[];
   subareas: Tables<'subareas'>[];
+  measurements?: Tables<'kpi_measurements'>[];
   showAreaTags?: boolean;
   otherAreas?: Tables<'areas'>[];
 }) {
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [kpiEvidenceId, setKpiEvidenceId] = useState<string | null>(null);
   const [kpiEvidenceName, setKpiEvidenceName] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState<string>('actual');
   const circumference = 2 * Math.PI * 28;
   const strokeDashoffset = circumference - (obj.progress_percent / 100) * circumference;
   const progressColor = obj.progress_percent >= 70 ? 'hsl(var(--success))' : obj.progress_percent >= 40 ? 'hsl(var(--warning))' : 'hsl(var(--destructive))';
+
+  // Get unique months from measurements for this objective's KPIs
+  const kpiIds = objKpis.map(k => k.id);
+  const relevantMeasurements = (measurements ?? []).filter(m => kpiIds.includes(m.kpi_id));
+  const availableMonths = useMemo(() => {
+    const monthSet = new Set<string>();
+    relevantMeasurements.forEach(m => {
+      const d = m.period_date;
+      if (d) monthSet.add(d.substring(0, 7)); // YYYY-MM
+    });
+    return Array.from(monthSet).sort();
+  }, [relevantMeasurements]);
+
+  const monthLabels: Record<string, string> = {
+    '01': 'Ene', '02': 'Feb', '03': 'Mar', '04': 'Abr', '05': 'May', '06': 'Jun',
+    '07': 'Jul', '08': 'Ago', '09': 'Sep', '10': 'Oct', '11': 'Nov', '12': 'Dic',
+  };
+
+  const getMonthLabel = (ym: string) => {
+    const [year, month] = ym.split('-');
+    return `${monthLabels[month] ?? month} ${year}`;
+  };
+
+  // Get KPI value for a given month
+  const getKpiMonthValue = (kpiId: string) => {
+    if (selectedMonth === 'actual') return null; // use current_value
+    const m = relevantMeasurements.find(m => m.kpi_id === kpiId && m.period_date.startsWith(selectedMonth));
+    return m ? m.value : null;
+  };
 
   return (
     <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
@@ -428,6 +459,36 @@ function ObjectiveCard({
 
       {isOpen && objKpis.length > 0 && (
         <div className="border-t bg-muted/20 px-5 py-3">
+          {/* Month tabs */}
+          {availableMonths.length > 0 && (
+            <div className="flex items-center gap-1 mb-3 overflow-x-auto pb-1">
+              <Calendar className="w-4 h-4 text-muted-foreground shrink-0 mr-1" />
+              <button
+                onClick={() => setSelectedMonth('actual')}
+                className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                  selectedMonth === 'actual'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                }`}
+              >
+                Actual
+              </button>
+              {availableMonths.map(ym => (
+                <button
+                  key={ym}
+                  onClick={() => setSelectedMonth(ym)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                    selectedMonth === ym
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                  }`}
+                >
+                  {getMonthLabel(ym)}
+                </button>
+              ))}
+            </div>
+          )}
+
           <table className="w-full text-sm">
             <thead>
               <tr className="text-xs text-muted-foreground">
@@ -439,41 +500,64 @@ function ObjectiveCard({
               </tr>
             </thead>
             <tbody>
-              {objKpis.map(k => (
-                <tr key={k.id} className="border-t border-border/50">
-                  <td className="py-2 font-medium">{k.name}</td>
-                  <td className="py-2">{k.target} {k.unit}</td>
-                  <td className="py-2">{k.current_value} {k.unit}</td>
-                  <td className="py-2"><TrafficLightBadge light={getTrafficLight(k as any)} /></td>
-                  <td className="py-2 text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setKpiEvidenceId(k.id); setKpiEvidenceName(k.name); }}>
-                        <Paperclip className="w-3 h-3" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEditKPI(k)}>
-                        <Edit className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {objKpis.map(k => {
+                const monthValue = getKpiMonthValue(k.id);
+                const displayValue = selectedMonth === 'actual' ? k.current_value : (monthValue ?? 0);
+                const kpiForLight = { ...k, current_value: displayValue };
+                return (
+                  <tr key={k.id} className="border-t border-border/50">
+                    <td className="py-2 font-medium">{k.name}</td>
+                    <td className="py-2">{k.target} {k.unit}</td>
+                    <td className="py-2">
+                      {selectedMonth !== 'actual' && monthValue === null
+                        ? <span className="text-muted-foreground italic">Sin dato</span>
+                        : <>{displayValue} {k.unit}</>
+                      }
+                    </td>
+                    <td className="py-2">
+                      {selectedMonth !== 'actual' && monthValue === null
+                        ? <span className="text-muted-foreground">—</span>
+                        : <TrafficLightBadge light={getTrafficLight(kpiForLight as any)} />
+                      }
+                    </td>
+                    <td className="py-2 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setKpiEvidenceId(k.id); setKpiEvidenceName(k.name); }}>
+                          <Paperclip className="w-3 h-3" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEditKPI(k)}>
+                          <Edit className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
             <tfoot>
               <tr className="border-t-2 border-border">
                 <td colSpan={2} className="py-2 text-right font-semibold text-sm">Promedio General:</td>
                 <td className="py-2 font-bold text-sm">
                   {(() => {
-                    const avg = objKpis.length > 0
-                      ? Math.round(objKpis.reduce((sum, k) => sum + (k.target > 0 ? (k.current_value / k.target) * 100 : 0), 0) / objKpis.length)
-                      : 0;
+                    const values = objKpis.map(k => {
+                      const monthValue = getKpiMonthValue(k.id);
+                      const val = selectedMonth === 'actual' ? k.current_value : (monthValue ?? null);
+                      if (val === null) return null;
+                      return k.target > 0 ? (val / k.target) * 100 : 0;
+                    }).filter((v): v is number => v !== null);
+                    const avg = values.length > 0 ? Math.round(values.reduce((s, v) => s + v, 0) / values.length) : 0;
                     return `${avg}%`;
                   })()}
                 </td>
                 <td className="py-2">
                   {(() => {
-                    const avg = objKpis.length > 0
-                      ? Math.round(objKpis.reduce((sum, k) => sum + (k.target > 0 ? (k.current_value / k.target) * 100 : 0), 0) / objKpis.length)
-                      : 0;
+                    const values = objKpis.map(k => {
+                      const monthValue = getKpiMonthValue(k.id);
+                      const val = selectedMonth === 'actual' ? k.current_value : (monthValue ?? null);
+                      if (val === null) return null;
+                      return k.target > 0 ? (val / k.target) * 100 : 0;
+                    }).filter((v): v is number => v !== null);
+                    const avg = values.length > 0 ? Math.round(values.reduce((s, v) => s + v, 0) / values.length) : 0;
                     const label = avg >= 100 ? 'Alto' : avg >= 80 ? 'Medio' : 'Bajo';
                     const color = avg >= 100 ? 'text-green-600 bg-green-50' : avg >= 80 ? 'text-yellow-600 bg-yellow-50' : 'text-red-600 bg-red-50';
                     return <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${color}`}>{label} ({avg}%)</span>;
