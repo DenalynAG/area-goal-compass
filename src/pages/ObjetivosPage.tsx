@@ -69,10 +69,16 @@ export default function ObjetivosPage() {
     return kpis.filter(k => objIds.includes(k.objective_id));
   };
 
+  const getObjProgress = (obj: Tables<'objectives'>) => {
+    const objKpis = kpis.filter(k => k.objective_id === obj.id);
+    if (objKpis.length === 0) return obj.progress_percent;
+    return Math.round(objKpis.reduce((sum, k) => sum + (k.target > 0 ? (k.current_value / k.target) * 100 : 0), 0) / objKpis.length);
+  };
+
   const getAreaProgress = (areaId: string) => {
     const areaObjs = getAreaObjectives(areaId);
     if (areaObjs.length === 0) return 0;
-    return Math.round(areaObjs.reduce((sum, o) => sum + o.progress_percent, 0) / areaObjs.length);
+    return Math.round(areaObjs.reduce((sum, o) => sum + getObjProgress(o), 0) / areaObjs.length);
   };
 
   // Global KPIs for Dirección General objectives
