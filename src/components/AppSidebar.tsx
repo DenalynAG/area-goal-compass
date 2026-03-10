@@ -163,7 +163,6 @@ const navItems: NavItem[] = [
     icon: Monitor,
     label: "Tecnología",
     children: [
-      { to: "/tecnologia/colaboradores", label: "Colaboradores", icon: Users },
       { to: "/tecnologia/objetivos", label: "Objetivos", icon: Target },
       { to: "/tecnologia/leader-pass", label: "Leader Pass", icon: ClipboardList },
       { to: "/tecnologia/calidad", label: "Calidad", icon: ShieldCheck },
