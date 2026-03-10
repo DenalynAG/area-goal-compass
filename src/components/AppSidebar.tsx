@@ -186,6 +186,29 @@ export default function AppSidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(["/rrhh"]));
   const location = useLocation();
+  const visibleMenuKeys = useVisibleMenuKeys();
+
+  // Filter nav items based on permissions
+  const filteredNavItems = useMemo(() => {
+    return navItems
+      .filter(item => visibleMenuKeys.has(item.to))
+      .map(item => {
+        if (!item.children) return item;
+        const filteredChildren = item.children
+          .filter(child => visibleMenuKeys.has(child.to))
+          .map(child => {
+            if (!child.children) return child;
+            return {
+              ...child,
+              children: child.children.filter(sub => visibleMenuKeys.has(sub.to)),
+            };
+          })
+          .filter(child => !child.children || child.children.length > 0);
+        if (filteredChildren.length === 0) return null;
+        return { ...item, children: filteredChildren };
+      })
+      .filter(Boolean) as NavItem[];
+  }, [visibleMenuKeys]);
 
   // Close mobile sidebar on route change
   useEffect(() => {
