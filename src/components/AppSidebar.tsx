@@ -64,6 +64,8 @@ const navItems: NavItem[] = [
     icon: UtensilsCrossed,
     label: "Alimentos y Bebidas",
     children: [
+      { to: "/ayb/carta-digital", label: "Sistema Carta Digital", icon: ClipboardList },
+      { to: "/ayb/recogida-loza", label: "Recogida Loza", icon: Package },
       { to: "/ayb/objetivos", label: "Objetivos", icon: Target },
       { to: "/ayb/leader-pass", label: "Leader Pass", icon: ClipboardList },
       { to: "/ayb/calidad", label: "Calidad", icon: ShieldCheck },
@@ -78,6 +80,7 @@ const navItems: NavItem[] = [
       { to: "/comercial/comercial", label: "Comercial", icon: Handshake },
       { to: "/comercial/hospitalidad", label: "Hospitalidad", icon: Hotel, children: [
         { to: "/comercial/hospitalidad/fidelizacion", label: "Sistema Fidelización", icon: Heart },
+        { to: "/comercial/hospitalidad/servicios", label: "Gestión de Servicios", icon: Handshake },
       ] },
       { to: "/comercial/reservas", label: "Reservas", icon: CalendarCheck },
       { to: "/comercial/objetivos", label: "Objetivos", icon: Target },

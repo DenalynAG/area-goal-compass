@@ -16,6 +16,8 @@ const MENU_LABELS: Record<string, string> = {
   '/': 'NotiOSH',
   '/aplicaciones': 'Aplicaciones',
   '/ayb': 'Alimentos y Bebidas',
+  '/ayb/carta-digital': 'AyB · Sistema Carta Digital',
+  '/ayb/recogida-loza': 'AyB · Recogida Loza',
   '/ayb/colaboradores': 'AyB · Colaboradores',
   '/ayb/objetivos': 'AyB · Objetivos',
   '/ayb/leader-pass': 'AyB · Leader Pass',
@@ -26,6 +28,7 @@ const MENU_LABELS: Record<string, string> = {
   '/comercial/comercial': 'Comercial · Comercial',
   '/comercial/hospitalidad': 'Comercial · Hospitalidad',
   '/comercial/hospitalidad/fidelizacion': 'Comercial · Sistema Fidelización',
+  '/comercial/hospitalidad/servicios': 'Comercial · Gestión de Servicios',
   '/comercial/reservas': 'Comercial · Reservas',
   '/comercial/objetivos': 'Comercial · Objetivos',
   '/comercial/leader-pass': 'Comercial · Leader Pass',
@@ -84,8 +87,8 @@ const MENU_LABELS: Record<string, string> = {
 // Group menus by area
 const MENU_GROUPS = [
   { label: 'General', keys: ['/', '/aplicaciones', '/organigrama', '/administracion'] },
-  { label: 'Alimentos y Bebidas', keys: ['/ayb', '/ayb/colaboradores', '/ayb/objetivos', '/ayb/leader-pass', '/ayb/calidad', '/ayb/evaluaciones'] },
-  { label: 'Comercial', keys: ['/comercial', '/comercial/colaboradores', '/comercial/comercial', '/comercial/hospitalidad', '/comercial/hospitalidad/fidelizacion', '/comercial/reservas', '/comercial/objetivos', '/comercial/leader-pass', '/comercial/calidad', '/comercial/evaluaciones'] },
+  { label: 'Alimentos y Bebidas', keys: ['/ayb', '/ayb/carta-digital', '/ayb/recogida-loza', '/ayb/colaboradores', '/ayb/objetivos', '/ayb/leader-pass', '/ayb/calidad', '/ayb/evaluaciones'] },
+  { label: 'Comercial', keys: ['/comercial', '/comercial/colaboradores', '/comercial/comercial', '/comercial/hospitalidad', '/comercial/hospitalidad/fidelizacion', '/comercial/hospitalidad/servicios', '/comercial/reservas', '/comercial/objetivos', '/comercial/leader-pass', '/comercial/calidad', '/comercial/evaluaciones'] },
   { label: 'Compras', keys: ['/compras', '/compras/colaboradores', '/compras/objetivos', '/compras/leader-pass', '/compras/calidad', '/compras/evaluaciones'] },
   { label: 'Contraloría', keys: ['/contraloria', '/contraloria/devoluciones', '/contraloria/colaboradores', '/contraloria/objetivos', '/contraloria/leader-pass', '/contraloria/calidad', '/contraloria/evaluaciones'] },
   { label: 'Mercadeo', keys: ['/mercadeo', '/mercadeo/crm', '/mercadeo/colaboradores', '/mercadeo/objetivos', '/mercadeo/leader-pass', '/mercadeo/calidad', '/mercadeo/evaluaciones'] },
