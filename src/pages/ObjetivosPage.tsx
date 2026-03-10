@@ -27,6 +27,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   const { data: subareas = [] } = useSubareas();
   const { data: profiles = [] } = useProfiles();
 
+  const [searchParams, setSearchParams] = useSearchParams();
   const qc = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
