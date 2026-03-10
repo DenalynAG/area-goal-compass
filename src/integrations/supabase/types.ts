@@ -365,6 +365,94 @@ export type Database = {
           },
         ]
       }
+      comfort_assignments: {
+        Row: {
+          assigned_user_id: string | null
+          assignment_date: string
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          room_id: string
+          status: string
+          task_type: string
+        }
+        Insert: {
+          assigned_user_id?: string | null
+          assignment_date?: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          room_id: string
+          status?: string
+          task_type: string
+        }
+        Update: {
+          assigned_user_id?: string | null
+          assignment_date?: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          room_id?: string
+          status?: string
+          task_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comfort_assignments_assigned_user_id_fkey"
+            columns: ["assigned_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comfort_assignments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comfort_assignments_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "comfort_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comfort_rooms: {
+        Row: {
+          created_at: string
+          floor: number
+          id: string
+          room_number: string
+          status: string
+          tower: string
+        }
+        Insert: {
+          created_at?: string
+          floor: number
+          id?: string
+          room_number: string
+          status?: string
+          tower: string
+        }
+        Update: {
+          created_at?: string
+          floor?: number
+          id?: string
+          room_number?: string
+          status?: string
+          tower?: string
+        }
+        Relationships: []
+      }
       evaluation_criteria: {
         Row: {
           created_at: string
