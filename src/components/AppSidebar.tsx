@@ -189,6 +189,7 @@ export default function AppSidebar() {
                               : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
                           )}
                         >
+                          {child.icon && <child.icon className="w-4 h-4 shrink-0" />}
                           <span className="truncate">{child.label}</span>
                         </NavLink>
                       );
