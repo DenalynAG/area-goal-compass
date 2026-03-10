@@ -16,6 +16,8 @@ const MENU_LABELS: Record<string, string> = {
   '/': 'NotiOSH',
   '/aplicaciones': 'Aplicaciones',
   '/ayb': 'Alimentos y Bebidas',
+  '/ayb/carta-digital': 'AyB · Sistema Carta Digital',
+  '/ayb/recogida-loza': 'AyB · Recogida Loza',
   '/ayb/colaboradores': 'AyB · Colaboradores',
   '/ayb/objetivos': 'AyB · Objetivos',
   '/ayb/leader-pass': 'AyB · Leader Pass',
