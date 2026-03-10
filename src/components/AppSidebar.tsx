@@ -150,7 +150,7 @@ export default function AppSidebar() {
         {navItems.map((item) => {
           const isActive = location.pathname === item.to || (item.to !== "/" && location.pathname.startsWith(item.to));
 
-          if (item.children) {
+          if (item.children && item.children.length > 0) {
             const isGroupExpanded = expandedGroups.has(item.to);
             return (
               <div key={item.to}>
