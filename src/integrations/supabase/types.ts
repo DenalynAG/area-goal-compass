@@ -27,6 +27,7 @@ export type Database = {
           estimated_exit_time: string | null
           exit_datetime: string | null
           id: string
+          photo_url: string | null
           subarea_id: string | null
           visitor_name: string
           zone_requirement: string
@@ -43,6 +44,7 @@ export type Database = {
           estimated_exit_time?: string | null
           exit_datetime?: string | null
           id?: string
+          photo_url?: string | null
           subarea_id?: string | null
           visitor_name: string
           zone_requirement?: string
@@ -59,6 +61,7 @@ export type Database = {
           estimated_exit_time?: string | null
           exit_datetime?: string | null
           id?: string
+          photo_url?: string | null
           subarea_id?: string | null
           visitor_name?: string
           zone_requirement?: string
@@ -171,6 +174,7 @@ export type Database = {
           exit_datetime: string | null
           id: string
           movement_type: string
+          photo_url: string | null
           reason: string
           subarea_id: string | null
         }
@@ -185,6 +189,7 @@ export type Database = {
           exit_datetime?: string | null
           id?: string
           movement_type: string
+          photo_url?: string | null
           reason?: string
           subarea_id?: string | null
         }
@@ -199,6 +204,7 @@ export type Database = {
           exit_datetime?: string | null
           id?: string
           movement_type?: string
+          photo_url?: string | null
           reason?: string
           subarea_id?: string | null
         }
