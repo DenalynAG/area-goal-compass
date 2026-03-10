@@ -21,6 +21,8 @@ import {
   Megaphone,
   Wrench,
   Monitor,
+  Target,
+  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
