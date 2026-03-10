@@ -151,7 +151,7 @@ export default function MenuPermissionsSection() {
         <div>
           <h3 className="font-semibold">Gestión de Menús</h3>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Configura la visibilidad de menús y submenús por rol. Super Admin siempre ve todo.
+            Configura la visibilidad de menús y submenús por rol.
           </p>
         </div>
       </div>
