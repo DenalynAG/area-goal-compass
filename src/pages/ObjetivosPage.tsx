@@ -647,7 +647,6 @@ function ObjectiveCard({
 
   // Get KPI value for a given month
   const getKpiMonthValue = (kpiId: string) => {
-    if (selectedMonth === 'actual') return null; // use current_value
     const m = relevantMeasurements.find(m => m.kpi_id === kpiId && m.period_date.startsWith(selectedMonth));
     return m ? m.value : null;
   };
