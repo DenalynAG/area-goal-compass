@@ -47,8 +47,9 @@ export default function LoginPage() {
             alt="OSHOME logo"
             className="w-20 h-20 rounded-2xl object-contain mx-auto mb-4"
           />
-          <h1 className="text-2xl font-display font-extrabold text-sidebar-foreground">Bienvenidos..!</h1>
-          <p className="text-sidebar-foreground/50 mt-1 text-sm">OSH Hotels · Inicia sesión o regístrate</p>
+          <h1 className="text-2xl font-display font-extrabold text-sidebar-foreground">EasyConnect</h1>
+          <p className="text-sidebar-foreground/70 mt-1 text-sm">Plataforma de Gestión Estratégica Hotelera</p>
+          <p className="text-sidebar-foreground/50 mt-1 text-xs">Inicia sesión o regístrate</p>
         </div>
 
         <div className="bg-card rounded-2xl shadow-2xl p-8">
