@@ -172,7 +172,8 @@ export default function ControlAccesoPage() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
+                   <TableRow>
+                    <TableHead>Foto</TableHead>
                     <TableHead>Empresa</TableHead>
                     <TableHead>Visitante</TableHead>
                     <TableHead>Documento</TableHead>
@@ -189,6 +190,17 @@ export default function ControlAccesoPage() {
                 <TableBody>
                   {filtered.map((r: any) => (
                     <TableRow key={r.id}>
+                      <TableCell>
+                        {r.photo_url ? (
+                          <a href={r.photo_url} target="_blank" rel="noopener noreferrer">
+                            <img src={r.photo_url} alt="Visitante" className="w-10 h-10 rounded-md object-cover border hover:opacity-80 transition-opacity" />
+                          </a>
+                        ) : (
+                          <div className="w-10 h-10 rounded-md bg-muted flex items-center justify-center">
+                            <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                        )}
+                      </TableCell>
                       <TableCell className="font-medium">{r.company_name}</TableCell>
                       <TableCell>{r.visitor_name}</TableCell>
                       <TableCell>{r.document_id}</TableCell>
