@@ -4,7 +4,6 @@ import {
   Newspaper,
   Building2,
   Users,
-  Target,
   FileText,
   ClipboardCheck,
   ClipboardList,
@@ -15,6 +14,13 @@ import {
   Menu,
   ShieldCheck,
   ChevronDown,
+  UtensilsCrossed,
+  Briefcase,
+  ShoppingCart,
+  Calculator,
+  Megaphone,
+  Wrench,
+  Monitor,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -42,6 +48,57 @@ const navItems: NavItem[] = [
       { to: "/calidad/auditorias", label: "Calidad" },
       { to: "/evaluaciones", label: "Evaluaciones" },
     ],
+  },
+  {
+    to: "/ayb",
+    icon: UtensilsCrossed,
+    label: "Alimentos y Bebidas",
+    children: [],
+  },
+  {
+    to: "/comercial",
+    icon: Briefcase,
+    label: "Comercial",
+    children: [
+      { to: "/comercial/comercial", label: "Comercial" },
+      { to: "/comercial/hospitalidad", label: "Hospitalidad" },
+      { to: "/comercial/reservas", label: "Reservas" },
+    ],
+  },
+  {
+    to: "/compras",
+    icon: ShoppingCart,
+    label: "Compras",
+    children: [],
+  },
+  {
+    to: "/contraloria",
+    icon: Calculator,
+    label: "Contraloría",
+    children: [],
+  },
+  {
+    to: "/mercadeo",
+    icon: Megaphone,
+    label: "Mercadeo",
+    children: [],
+  },
+  {
+    to: "/operaciones",
+    icon: Wrench,
+    label: "Operaciones",
+    children: [
+      { to: "/operaciones/glowingdesk", label: "GlowingDesk" },
+      { to: "/operaciones/housekeeping", label: "Comfort & Housekeeping" },
+      { to: "/operaciones/mantenimiento", label: "Mantenimiento" },
+      { to: "/operaciones/seguridad", label: "Seguridad" },
+    ],
+  },
+  {
+    to: "/tecnologia",
+    icon: Monitor,
+    label: "Tecnología",
+    children: [],
   },
   { to: "/reportes", icon: FileText, label: "Reportes" },
   { to: "/organigrama", icon: Building2, label: "Organigrama" },
@@ -93,7 +150,7 @@ export default function AppSidebar() {
         {navItems.map((item) => {
           const isActive = location.pathname === item.to || (item.to !== "/" && location.pathname.startsWith(item.to));
 
-          if (item.children) {
+          if (item.children && item.children.length > 0) {
             const isGroupExpanded = expandedGroups.has(item.to);
             return (
               <div key={item.to}>
