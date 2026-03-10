@@ -728,16 +728,6 @@ function ObjectiveCard({
           {objKpis.length > 0 && (
             <div className="flex items-center gap-1 mb-3 overflow-x-auto pb-1">
               <Calendar className="w-4 h-4 text-muted-foreground shrink-0 mr-1" />
-              <button
-                onClick={() => setSelectedMonth('actual')}
-                className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                  selectedMonth === 'actual'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                }`}
-              >
-                Actual
-              </button>
               {availableMonths.map(ym => (
                 <button
                   key={ym}
