@@ -64,6 +64,8 @@ const navItems: NavItem[] = [
     icon: UtensilsCrossed,
     label: "Alimentos y Bebidas",
     children: [
+      { to: "/ayb/carta-digital", label: "Sistema Carta Digital", icon: ClipboardList },
+      { to: "/ayb/recogida-loza", label: "Recogida Loza", icon: Package },
       { to: "/ayb/objetivos", label: "Objetivos", icon: Target },
       { to: "/ayb/leader-pass", label: "Leader Pass", icon: ClipboardList },
       { to: "/ayb/calidad", label: "Calidad", icon: ShieldCheck },
