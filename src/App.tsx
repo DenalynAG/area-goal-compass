@@ -49,6 +49,7 @@ function ProtectedRoutes() {
         <Route path="/administracion" element={<AdministracionPage />} />
         <Route path="/operaciones/seguridad/control-acceso" element={<ControlAccesoPage />} />
         <Route path="/operaciones/seguridad/control-activos" element={<ControlActivosPage />} />
+        <Route path="/operaciones/housekeeping/comfort-map" element={<ComfortMapPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AppLayout>
