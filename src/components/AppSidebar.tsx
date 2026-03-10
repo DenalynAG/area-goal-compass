@@ -47,19 +47,6 @@ const navItems: NavItem[] = [
   { to: "/", icon: Newspaper, label: "NotiOSH" },
   { to: "/aplicaciones", icon: Monitor, label: "Aplicaciones" },
   {
-    to: "/rrhh",
-    icon: Users,
-    label: "Recursos Humanos",
-    children: [
-      { to: "/estructura", label: "Estructura", icon: Building2 },
-      { to: "/colaboradores", label: "Colaboradores", icon: Users },
-      { to: "/objetivos", label: "Objetivos", icon: Target },
-      { to: "/leader-pass", label: "Leader Pass", icon: ClipboardList },
-      { to: "/calidad/auditorias", label: "Calidad", icon: ShieldCheck },
-      { to: "/evaluaciones", label: "Evaluaciones", icon: ClipboardCheck },
-    ],
-  },
-  {
     to: "/ayb",
     icon: UtensilsCrossed,
     label: "Alimentos y Bebidas",
@@ -105,12 +92,24 @@ const navItems: NavItem[] = [
     ],
   },
   {
+    to: "/rrhh",
+    icon: Users,
+    label: "Recursos Humanos",
+    children: [
+      { to: "/estructura", label: "Estructura", icon: Building2 },
+      { to: "/colaboradores", label: "Colaboradores", icon: Users },
+      { to: "/objetivos", label: "Objetivos", icon: Target },
+      { to: "/leader-pass", label: "Leader Pass", icon: ClipboardList },
+      { to: "/calidad/auditorias", label: "Calidad", icon: ShieldCheck },
+      { to: "/evaluaciones", label: "Evaluaciones", icon: ClipboardCheck },
+    ],
+  },
+  {
     to: "/tecnologia",
     icon: Monitor,
     label: "Tecnología",
     children: [],
   },
-  { to: "/reportes", icon: FileText, label: "Reportes" },
   { to: "/organigrama", icon: Building2, label: "Organigrama" },
   { to: "/administracion", icon: Settings, label: "Administración" },
 ];
