@@ -113,6 +113,7 @@ const navItems: NavItem[] = [
     icon: Megaphone,
     label: "Mercadeo",
     children: [
+      { to: "/mercadeo/crm", label: "Sistema CRM", icon: BarChart3 },
       { to: "/mercadeo/objetivos", label: "Objetivos", icon: Target },
       { to: "/mercadeo/leader-pass", label: "Leader Pass", icon: ClipboardList },
       { to: "/mercadeo/calidad", label: "Calidad", icon: ShieldCheck },
