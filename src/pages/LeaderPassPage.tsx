@@ -120,10 +120,23 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
   const [evidenceActivity, setEvidenceActivity] = useState<{ id: string; name: string } | null>(null);
   const [showBanner, setShowBanner] = useState(false);
 
+  // Resolve area filter from name
+  const presetAreaId = useMemo(() => {
+    if (!areaFilterName) return null;
+    return areas.find(a => a.name === areaFilterName)?.id ?? null;
+  }, [areaFilterName, areas]);
+
   // Filters
   const [filterAreaId, setFilterAreaId] = useState<string>('all');
   const [filterSubareaId, setFilterSubareaId] = useState<string>('all');
   const [filterCargo, setFilterCargo] = useState<string>('all');
+
+  // Auto-set area filter when areaFilterName is provided
+  useEffect(() => {
+    if (presetAreaId) {
+      setFilterAreaId(presetAreaId);
+    }
+  }, [presetAreaId]);
 
   const periods = useMemo(() => getPeriodOptions(), []);
 
