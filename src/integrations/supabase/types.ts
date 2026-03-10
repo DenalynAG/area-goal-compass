@@ -835,6 +835,33 @@ export type Database = {
           },
         ]
       }
+      menu_permissions: {
+        Row: {
+          created_at: string
+          id: string
+          is_visible: boolean
+          menu_key: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          menu_key: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          menu_key?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       newsletter_comments: {
         Row: {
           avatar: string | null
