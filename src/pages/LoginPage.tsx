@@ -15,6 +15,27 @@ export default function LoginPage() {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  const [forgotMessage, setForgotMessage] = useState('');
+
+  const handleForgotPassword = async () => {
+    if (!email.trim()) {
+      setError('Ingresa tu correo electrónico primero.');
+      return;
+    }
+    setError('');
+    setForgotMessage('');
+    setIsLoading(true);
+    const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (err) {
+      setError(err.message);
+    } else {
+      setForgotMessage('Revisa tu correo electrónico para restablecer tu contraseña.');
+    }
+    setIsLoading(false);
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
