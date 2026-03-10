@@ -22,6 +22,13 @@ import {
   Wrench,
   Monitor,
   Target,
+  Handshake,
+  Hotel,
+  CalendarCheck,
+  Lamp,
+  Sparkles,
+  Hammer,
+  Shield,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -63,9 +70,9 @@ const navItems: NavItem[] = [
     icon: Briefcase,
     label: "Comercial",
     children: [
-      { to: "/comercial/comercial", label: "Comercial" },
-      { to: "/comercial/hospitalidad", label: "Hospitalidad" },
-      { to: "/comercial/reservas", label: "Reservas" },
+      { to: "/comercial/comercial", label: "Comercial", icon: Handshake },
+      { to: "/comercial/hospitalidad", label: "Hospitalidad", icon: Hotel },
+      { to: "/comercial/reservas", label: "Reservas", icon: CalendarCheck },
     ],
   },
   {
@@ -91,10 +98,10 @@ const navItems: NavItem[] = [
     icon: Wrench,
     label: "Operaciones",
     children: [
-      { to: "/operaciones/glowingdesk", label: "GlowingDesk" },
-      { to: "/operaciones/housekeeping", label: "Comfort & Housekeeping" },
-      { to: "/operaciones/mantenimiento", label: "Mantenimiento" },
-      { to: "/operaciones/seguridad", label: "Seguridad" },
+      { to: "/operaciones/glowingdesk", label: "GlowingDesk", icon: Lamp },
+      { to: "/operaciones/housekeeping", label: "Comfort & Housekeeping", icon: Sparkles },
+      { to: "/operaciones/mantenimiento", label: "Mantenimiento", icon: Hammer },
+      { to: "/operaciones/seguridad", label: "Seguridad", icon: Shield },
     ],
   },
   {
