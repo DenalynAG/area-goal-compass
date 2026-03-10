@@ -30,18 +30,20 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { to: "/", icon: Newspaper, label: "Portal OSH" },
-  { to: "/estructura", icon: Building2, label: "Estructura" },
-  { to: "/colaboradores", icon: Users, label: "Colaboradores" },
-  { to: "/objetivos", icon: Target, label: "Objetivos" },
-  { to: "/leader-pass", icon: ClipboardList, label: "Leader Pass" },
   {
-    to: "/calidad",
-    icon: ShieldCheck,
-    label: "Calidad",
-    children: [{ to: "/calidad/auditorias", label: "Auditorías" }],
+    to: "/rrhh",
+    icon: Users,
+    label: "Recursos Humanos",
+    children: [
+      { to: "/estructura", label: "Estructura" },
+      { to: "/colaboradores", label: "Colaboradores" },
+      { to: "/objetivos", label: "Objetivos" },
+      { to: "/leader-pass", label: "Leader Pass" },
+      { to: "/calidad/auditorias", label: "Calidad" },
+      { to: "/evaluaciones", label: "Evaluaciones" },
+    ],
   },
   { to: "/reportes", icon: FileText, label: "Reportes" },
-  { to: "/evaluaciones", icon: ClipboardCheck, label: "Evaluaciones" },
   { to: "/organigrama", icon: Building2, label: "Organigrama" },
   { to: "/administracion", icon: Settings, label: "Administración" },
 ];
@@ -50,7 +52,7 @@ export default function AppSidebar() {
   const { user, profile, roles, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(["/calidad"]));
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(["/rrhh"]));
   const location = useLocation();
 
   const toggleGroup = (to: string) => {
