@@ -43,6 +43,7 @@ const MENU_LABELS: Record<string, string> = {
   '/contraloria/calidad': 'Contraloría · Calidad',
   '/contraloria/evaluaciones': 'Contraloría · Evaluaciones',
   '/mercadeo': 'Mercadeo',
+  '/mercadeo/crm': 'Mercadeo · Sistema CRM',
   '/mercadeo/colaboradores': 'Mercadeo · Colaboradores',
   '/mercadeo/objetivos': 'Mercadeo · Objetivos',
   '/mercadeo/leader-pass': 'Mercadeo · Leader Pass',
