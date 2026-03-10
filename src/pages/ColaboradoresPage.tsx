@@ -160,8 +160,8 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between page-header flex-wrap gap-3">
         <div>
-          <h1 className="page-title">Colaboradores</h1>
-          <p className="page-subtitle">{profiles.length} colaboradores registrados</p>
+          <h1 className="page-title">{areaFilterName ? `Colaboradores · ${areaFilterName}` : 'Colaboradores'}</h1>
+          <p className="page-subtitle">{areaFilteredProfiles.length} colaboradores registrados</p>
         </div>
         <div className="flex gap-2">
           <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleImportExcel} />
