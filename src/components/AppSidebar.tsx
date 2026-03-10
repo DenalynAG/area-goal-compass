@@ -33,7 +33,7 @@ interface NavItem {
   to: string;
   icon: typeof Newspaper;
   label: string;
-  children?: { to: string; label: string }[];
+  children?: { to: string; label: string; icon?: LucideIcon }[];
 }
 
 const navItems: NavItem[] = [
@@ -43,12 +43,12 @@ const navItems: NavItem[] = [
     icon: Users,
     label: "Recursos Humanos",
     children: [
-      { to: "/estructura", label: "Estructura" },
-      { to: "/colaboradores", label: "Colaboradores" },
-      { to: "/objetivos", label: "Objetivos" },
-      { to: "/leader-pass", label: "Leader Pass" },
-      { to: "/calidad/auditorias", label: "Calidad" },
-      { to: "/evaluaciones", label: "Evaluaciones" },
+      { to: "/estructura", label: "Estructura", icon: Building2 },
+      { to: "/colaboradores", label: "Colaboradores", icon: Users },
+      { to: "/objetivos", label: "Objetivos", icon: Target },
+      { to: "/leader-pass", label: "Leader Pass", icon: ClipboardList },
+      { to: "/calidad/auditorias", label: "Calidad", icon: ShieldCheck },
+      { to: "/evaluaciones", label: "Evaluaciones", icon: ClipboardCheck },
     ],
   },
   {
