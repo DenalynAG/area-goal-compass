@@ -13,7 +13,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 
-export default function ObjetivosPage() {
+interface ObjetivosPageProps {
+  areaFilterName?: string;
+}
+
+export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {}) {
   const { data: objectives = [], isLoading } = useObjectives();
   const { data: kpis = [] } = useKPIs();
   const { data: measurements = [] } = useKPIMeasurements();
