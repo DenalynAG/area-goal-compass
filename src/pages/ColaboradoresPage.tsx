@@ -139,7 +139,16 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const filtered = profiles.filter(c =>
+  // Filter profiles by area if areaFilterName is provided
+  const areaFilteredProfiles = useMemo(() => {
+    if (!areaFilterName) return profiles;
+    const area = areas.find(a => a.name === areaFilterName);
+    if (!area) return profiles;
+    const areaUserIds = new Set(memberships.filter(m => m.area_id === area.id).map(m => m.user_id));
+    return profiles.filter(p => areaUserIds.has(p.id));
+  }, [profiles, areaFilterName, areas, memberships]);
+
+  const filtered = areaFilteredProfiles.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
     c.email.toLowerCase().includes(search.toLowerCase()) ||
     (c.position ?? '').toLowerCase().includes(search.toLowerCase())
