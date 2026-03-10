@@ -22,6 +22,13 @@ import {
   Wrench,
   Monitor,
   Target,
+  Handshake,
+  Hotel,
+  CalendarCheck,
+  Lamp,
+  Sparkles,
+  Hammer,
+  Shield,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
