@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,6 +15,27 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const [forgotMessage, setForgotMessage] = useState('');
+
+  const handleForgotPassword = async () => {
+    if (!email.trim()) {
+      setError('Ingresa tu correo electrónico primero.');
+      return;
+    }
+    setError('');
+    setForgotMessage('');
+    setIsLoading(true);
+    const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (err) {
+      setError(err.message);
+    } else {
+      setForgotMessage('Revisa tu correo electrónico para restablecer tu contraseña.');
+    }
+    setIsLoading(false);
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,9 +98,20 @@ export default function LoginPage() {
                   </div>
                 </div>
                 {error && <p className="text-sm text-destructive">{error}</p>}
+                {forgotMessage && <p className="text-sm text-accent-foreground bg-accent/20 p-2 rounded">{forgotMessage}</p>}
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? 'Ingresando...' : 'Iniciar Sesión'}
                 </Button>
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={handleForgotPassword}
+                    className="text-sm text-primary hover:underline"
+                    disabled={isLoading}
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </button>
+                </div>
               </form>
             </TabsContent>
 
