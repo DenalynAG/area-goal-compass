@@ -324,7 +324,7 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label>Correo Corporativo</Label>
-                <Input type="email" value={email} onChange={e => setEmail(e.target.value)} maxLength={255} disabled={isEditing} placeholder="Para login (si no hay personal)" />
+                <Input type="email" value={email} onChange={e => setEmail(e.target.value)} maxLength={255} disabled={isEditing && !isSuperAdmin} placeholder="Para login (si no hay personal)" />
               </div>
               <div className="space-y-1.5">
                 <Label>Correo Personal</Label>
