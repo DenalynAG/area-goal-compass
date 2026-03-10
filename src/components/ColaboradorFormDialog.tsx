@@ -176,6 +176,7 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
     if (isEditing) {
       const avatarUrl = await uploadAvatar(profile!.id);
       if (avatarUrl) profilePayload.avatar = avatarUrl;
+      if (isSuperAdmin && email.trim()) profilePayload.email = email.trim();
 
       const { error } = await supabase.from('profiles').update(profilePayload).eq('id', profile!.id);
       if (error) { toast.error(error.message); setSaving(false); return; }
