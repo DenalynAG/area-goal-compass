@@ -796,9 +796,8 @@ function ObjectiveCard({
                   {(() => {
                     const values = objKpis.map(k => {
                       const monthValue = getKpiMonthValue(k.id);
-                      const val = selectedMonth === 'actual' ? k.current_value : (monthValue ?? null);
-                      if (val === null) return null;
-                      return k.target > 0 ? (val / k.target) * 100 : 0;
+                      if (monthValue === null) return null;
+                      return k.target > 0 ? (monthValue / k.target) * 100 : 0;
                     }).filter((v): v is number => v !== null);
                     const avg = values.length > 0 ? Math.round(values.reduce((s, v) => s + v, 0) / values.length) : 0;
                     return `${avg}%`;
@@ -808,9 +807,8 @@ function ObjectiveCard({
                   {(() => {
                     const values = objKpis.map(k => {
                       const monthValue = getKpiMonthValue(k.id);
-                      const val = selectedMonth === 'actual' ? k.current_value : (monthValue ?? null);
-                      if (val === null) return null;
-                      return k.target > 0 ? (val / k.target) * 100 : 0;
+                      if (monthValue === null) return null;
+                      return k.target > 0 ? (monthValue / k.target) * 100 : 0;
                     }).filter((v): v is number => v !== null);
                     const avg = values.length > 0 ? Math.round(values.reduce((s, v) => s + v, 0) / values.length) : 0;
                     const label = avg >= 100 ? 'Alto' : avg >= 80 ? 'Medio' : 'Bajo';
