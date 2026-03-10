@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import AppLayout from "@/components/AppLayout";
 import LoginPage from "@/pages/LoginPage";
+import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import NewsletterPortalPage from "@/pages/NewsletterPortalPage";
 import EstructuraPage from "@/pages/EstructuraPage";
 import ColaboradoresPage from "@/pages/ColaboradoresPage";
