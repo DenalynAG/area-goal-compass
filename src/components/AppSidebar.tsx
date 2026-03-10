@@ -209,6 +209,52 @@ export default function AppSidebar() {
                   <div className="ml-5 pl-3 border-l border-sidebar-border space-y-0.5 mt-0.5">
                     {item.children.map((child) => {
                       const childActive = location.pathname === child.to;
+                      const hasSubChildren = child.children && child.children.length > 0;
+                      const isSubExpanded = expandedGroups.has(child.to);
+
+                      if (hasSubChildren) {
+                        return (
+                          <div key={child.to}>
+                            <button
+                              onClick={() => toggleGroup(child.to)}
+                              className={cn(
+                                "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all w-full",
+                                childActive
+                                  ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+                              )}
+                            >
+                              {child.icon && <child.icon className="w-4 h-4 shrink-0" />}
+                              <span className="truncate flex-1 text-left">{child.label}</span>
+                              <ChevronDown className={cn("w-3 h-3 transition-transform", isSubExpanded && "rotate-180")} />
+                            </button>
+                            {isSubExpanded && (
+                              <div className="ml-4 pl-3 border-l border-sidebar-border space-y-0.5 mt-0.5">
+                                {child.children!.map((sub) => {
+                                  const subActive = location.pathname === sub.to;
+                                  return (
+                                    <NavLink
+                                      key={sub.to}
+                                      to={sub.to}
+                                      onClick={() => setMobileOpen(false)}
+                                      className={cn(
+                                        "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition-all",
+                                        subActive
+                                          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                                          : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+                                      )}
+                                    >
+                                      {sub.icon && <sub.icon className="w-3.5 h-3.5 shrink-0" />}
+                                      <span className="truncate">{sub.label}</span>
+                                    </NavLink>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      }
+
                       return (
                         <NavLink
                           key={child.to}
