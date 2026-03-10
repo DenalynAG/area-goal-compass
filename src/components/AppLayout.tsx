@@ -8,7 +8,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <main className="flex-1 min-w-0">
         {/* Header */}
         <header className="border-b bg-card px-4 md:px-6 lg:px-8 py-3">
-          <div className="max-w-[1400px] mx-auto">
+          <div>
             <h1 className="text-sm font-bold text-foreground leading-tight">EasyConnect – Plataforma de Gestión Estratégica Hotelera</h1>
             <p className="text-[11px] text-muted-foreground leading-tight">Sistema centralizado para la administración de áreas, subáreas, colaboradores, objetivos, indicadores y aplicativos internos de gestión operativa y administrativa.</p>
           </div>
