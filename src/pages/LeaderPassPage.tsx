@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -97,7 +97,11 @@ const ACTIVITY_COLORS = [
   'bg-teal-500/10 text-teal-700 border-teal-200',
 ];
 
-export default function LeaderPassPage() {
+interface LeaderPassPageProps {
+  areaFilterName?: string;
+}
+
+export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps = {}) {
   const { user, isSuperAdmin, hasRole } = useAuth();
   const { data: activities = [], isLoading: loadingActs } = useLeaderPassActivities();
   const { data: profiles = [] } = useProfiles();
@@ -116,10 +120,23 @@ export default function LeaderPassPage() {
   const [evidenceActivity, setEvidenceActivity] = useState<{ id: string; name: string } | null>(null);
   const [showBanner, setShowBanner] = useState(false);
 
+  // Resolve area filter from name
+  const presetAreaId = useMemo(() => {
+    if (!areaFilterName) return null;
+    return areas.find(a => a.name === areaFilterName)?.id ?? null;
+  }, [areaFilterName, areas]);
+
   // Filters
   const [filterAreaId, setFilterAreaId] = useState<string>('all');
   const [filterSubareaId, setFilterSubareaId] = useState<string>('all');
   const [filterCargo, setFilterCargo] = useState<string>('all');
+
+  // Auto-set area filter when areaFilterName is provided
+  useEffect(() => {
+    if (presetAreaId) {
+      setFilterAreaId(presetAreaId);
+    }
+  }, [presetAreaId]);
 
   const periods = useMemo(() => getPeriodOptions(), []);
 

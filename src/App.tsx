@@ -1,3 +1,4 @@
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -23,6 +24,7 @@ import ControlAccesoPage from "@/pages/ControlAccesoPage";
 import ControlActivosPage from "@/pages/ControlActivosPage";
 import ComfortMapPage from "@/pages/ComfortMapPage";
 import AreaObjetivosPage from "@/pages/AreaObjetivosPage";
+import AreaModulePage from "@/pages/AreaModulePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -53,13 +55,19 @@ function ProtectedRoutes() {
         <Route path="/operaciones/housekeeping/comfort-map" element={<ComfortMapPage />} />
         
         {/* Area-specific objectives */}
-        <Route path="/ayb/objetivos" element={<AreaObjetivosPage areaKey="ayb" />} />
-        <Route path="/comercial/objetivos" element={<AreaObjetivosPage areaKey="comercial" />} />
-        <Route path="/compras/objetivos" element={<AreaObjetivosPage areaKey="compras" />} />
-        <Route path="/contraloria/objetivos" element={<AreaObjetivosPage areaKey="contraloria" />} />
-        <Route path="/mercadeo/objetivos" element={<AreaObjetivosPage areaKey="mercadeo" />} />
-        <Route path="/operaciones/objetivos" element={<AreaObjetivosPage areaKey="operaciones" />} />
-        <Route path="/tecnologia/objetivos" element={<AreaObjetivosPage areaKey="tecnologia" />} />
+        {['ayb', 'comercial', 'compras', 'contraloria', 'mercadeo', 'operaciones', 'tecnologia'].map(key => (
+          <Route key={`${key}-obj`} path={`/${key}/objetivos`} element={<AreaObjetivosPage areaKey={key} />} />
+        ))}
+
+        {/* Area-specific modules: colaboradores, leader-pass, calidad, evaluaciones */}
+        {['ayb', 'comercial', 'compras', 'contraloria', 'mercadeo', 'operaciones', 'tecnologia'].map(key => (
+          <React.Fragment key={key}>
+            <Route path={`/${key}/colaboradores`} element={<AreaModulePage areaKey={key} module="colaboradores" />} />
+            <Route path={`/${key}/leader-pass`} element={<AreaModulePage areaKey={key} module="leader-pass" />} />
+            <Route path={`/${key}/calidad`} element={<AreaModulePage areaKey={key} module="calidad" />} />
+            <Route path={`/${key}/evaluaciones`} element={<AreaModulePage areaKey={key} module="evaluaciones" />} />
+          </React.Fragment>
+        ))}
         
         <Route path="*" element={<NotFound />} />
       </Routes>

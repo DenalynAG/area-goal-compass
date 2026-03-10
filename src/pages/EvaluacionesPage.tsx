@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import { useProfiles } from '@/hooks/useSupabaseData';
+import { useProfiles, useMemberships, useAreas } from '@/hooks/useSupabaseData';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -42,7 +42,11 @@ function ScoreLabel({ score }: { score: number | null }) {
   return <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${color}`}>{label}</span>;
 }
 
-export default function EvaluacionesPage() {
+interface EvaluacionesPageProps {
+  areaFilterName?: string;
+}
+
+export default function EvaluacionesPage({ areaFilterName }: EvaluacionesPageProps = {}) {
   const [open, setOpen] = useState(false);
   const [editingEval, setEditingEval] = useState<Tables<'evaluations'> | null>(null);
   const [filterType, setFilterType] = useState<string>('all');
@@ -60,8 +64,19 @@ export default function EvaluacionesPage() {
   });
 
   const { data: profiles = [] } = useProfiles();
+  const { data: memberships = [] } = useMemberships();
+  const { data: areas = [] } = useAreas();
 
-  const filtered = filterType === 'all' ? evaluations : evaluations.filter(e => e.type === filterType);
+  // Filter evaluations by area if areaFilterName is provided
+  const areaFilteredEvaluations = useMemo(() => {
+    if (!areaFilterName) return evaluations;
+    const area = areas.find(a => a.name === areaFilterName);
+    if (!area) return evaluations;
+    const areaUserIds = new Set(memberships.filter(m => m.area_id === area.id).map(m => m.user_id));
+    return evaluations.filter(e => areaUserIds.has(e.collaborator_user_id));
+  }, [evaluations, areaFilterName, areas, memberships]);
+
+  const filtered = filterType === 'all' ? areaFilteredEvaluations : areaFilteredEvaluations.filter(e => e.type === filterType);
   const getCollaboratorName = (id: string) => profiles.find(p => p.id === id)?.name ?? id;
 
   const handleEdit = (ev: Tables<'evaluations'>) => {

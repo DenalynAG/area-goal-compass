@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { useProfiles, useMemberships, useUserRoles, useAreas, useSubareas, getAreaNameFromList, getSubareaNameFromList } from '@/hooks/useSupabaseData';
 import { getRoleLabel } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 
-export default function ColaboradoresPage() {
+interface ColaboradoresPageProps {
+  areaFilterName?: string;
+}
+
+export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageProps = {}) {
   const { data: profiles = [], isLoading } = useProfiles();
   const { data: memberships = [] } = useMemberships();
   const { data: userRoles = [] } = useUserRoles();
@@ -135,7 +139,16 @@ export default function ColaboradoresPage() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const filtered = profiles.filter(c =>
+  // Filter profiles by area if areaFilterName is provided
+  const areaFilteredProfiles = useMemo(() => {
+    if (!areaFilterName) return profiles;
+    const area = areas.find(a => a.name === areaFilterName);
+    if (!area) return profiles;
+    const areaUserIds = new Set(memberships.filter(m => m.area_id === area.id).map(m => m.user_id));
+    return profiles.filter(p => areaUserIds.has(p.id));
+  }, [profiles, areaFilterName, areas, memberships]);
+
+  const filtered = areaFilteredProfiles.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
     c.email.toLowerCase().includes(search.toLowerCase()) ||
     (c.position ?? '').toLowerCase().includes(search.toLowerCase())
@@ -147,8 +160,8 @@ export default function ColaboradoresPage() {
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between page-header flex-wrap gap-3">
         <div>
-          <h1 className="page-title">Colaboradores</h1>
-          <p className="page-subtitle">{profiles.length} colaboradores registrados</p>
+          <h1 className="page-title">{areaFilterName ? `Colaboradores · ${areaFilterName}` : 'Colaboradores'}</h1>
+          <p className="page-subtitle">{areaFilteredProfiles.length} colaboradores registrados</p>
         </div>
         <div className="flex gap-2">
           <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleImportExcel} />

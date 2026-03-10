@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -110,7 +110,11 @@ const SEVERITY_CONFIG: Record<string, { label: string; className: string; icon: 
 };
 
 // ─── Main Component ───
-export default function AuditoriasPage() {
+interface AuditoriasPageProps {
+  areaFilterName?: string;
+}
+
+export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps = {}) {
   const { user, profile, hasRole, isSuperAdmin } = useAuth();
   const qc = useQueryClient();
   const { data: plans = [], isLoading } = useAuditPlans();
@@ -121,10 +125,23 @@ export default function AuditoriasPage() {
 
   const canManage = isSuperAdmin || hasRole("admin_area");
 
+  // Resolve area filter from name
+  const presetAreaId = useMemo(() => {
+    if (!areaFilterName) return null;
+    return areas.find(a => a.name === areaFilterName)?.id ?? null;
+  }, [areaFilterName, areas]);
+
   const [activeTab, setActiveTab] = useState("planes");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterArea, setFilterArea] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
+
+  // Auto-set area filter when areaFilterName is provided
+  useEffect(() => {
+    if (presetAreaId) {
+      setFilterArea(presetAreaId);
+    }
+  }, [presetAreaId]);
 
   // Plan dialog
   const [planDialogOpen, setPlanDialogOpen] = useState(false);
