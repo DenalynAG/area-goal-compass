@@ -1,0 +1,1 @@
+UPDATE public.menu_permissions SET is_visible = true, updated_at = now() WHERE role = 'admin_area' AND is_visible = false;
