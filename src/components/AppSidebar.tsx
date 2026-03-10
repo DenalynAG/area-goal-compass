@@ -62,7 +62,6 @@ const navItems: NavItem[] = [
     icon: UtensilsCrossed,
     label: "Alimentos y Bebidas",
     children: [
-      { to: "/ayb/colaboradores", label: "Colaboradores", icon: Users },
       { to: "/ayb/objetivos", label: "Objetivos", icon: Target },
       { to: "/ayb/leader-pass", label: "Leader Pass", icon: ClipboardList },
       { to: "/ayb/calidad", label: "Calidad", icon: ShieldCheck },
@@ -74,7 +73,6 @@ const navItems: NavItem[] = [
     icon: Briefcase,
     label: "Comercial",
     children: [
-      { to: "/comercial/colaboradores", label: "Colaboradores", icon: Users },
       { to: "/comercial/comercial", label: "Comercial", icon: Handshake },
       { to: "/comercial/hospitalidad", label: "Hospitalidad", icon: Hotel },
       { to: "/comercial/reservas", label: "Reservas", icon: CalendarCheck },
@@ -89,7 +87,6 @@ const navItems: NavItem[] = [
     icon: ShoppingCart,
     label: "Compras",
     children: [
-      { to: "/compras/colaboradores", label: "Colaboradores", icon: Users },
       { to: "/compras/objetivos", label: "Objetivos", icon: Target },
       { to: "/compras/leader-pass", label: "Leader Pass", icon: ClipboardList },
       { to: "/compras/calidad", label: "Calidad", icon: ShieldCheck },
@@ -101,7 +98,6 @@ const navItems: NavItem[] = [
     icon: Calculator,
     label: "Contraloría",
     children: [
-      { to: "/contraloria/colaboradores", label: "Colaboradores", icon: Users },
       { to: "/contraloria/objetivos", label: "Objetivos", icon: Target },
       { to: "/contraloria/leader-pass", label: "Leader Pass", icon: ClipboardList },
       { to: "/contraloria/calidad", label: "Calidad", icon: ShieldCheck },
@@ -113,7 +109,6 @@ const navItems: NavItem[] = [
     icon: Megaphone,
     label: "Mercadeo",
     children: [
-      { to: "/mercadeo/colaboradores", label: "Colaboradores", icon: Users },
       { to: "/mercadeo/objetivos", label: "Objetivos", icon: Target },
       { to: "/mercadeo/leader-pass", label: "Leader Pass", icon: ClipboardList },
       { to: "/mercadeo/calidad", label: "Calidad", icon: ShieldCheck },
@@ -125,7 +120,6 @@ const navItems: NavItem[] = [
     icon: Wrench,
     label: "Operaciones",
     children: [
-      { to: "/operaciones/colaboradores", label: "Colaboradores", icon: Users },
       { to: "/operaciones/glowingdesk", label: "GlowingDesk", icon: Lamp },
       {
         to: "/operaciones/housekeeping",
@@ -169,7 +163,6 @@ const navItems: NavItem[] = [
     icon: Monitor,
     label: "Tecnología",
     children: [
-      { to: "/tecnologia/colaboradores", label: "Colaboradores", icon: Users },
       { to: "/tecnologia/objetivos", label: "Objetivos", icon: Target },
       { to: "/tecnologia/leader-pass", label: "Leader Pass", icon: ClipboardList },
       { to: "/tecnologia/calidad", label: "Calidad", icon: ShieldCheck },
