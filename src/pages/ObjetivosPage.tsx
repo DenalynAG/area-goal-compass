@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useObjectives, useKPIs, useKPIMeasurements, useAreas, useSubareas, useProfiles, getProfileName, getAreaNameFromList } from '@/hooks/useSupabaseData';
 import { getTrafficLight } from '@/types';
 import { StatusBadge, ProgressBar, TrafficLightBadge } from '@/components/StatusBadge';
@@ -26,6 +27,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   const { data: subareas = [] } = useSubareas();
   const { data: profiles = [] } = useProfiles();
 
+  const [searchParams, setSearchParams] = useSearchParams();
   const qc = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
@@ -328,9 +330,11 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
             ...areaSubareas.map(sub => ({ id: sub.id, label: sub.name, isArea: false })),
           ];
           const defaultTab = tabs[0]?.id || selectedArea.id;
+          const activeTab = searchParams.get('tab');
+          const currentTab = (activeTab && tabs.some(t => t.id === activeTab)) ? activeTab : defaultTab;
 
           return (
-            <Tabs defaultValue={defaultTab} className="w-full">
+            <Tabs value={currentTab} onValueChange={(val) => setSearchParams({ tab: val }, { replace: true })} className="w-full">
               <TabsList className="w-full flex-wrap h-auto gap-1 bg-muted/50 p-1 rounded-lg">
                 {tabs.map(tab => {
                   const tabObjs = tab.isArea ? directAreaObjs : getSubareaObjs(tab.id);
