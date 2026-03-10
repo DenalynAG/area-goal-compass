@@ -61,12 +61,12 @@ function ProtectedRoutes() {
 
         {/* Area-specific modules: colaboradores, leader-pass, calidad, evaluaciones */}
         {['ayb', 'comercial', 'compras', 'contraloria', 'mercadeo', 'operaciones', 'tecnologia'].map(key => (
-          <>
-            <Route key={`${key}-colab`} path={`/${key}/colaboradores`} element={<AreaModulePage areaKey={key} module="colaboradores" />} />
-            <Route key={`${key}-lp`} path={`/${key}/leader-pass`} element={<AreaModulePage areaKey={key} module="leader-pass" />} />
-            <Route key={`${key}-cal`} path={`/${key}/calidad`} element={<AreaModulePage areaKey={key} module="calidad" />} />
-            <Route key={`${key}-eval`} path={`/${key}/evaluaciones`} element={<AreaModulePage areaKey={key} module="evaluaciones" />} />
-          </>
+          <React.Fragment key={key}>
+            <Route path={`/${key}/colaboradores`} element={<AreaModulePage areaKey={key} module="colaboradores" />} />
+            <Route path={`/${key}/leader-pass`} element={<AreaModulePage areaKey={key} module="leader-pass" />} />
+            <Route path={`/${key}/calidad`} element={<AreaModulePage areaKey={key} module="calidad" />} />
+            <Route path={`/${key}/evaluaciones`} element={<AreaModulePage areaKey={key} module="evaluaciones" />} />
+          </React.Fragment>
         ))}
         
         <Route path="*" element={<NotFound />} />
