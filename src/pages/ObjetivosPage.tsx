@@ -286,7 +286,6 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
               <ArrowLeft className="w-5 h-5" />
             </Button>
           )}
-          </Button>
           <div>
             <h1 className="page-title">Objetivos — {selectedArea.name}</h1>
             <p className="page-subtitle">
