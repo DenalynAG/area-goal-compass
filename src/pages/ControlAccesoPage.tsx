@@ -84,6 +84,19 @@ export default function ControlAccesoPage() {
       return;
     }
     setSaving(true);
+
+    let photoUrl: string | null = null;
+    if (photoFile) {
+      setUploading(true);
+      const ext = photoFile.name.split(".").pop();
+      const filePath = `acceso/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error: uploadErr } = await supabase.storage.from("evidencias").upload(filePath, photoFile);
+      setUploading(false);
+      if (uploadErr) { toast.error("Error al subir imagen"); setSaving(false); return; }
+      const { data: urlData } = supabase.storage.from("evidencias").getPublicUrl(filePath);
+      photoUrl = urlData.publicUrl;
+    }
+
     const payload: any = {
       company_name: companyName.trim(),
       visitor_name: visitorName.trim(),
@@ -96,6 +109,7 @@ export default function ControlAccesoPage() {
       zone_requirement: zoneReq.trim(),
       arl: arl.trim(),
       created_by: user?.id,
+      photo_url: photoUrl,
     };
     const { error } = await supabase.from("access_control" as any).insert(payload);
     setSaving(false);
