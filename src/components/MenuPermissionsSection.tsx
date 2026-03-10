@@ -84,7 +84,7 @@ const MENU_LABELS: Record<string, string> = {
 const MENU_GROUPS = [
   { label: 'General', keys: ['/', '/aplicaciones', '/organigrama', '/administracion'] },
   { label: 'Alimentos y Bebidas', keys: ['/ayb', '/ayb/colaboradores', '/ayb/objetivos', '/ayb/leader-pass', '/ayb/calidad', '/ayb/evaluaciones'] },
-  { label: 'Comercial', keys: ['/comercial', '/comercial/colaboradores', '/comercial/comercial', '/comercial/hospitalidad', '/comercial/reservas', '/comercial/objetivos', '/comercial/leader-pass', '/comercial/calidad', '/comercial/evaluaciones'] },
+  { label: 'Comercial', keys: ['/comercial', '/comercial/colaboradores', '/comercial/comercial', '/comercial/hospitalidad', '/comercial/hospitalidad/fidelizacion', '/comercial/reservas', '/comercial/objetivos', '/comercial/leader-pass', '/comercial/calidad', '/comercial/evaluaciones'] },
   { label: 'Compras', keys: ['/compras', '/compras/colaboradores', '/compras/objetivos', '/compras/leader-pass', '/compras/calidad', '/compras/evaluaciones'] },
   { label: 'Contraloría', keys: ['/contraloria', '/contraloria/colaboradores', '/contraloria/objetivos', '/contraloria/leader-pass', '/contraloria/calidad', '/contraloria/evaluaciones'] },
   { label: 'Mercadeo', keys: ['/mercadeo', '/mercadeo/colaboradores', '/mercadeo/objetivos', '/mercadeo/leader-pass', '/mercadeo/calidad', '/mercadeo/evaluaciones'] },
