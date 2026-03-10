@@ -120,7 +120,6 @@ const navItems: NavItem[] = [
     icon: Wrench,
     label: "Operaciones",
     children: [
-      { to: "/operaciones/colaboradores", label: "Colaboradores", icon: Users },
       { to: "/operaciones/glowingdesk", label: "GlowingDesk", icon: Lamp },
       {
         to: "/operaciones/housekeeping",
