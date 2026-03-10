@@ -57,6 +57,16 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
     setKpiDialogOpen(true);
   };
 
+  // Auto-select area when areaFilterName is provided
+  useEffect(() => {
+    if (areaFilterName && areas.length > 0) {
+      const match = areas.find(a => a.name.toLowerCase() === areaFilterName.toLowerCase());
+      if (match) setSelectedAreaId(match.id);
+    }
+  }, [areaFilterName, areas]);
+
+  const isAreaLocked = !!areaFilterName;
+
   const direccionGeneral = areas.find(a => a.name === 'Dirección General');
   const otherAreas = areas.filter(a => a.name !== 'Dirección General');
 
