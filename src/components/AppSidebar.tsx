@@ -87,7 +87,6 @@ const navItems: NavItem[] = [
     icon: ShoppingCart,
     label: "Compras",
     children: [
-      { to: "/compras/colaboradores", label: "Colaboradores", icon: Users },
       { to: "/compras/objetivos", label: "Objetivos", icon: Target },
       { to: "/compras/leader-pass", label: "Leader Pass", icon: ClipboardList },
       { to: "/compras/calidad", label: "Calidad", icon: ShieldCheck },
