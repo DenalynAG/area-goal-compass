@@ -21,6 +21,8 @@ import {
   Megaphone,
   Wrench,
   Monitor,
+  Target,
+  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -31,7 +33,7 @@ interface NavItem {
   to: string;
   icon: typeof Newspaper;
   label: string;
-  children?: { to: string; label: string }[];
+  children?: { to: string; label: string; icon?: LucideIcon }[];
 }
 
 const navItems: NavItem[] = [
@@ -41,12 +43,12 @@ const navItems: NavItem[] = [
     icon: Users,
     label: "Recursos Humanos",
     children: [
-      { to: "/estructura", label: "Estructura" },
-      { to: "/colaboradores", label: "Colaboradores" },
-      { to: "/objetivos", label: "Objetivos" },
-      { to: "/leader-pass", label: "Leader Pass" },
-      { to: "/calidad/auditorias", label: "Calidad" },
-      { to: "/evaluaciones", label: "Evaluaciones" },
+      { to: "/estructura", label: "Estructura", icon: Building2 },
+      { to: "/colaboradores", label: "Colaboradores", icon: Users },
+      { to: "/objetivos", label: "Objetivos", icon: Target },
+      { to: "/leader-pass", label: "Leader Pass", icon: ClipboardList },
+      { to: "/calidad/auditorias", label: "Calidad", icon: ShieldCheck },
+      { to: "/evaluaciones", label: "Evaluaciones", icon: ClipboardCheck },
     ],
   },
   {
@@ -187,6 +189,7 @@ export default function AppSidebar() {
                               : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
                           )}
                         >
+                          {child.icon && <child.icon className="w-4 h-4 shrink-0" />}
                           <span className="truncate">{child.label}</span>
                         </NavLink>
                       );
