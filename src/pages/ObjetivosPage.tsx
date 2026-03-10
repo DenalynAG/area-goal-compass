@@ -329,9 +329,11 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
             ...areaSubareas.map(sub => ({ id: sub.id, label: sub.name, isArea: false })),
           ];
           const defaultTab = tabs[0]?.id || selectedArea.id;
+          const activeTab = searchParams.get('tab');
+          const currentTab = (activeTab && tabs.some(t => t.id === activeTab)) ? activeTab : defaultTab;
 
           return (
-            <Tabs defaultValue={defaultTab} className="w-full">
+            <Tabs value={currentTab} onValueChange={(val) => setSearchParams({ tab: val }, { replace: true })} className="w-full">
               <TabsList className="w-full flex-wrap h-auto gap-1 bg-muted/50 p-1 rounded-lg">
                 {tabs.map(tab => {
                   const tabObjs = tab.isArea ? directAreaObjs : getSubareaObjs(tab.id);
