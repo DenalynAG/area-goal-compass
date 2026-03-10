@@ -18,6 +18,7 @@ import EvaluacionesPage from "@/pages/EvaluacionesPage";
 import OrganigramaPage from "@/pages/OrganigramaPage";
 import LeaderPassPage from "@/pages/LeaderPassPage";
 import AuditoriasPage from "@/pages/AuditoriasPage";
+import AplicacionesPage from "@/pages/AplicacionesPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ function ProtectedRoutes() {
     <AppLayout>
       <Routes>
         <Route path="/" element={<NewsletterPortalPage />} />
+        <Route path="/aplicaciones" element={<AplicacionesPage />} />
         <Route path="/estructura" element={<EstructuraPage />} />
         <Route path="/colaboradores" element={<ColaboradoresPage />} />
         
