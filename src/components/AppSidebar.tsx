@@ -169,7 +169,9 @@ const navItems: NavItem[] = [
     to: "/tecnologia",
     icon: Monitor,
     label: "Tecnología",
-    children: [],
+    children: [
+      { to: "/tecnologia/objetivos", label: "Objetivos", icon: Target },
+    ],
   },
   { to: "/organigrama", icon: Building2, label: "Organigrama" },
   { to: "/administracion", icon: Settings, label: "Administración" },
