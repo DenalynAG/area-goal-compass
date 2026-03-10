@@ -11,7 +11,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 
-export default function ColaboradoresPage() {
+interface ColaboradoresPageProps {
+  areaFilterName?: string;
+}
+
+export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageProps = {}) {
   const { data: profiles = [], isLoading } = useProfiles();
   const { data: memberships = [] } = useMemberships();
   const { data: userRoles = [] } = useUserRoles();
