@@ -35,9 +35,10 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { getRoleLabel } from "@/types";
 import { Button } from "@/components/ui/button";
+import { useVisibleMenuKeys } from "@/hooks/useMenuPermissions";
 
 interface NavChild {
   to: string;
