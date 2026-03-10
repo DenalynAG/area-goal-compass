@@ -93,6 +93,19 @@ export default function ControlActivosPage() {
       return;
     }
     setSaving(true);
+
+    let photoUrl: string | null = null;
+    if (photoFile) {
+      setUploading(true);
+      const ext = photoFile.name.split(".").pop();
+      const filePath = `activos/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error: uploadErr } = await supabase.storage.from("evidencias").upload(filePath, photoFile);
+      setUploading(false);
+      if (uploadErr) { toast.error("Error al subir imagen"); setSaving(false); return; }
+      const { data: urlData } = supabase.storage.from("evidencias").getPublicUrl(filePath);
+      photoUrl = urlData.publicUrl;
+    }
+
     const payload: any = {
       area_id: areaId || null,
       subarea_id: subareaId || null,
@@ -104,6 +117,7 @@ export default function ControlActivosPage() {
       entry_datetime: entryDatetime || null,
       reason: reason.trim(),
       created_by: user?.id,
+      photo_url: photoUrl,
     };
     const { error } = await supabase.from("asset_movements" as any).insert(payload);
     setSaving(false);
