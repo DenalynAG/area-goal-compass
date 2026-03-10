@@ -11,7 +11,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           <div className="max-w-[1400px] mx-auto">
             <h1 className="text-sm font-bold text-foreground leading-tight">EasyConnect – Plataforma de Gestión Estratégica Hotelera</h1>
             <p className="text-[11px] text-muted-foreground leading-tight">Sistema centralizado para la administración de áreas, subáreas, colaboradores, objetivos, indicadores y aplicativos internos de gestión operativa y administrativa.</p>
-            </div>
           </div>
         </header>
         <div className="p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto">
