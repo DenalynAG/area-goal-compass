@@ -39,11 +39,18 @@ import { useState } from "react";
 import { getRoleLabel } from "@/types";
 import { Button } from "@/components/ui/button";
 
+interface NavChild {
+  to: string;
+  label: string;
+  icon?: LucideIcon;
+  children?: { to: string; label: string; icon?: LucideIcon }[];
+}
+
 interface NavItem {
   to: string;
   icon: typeof Newspaper;
   label: string;
-  children?: { to: string; label: string; icon?: LucideIcon }[];
+  children?: NavChild[];
 }
 
 const navItems: NavItem[] = [
