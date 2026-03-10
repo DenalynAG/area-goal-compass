@@ -29,6 +29,8 @@ import {
   Sparkles,
   Hammer,
   Shield,
+  DoorOpen,
+  Package,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -89,6 +91,8 @@ const navItems: NavItem[] = [
       { to: "/operaciones/housekeeping", label: "Comfort & Housekeeping", icon: Sparkles },
       { to: "/operaciones/mantenimiento", label: "Mantenimiento", icon: Hammer },
       { to: "/operaciones/seguridad", label: "Seguridad", icon: Shield },
+      { to: "/operaciones/seguridad/control-acceso", label: "Control de Acceso", icon: DoorOpen },
+      { to: "/operaciones/seguridad/control-activos", label: "Control de Activos", icon: Package },
     ],
   },
   {

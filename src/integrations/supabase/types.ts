@@ -14,6 +14,86 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_control: {
+        Row: {
+          area_id: string | null
+          arl: string
+          companion_user_id: string | null
+          company_name: string
+          created_at: string
+          created_by: string | null
+          document_id: string
+          entry_datetime: string
+          estimated_exit_time: string | null
+          exit_datetime: string | null
+          id: string
+          subarea_id: string | null
+          visitor_name: string
+          zone_requirement: string
+        }
+        Insert: {
+          area_id?: string | null
+          arl?: string
+          companion_user_id?: string | null
+          company_name: string
+          created_at?: string
+          created_by?: string | null
+          document_id: string
+          entry_datetime?: string
+          estimated_exit_time?: string | null
+          exit_datetime?: string | null
+          id?: string
+          subarea_id?: string | null
+          visitor_name: string
+          zone_requirement?: string
+        }
+        Update: {
+          area_id?: string | null
+          arl?: string
+          companion_user_id?: string | null
+          company_name?: string
+          created_at?: string
+          created_by?: string | null
+          document_id?: string
+          entry_datetime?: string
+          estimated_exit_time?: string | null
+          exit_datetime?: string | null
+          id?: string
+          subarea_id?: string | null
+          visitor_name?: string
+          zone_requirement?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "access_control_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "access_control_companion_user_id_fkey"
+            columns: ["companion_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "access_control_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "access_control_subarea_id_fkey"
+            columns: ["subarea_id"]
+            isOneToOne: false
+            referencedRelation: "subareas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       activity_log: {
         Row: {
           action: string
@@ -75,6 +155,80 @@ export type Database = {
             columns: ["leader_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_movements: {
+        Row: {
+          area_id: string | null
+          asset_serial: string
+          asset_type: string
+          collaborator_user_id: string | null
+          created_at: string
+          created_by: string | null
+          entry_datetime: string | null
+          exit_datetime: string | null
+          id: string
+          movement_type: string
+          reason: string
+          subarea_id: string | null
+        }
+        Insert: {
+          area_id?: string | null
+          asset_serial?: string
+          asset_type: string
+          collaborator_user_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          entry_datetime?: string | null
+          exit_datetime?: string | null
+          id?: string
+          movement_type: string
+          reason?: string
+          subarea_id?: string | null
+        }
+        Update: {
+          area_id?: string | null
+          asset_serial?: string
+          asset_type?: string
+          collaborator_user_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          entry_datetime?: string | null
+          exit_datetime?: string | null
+          id?: string
+          movement_type?: string
+          reason?: string
+          subarea_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_movements_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_movements_collaborator_user_id_fkey"
+            columns: ["collaborator_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_movements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_movements_subarea_id_fkey"
+            columns: ["subarea_id"]
+            isOneToOne: false
+            referencedRelation: "subareas"
             referencedColumns: ["id"]
           },
         ]
