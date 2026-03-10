@@ -298,125 +298,97 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
           <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" />Nuevo Objetivo</Button>
         </div>
 
-        {/* Area card - hierarchical structure */}
-        <div className="bg-card border rounded-xl shadow-sm overflow-hidden">
-          {/* Area header row */}
-          <button
-            onClick={() => toggleArea(selectedArea.id)}
-            className="w-full px-5 py-4 flex items-center gap-3 hover:bg-muted/30 transition-colors"
-          >
-            {expandedAreas[selectedArea.id] !== false
-              ? <ChevronDown className="w-5 h-5 text-muted-foreground" />
-              : <ChevronRight className="w-5 h-5 text-muted-foreground" />}
-            <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center">
-              <BarChart3 className="w-4 h-4 text-primary" />
+        {/* Area header */}
+        <div className="bg-card border rounded-xl shadow-sm px-5 py-4 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center">
+            <BarChart3 className="w-4 h-4 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-base">{selectedArea.name}</span>
+              <StatusBadge status={selectedArea.status} />
             </div>
-            <div className="flex-1 text-left min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-base">{selectedArea.name}</span>
-                <StatusBadge status={selectedArea.status} />
-              </div>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                — Líder: {getProfileName(profiles, selectedArea.leader_user_id)}
-              </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              — Líder: {getProfileName(profiles, selectedArea.leader_user_id)}
+            </p>
+          </div>
+          <div className="shrink-0 text-right">
+            <div className="flex items-center gap-2">
+              <ProgressBar value={areaProgress} className="w-24" />
+              <span className="text-xs font-semibold text-muted-foreground">{areaProgress}%</span>
             </div>
-            <div className="shrink-0 flex items-center gap-3">
-              <div className="text-right">
-                <div className="flex items-center gap-2">
-                  <ProgressBar value={areaProgress} className="w-24" />
-                  <span className="text-xs font-semibold text-muted-foreground">{areaProgress}%</span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-0.5">{areaObjs.length} obj · {areaKpisList.length} ind</p>
-              </div>
-            </div>
-          </button>
+            <p className="text-xs text-muted-foreground mt-0.5">{areaObjs.length} obj · {areaKpisList.length} ind</p>
+          </div>
+        </div>
 
-          {/* Area body - expanded by default */}
-          {expandedAreas[selectedArea.id] !== false && (
-            <div className="border-t">
-              {/* Direct area objectives */}
-              {directAreaObjs.length > 0 && (
-                <div className="px-5 py-4 space-y-3 border-b bg-muted/5">
-                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pl-8">Objetivos del Área</h3>
-                  {directAreaObjs.map((obj, idx) => {
-                    const objKpis2 = kpis.filter(k => k.objective_id === obj.id);
-                    const isOpen = expandedObj[obj.id];
-                    return (
-                      <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
-                        onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={() => openNewKPI(obj.id)} onEditKPI={openEditKPI}
-                        profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} />
-                    );
-                  })}
-                </div>
-              )}
+        {/* Tabs for Area + Subareas */}
+        {(() => {
+          const tabs = [
+            ...(directAreaObjs.length > 0 || areaSubareas.length === 0 ? [{ id: selectedArea.id, label: selectedArea.name, isArea: true }] : []),
+            ...areaSubareas.map(sub => ({ id: sub.id, label: sub.name, isArea: false })),
+          ];
+          const defaultTab = tabs[0]?.id || selectedArea.id;
 
-              {/* Subareas as nested expandable rows */}
-              {areaSubareas.map(sub => {
-                const subObjs = getSubareaObjs(sub.id);
-                const subKpis = kpis.filter(k => subObjs.some(o => o.id === k.objective_id));
-                const subProgress = subObjs.length > 0 ? Math.round(subObjs.reduce((s, o) => s + getObjProgress(o), 0) / subObjs.length) : 0;
-                const isSubExpanded = expandedAreas[sub.id];
+          return (
+            <Tabs defaultValue={defaultTab} className="w-full">
+              <TabsList className="w-full flex-wrap h-auto gap-1 bg-muted/50 p-1 rounded-lg">
+                {tabs.map(tab => {
+                  const tabObjs = tab.isArea ? directAreaObjs : getSubareaObjs(tab.id);
+                  const tabKpis = kpis.filter(k => tabObjs.some(o => o.id === k.objective_id));
+                  const tabProgress = tabObjs.length > 0 ? Math.round(tabObjs.reduce((s, o) => s + getObjProgress(o), 0) / tabObjs.length) : 0;
+                  return (
+                    <TabsTrigger key={tab.id} value={tab.id} className="flex-1 min-w-[120px] text-xs data-[state=active]:shadow-sm">
+                      <div className="flex flex-col items-center gap-0.5">
+                        <span className="font-medium truncate max-w-[120px]">{tab.label}</span>
+                        <span className="text-[10px] text-muted-foreground">{tabObjs.length} obj · {tabProgress}%</span>
+                      </div>
+                    </TabsTrigger>
+                  );
+                })}
+              </TabsList>
+
+              {tabs.map(tab => {
+                const tabObjs = tab.isArea ? directAreaObjs : getSubareaObjs(tab.id);
+                const sub = !tab.isArea ? areaSubareas.find(s => s.id === tab.id) : null;
 
                 return (
-                  <div key={sub.id} className="border-b last:border-b-0">
-                    {/* Subarea header */}
-                    <button
-                      onClick={() => toggleArea(sub.id)}
-                      className="w-full px-5 py-3 pl-10 flex items-center gap-3 hover:bg-muted/30 transition-colors"
-                    >
-                      {isSubExpanded
-                        ? <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                        : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
-                      <div className="w-7 h-7 rounded-md bg-accent/10 flex items-center justify-center">
-                        <Target className="w-3.5 h-3.5 text-accent-foreground" />
-                      </div>
-                      <div className="flex-1 text-left min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-sm">{sub.name}</span>
-                          <StatusBadge status={sub.status} />
-                          <span className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Target className="w-3 h-3" /> {subObjs.length}
-                          </span>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          — Líder: {getProfileName(profiles, sub.leader_user_id)}
-                        </p>
-                      </div>
-                      <div className="shrink-0 flex items-center gap-2">
-                        <ProgressBar value={subProgress} className="w-20" />
-                        <span className="text-xs font-semibold text-muted-foreground">{subProgress}%</span>
-                      </div>
-                    </button>
-
-                    {/* Subarea objectives - expanded content */}
-                    {isSubExpanded && (
-                      <div className="pl-16 pr-5 py-3 space-y-3 bg-muted/5">
-                        {subObjs.map((obj, idx) => {
-                          const objKpis2 = kpis.filter(k => k.objective_id === obj.id);
-                          const isOpen = expandedObj[obj.id];
-                          return (
-                            <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
-                              onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={() => openNewKPI(obj.id)} onEditKPI={openEditKPI}
-                              profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} />
-                          );
-                        })}
-                        {subObjs.length === 0 && (
-                          <div className="text-center py-4 text-sm text-muted-foreground bg-muted/20 rounded-lg">
-                            Sin objetivos registrados para esta subárea
+                  <TabsContent key={tab.id} value={tab.id} className="mt-4 space-y-3">
+                    {/* Subarea info header */}
+                    {sub && (
+                      <div className="flex items-center gap-2 px-1 pb-2 border-b">
+                        <Target className="w-4 h-4 text-primary" />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-sm">{sub.name}</span>
+                            <StatusBadge status={sub.status} />
                           </div>
-                        )}
+                          <p className="text-xs text-muted-foreground">
+                            Líder: {getProfileName(profiles, sub.leader_user_id)}
+                          </p>
+                        </div>
                       </div>
                     )}
-                  </div>
+
+                    {tabObjs.map((obj, idx) => {
+                      const objKpis2 = kpis.filter(k => k.objective_id === obj.id);
+                      const isOpen = expandedObj[obj.id];
+                      return (
+                        <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
+                          onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={() => openNewKPI(obj.id)} onEditKPI={openEditKPI}
+                          profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} />
+                      );
+                    })}
+                    {tabObjs.length === 0 && (
+                      <div className="text-center py-8 text-sm text-muted-foreground bg-muted/20 rounded-lg">
+                        Sin objetivos registrados
+                      </div>
+                    )}
+                  </TabsContent>
                 );
               })}
-
-              {areaObjs.length === 0 && areaSubareas.length === 0 && (
-                <div className="text-center py-12 text-muted-foreground">No hay objetivos registrados para esta área</div>
-              )}
-            </div>
-          )}
-        </div>
+            </Tabs>
+          );
+        })()}
 
         <ObjetivoFormDialog open={dialogOpen} onOpenChange={setDialogOpen} objective={editingObj} areas={areas} subareas={subareas} profiles={profiles} />
         <KPIFormDialog open={kpiDialogOpen} onOpenChange={setKpiDialogOpen} kpi={editingKPI} objectives={objectives} areas={areas} subareas={subareas} preselectedObjectiveId={preselectedObjectiveId} />
