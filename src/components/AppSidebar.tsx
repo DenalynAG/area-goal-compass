@@ -80,6 +80,7 @@ const navItems: NavItem[] = [
       { to: "/comercial/comercial", label: "Comercial", icon: Handshake },
       { to: "/comercial/hospitalidad", label: "Hospitalidad", icon: Hotel, children: [
         { to: "/comercial/hospitalidad/fidelizacion", label: "Sistema Fidelización", icon: Heart },
+        { to: "/comercial/hospitalidad/servicios", label: "Gestión de Servicios", icon: Handshake },
       ] },
       { to: "/comercial/reservas", label: "Reservas", icon: CalendarCheck },
       { to: "/comercial/objetivos", label: "Objetivos", icon: Target },
