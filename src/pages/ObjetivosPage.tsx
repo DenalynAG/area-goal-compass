@@ -281,8 +281,11 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
     return (
       <div className="animate-fade-in space-y-6">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => setSelectedAreaId(null)}>
-            <ArrowLeft className="w-5 h-5" />
+          {!isAreaLocked && (
+            <Button variant="ghost" size="icon" onClick={() => setSelectedAreaId(null)}>
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+          )}
           </Button>
           <div>
             <h1 className="page-title">Objetivos — {selectedArea.name}</h1>
