@@ -12,6 +12,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import CargoFormDialog from '@/components/CargoFormDialog';
 import EvaluacionCriteriaSection from '@/components/EvaluacionCriteriaSection';
+import MenuPermissionsSection from '@/components/MenuPermissionsSection';
 import * as XLSX from 'xlsx';
 
 export default function AdministracionPage() {
