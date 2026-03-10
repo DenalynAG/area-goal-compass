@@ -29,6 +29,7 @@ interface Props {
 }
 
 export default function ColaboradorFormDialog({ open, onOpenChange, profile, areas, subareas, membership, userRole, defaultAreaId, defaultSubareaId }: Props) {
+  const { isSuperAdmin } = useAuth();
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const { data: positions = [] } = usePositions();
