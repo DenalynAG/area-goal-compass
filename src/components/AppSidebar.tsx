@@ -61,7 +61,11 @@ const navItems: NavItem[] = [
     icon: UtensilsCrossed,
     label: "Alimentos y Bebidas",
     children: [
+      { to: "/ayb/colaboradores", label: "Colaboradores", icon: Users },
       { to: "/ayb/objetivos", label: "Objetivos", icon: Target },
+      { to: "/ayb/leader-pass", label: "Leader Pass", icon: ClipboardList },
+      { to: "/ayb/calidad", label: "Calidad", icon: ShieldCheck },
+      { to: "/ayb/evaluaciones", label: "Evaluaciones", icon: ClipboardCheck },
     ],
   },
   {
@@ -69,10 +73,14 @@ const navItems: NavItem[] = [
     icon: Briefcase,
     label: "Comercial",
     children: [
+      { to: "/comercial/colaboradores", label: "Colaboradores", icon: Users },
       { to: "/comercial/comercial", label: "Comercial", icon: Handshake },
       { to: "/comercial/hospitalidad", label: "Hospitalidad", icon: Hotel },
       { to: "/comercial/reservas", label: "Reservas", icon: CalendarCheck },
       { to: "/comercial/objetivos", label: "Objetivos", icon: Target },
+      { to: "/comercial/leader-pass", label: "Leader Pass", icon: ClipboardList },
+      { to: "/comercial/calidad", label: "Calidad", icon: ShieldCheck },
+      { to: "/comercial/evaluaciones", label: "Evaluaciones", icon: ClipboardCheck },
     ],
   },
   {
@@ -80,7 +88,11 @@ const navItems: NavItem[] = [
     icon: ShoppingCart,
     label: "Compras",
     children: [
+      { to: "/compras/colaboradores", label: "Colaboradores", icon: Users },
       { to: "/compras/objetivos", label: "Objetivos", icon: Target },
+      { to: "/compras/leader-pass", label: "Leader Pass", icon: ClipboardList },
+      { to: "/compras/calidad", label: "Calidad", icon: ShieldCheck },
+      { to: "/compras/evaluaciones", label: "Evaluaciones", icon: ClipboardCheck },
     ],
   },
   {
@@ -88,7 +100,11 @@ const navItems: NavItem[] = [
     icon: Calculator,
     label: "Contraloría",
     children: [
+      { to: "/contraloria/colaboradores", label: "Colaboradores", icon: Users },
       { to: "/contraloria/objetivos", label: "Objetivos", icon: Target },
+      { to: "/contraloria/leader-pass", label: "Leader Pass", icon: ClipboardList },
+      { to: "/contraloria/calidad", label: "Calidad", icon: ShieldCheck },
+      { to: "/contraloria/evaluaciones", label: "Evaluaciones", icon: ClipboardCheck },
     ],
   },
   {
@@ -96,7 +112,11 @@ const navItems: NavItem[] = [
     icon: Megaphone,
     label: "Mercadeo",
     children: [
+      { to: "/mercadeo/colaboradores", label: "Colaboradores", icon: Users },
       { to: "/mercadeo/objetivos", label: "Objetivos", icon: Target },
+      { to: "/mercadeo/leader-pass", label: "Leader Pass", icon: ClipboardList },
+      { to: "/mercadeo/calidad", label: "Calidad", icon: ShieldCheck },
+      { to: "/mercadeo/evaluaciones", label: "Evaluaciones", icon: ClipboardCheck },
     ],
   },
   {
@@ -104,6 +124,7 @@ const navItems: NavItem[] = [
     icon: Wrench,
     label: "Operaciones",
     children: [
+      { to: "/operaciones/colaboradores", label: "Colaboradores", icon: Users },
       { to: "/operaciones/glowingdesk", label: "GlowingDesk", icon: Lamp },
       {
         to: "/operaciones/housekeeping",
@@ -124,6 +145,9 @@ const navItems: NavItem[] = [
         ],
       },
       { to: "/operaciones/objetivos", label: "Objetivos", icon: Target },
+      { to: "/operaciones/leader-pass", label: "Leader Pass", icon: ClipboardList },
+      { to: "/operaciones/calidad", label: "Calidad", icon: ShieldCheck },
+      { to: "/operaciones/evaluaciones", label: "Evaluaciones", icon: ClipboardCheck },
     ],
   },
   {
@@ -144,7 +168,11 @@ const navItems: NavItem[] = [
     icon: Monitor,
     label: "Tecnología",
     children: [
+      { to: "/tecnologia/colaboradores", label: "Colaboradores", icon: Users },
       { to: "/tecnologia/objetivos", label: "Objetivos", icon: Target },
+      { to: "/tecnologia/leader-pass", label: "Leader Pass", icon: ClipboardList },
+      { to: "/tecnologia/calidad", label: "Calidad", icon: ShieldCheck },
+      { to: "/tecnologia/evaluaciones", label: "Evaluaciones", icon: ClipboardCheck },
     ],
   },
   { to: "/organigrama", icon: Building2, label: "Organigrama" },
