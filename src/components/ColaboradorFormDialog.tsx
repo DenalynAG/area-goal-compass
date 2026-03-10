@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { usePositions } from '@/hooks/useSupabaseData';
 import { getRoleLabel } from '@/types';
 import type { Enums } from '@/integrations/supabase/types';
@@ -28,6 +29,7 @@ interface Props {
 }
 
 export default function ColaboradorFormDialog({ open, onOpenChange, profile, areas, subareas, membership, userRole, defaultAreaId, defaultSubareaId }: Props) {
+  const { isSuperAdmin } = useAuth();
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const { data: positions = [] } = usePositions();
@@ -174,6 +176,7 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
     if (isEditing) {
       const avatarUrl = await uploadAvatar(profile!.id);
       if (avatarUrl) profilePayload.avatar = avatarUrl;
+      if (isSuperAdmin && email.trim()) profilePayload.email = email.trim();
 
       const { error } = await supabase.from('profiles').update(profilePayload).eq('id', profile!.id);
       if (error) { toast.error(error.message); setSaving(false); return; }
@@ -322,7 +325,7 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label>Correo Corporativo</Label>
-                <Input type="email" value={email} onChange={e => setEmail(e.target.value)} maxLength={255} disabled={isEditing} placeholder="Para login (si no hay personal)" />
+                <Input type="email" value={email} onChange={e => setEmail(e.target.value)} maxLength={255} disabled={isEditing && !isSuperAdmin} placeholder="Para login (si no hay personal)" />
               </div>
               <div className="space-y-1.5">
                 <Label>Correo Personal</Label>
