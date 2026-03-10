@@ -4,8 +4,7 @@ import { useObjectives, useKPIs, useKPIMeasurements, useAreas, useSubareas, useP
 import { getTrafficLight } from '@/types';
 import { StatusBadge, ProgressBar, TrafficLightBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
-import { Plus, Target, ChevronRight, ChevronDown, Edit, TrendingUp, Settings, ArrowLeft, BarChart3, Paperclip, Calendar, Upload, Download } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, Target, ChevronRight, ChevronDown, Edit, TrendingUp, Settings, ArrowLeft, BarChart3, Paperclip, Calendar, Upload, Download, Layers, User } from 'lucide-react';
 import type { Tables } from '@/integrations/supabase/types';
 import ObjetivoFormDialog from '@/components/ObjetivoFormDialog';
 import KPIFormDialog from '@/components/KPIFormDialog';
@@ -324,69 +323,80 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
           </div>
         </div>
 
-        {/* Tabs for Area + Subareas */}
-        {(() => {
-          const tabs = [
-            ...(directAreaObjs.length > 0 || areaSubareas.length === 0 ? [{ id: selectedArea.id, label: selectedArea.name, isArea: true }] : []),
-            ...areaSubareas.map(sub => ({ id: sub.id, label: sub.name, isArea: false })),
-          ];
-          const defaultTab = tabs[0]?.id || selectedArea.id;
-          const activeTab = searchParams.get('tab');
-          const currentTab = (activeTab && tabs.some(t => t.id === activeTab)) ? activeTab : defaultTab;
-
-          return (
-            <Tabs value={currentTab} onValueChange={(val) => setSearchParams({ tab: val }, { replace: true })} className="w-full">
-              <div className="border-b overflow-x-auto">
-                <nav className="flex min-w-max">
-                  {tabs.map(tab => {
-                    const tabObjs = tab.isArea ? directAreaObjs : getSubareaObjs(tab.id);
-                    const tabKpis = kpis.filter(k => tabObjs.some(o => o.id === k.objective_id));
-                    const tabProgress = tabObjs.length > 0 ? Math.round(tabObjs.reduce((s, o) => s + getObjProgress(o), 0) / tabObjs.length) : 0;
-                    const isActive = currentTab === tab.id;
+        {/* Collapsible subarea cards */}
+        <div className="space-y-3">
+          {/* Direct area objectives */}
+          {directAreaObjs.length > 0 && (
+            <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
+              <div className="flex items-center">
+                <button
+                  onClick={() => toggleArea(`obj-area-${selectedArea.id}`)}
+                  className="flex-1 flex items-center gap-4 px-5 py-4 hover:bg-muted/30 transition-colors text-left"
+                >
+                  {expandedAreas[`obj-area-${selectedArea.id}`] ? <ChevronDown className="w-5 h-5 text-muted-foreground" /> : <ChevronRight className="w-5 h-5 text-muted-foreground" />}
+                  <Layers className="w-5 h-5 text-muted-foreground" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3">
+                      <span className="font-semibold">{selectedArea.name}</span>
+                      <StatusBadge status={selectedArea.status} />
+                      <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
+                        <Target className="w-3 h-3" />{directAreaObjs.length}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      — Líder: {getProfileName(profiles, selectedArea.leader_user_id)}
+                    </p>
+                  </div>
+                </button>
+              </div>
+              {expandedAreas[`obj-area-${selectedArea.id}`] && (
+                <div className="border-t bg-muted/20 px-5 py-4 space-y-3">
+                  {directAreaObjs.map((obj, idx) => {
+                    const objKpis2 = kpis.filter(k => k.objective_id === obj.id);
+                    const isOpen = expandedObj[obj.id];
                     return (
-                      <button
-                        key={tab.id}
-                        onClick={() => setSearchParams({ tab: tab.id }, { replace: true })}
-                        className={cn(
-                          "px-5 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors",
-                          isActive
-                            ? "border-primary text-primary"
-                            : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/30"
-                        )}
-                      >
-                        {tab.label}
-                        <span className={cn("ml-1.5 text-[10px]", isActive ? "text-primary/70" : "text-muted-foreground/60")}>
-                          {tabObjs.length} obj · {tabProgress}%
-                        </span>
-                      </button>
+                      <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
+                        onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={() => openNewKPI(obj.id)} onEditKPI={openEditKPI}
+                        profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} />
                     );
                   })}
-                </nav>
-              </div>
+                </div>
+              )}
+            </div>
+          )}
 
-              {tabs.map(tab => {
-                const tabObjs = tab.isArea ? directAreaObjs : getSubareaObjs(tab.id);
-                const sub = !tab.isArea ? areaSubareas.find(s => s.id === tab.id) : null;
+          {/* Subarea collapsible cards */}
+          {areaSubareas.map(sub => {
+            const subObjs = getSubareaObjs(sub.id);
+            const subProgress = subObjs.length > 0 ? Math.round(subObjs.reduce((s, o) => s + getObjProgress(o), 0) / subObjs.length) : 0;
+            const isSubExpanded = expandedAreas[`obj-sub-${sub.id}`];
 
-                return (
-                  <TabsContent key={tab.id} value={tab.id} className="mt-4 space-y-3">
-                    {/* Subarea info header */}
-                    {sub && (
-                      <div className="flex items-center gap-2 px-1 pb-2 border-b">
-                        <Target className="w-4 h-4 text-primary" />
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-sm">{sub.name}</span>
-                            <StatusBadge status={sub.status} />
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            Líder: {getProfileName(profiles, sub.leader_user_id)}
-                          </p>
-                        </div>
+            return (
+              <div key={sub.id} className="bg-card rounded-xl border shadow-sm overflow-hidden">
+                <div className="flex items-center">
+                  <button
+                    onClick={() => toggleArea(`obj-sub-${sub.id}`)}
+                    className="flex-1 flex items-center gap-4 px-5 py-3 pl-14 hover:bg-muted/30 transition-colors text-left"
+                  >
+                    {isSubExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+                    <Layers className="w-4 h-4 text-muted-foreground" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-sm">{sub.name}</span>
+                        <StatusBadge status={sub.status} />
+                        <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
+                          <Target className="w-3 h-3" />{subObjs.length}
+                        </span>
                       </div>
-                    )}
-
-                    {tabObjs.map((obj, idx) => {
+                      <p className="text-xs text-muted-foreground">
+                        — Líder: {getProfileName(profiles, sub.leader_user_id)}
+                      </p>
+                    </div>
+                  </button>
+                </div>
+                {isSubExpanded && (
+                  <div className="border-t bg-muted/20 px-5 py-4 space-y-3">
+                    {subObjs.map((obj, idx) => {
                       const objKpis2 = kpis.filter(k => k.objective_id === obj.id);
                       const isOpen = expandedObj[obj.id];
                       return (
@@ -395,17 +405,17 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                           profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} />
                       );
                     })}
-                    {tabObjs.length === 0 && (
+                    {subObjs.length === 0 && (
                       <div className="text-center py-8 text-sm text-muted-foreground bg-muted/20 rounded-lg">
                         Sin objetivos registrados
                       </div>
                     )}
-                  </TabsContent>
-                );
-              })}
-            </Tabs>
-          );
-        })()}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
 
         <ObjetivoFormDialog open={dialogOpen} onOpenChange={setDialogOpen} objective={editingObj} areas={areas} subareas={subareas} profiles={profiles} />
         <KPIFormDialog open={kpiDialogOpen} onOpenChange={setKpiDialogOpen} kpi={editingKPI} objectives={objectives} areas={areas} subareas={subareas} preselectedObjectiveId={preselectedObjectiveId} />
