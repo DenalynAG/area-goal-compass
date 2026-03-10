@@ -70,9 +70,9 @@ const navItems: NavItem[] = [
     icon: Briefcase,
     label: "Comercial",
     children: [
-      { to: "/comercial/comercial", label: "Comercial" },
-      { to: "/comercial/hospitalidad", label: "Hospitalidad" },
-      { to: "/comercial/reservas", label: "Reservas" },
+      { to: "/comercial/comercial", label: "Comercial", icon: Handshake },
+      { to: "/comercial/hospitalidad", label: "Hospitalidad", icon: Hotel },
+      { to: "/comercial/reservas", label: "Reservas", icon: CalendarCheck },
     ],
   },
   {
