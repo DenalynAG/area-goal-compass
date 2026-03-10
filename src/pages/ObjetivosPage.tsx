@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
+import { cn } from '@/lib/utils';
 
 interface ObjetivosPageProps {
   areaFilterName?: string;
@@ -335,21 +336,33 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
 
           return (
             <Tabs value={currentTab} onValueChange={(val) => setSearchParams({ tab: val }, { replace: true })} className="w-full">
-              <TabsList className="w-full flex-wrap h-auto gap-1 bg-muted/50 p-1 rounded-lg">
-                {tabs.map(tab => {
-                  const tabObjs = tab.isArea ? directAreaObjs : getSubareaObjs(tab.id);
-                  const tabKpis = kpis.filter(k => tabObjs.some(o => o.id === k.objective_id));
-                  const tabProgress = tabObjs.length > 0 ? Math.round(tabObjs.reduce((s, o) => s + getObjProgress(o), 0) / tabObjs.length) : 0;
-                  return (
-                    <TabsTrigger key={tab.id} value={tab.id} className="flex-1 min-w-[120px] text-xs data-[state=active]:shadow-sm">
-                      <div className="flex flex-col items-center gap-0.5">
-                        <span className="font-medium truncate max-w-[120px]">{tab.label}</span>
-                        <span className="text-[10px] text-muted-foreground">{tabObjs.length} obj · {tabProgress}%</span>
-                      </div>
-                    </TabsTrigger>
-                  );
-                })}
-              </TabsList>
+              <div className="border-b overflow-x-auto">
+                <nav className="flex min-w-max">
+                  {tabs.map(tab => {
+                    const tabObjs = tab.isArea ? directAreaObjs : getSubareaObjs(tab.id);
+                    const tabKpis = kpis.filter(k => tabObjs.some(o => o.id === k.objective_id));
+                    const tabProgress = tabObjs.length > 0 ? Math.round(tabObjs.reduce((s, o) => s + getObjProgress(o), 0) / tabObjs.length) : 0;
+                    const isActive = currentTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setSearchParams({ tab: tab.id }, { replace: true })}
+                        className={cn(
+                          "px-5 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors",
+                          isActive
+                            ? "border-primary text-primary"
+                            : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/30"
+                        )}
+                      >
+                        {tab.label}
+                        <span className={cn("ml-1.5 text-[10px]", isActive ? "text-primary/70" : "text-muted-foreground/60")}>
+                          {tabObjs.length} obj · {tabProgress}%
+                        </span>
+                      </button>
+                    );
+                  })}
+                </nav>
+              </div>
 
               {tabs.map(tab => {
                 const tabObjs = tab.isArea ? directAreaObjs : getSubareaObjs(tab.id);
