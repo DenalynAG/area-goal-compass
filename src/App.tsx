@@ -21,6 +21,7 @@ import AuditoriasPage from "@/pages/AuditoriasPage";
 import AplicacionesPage from "@/pages/AplicacionesPage";
 import ControlAccesoPage from "@/pages/ControlAccesoPage";
 import ControlActivosPage from "@/pages/ControlActivosPage";
+import ComfortMapPage from "@/pages/ComfortMapPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -48,6 +49,7 @@ function ProtectedRoutes() {
         <Route path="/administracion" element={<AdministracionPage />} />
         <Route path="/operaciones/seguridad/control-acceso" element={<ControlAccesoPage />} />
         <Route path="/operaciones/seguridad/control-activos" element={<ControlActivosPage />} />
+        <Route path="/operaciones/housekeeping/comfort-map" element={<ComfortMapPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AppLayout>
