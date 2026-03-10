@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAreas, useSubareas, useProfiles } from "@/hooks/useSupabaseData";
@@ -15,7 +15,7 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Package, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
+import { Plus, Package, ArrowDownToLine, ArrowUpFromLine, Camera, X, Image as ImageIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 const ASSET_TYPES = [
@@ -51,7 +51,10 @@ export default function ControlActivosPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
-
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   // Form
   const [areaId, setAreaId] = useState("");
   const [subareaId, setSubareaId] = useState("");
@@ -70,6 +73,16 @@ export default function ControlActivosPage() {
     setAreaId(""); setSubareaId(""); setCollaboratorId("");
     setMovementType("salida"); setAssetType(""); setCustomAssetType("");
     setAssetSerial(""); setExitDatetime(""); setEntryDatetime(""); setReason("");
+    setPhotoFile(null); setPhotoPreview(null);
+  };
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error("Solo se permiten imágenes"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("La imagen no puede superar 5MB"); return; }
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -80,6 +93,19 @@ export default function ControlActivosPage() {
       return;
     }
     setSaving(true);
+
+    let photoUrl: string | null = null;
+    if (photoFile) {
+      setUploading(true);
+      const ext = photoFile.name.split(".").pop();
+      const filePath = `activos/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error: uploadErr } = await supabase.storage.from("evidencias").upload(filePath, photoFile);
+      setUploading(false);
+      if (uploadErr) { toast.error("Error al subir imagen"); setSaving(false); return; }
+      const { data: urlData } = supabase.storage.from("evidencias").getPublicUrl(filePath);
+      photoUrl = urlData.publicUrl;
+    }
+
     const payload: any = {
       area_id: areaId || null,
       subarea_id: subareaId || null,
@@ -91,6 +117,7 @@ export default function ControlActivosPage() {
       entry_datetime: entryDatetime || null,
       reason: reason.trim(),
       created_by: user?.id,
+      photo_url: photoUrl,
     };
     const { error } = await supabase.from("asset_movements" as any).insert(payload);
     setSaving(false);
@@ -274,10 +301,29 @@ export default function ControlActivosPage() {
                 <Label>Motivo</Label>
                 <Textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Describir motivo de la entrada o salida del activo" rows={3} />
               </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label>Foto / Imagen del Activo</Label>
+                <input ref={photoInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoChange} />
+                {photoPreview ? (
+                  <div className="relative w-full max-w-xs">
+                    <img src={photoPreview} alt="Preview" className="w-full h-40 object-cover rounded-lg border" />
+                    <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-7 w-7"
+                      onClick={() => { setPhotoFile(null); setPhotoPreview(null); }}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button type="button" variant="outline" className="w-full max-w-xs h-24 border-dashed flex flex-col gap-1"
+                    onClick={() => photoInputRef.current?.click()}>
+                    <Camera className="h-6 w-6 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">Tomar foto o seleccionar imagen</span>
+                  </Button>
+                )}
+              </div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-              <Button type="submit" disabled={saving}>{saving ? "Guardando..." : "Registrar Movimiento"}</Button>
+              <Button type="submit" disabled={saving || uploading}>{saving ? "Guardando..." : "Registrar Movimiento"}</Button>
             </div>
           </form>
         </DialogContent>
