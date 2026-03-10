@@ -293,10 +293,29 @@ export default function ControlAccesoPage() {
                 <Label>Zona o Requerimiento</Label>
                 <Input value={zoneReq} onChange={(e) => setZoneReq(e.target.value)} placeholder="Ej: Lobby, Piso 3..." />
               </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label>Foto / Imagen del Visitante</Label>
+                <input ref={photoInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoChange} />
+                {photoPreview ? (
+                  <div className="relative w-full max-w-xs">
+                    <img src={photoPreview} alt="Preview" className="w-full h-40 object-cover rounded-lg border" />
+                    <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-7 w-7"
+                      onClick={() => { setPhotoFile(null); setPhotoPreview(null); }}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button type="button" variant="outline" className="w-full max-w-xs h-24 border-dashed flex flex-col gap-1"
+                    onClick={() => photoInputRef.current?.click()}>
+                    <Camera className="h-6 w-6 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">Tomar foto o seleccionar imagen</span>
+                  </Button>
+                )}
+              </div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-              <Button type="submit" disabled={saving}>{saving ? "Guardando..." : "Registrar Ingreso"}</Button>
+              <Button type="submit" disabled={saving || uploading}>{saving ? "Guardando..." : "Registrar Ingreso"}</Button>
             </div>
           </form>
         </DialogContent>
