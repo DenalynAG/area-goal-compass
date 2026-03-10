@@ -308,6 +308,7 @@ export default function NewsletterPortalPage() {
             </Button>
           )}
         </div>
+        </div>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
