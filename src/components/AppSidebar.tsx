@@ -35,9 +35,10 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { getRoleLabel } from "@/types";
 import { Button } from "@/components/ui/button";
+import { useVisibleMenuKeys } from "@/hooks/useMenuPermissions";
 
 interface NavChild {
   to: string;
@@ -185,6 +186,29 @@ export default function AppSidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(["/rrhh"]));
   const location = useLocation();
+  const visibleMenuKeys = useVisibleMenuKeys();
+
+  // Filter nav items based on permissions
+  const filteredNavItems = useMemo(() => {
+    return navItems
+      .filter(item => visibleMenuKeys.has(item.to))
+      .map(item => {
+        if (!item.children) return item;
+        const filteredChildren = item.children
+          .filter(child => visibleMenuKeys.has(child.to))
+          .map(child => {
+            if (!child.children) return child;
+            return {
+              ...child,
+              children: child.children.filter(sub => visibleMenuKeys.has(sub.to)),
+            };
+          })
+          .filter(child => !child.children || child.children.length > 0);
+        if (filteredChildren.length === 0) return null;
+        return { ...item, children: filteredChildren };
+      })
+      .filter(Boolean) as NavItem[];
+  }, [visibleMenuKeys]);
 
   // Close mobile sidebar on route change
   useEffect(() => {
@@ -235,7 +259,7 @@ export default function AppSidebar() {
 
       {/* Nav */}
       <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto scrollbar-thin">
-        {navItems.map((item) => {
+        {filteredNavItems.map((item) => {
           const isActive = location.pathname === item.to || (item.to !== "/" && location.pathname.startsWith(item.to));
 
           if (item.children && item.children.length > 0) {
