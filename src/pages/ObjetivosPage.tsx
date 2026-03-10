@@ -611,7 +611,8 @@ function ObjectiveCard({
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [kpiEvidenceId, setKpiEvidenceId] = useState<string | null>(null);
   const [kpiEvidenceName, setKpiEvidenceName] = useState('');
-  const [selectedMonth, setSelectedMonth] = useState<string>('actual');
+  const currentMonth = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+  const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth);
   
   // Progress computed from KPI average
   const computedProgress = useMemo(() => {
