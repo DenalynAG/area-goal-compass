@@ -65,6 +65,16 @@ export default function ControlAccesoPage() {
     setEntryDatetime(""); setEstimatedExit("");
     setAreaId(""); setSubareaId(""); setCompanionId("");
     setZoneReq(""); setArl("");
+    setPhotoFile(null); setPhotoPreview(null);
+  };
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error("Solo se permiten imágenes"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("La imagen no puede superar 5MB"); return; }
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
