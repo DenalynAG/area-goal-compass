@@ -230,10 +230,11 @@ export default function NewsletterPortalPage() {
 
   return (
     <div className="animate-fade-in max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm pb-3 pt-1 -mx-4 px-4 md:-mx-6 md:px-6 lg:-mx-8 lg:px-8 border-b border-border/50 mb-6">
+        <div className="flex items-center justify-between">
         <div>
-          <h1 className="page-title">NotiOSH</h1>
+          <h1 className="page-title font-display">NotiOSH</h1>
           <p className="page-subtitle">Tu feed de novedades y reconocimientos</p>
         </div>
         <div className="flex items-center gap-2">
@@ -306,6 +307,7 @@ export default function NewsletterPortalPage() {
               <Plus className="w-4 h-4 mr-1" /> Publicar
             </Button>
           )}
+        </div>
         </div>
       </div>
 
