@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAreas, useSubareas, useProfiles, useMemberships } from "@/hooks/useSupabaseData";
@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, DoorOpen, Clock, LogOut as LogOutIcon } from "lucide-react";
+import { Plus, DoorOpen, Clock, LogOut as LogOutIcon, Camera, X, Image as ImageIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 function useAccessControl() {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAreas, useSubareas, useProfiles } from "@/hooks/useSupabaseData";
@@ -15,7 +15,7 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Package, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
+import { Plus, Package, ArrowDownToLine, ArrowUpFromLine, Camera, X, Image as ImageIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 const ASSET_TYPES = [
