@@ -98,6 +98,7 @@ export default function LoginPage() {
                   </div>
                 </div>
                 {error && <p className="text-sm text-destructive">{error}</p>}
+                {forgotMessage && <p className="text-sm text-accent-foreground bg-accent/20 p-2 rounded">{forgotMessage}</p>}
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? 'Ingresando...' : 'Iniciar Sesión'}
                 </Button>
