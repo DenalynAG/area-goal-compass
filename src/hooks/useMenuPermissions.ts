@@ -19,7 +19,7 @@ export function useMenuPermissions() {
         .select('*')
         .order('menu_key');
       if (error) throw error;
-      return (data ?? []) as MenuPermission[];
+      return (data ?? []) as unknown as MenuPermission[];
     },
   });
 }
