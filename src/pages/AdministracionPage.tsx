@@ -332,8 +332,6 @@ export default function AdministracionPage() {
       {/* Gestión de Menús - Solo Super Admin */}
       {isSuperAdmin && <MenuPermissionsSection />}
 
-      {/* Roles y Accesos */}
-      <RolesSection canEdit={isSuperAdmin} />
 
       {/* Audit log */}
       <div className="bg-card rounded-xl border shadow-sm">
