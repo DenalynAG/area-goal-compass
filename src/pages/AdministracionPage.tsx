@@ -329,6 +329,9 @@ export default function AdministracionPage() {
       {/* Indicadores de Evaluación */}
       <EvaluacionCriteriaSection canManage={canManage} />
 
+      {/* Gestión de Menús - Solo Super Admin */}
+      {isSuperAdmin && <MenuPermissionsSection />}
+
       {/* Roles y Accesos */}
       <RolesSection canEdit={isSuperAdmin} />
 
