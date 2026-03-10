@@ -32,6 +32,7 @@ function ProtectedRoutes() {
     <AppLayout>
       <Routes>
         <Route path="/" element={<NewsletterPortalPage />} />
+        <Route path="/aplicaciones" element={<AplicacionesPage />} />
         <Route path="/estructura" element={<EstructuraPage />} />
         <Route path="/colaboradores" element={<ColaboradoresPage />} />
         
