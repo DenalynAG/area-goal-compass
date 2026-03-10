@@ -97,7 +97,11 @@ const ACTIVITY_COLORS = [
   'bg-teal-500/10 text-teal-700 border-teal-200',
 ];
 
-export default function LeaderPassPage() {
+interface LeaderPassPageProps {
+  areaFilterName?: string;
+}
+
+export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps = {}) {
   const { user, isSuperAdmin, hasRole } = useAuth();
   const { data: activities = [], isLoading: loadingActs } = useLeaderPassActivities();
   const { data: profiles = [] } = useProfiles();
