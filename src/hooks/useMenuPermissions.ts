@@ -29,12 +29,6 @@ export function useVisibleMenuKeys(): Set<string> {
   const { data: permissions = [] } = useMenuPermissions();
 
   return useMemo(() => {
-    // Super admin sees everything
-    if (isSuperAdmin) {
-      return new Set(permissions.map(p => p.menu_key));
-    }
-
-    // For other roles, check visibility
     const visibleKeys = new Set<string>();
     for (const perm of permissions) {
       if (perm.is_visible && roles.includes(perm.role as any)) {
@@ -42,5 +36,5 @@ export function useVisibleMenuKeys(): Set<string> {
       }
     }
     return visibleKeys;
-  }, [permissions, roles, isSuperAdmin]);
+  }, [permissions, roles]);
 }
