@@ -102,6 +102,7 @@ const navItems: NavItem[] = [
     icon: Calculator,
     label: "Contraloría",
     children: [
+      { to: "/contraloria/devoluciones", label: "Sistema Devoluciones", icon: ClipboardList },
       { to: "/contraloria/objetivos", label: "Objetivos", icon: Target },
       { to: "/contraloria/leader-pass", label: "Leader Pass", icon: ClipboardList },
       { to: "/contraloria/calidad", label: "Calidad", icon: ShieldCheck },
