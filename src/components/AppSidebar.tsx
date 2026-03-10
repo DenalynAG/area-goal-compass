@@ -76,7 +76,9 @@ const navItems: NavItem[] = [
     label: "Comercial",
     children: [
       { to: "/comercial/comercial", label: "Comercial", icon: Handshake },
-      { to: "/comercial/hospitalidad", label: "Hospitalidad", icon: Hotel },
+      { to: "/comercial/hospitalidad", label: "Hospitalidad", icon: Hotel, children: [
+        { to: "/comercial/hospitalidad/fidelizacion", label: "Sistema Fidelización", icon: Heart },
+      ] },
       { to: "/comercial/reservas", label: "Reservas", icon: CalendarCheck },
       { to: "/comercial/objetivos", label: "Objetivos", icon: Target },
       { to: "/comercial/leader-pass", label: "Leader Pass", icon: ClipboardList },
