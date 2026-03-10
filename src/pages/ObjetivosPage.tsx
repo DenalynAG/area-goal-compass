@@ -272,6 +272,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
     const areaObjs = getAreaObjectives(selectedArea.id);
     const areaKpisList = getAreaKpis(selectedArea.id);
     const areaSubareas = subareas.filter(s => s.area_id === selectedArea.id);
+    const areaProgress = getAreaProgress(selectedArea.id);
 
     // Objectives directly on the area (not subarea)
     const directAreaObjs = objectives.filter(o => o.scope_type === 'area' && o.scope_id === selectedArea.id);
@@ -279,76 +280,142 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
     const getSubareaObjs = (subId: string) => objectives.filter(o => o.scope_type === 'subarea' && o.scope_id === subId);
 
     return (
-      <div className="animate-fade-in space-y-6">
+      <div className="animate-fade-in space-y-4">
+        {/* Header */}
         <div className="flex items-center gap-3">
           {!isAreaLocked && (
             <Button variant="ghost" size="icon" onClick={() => setSelectedAreaId(null)}>
               <ArrowLeft className="w-5 h-5" />
             </Button>
           )}
-          <div>
+          <div className="flex-1">
             <h1 className="page-title">Objetivos — {selectedArea.name}</h1>
             <p className="page-subtitle">
-              {selectedArea.leader_user_id && `Líder: ${getProfileName(profiles, selectedArea.leader_user_id)} · `}
               {areaObjs.length} objetivos · {areaKpisList.length} indicadores
             </p>
           </div>
-          <div className="ml-auto">
-            <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" />Nuevo Objetivo</Button>
-          </div>
+          <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" />Nuevo Objetivo</Button>
         </div>
 
-        {/* Direct area objectives */}
-        {directAreaObjs.length > 0 && (
-          <div className="space-y-3">
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Objetivos del Área</h2>
-            {directAreaObjs.map((obj, idx) => {
-              const objKpis = kpis.filter(k => k.objective_id === obj.id);
-              const isOpen = expandedObj[obj.id];
-              return (
-                <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis} isOpen={isOpen}
-                  onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={() => openNewKPI(obj.id)} onEditKPI={openEditKPI}
-                  profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} />
-              );
-            })}
-          </div>
-        )}
-
-        {/* Subarea sections */}
-        {areaSubareas.map(sub => {
-          const subObjs = getSubareaObjs(sub.id);
-          const subKpis = kpis.filter(k => subObjs.some(o => o.id === k.objective_id));
-          const subProgress = subObjs.length > 0 ? Math.round(subObjs.reduce((s, o) => s + getObjProgress(o), 0) / subObjs.length) : 0;
-
-          return (
-            <div key={sub.id} className="space-y-3">
-              <div className="flex items-center justify-between border-b pb-2">
-                <div>
-                  <h2 className="text-sm font-semibold">{sub.name}</h2>
-                  <p className="text-xs text-muted-foreground">
-                    {sub.leader_user_id ? `Responsable: ${getProfileName(profiles, sub.leader_user_id)}` : 'Sin responsable'} · {subObjs.length} objetivos · {subKpis.length} indicadores · {subProgress}%
-                  </p>
-                </div>
+        {/* Area card - hierarchical structure */}
+        <div className="bg-card border rounded-xl shadow-sm overflow-hidden">
+          {/* Area header row */}
+          <button
+            onClick={() => toggleArea(selectedArea.id)}
+            className="w-full px-5 py-4 flex items-center gap-3 hover:bg-muted/30 transition-colors"
+          >
+            {expandedAreas[selectedArea.id] !== false
+              ? <ChevronDown className="w-5 h-5 text-muted-foreground" />
+              : <ChevronRight className="w-5 h-5 text-muted-foreground" />}
+            <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center">
+              <BarChart3 className="w-4 h-4 text-primary" />
+            </div>
+            <div className="flex-1 text-left min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-base">{selectedArea.name}</span>
+                <StatusBadge status={selectedArea.status} />
               </div>
-              {subObjs.map((obj, idx) => {
-                const objKpis = kpis.filter(k => k.objective_id === obj.id);
-                const isOpen = expandedObj[obj.id];
+              <p className="text-xs text-muted-foreground mt-0.5">
+                — Líder: {getProfileName(profiles, selectedArea.leader_user_id)}
+              </p>
+            </div>
+            <div className="shrink-0 flex items-center gap-3">
+              <div className="text-right">
+                <div className="flex items-center gap-2">
+                  <ProgressBar value={areaProgress} className="w-24" />
+                  <span className="text-xs font-semibold text-muted-foreground">{areaProgress}%</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">{areaObjs.length} obj · {areaKpisList.length} ind</p>
+              </div>
+            </div>
+          </button>
+
+          {/* Area body - expanded by default */}
+          {expandedAreas[selectedArea.id] !== false && (
+            <div className="border-t">
+              {/* Direct area objectives */}
+              {directAreaObjs.length > 0 && (
+                <div className="px-5 py-4 space-y-3 border-b bg-muted/5">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pl-8">Objetivos del Área</h3>
+                  {directAreaObjs.map((obj, idx) => {
+                    const objKpis2 = kpis.filter(k => k.objective_id === obj.id);
+                    const isOpen = expandedObj[obj.id];
+                    return (
+                      <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
+                        onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={() => openNewKPI(obj.id)} onEditKPI={openEditKPI}
+                        profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} />
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Subareas as nested expandable rows */}
+              {areaSubareas.map(sub => {
+                const subObjs = getSubareaObjs(sub.id);
+                const subKpis = kpis.filter(k => subObjs.some(o => o.id === k.objective_id));
+                const subProgress = subObjs.length > 0 ? Math.round(subObjs.reduce((s, o) => s + getObjProgress(o), 0) / subObjs.length) : 0;
+                const isSubExpanded = expandedAreas[sub.id];
+
                 return (
-                <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis} isOpen={isOpen}
-                  onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={() => openNewKPI(obj.id)} onEditKPI={openEditKPI}
-                  profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} />
+                  <div key={sub.id} className="border-b last:border-b-0">
+                    {/* Subarea header */}
+                    <button
+                      onClick={() => toggleArea(sub.id)}
+                      className="w-full px-5 py-3 pl-10 flex items-center gap-3 hover:bg-muted/30 transition-colors"
+                    >
+                      {isSubExpanded
+                        ? <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                        : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+                      <div className="w-7 h-7 rounded-md bg-accent/10 flex items-center justify-center">
+                        <Target className="w-3.5 h-3.5 text-accent-foreground" />
+                      </div>
+                      <div className="flex-1 text-left min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm">{sub.name}</span>
+                          <StatusBadge status={sub.status} />
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Target className="w-3 h-3" /> {subObjs.length}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          — Líder: {getProfileName(profiles, sub.leader_user_id)}
+                        </p>
+                      </div>
+                      <div className="shrink-0 flex items-center gap-2">
+                        <ProgressBar value={subProgress} className="w-20" />
+                        <span className="text-xs font-semibold text-muted-foreground">{subProgress}%</span>
+                      </div>
+                    </button>
+
+                    {/* Subarea objectives - expanded content */}
+                    {isSubExpanded && (
+                      <div className="pl-16 pr-5 py-3 space-y-3 bg-muted/5">
+                        {subObjs.map((obj, idx) => {
+                          const objKpis2 = kpis.filter(k => k.objective_id === obj.id);
+                          const isOpen = expandedObj[obj.id];
+                          return (
+                            <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
+                              onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={() => openNewKPI(obj.id)} onEditKPI={openEditKPI}
+                              profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} />
+                          );
+                        })}
+                        {subObjs.length === 0 && (
+                          <div className="text-center py-4 text-sm text-muted-foreground bg-muted/20 rounded-lg">
+                            Sin objetivos registrados para esta subárea
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
-              {subObjs.length === 0 && (
-                <div className="text-center py-6 text-sm text-muted-foreground bg-muted/30 rounded-lg">Sin objetivos registrados</div>
+
+              {areaObjs.length === 0 && areaSubareas.length === 0 && (
+                <div className="text-center py-12 text-muted-foreground">No hay objetivos registrados para esta área</div>
               )}
             </div>
-          );
-        })}
-
-        {areaObjs.length === 0 && areaSubareas.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground">No hay objetivos registrados para esta área</div>
-        )}
+          )}
+        </div>
 
         <ObjetivoFormDialog open={dialogOpen} onOpenChange={setDialogOpen} objective={editingObj} areas={areas} subareas={subareas} profiles={profiles} />
         <KPIFormDialog open={kpiDialogOpen} onOpenChange={setKpiDialogOpen} kpi={editingKPI} objectives={objectives} areas={areas} subareas={subareas} preselectedObjectiveId={preselectedObjectiveId} />
