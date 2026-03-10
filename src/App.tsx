@@ -23,6 +23,7 @@ import ControlAccesoPage from "@/pages/ControlAccesoPage";
 import ControlActivosPage from "@/pages/ControlActivosPage";
 import ComfortMapPage from "@/pages/ComfortMapPage";
 import AreaObjetivosPage from "@/pages/AreaObjetivosPage";
+import AreaModulePage from "@/pages/AreaModulePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
