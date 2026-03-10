@@ -38,6 +38,7 @@ const MENU_LABELS: Record<string, string> = {
   '/compras/calidad': 'Compras · Calidad',
   '/compras/evaluaciones': 'Compras · Evaluaciones',
   '/contraloria': 'Contraloría',
+  '/contraloria/devoluciones': 'Contraloría · Sistema Devoluciones',
   '/contraloria/colaboradores': 'Contraloría · Colaboradores',
   '/contraloria/objetivos': 'Contraloría · Objetivos',
   '/contraloria/leader-pass': 'Contraloría · Leader Pass',
