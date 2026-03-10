@@ -121,14 +121,7 @@ const navItems: NavItem[] = [
     label: "Operaciones",
     children: [
       { to: "/operaciones/glowingdesk", label: "GlowingDesk", icon: Lamp },
-      {
-        to: "/operaciones/housekeeping",
-        label: "Comfort & Housekeeping",
-        icon: Sparkles,
-        children: [
-          { to: "/operaciones/housekeeping/comfort-map", label: "OSH Comfort Map", icon: Map },
-        ],
-      },
+      { to: "/operaciones/housekeeping", label: "Comfort & Housekeeping", icon: Sparkles },
       { to: "/operaciones/mantenimiento", label: "Mantenimiento", icon: Hammer },
       {
         to: "/operaciones/seguridad",
