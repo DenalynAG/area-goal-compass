@@ -28,6 +28,7 @@ const MENU_LABELS: Record<string, string> = {
   '/comercial/comercial': 'Comercial · Comercial',
   '/comercial/hospitalidad': 'Comercial · Hospitalidad',
   '/comercial/hospitalidad/fidelizacion': 'Comercial · Sistema Fidelización',
+  '/comercial/hospitalidad/servicios': 'Comercial · Gestión de Servicios',
   '/comercial/reservas': 'Comercial · Reservas',
   '/comercial/objetivos': 'Comercial · Objetivos',
   '/comercial/leader-pass': 'Comercial · Leader Pass',
