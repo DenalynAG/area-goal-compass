@@ -37,7 +37,8 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { to: "/", icon: Newspaper, label: "Portal OSH" },
+  { to: "/", icon: Newspaper, label: "NotiOSH" },
+  { to: "/aplicaciones", icon: Monitor, label: "Aplicaciones" },
   {
     to: "/rrhh",
     icon: Users,
