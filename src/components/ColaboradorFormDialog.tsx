@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { usePositions } from '@/hooks/useSupabaseData';
 import { getRoleLabel } from '@/types';
 import type { Enums } from '@/integrations/supabase/types';
