@@ -21,6 +21,7 @@ import AuditoriasPage from "@/pages/AuditoriasPage";
 import AplicacionesPage from "@/pages/AplicacionesPage";
 import ControlAccesoPage from "@/pages/ControlAccesoPage";
 import ControlActivosPage from "@/pages/ControlActivosPage";
+import ComfortMapPage from "@/pages/ComfortMapPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
