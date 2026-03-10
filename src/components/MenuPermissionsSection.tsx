@@ -91,8 +91,8 @@ const MENU_GROUPS = [
   { label: 'Tecnología', keys: ['/tecnologia', '/tecnologia/colaboradores', '/tecnologia/objetivos', '/tecnologia/leader-pass', '/tecnologia/calidad', '/tecnologia/evaluaciones'] },
 ];
 
-// Roles to show (exclude super_admin since it always sees everything)
-const editableRoles = rolesList.filter(r => r !== 'super_admin');
+// All roles are editable, including super_admin
+const editableRoles = [...rolesList];
 
 export default function MenuPermissionsSection() {
   const { data: permissions = [], isLoading } = useMenuPermissions();
