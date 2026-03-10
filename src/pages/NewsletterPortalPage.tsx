@@ -1,14 +1,36 @@
 import { useState, useRef, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  useProfiles,
-  useNewsletterPosts,
-  useAreas,
-  useMemberships,
-} from "@/hooks/useSupabaseData";
+import { useProfiles, useNewsletterPosts, useAreas, useMemberships } from "@/hooks/useSupabaseData";
 import { supabase } from "@/integrations/supabase/client";
-import { Award, Cake, Megaphone, Plus, Pencil, Heart, MessageCircle, Share2, Sparkles, PartyPopper, Send, Trash2, CalendarDays, ChevronLeft, ChevronRight, Bell, Check } from "lucide-react";
-import { format, parseISO, isSameDay, formatDistanceToNow, startOfMonth, endOfMonth, eachDayOfInterval, getDay } from "date-fns";
+import {
+  Award,
+  Cake,
+  Megaphone,
+  Plus,
+  Pencil,
+  Heart,
+  MessageCircle,
+  Share2,
+  Sparkles,
+  PartyPopper,
+  Send,
+  Trash2,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Bell,
+  Check,
+} from "lucide-react";
+import {
+  format,
+  parseISO,
+  isSameDay,
+  formatDistanceToNow,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  getDay,
+} from "date-fns";
 import { es } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,7 +83,10 @@ function useNewsletterComments() {
   return useQuery({
     queryKey: ["newsletter_comments"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("newsletter_comments").select("*").order("created_at", { ascending: true });
+      const { data, error } = await supabase
+        .from("newsletter_comments")
+        .select("*")
+        .order("created_at", { ascending: true });
       if (error) throw error;
       return data as NewsletterComment[];
     },
@@ -103,7 +128,11 @@ export default function NewsletterPortalPage() {
   const markAllRead = async () => {
     const unread = notifications.filter((n) => !n.is_read);
     if (unread.length === 0) return;
-    await supabase.from("notifications").update({ is_read: true } as any).eq("user_id", user!.id).eq("is_read", false);
+    await supabase
+      .from("notifications")
+      .update({ is_read: true } as any)
+      .eq("user_id", user!.id)
+      .eq("is_read", false);
     qc.invalidateQueries({ queryKey: ["notifications"] });
   };
 
@@ -121,9 +150,7 @@ export default function NewsletterPortalPage() {
       return da - db;
     });
 
-  const allPosts = [...posts].sort(
-    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  );
+  const allPosts = [...posts].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   const toggleLike = (id: string) => {
     setLikedPosts((prev) => {
@@ -155,7 +182,10 @@ export default function NewsletterPortalPage() {
       comment: text,
     });
     setSubmitting(false);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     setCommentInputs((prev) => ({ ...prev, [postId]: "" }));
     qc.invalidateQueries({ queryKey: ["newsletter_comments"] });
 
@@ -175,12 +205,20 @@ export default function NewsletterPortalPage() {
 
   const deleteComment = async (commentId: string) => {
     const { error } = await supabase.from("newsletter_comments").delete().eq("id", commentId);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     qc.invalidateQueries({ queryKey: ["newsletter_comments"] });
   };
 
   const getInitials = (name: string) =>
-    name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+    name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
 
   const getAvatar = (userId: string | null) => {
     if (!userId) return null;
@@ -188,18 +226,14 @@ export default function NewsletterPortalPage() {
   };
 
   if (isLoading)
-    return (
-      <div className="flex items-center justify-center py-20 text-muted-foreground">
-        Cargando portal…
-      </div>
-    );
+    return <div className="flex items-center justify-center py-20 text-muted-foreground">Cargando portal…</div>;
 
   return (
     <div className="animate-fade-in max-w-5xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="page-title">Portal OSH</h1>
+          <h1 className="page-title">NotiOSH</h1>
           <p className="page-subtitle">Tu feed de novedades y reconocimientos</p>
         </div>
         <div className="flex items-center gap-2">
@@ -232,9 +266,7 @@ export default function NewsletterPortalPage() {
                 </div>
                 <div className="max-h-80 overflow-y-auto">
                   {notifications.length === 0 ? (
-                    <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-                      Sin notificaciones
-                    </div>
+                    <div className="px-4 py-8 text-center text-sm text-muted-foreground">Sin notificaciones</div>
                   ) : (
                     notifications.map((n) => (
                       <div
@@ -244,7 +276,9 @@ export default function NewsletterPortalPage() {
                         }`}
                       >
                         <div className="flex items-start gap-2.5">
-                          <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${n.is_read ? "bg-muted-foreground/30" : "bg-primary"}`} />
+                          <div
+                            className={`mt-1 w-2 h-2 rounded-full shrink-0 ${n.is_read ? "bg-muted-foreground/30" : "bg-primary"}`}
+                          />
                           <div className="flex-1 min-w-0">
                             <p className="text-xs font-semibold">{n.title}</p>
                             <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{n.body}</p>
@@ -290,10 +324,7 @@ export default function NewsletterPortalPage() {
               <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
                 {birthdaysThisMonth.map((p) => {
                   const bd = parseISO(p.birthday!);
-                  const isToday = isSameDay(
-                    new Date(today.getFullYear(), bd.getMonth(), bd.getDate()),
-                    today
-                  );
+                  const isToday = isSameDay(new Date(today.getFullYear(), bd.getMonth(), bd.getDate()), today);
                   return (
                     <div key={p.id} className="flex flex-col items-center gap-1.5 shrink-0 w-[72px]">
                       <div
@@ -319,9 +350,7 @@ export default function NewsletterPortalPage() {
                       <span className="text-[10px] text-center font-medium leading-tight truncate w-full">
                         {p.name.split(" ")[0]}
                       </span>
-                      <span className="text-[9px] text-muted-foreground">
-                        {format(bd, "d MMM", { locale: es })}
-                      </span>
+                      <span className="text-[9px] text-muted-foreground">{format(bd, "d MMM", { locale: es })}</span>
                     </div>
                   );
                 })}
@@ -389,7 +418,11 @@ export default function NewsletterPortalPage() {
                           <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[hsl(var(--success))] to-[hsl(var(--warning))] p-[2px] shrink-0">
                             <div className="w-full h-full rounded-full bg-card flex items-center justify-center overflow-hidden">
                               {target.avatar ? (
-                                <img src={target.avatar} alt={target.name} className="w-full h-full object-cover rounded-full" />
+                                <img
+                                  src={target.avatar}
+                                  alt={target.name}
+                                  className="w-full h-full object-cover rounded-full"
+                                />
                               ) : (
                                 <span className="text-xs font-bold text-[hsl(var(--success))]">
                                   {getInitials(target.name)}
@@ -405,9 +438,7 @@ export default function NewsletterPortalPage() {
                               </span>
                             </div>
                             <p className="text-sm font-bold mt-0.5">{target.name}</p>
-                            {target.position && (
-                              <p className="text-[11px] text-muted-foreground">{target.position}</p>
-                            )}
+                            {target.position && <p className="text-[11px] text-muted-foreground">{target.position}</p>}
                           </div>
                           <PartyPopper className="w-6 h-6 text-[hsl(var(--warning)/0.5)]" />
                         </div>
@@ -431,9 +462,7 @@ export default function NewsletterPortalPage() {
                       <button
                         onClick={() => toggleLike(post.id)}
                         className={`p-2 rounded-full transition-colors ${
-                          isLiked
-                            ? "text-[hsl(var(--destructive))]"
-                            : "text-muted-foreground hover:text-foreground"
+                          isLiked ? "text-[hsl(var(--destructive))]" : "text-muted-foreground hover:text-foreground"
                         }`}
                       >
                         <Heart className={`w-5 h-5 ${isLiked ? "fill-current" : ""}`} />
@@ -476,7 +505,11 @@ export default function NewsletterPortalPage() {
                               <div key={c.id} className="flex gap-2.5 group">
                                 <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
                                   {c.avatar ? (
-                                    <img src={c.avatar} alt={c.user_name} className="w-full h-full object-cover rounded-full" />
+                                    <img
+                                      src={c.avatar}
+                                      alt={c.user_name}
+                                      className="w-full h-full object-cover rounded-full"
+                                    />
                                   ) : (
                                     <span className="text-[9px] font-bold text-primary">
                                       {getInitials(c.user_name || "?")}
@@ -486,7 +519,9 @@ export default function NewsletterPortalPage() {
                                 <div className="flex-1 min-w-0">
                                   <div className="bg-card rounded-xl px-3 py-2 border">
                                     <p className="text-xs font-semibold">{c.user_name}</p>
-                                    <p className="text-xs text-muted-foreground mt-0.5 whitespace-pre-line">{c.comment}</p>
+                                    <p className="text-xs text-muted-foreground mt-0.5 whitespace-pre-line">
+                                      {c.comment}
+                                    </p>
                                   </div>
                                   <div className="flex items-center gap-2 mt-0.5 px-1">
                                     <span className="text-[10px] text-muted-foreground">
@@ -511,7 +546,11 @@ export default function NewsletterPortalPage() {
                           <div className="flex gap-2 items-center">
                             <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
                               {profile?.avatar ? (
-                                <img src={profile.avatar} alt={profile.name} className="w-full h-full object-cover rounded-full" />
+                                <img
+                                  src={profile.avatar}
+                                  alt={profile.name}
+                                  className="w-full h-full object-cover rounded-full"
+                                />
                               ) : (
                                 <span className="text-[9px] font-bold text-primary">
                                   {getInitials(profile?.name ?? "?")}
@@ -629,12 +668,12 @@ export default function NewsletterPortalPage() {
                               : "hover:bg-muted/50"
                           } ${isToday ? "ring-2 ring-primary ring-inset" : ""}`}
                         >
-                          <span className={`text-[11px] ${bds.length > 0 ? "font-bold text-foreground" : "text-muted-foreground"} ${isToday ? "text-primary font-bold" : ""}`}>
+                          <span
+                            className={`text-[11px] ${bds.length > 0 ? "font-bold text-foreground" : "text-muted-foreground"} ${isToday ? "text-primary font-bold" : ""}`}
+                          >
                             {d}
                           </span>
-                          {bds.length > 0 && (
-                            <span className="text-[7px] leading-none">🎂</span>
-                          )}
+                          {bds.length > 0 && <span className="text-[7px] leading-none">🎂</span>}
                           {bds.length > 0 && (
                             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block z-30 pointer-events-none">
                               <div className="bg-popover border rounded-lg shadow-lg p-2 min-w-[140px]">
@@ -642,7 +681,11 @@ export default function NewsletterPortalPage() {
                                   <div key={p.id} className="flex items-center gap-2 py-0.5">
                                     <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
                                       {p.avatar ? (
-                                        <img src={p.avatar} alt={p.name} className="w-full h-full object-cover rounded-full" />
+                                        <img
+                                          src={p.avatar}
+                                          alt={p.name}
+                                          className="w-full h-full object-cover rounded-full"
+                                        />
                                       ) : (
                                         <span className="text-[8px] font-bold text-primary">{getInitials(p.name)}</span>
                                       )}
@@ -666,10 +709,7 @@ export default function NewsletterPortalPage() {
                       </span>
                       {bdList.map((p) => {
                         const bd = parseISO(p.birthday!);
-                        const dayIsToday = isSameDay(
-                          new Date(today.getFullYear(), bd.getMonth(), bd.getDate()),
-                          today
-                        );
+                        const dayIsToday = isSameDay(new Date(today.getFullYear(), bd.getMonth(), bd.getDate()), today);
                         return (
                           <div key={p.id} className="flex items-center gap-2">
                             <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
