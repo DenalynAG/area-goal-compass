@@ -757,20 +757,20 @@ function ObjectiveCard({
             <tbody>
               {objKpis.map(k => {
                 const monthValue = getKpiMonthValue(k.id);
-                const displayValue = selectedMonth === 'actual' ? k.current_value : (monthValue ?? 0);
+                const displayValue = monthValue ?? 0;
                 const kpiForLight = { ...k, current_value: displayValue };
                 return (
                   <tr key={k.id} className="border-t border-border/50">
                     <td className="py-2 font-medium">{k.name}</td>
                     <td className="py-2">{k.target} {k.unit}</td>
                     <td className="py-2">
-                      {selectedMonth !== 'actual' && monthValue === null
+                      {monthValue === null
                         ? <span className="text-muted-foreground italic">Sin dato</span>
                         : <>{displayValue} {k.unit}</>
                       }
                     </td>
                     <td className="py-2">
-                      {selectedMonth !== 'actual' && monthValue === null
+                      {monthValue === null
                         ? <span className="text-muted-foreground">—</span>
                         : <TrafficLightBadge light={getTrafficLight(kpiForLight as any)} />
                       }
