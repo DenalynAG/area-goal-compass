@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useActivityLog, usePositions, useAreas, useSubareas, useSystemParameters } from '@/hooks/useSupabaseData';
 import { useAuth } from '@/contexts/AuthContext';
-import { Settings, Clock, User, Briefcase, Plus, Pencil, Trash2, Upload, ChevronDown, ChevronRight, Building2, FolderOpen, Check, X, Shield } from 'lucide-react';
+import { Settings, Clock, User, Briefcase, Plus, Pencil, Trash2, Upload, ChevronDown, ChevronRight, Building2, FolderOpen, Check, X } from 'lucide-react';
 import { getRoleLabel } from '@/types';
 import type { Enums } from '@/integrations/supabase/types';
 import { Constants } from '@/integrations/supabase/types';
