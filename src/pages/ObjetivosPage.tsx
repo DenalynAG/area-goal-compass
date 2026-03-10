@@ -611,7 +611,8 @@ function ObjectiveCard({
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [kpiEvidenceId, setKpiEvidenceId] = useState<string | null>(null);
   const [kpiEvidenceName, setKpiEvidenceName] = useState('');
-  const [selectedMonth, setSelectedMonth] = useState<string>('actual');
+  const currentMonth = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+  const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth);
   
   // Progress computed from KPI average
   const computedProgress = useMemo(() => {
@@ -646,7 +647,6 @@ function ObjectiveCard({
 
   // Get KPI value for a given month
   const getKpiMonthValue = (kpiId: string) => {
-    if (selectedMonth === 'actual') return null; // use current_value
     const m = relevantMeasurements.find(m => m.kpi_id === kpiId && m.period_date.startsWith(selectedMonth));
     return m ? m.value : null;
   };
@@ -728,16 +728,6 @@ function ObjectiveCard({
           {objKpis.length > 0 && (
             <div className="flex items-center gap-1 mb-3 overflow-x-auto pb-1">
               <Calendar className="w-4 h-4 text-muted-foreground shrink-0 mr-1" />
-              <button
-                onClick={() => setSelectedMonth('actual')}
-                className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                  selectedMonth === 'actual'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                }`}
-              >
-                Actual
-              </button>
               {availableMonths.map(ym => (
                 <button
                   key={ym}
@@ -767,20 +757,20 @@ function ObjectiveCard({
             <tbody>
               {objKpis.map(k => {
                 const monthValue = getKpiMonthValue(k.id);
-                const displayValue = selectedMonth === 'actual' ? k.current_value : (monthValue ?? 0);
+                const displayValue = monthValue ?? 0;
                 const kpiForLight = { ...k, current_value: displayValue };
                 return (
                   <tr key={k.id} className="border-t border-border/50">
                     <td className="py-2 font-medium">{k.name}</td>
                     <td className="py-2">{k.target} {k.unit}</td>
                     <td className="py-2">
-                      {selectedMonth !== 'actual' && monthValue === null
+                      {monthValue === null
                         ? <span className="text-muted-foreground italic">Sin dato</span>
                         : <>{displayValue} {k.unit}</>
                       }
                     </td>
                     <td className="py-2">
-                      {selectedMonth !== 'actual' && monthValue === null
+                      {monthValue === null
                         ? <span className="text-muted-foreground">—</span>
                         : <TrafficLightBadge light={getTrafficLight(kpiForLight as any)} />
                       }
@@ -806,9 +796,8 @@ function ObjectiveCard({
                   {(() => {
                     const values = objKpis.map(k => {
                       const monthValue = getKpiMonthValue(k.id);
-                      const val = selectedMonth === 'actual' ? k.current_value : (monthValue ?? null);
-                      if (val === null) return null;
-                      return k.target > 0 ? (val / k.target) * 100 : 0;
+                      if (monthValue === null) return null;
+                      return k.target > 0 ? (monthValue / k.target) * 100 : 0;
                     }).filter((v): v is number => v !== null);
                     const avg = values.length > 0 ? Math.round(values.reduce((s, v) => s + v, 0) / values.length) : 0;
                     return `${avg}%`;
@@ -818,9 +807,8 @@ function ObjectiveCard({
                   {(() => {
                     const values = objKpis.map(k => {
                       const monthValue = getKpiMonthValue(k.id);
-                      const val = selectedMonth === 'actual' ? k.current_value : (monthValue ?? null);
-                      if (val === null) return null;
-                      return k.target > 0 ? (val / k.target) * 100 : 0;
+                      if (monthValue === null) return null;
+                      return k.target > 0 ? (monthValue / k.target) * 100 : 0;
                     }).filter((v): v is number => v !== null);
                     const avg = values.length > 0 ? Math.round(values.reduce((s, v) => s + v, 0) / values.length) : 0;
                     const label = avg >= 100 ? 'Alto' : avg >= 80 ? 'Medio' : 'Bajo';
