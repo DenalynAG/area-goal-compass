@@ -60,7 +60,9 @@ const navItems: NavItem[] = [
     to: "/ayb",
     icon: UtensilsCrossed,
     label: "Alimentos y Bebidas",
-    children: [],
+    children: [
+      { to: "/ayb/objetivos", label: "Objetivos", icon: Target },
+    ],
   },
   {
     to: "/comercial",
@@ -70,25 +72,59 @@ const navItems: NavItem[] = [
       { to: "/comercial/comercial", label: "Comercial", icon: Handshake },
       { to: "/comercial/hospitalidad", label: "Hospitalidad", icon: Hotel },
       { to: "/comercial/reservas", label: "Reservas", icon: CalendarCheck },
+      { to: "/comercial/objetivos", label: "Objetivos", icon: Target },
     ],
   },
   {
     to: "/compras",
     icon: ShoppingCart,
     label: "Compras",
-    children: [],
+    children: [
+      { to: "/compras/objetivos", label: "Objetivos", icon: Target },
+    ],
   },
   {
     to: "/contraloria",
     icon: Calculator,
     label: "Contraloría",
-    children: [],
+    children: [
+      { to: "/contraloria/objetivos", label: "Objetivos", icon: Target },
+    ],
   },
   {
     to: "/mercadeo",
     icon: Megaphone,
     label: "Mercadeo",
-    children: [],
+    children: [
+      { to: "/mercadeo/objetivos", label: "Objetivos", icon: Target },
+    ],
+  },
+  {
+    to: "/operaciones",
+    icon: Wrench,
+    label: "Operaciones",
+    children: [
+      { to: "/operaciones/glowingdesk", label: "GlowingDesk", icon: Lamp },
+      {
+        to: "/operaciones/housekeeping",
+        label: "Comfort & Housekeeping",
+        icon: Sparkles,
+        children: [
+          { to: "/operaciones/housekeeping/comfort-map", label: "OSH Comfort Map", icon: Map },
+        ],
+      },
+      { to: "/operaciones/mantenimiento", label: "Mantenimiento", icon: Hammer },
+      {
+        to: "/operaciones/seguridad",
+        label: "Seguridad",
+        icon: Shield,
+        children: [
+          { to: "/operaciones/seguridad/control-acceso", label: "Control de Acceso", icon: DoorOpen },
+          { to: "/operaciones/seguridad/control-activos", label: "Control de Activos", icon: Package },
+        ],
+      },
+      { to: "/operaciones/objetivos", label: "Objetivos", icon: Target },
+    ],
   },
   {
     to: "/operaciones",
@@ -133,7 +169,9 @@ const navItems: NavItem[] = [
     to: "/tecnologia",
     icon: Monitor,
     label: "Tecnología",
-    children: [],
+    children: [
+      { to: "/tecnologia/objetivos", label: "Objetivos", icon: Target },
+    ],
   },
   { to: "/organigrama", icon: Building2, label: "Organigrama" },
   { to: "/administracion", icon: Settings, label: "Administración" },

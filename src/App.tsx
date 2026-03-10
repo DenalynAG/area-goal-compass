@@ -22,6 +22,7 @@ import AplicacionesPage from "@/pages/AplicacionesPage";
 import ControlAccesoPage from "@/pages/ControlAccesoPage";
 import ControlActivosPage from "@/pages/ControlActivosPage";
 import ComfortMapPage from "@/pages/ComfortMapPage";
+import AreaObjetivosPage from "@/pages/AreaObjetivosPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,6 +51,16 @@ function ProtectedRoutes() {
         <Route path="/operaciones/seguridad/control-acceso" element={<ControlAccesoPage />} />
         <Route path="/operaciones/seguridad/control-activos" element={<ControlActivosPage />} />
         <Route path="/operaciones/housekeeping/comfort-map" element={<ComfortMapPage />} />
+        
+        {/* Area-specific objectives */}
+        <Route path="/ayb/objetivos" element={<AreaObjetivosPage areaKey="ayb" />} />
+        <Route path="/comercial/objetivos" element={<AreaObjetivosPage areaKey="comercial" />} />
+        <Route path="/compras/objetivos" element={<AreaObjetivosPage areaKey="compras" />} />
+        <Route path="/contraloria/objetivos" element={<AreaObjetivosPage areaKey="contraloria" />} />
+        <Route path="/mercadeo/objetivos" element={<AreaObjetivosPage areaKey="mercadeo" />} />
+        <Route path="/operaciones/objetivos" element={<AreaObjetivosPage areaKey="operaciones" />} />
+        <Route path="/tecnologia/objetivos" element={<AreaObjetivosPage areaKey="tecnologia" />} />
+        
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AppLayout>

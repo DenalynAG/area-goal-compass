@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useObjectives, useKPIs, useKPIMeasurements, useAreas, useSubareas, useProfiles, getProfileName, getAreaNameFromList } from '@/hooks/useSupabaseData';
 import { getTrafficLight } from '@/types';
 import { StatusBadge, ProgressBar, TrafficLightBadge } from '@/components/StatusBadge';
@@ -13,7 +13,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 
-export default function ObjetivosPage() {
+interface ObjetivosPageProps {
+  areaFilterName?: string;
+}
+
+export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {}) {
   const { data: objectives = [], isLoading } = useObjectives();
   const { data: kpis = [] } = useKPIs();
   const { data: measurements = [] } = useKPIMeasurements();
@@ -52,6 +56,16 @@ export default function ObjetivosPage() {
     setPreselectedObjectiveId(null);
     setKpiDialogOpen(true);
   };
+
+  // Auto-select area when areaFilterName is provided
+  useEffect(() => {
+    if (areaFilterName && areas.length > 0) {
+      const match = areas.find(a => a.name.toLowerCase() === areaFilterName.toLowerCase());
+      if (match) setSelectedAreaId(match.id);
+    }
+  }, [areaFilterName, areas]);
+
+  const isAreaLocked = !!areaFilterName;
 
   const direccionGeneral = areas.find(a => a.name === 'Dirección General');
   const otherAreas = areas.filter(a => a.name !== 'Dirección General');
@@ -267,9 +281,11 @@ export default function ObjetivosPage() {
     return (
       <div className="animate-fade-in space-y-6">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => setSelectedAreaId(null)}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
+          {!isAreaLocked && (
+            <Button variant="ghost" size="icon" onClick={() => setSelectedAreaId(null)}>
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+          )}
           <div>
             <h1 className="page-title">Objetivos — {selectedArea.name}</h1>
             <p className="page-subtitle">
