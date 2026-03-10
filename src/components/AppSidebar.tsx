@@ -32,8 +32,6 @@ import {
   DoorOpen,
   Package,
   Map,
-  Heart,
-  BarChart3,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -64,8 +62,6 @@ const navItems: NavItem[] = [
     icon: UtensilsCrossed,
     label: "Alimentos y Bebidas",
     children: [
-      { to: "/ayb/carta-digital", label: "Sistema Carta Digital", icon: ClipboardList },
-      { to: "/ayb/recogida-loza", label: "Recogida Loza", icon: Package },
       { to: "/ayb/objetivos", label: "Objetivos", icon: Target },
       { to: "/ayb/leader-pass", label: "Leader Pass", icon: ClipboardList },
       { to: "/ayb/calidad", label: "Calidad", icon: ShieldCheck },
@@ -78,10 +74,7 @@ const navItems: NavItem[] = [
     label: "Comercial",
     children: [
       { to: "/comercial/comercial", label: "Comercial", icon: Handshake },
-      { to: "/comercial/hospitalidad", label: "Hospitalidad", icon: Hotel, children: [
-        { to: "/comercial/hospitalidad/fidelizacion", label: "Sistema Fidelización", icon: Heart },
-        { to: "/comercial/hospitalidad/servicios", label: "Gestión de Servicios", icon: Handshake },
-      ] },
+      { to: "/comercial/hospitalidad", label: "Hospitalidad", icon: Hotel },
       { to: "/comercial/reservas", label: "Reservas", icon: CalendarCheck },
       { to: "/comercial/objetivos", label: "Objetivos", icon: Target },
       { to: "/comercial/leader-pass", label: "Leader Pass", icon: ClipboardList },
@@ -105,7 +98,6 @@ const navItems: NavItem[] = [
     icon: Calculator,
     label: "Contraloría",
     children: [
-      { to: "/contraloria/devoluciones", label: "Sistema Devoluciones", icon: ClipboardList },
       { to: "/contraloria/objetivos", label: "Objetivos", icon: Target },
       { to: "/contraloria/leader-pass", label: "Leader Pass", icon: ClipboardList },
       { to: "/contraloria/calidad", label: "Calidad", icon: ShieldCheck },
@@ -117,7 +109,6 @@ const navItems: NavItem[] = [
     icon: Megaphone,
     label: "Mercadeo",
     children: [
-      { to: "/mercadeo/crm", label: "Sistema CRM", icon: BarChart3 },
       { to: "/mercadeo/objetivos", label: "Objetivos", icon: Target },
       { to: "/mercadeo/leader-pass", label: "Leader Pass", icon: ClipboardList },
       { to: "/mercadeo/calidad", label: "Calidad", icon: ShieldCheck },
