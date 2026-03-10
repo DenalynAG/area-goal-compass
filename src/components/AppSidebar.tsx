@@ -52,7 +52,7 @@ export default function AppSidebar() {
   const { user, profile, roles, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(["/calidad"]));
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(["/rrhh"]));
   const location = useLocation();
 
   const toggleGroup = (to: string) => {
