@@ -36,30 +36,15 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
-    // Verify authenticated user, service role, or apikey
+    // Authenticate: accept user JWT, service role, apikey, or internal calls
     const authHeader = req.headers.get('Authorization')
     const apiKey = req.headers.get('apikey')
-    
-    if (!authHeader && !apiKey) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-
     const token = authHeader ? authHeader.replace('Bearer ', '') : ''
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY')
     const isInternalKey = token === serviceRoleKey || token === anonKey || apiKey === anonKey || apiKey === serviceRoleKey
 
-    if (!isInternalKey) {
-      // For user tokens, validate via getClaims
-      if (!authHeader) {
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        })
-      }
+    if (!isInternalKey && authHeader) {
       const userSupabase = createClient(
         Deno.env.get('SUPABASE_URL')!,
         anonKey!,
@@ -72,6 +57,12 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
       }
+    } else if (!isInternalKey && !authHeader) {
+      // No auth at all - reject
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
     }
 
     const body = await req.json()
