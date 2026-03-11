@@ -99,7 +99,14 @@ Deno.serve(async (req) => {
       status: 'pending',
     })
 
-    // Send directly via Lovable email API (no queue needed for transactional)
+    // Generate unsubscribe token
+    const unsubscribeToken = crypto.randomUUID()
+    await supabase.from('email_unsubscribe_tokens').insert({
+      email: to,
+      token: unsubscribeToken,
+    })
+
+    // Send directly via Lovable email API
     try {
       await sendLovableEmail(
         {
@@ -112,6 +119,7 @@ Deno.serve(async (req) => {
           purpose: 'transactional',
           label: template,
           idempotency_key: messageId,
+          unsubscribe_token: unsubscribeToken,
         },
         { apiKey, sendUrl: Deno.env.get('LOVABLE_SEND_URL') }
       )
