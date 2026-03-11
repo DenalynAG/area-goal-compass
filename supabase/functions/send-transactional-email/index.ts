@@ -36,33 +36,27 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
-    // Authenticate: accept user JWT, service role, apikey, or internal calls
+    // Auth: validate user JWT if provided; gateway verify_jwt=false allows internal calls
     const authHeader = req.headers.get('Authorization')
-    const apiKey = req.headers.get('apikey')
-    const token = authHeader ? authHeader.replace('Bearer ', '') : ''
-    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-    const anonKey = Deno.env.get('SUPABASE_ANON_KEY')
-    const isInternalKey = token === serviceRoleKey || token === anonKey || apiKey === anonKey || apiKey === serviceRoleKey
-
-    if (!isInternalKey && authHeader) {
-      const userSupabase = createClient(
-        Deno.env.get('SUPABASE_URL')!,
-        anonKey!,
-        { global: { headers: { Authorization: authHeader } } }
-      )
-      const { data: claimsData, error: claimsError } = await userSupabase.auth.getClaims(token)
-      if (claimsError || !claimsData?.claims) {
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        })
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '')
+      const anonKey = Deno.env.get('SUPABASE_ANON_KEY')
+      const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+      const isKnownKey = token === serviceRoleKey || token === anonKey
+      if (!isKnownKey) {
+        const userSupabase = createClient(
+          Deno.env.get('SUPABASE_URL')!,
+          anonKey!,
+          { global: { headers: { Authorization: authHeader } } }
+        )
+        const { error: claimsError } = await userSupabase.auth.getClaims(token)
+        if (claimsError) {
+          return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+            status: 401,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          })
+        }
       }
-    } else if (!isInternalKey && !authHeader) {
-      // No auth at all - reject
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
     }
 
     const body = await req.json()
