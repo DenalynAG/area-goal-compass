@@ -35,25 +35,33 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
-    // Verify authenticated user or service role
+    // Verify authenticated user, service role, or apikey
     const authHeader = req.headers.get('Authorization')
-    if (!authHeader) {
+    const apiKey = req.headers.get('apikey')
+    
+    if (!authHeader && !apiKey) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    const token = authHeader.replace('Bearer ', '')
+    const token = authHeader ? authHeader.replace('Bearer ', '') : ''
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY')
-    const isInternalKey = token === serviceRoleKey || token === anonKey
+    const isInternalKey = token === serviceRoleKey || token === anonKey || apiKey === anonKey || apiKey === serviceRoleKey
 
     if (!isInternalKey) {
       // For user tokens, validate via getClaims
+      if (!authHeader) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
       const userSupabase = createClient(
         Deno.env.get('SUPABASE_URL')!,
-        Deno.env.get('SUPABASE_ANON_KEY')!,
+        anonKey!,
         { global: { headers: { Authorization: authHeader } } }
       )
       const { data: claimsData, error: claimsError } = await userSupabase.auth.getClaims(token)
