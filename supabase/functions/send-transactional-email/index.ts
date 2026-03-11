@@ -1,5 +1,6 @@
 import * as React from 'npm:react@18.3.1'
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
+import { sendLovableEmail } from 'npm:@lovable.dev/email-js'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { ReservationConfirmationEmail } from '../_shared/email-templates/reservation-confirmation.tsx'
 import { InternalNotificationEmail } from '../_shared/email-templates/internal-notification.tsx'
@@ -30,27 +31,41 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const apiKey = Deno.env.get('LOVABLE_API_KEY')
+    if (!apiKey) {
+      console.error('Missing LOVABLE_API_KEY')
+      return new Response(JSON.stringify({ error: 'Server configuration error' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
-    // Verify authenticated user
+    // Auth: validate user JWT if provided; gateway verify_jwt=false allows internal calls
     const authHeader = req.headers.get('Authorization')
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-
-    const token = authHeader.replace('Bearer ', '')
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '')
+      const anonKey = Deno.env.get('SUPABASE_ANON_KEY')
+      const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+      const isKnownKey = token === serviceRoleKey || token === anonKey
+      if (!isKnownKey) {
+        const userSupabase = createClient(
+          Deno.env.get('SUPABASE_URL')!,
+          anonKey!,
+          { global: { headers: { Authorization: authHeader } } }
+        )
+        const { error: claimsError } = await userSupabase.auth.getClaims(token)
+        if (claimsError) {
+          return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+            status: 401,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          })
+        }
+      }
     }
 
     const body = await req.json()
@@ -84,38 +99,52 @@ Deno.serve(async (req) => {
       status: 'pending',
     })
 
-    const { error: enqueueError } = await supabase.rpc('enqueue_email', {
-      queue_name: 'transactional_emails',
-      payload: {
-        message_id: messageId,
-        to,
-        from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
-        sender_domain: SENDER_DOMAIN,
-        subject: subject || DEFAULT_SUBJECTS[template] || 'Notificación',
-        html,
-        text,
-        purpose: 'transactional',
-        label: template,
-        queued_at: new Date().toISOString(),
-      },
+    // Generate unsubscribe token
+    const unsubscribeToken = crypto.randomUUID()
+    await supabase.from('email_unsubscribe_tokens').insert({
+      email: to,
+      token: unsubscribeToken,
     })
 
-    if (enqueueError) {
-      console.error('Failed to enqueue transactional email', { error: enqueueError, template })
-      await supabase.from('email_send_log').update({ status: 'failed', error_message: 'Failed to enqueue' })
+    // Send directly via Lovable email API
+    try {
+      await sendLovableEmail(
+        {
+          to,
+          from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
+          sender_domain: SENDER_DOMAIN,
+          subject: subject || DEFAULT_SUBJECTS[template] || 'Notificación',
+          html,
+          text,
+          purpose: 'transactional',
+          label: template,
+          idempotency_key: messageId,
+          unsubscribe_token: unsubscribeToken,
+        },
+        { apiKey, sendUrl: Deno.env.get('LOVABLE_SEND_URL') }
+      )
+
+      await supabase.from('email_send_log').update({ status: 'sent' })
         .eq('message_id', messageId)
-      return new Response(JSON.stringify({ error: 'Failed to enqueue email' }), {
+
+      console.log('Transactional email sent', { template, to, messageId })
+
+      return new Response(
+        JSON.stringify({ success: true, messageId }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    } catch (sendError) {
+      const errorMsg = sendError instanceof Error ? sendError.message : 'Send failed'
+      console.error('Failed to send transactional email', { error: errorMsg, template, to })
+
+      await supabase.from('email_send_log').update({ status: 'failed', error_message: errorMsg })
+        .eq('message_id', messageId)
+
+      return new Response(JSON.stringify({ error: 'Failed to send email', details: errorMsg }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
-
-    console.log('Transactional email enqueued', { template, to, messageId })
-
-    return new Response(
-      JSON.stringify({ success: true, messageId }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
   } catch (error) {
     console.error('Error in send-transactional-email:', error)
     const message = error instanceof Error ? error.message : 'Unknown error'
