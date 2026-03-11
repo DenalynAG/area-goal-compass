@@ -29,7 +29,8 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders })
   }
 
-  console.log('Request received', { method: req.method, hasAuth: !!req.headers.get('Authorization'), hasApiKey: !!req.headers.get('apikey') })
+  try {
+    console.log('Request received', { method: req.method, hasAuth: !!req.headers.get('Authorization'), hasApiKey: !!req.headers.get('apikey') })
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
