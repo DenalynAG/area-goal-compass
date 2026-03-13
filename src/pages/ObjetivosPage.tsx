@@ -626,22 +626,6 @@ function ObjectiveCard({
   const [kpiEvidenceName, setKpiEvidenceName] = useState('');
   const currentMonth = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
   const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth);
-  
-  // Progress computed from KPI average using selected month measurements
-  const computedProgress = useMemo(() => {
-    if (objKpis.length === 0) return obj.progress_percent;
-    const values = objKpis.map(k => {
-      const monthVal = getKpiMonthValue(k.id);
-      if (monthVal === null) return null;
-      return k.target > 0 ? (monthVal / k.target) * 100 : 0;
-    }).filter((v): v is number => v !== null);
-    if (values.length === 0) return 0;
-    return Math.round(values.reduce((s, v) => s + v, 0) / values.length);
-  }, [objKpis, obj.progress_percent, selectedMonth, relevantMeasurements]);
-
-  const circumference = 2 * Math.PI * 28;
-  const strokeDashoffset = circumference - (Math.min(computedProgress, 100) / 100) * circumference;
-  const progressColor = computedProgress >= 70 ? 'hsl(var(--success))' : computedProgress >= 40 ? 'hsl(var(--warning))' : 'hsl(var(--destructive))';
 
   // Build months for the current year
   const kpiIds = objKpis.map(k => k.id);
@@ -668,6 +652,19 @@ function ObjectiveCard({
   const getKpiMonthValue = (kpiId: string) => {
     const m = relevantMeasurements.find(m => m.kpi_id === kpiId && m.period_date.startsWith(selectedMonth));
     return m ? m.value : null;
+  };
+
+  // Progress computed from KPI average using selected month measurements
+  const computedProgress = useMemo(() => {
+    if (objKpis.length === 0) return obj.progress_percent;
+    const values = objKpis.map(k => {
+      const monthVal = getKpiMonthValue(k.id);
+      if (monthVal === null) return null;
+      return k.target > 0 ? (monthVal / k.target) * 100 : 0;
+    }).filter((v): v is number => v !== null);
+    if (values.length === 0) return 0;
+    return Math.round(values.reduce((s, v) => s + v, 0) / values.length);
+  }, [objKpis, obj.progress_percent, selectedMonth, relevantMeasurements]);
   };
 
   return (
