@@ -665,7 +665,10 @@ function ObjectiveCard({
     if (values.length === 0) return 0;
     return Math.round(values.reduce((s, v) => s + v, 0) / values.length);
   }, [objKpis, obj.progress_percent, selectedMonth, relevantMeasurements]);
-  };
+
+  const circumference = 2 * Math.PI * 28;
+  const strokeDashoffset = circumference - (Math.min(computedProgress, 100) / 100) * circumference;
+  const progressColor = computedProgress >= 70 ? 'hsl(var(--success))' : computedProgress >= 40 ? 'hsl(var(--warning))' : 'hsl(var(--destructive))';
 
   return (
     <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
