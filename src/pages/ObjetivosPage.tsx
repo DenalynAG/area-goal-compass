@@ -237,10 +237,23 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
     return kpis.filter(k => objIds.includes(k.objective_id));
   };
 
+  const currentMonthStr = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+
+  const getKpiCurrentMonthValue = (kpiId: string) => {
+    const m = measurements.find(m => m.kpi_id === kpiId && m.period_date.startsWith(currentMonthStr));
+    return m ? m.value : null;
+  };
+
   const getObjProgress = (obj: Tables<'objectives'>) => {
     const objKpis = kpis.filter(k => k.objective_id === obj.id);
     if (objKpis.length === 0) return obj.progress_percent;
-    return Math.round(objKpis.reduce((sum, k) => sum + (k.target > 0 ? (k.current_value / k.target) * 100 : 0), 0) / objKpis.length);
+    const values = objKpis.map(k => {
+      const monthVal = getKpiCurrentMonthValue(k.id);
+      if (monthVal === null) return null;
+      return k.target > 0 ? (monthVal / k.target) * 100 : 0;
+    }).filter((v): v is number => v !== null);
+    if (values.length === 0) return 0;
+    return Math.round(values.reduce((s, v) => s + v, 0) / values.length);
   };
 
   const getAreaProgress = (areaId: string) => {
