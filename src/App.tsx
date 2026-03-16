@@ -50,6 +50,7 @@ function ProtectedRoutes() {
         <Route path="/calidad/auditorias" element={<AuditoriasPage />} />
         <Route path="/reportes" element={<ReportesPage />} />
         <Route path="/evaluaciones" element={<EvaluacionesPage />} />
+        <Route path="/osh-people" element={<OshPeoplePage />} />
         <Route path="/organigrama" element={<OrganigramaPage />} />
         <Route path="/administracion" element={<AdministracionPage />} />
         <Route path="/operaciones/seguridad/control-acceso" element={<ControlAccesoPage />} />
