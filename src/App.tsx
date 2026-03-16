@@ -26,6 +26,7 @@ import ControlActivosPage from "@/pages/ControlActivosPage";
 import ComfortMapPage from "@/pages/ComfortMapPage";
 import AreaObjetivosPage from "@/pages/AreaObjetivosPage";
 import AreaModulePage from "@/pages/AreaModulePage";
+import OshPeoplePage from "@/pages/OshPeoplePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,6 +50,7 @@ function ProtectedRoutes() {
         <Route path="/calidad/auditorias" element={<AuditoriasPage />} />
         <Route path="/reportes" element={<ReportesPage />} />
         <Route path="/evaluaciones" element={<EvaluacionesPage />} />
+        <Route path="/osh-people" element={<OshPeoplePage />} />
         <Route path="/organigrama" element={<OrganigramaPage />} />
         <Route path="/administracion" element={<AdministracionPage />} />
         <Route path="/operaciones/seguridad/control-acceso" element={<ControlAccesoPage />} />

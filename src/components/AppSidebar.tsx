@@ -149,6 +149,7 @@ const navItems: NavItem[] = [
       { to: "/leader-pass", label: "Leader Pass", icon: ClipboardList },
       { to: "/calidad/auditorias", label: "Calidad", icon: ShieldCheck },
       { to: "/evaluaciones", label: "Evaluaciones", icon: ClipboardCheck },
+      { to: "/osh-people", label: "OSH People", icon: Sparkles },
     ],
   },
   {

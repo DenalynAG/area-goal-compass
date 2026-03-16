@@ -1229,6 +1229,51 @@ export type Database = {
         }
         Relationships: []
       }
+      recognition_posts: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          message: string
+          nominated_by: string | null
+          nominee_user_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          message?: string
+          nominated_by?: string | null
+          nominee_user_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          message?: string
+          nominated_by?: string | null
+          nominee_user_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recognition_posts_nominated_by_fkey"
+            columns: ["nominated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recognition_posts_nominee_user_id_fkey"
+            columns: ["nominee_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subareas: {
         Row: {
           area_id: string
