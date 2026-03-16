@@ -130,14 +130,46 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, are
       threshold_red: thresholdRed,
     };
 
-    const { error } = kpi
-      ? await supabase.from('kpis').update(payload).eq('id', kpi.id)
-      : await supabase.from('kpis').insert(payload);
+    let kpiId = kpi?.id;
+
+    if (kpi) {
+      const { error } = await supabase.from('kpis').update(payload).eq('id', kpi.id);
+      if (error) { setSaving(false); toast.error(error.message); return; }
+    } else {
+      const { data, error } = await supabase.from('kpis').insert(payload).select('id').single();
+      if (error) { setSaving(false); toast.error(error.message); return; }
+      kpiId = data.id;
+    }
+
+    // Upsert a kpi_measurement for the current month so the grid reflects the value
+    if (kpiId && currentValue > 0) {
+      const now = new Date();
+      const periodDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+      // Check if measurement already exists for this month
+      const { data: existing } = await supabase
+        .from('kpi_measurements')
+        .select('id')
+        .eq('kpi_id', kpiId)
+        .gte('period_date', periodDate)
+        .lt('period_date', `${now.getFullYear()}-${String(now.getMonth() + 2).padStart(2, '0')}-01`)
+        .maybeSingle();
+
+      if (existing) {
+        await supabase.from('kpi_measurements').update({ value: currentValue }).eq('id', existing.id);
+      } else {
+        await supabase.from('kpi_measurements').insert({
+          kpi_id: kpiId,
+          period_date: periodDate,
+          value: currentValue,
+          created_by: (await supabase.auth.getUser()).data.user?.id ?? '',
+        });
+      }
+    }
 
     setSaving(false);
-    if (error) { toast.error(error.message); return; }
     toast.success(kpi ? 'Indicador actualizado' : 'Indicador creado');
     qc.invalidateQueries({ queryKey: ['kpis'] });
+    qc.invalidateQueries({ queryKey: ['kpi_measurements'] });
     onOpenChange(false);
   };
 
