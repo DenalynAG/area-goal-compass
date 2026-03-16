@@ -68,6 +68,7 @@ const MENU_LABELS: Record<string, string> = {
   '/leader-pass': 'RRHH · Leader Pass',
   '/calidad/auditorias': 'RRHH · Calidad',
   '/evaluaciones': 'RRHH · Evaluaciones',
+  '/osh-people': 'RRHH · OSH People',
   '/tecnologia': 'Tecnología',
   '/tecnologia/colaboradores': 'Tecnología · Colaboradores',
   '/tecnologia/objetivos': 'Tecnología · Objetivos',
