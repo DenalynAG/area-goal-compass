@@ -13,7 +13,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               EasyConnect – Plataforma de Gestión Estratégica Hotelera
             </h1>
             <p className="text-[11px] text-muted-foreground leading-tight">
-              Sistema de Gestión de Objetivos, Indicadores de gestión Operativa y Administrativa.
+              Sistema de Gestión de Objetivos e Indicadores Administrativa y Operativos.
             </p>
           </div>
         </header>
