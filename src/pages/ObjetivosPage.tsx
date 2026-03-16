@@ -405,6 +405,10 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                         — Líder: {getProfileName(profiles, sub.leader_user_id)}
                       </p>
                     </div>
+                    <div className="shrink-0 flex items-center gap-2 mr-2">
+                      <ProgressBar value={subProgress} className="w-20" />
+                      <span className="text-xs font-semibold text-muted-foreground">{subProgress}%</span>
+                    </div>
                   </button>
                 </div>
                 {isSubExpanded && (
