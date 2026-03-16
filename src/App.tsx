@@ -26,6 +26,7 @@ import ControlActivosPage from "@/pages/ControlActivosPage";
 import ComfortMapPage from "@/pages/ComfortMapPage";
 import AreaObjetivosPage from "@/pages/AreaObjetivosPage";
 import AreaModulePage from "@/pages/AreaModulePage";
+import OshPeoplePage from "@/pages/OshPeoplePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
