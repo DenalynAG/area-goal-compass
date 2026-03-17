@@ -31,6 +31,7 @@ interface Props {
   onOpenChange: (v: boolean) => void;
   evaluation?: Tables<'evaluations'> | null;
   preselectedCollaboratorId?: string | null;
+  preselectedType?: EvalType | null;
 }
 
 interface CriterionRow {
@@ -52,7 +53,7 @@ const defaultForm = {
   notes: '',
 };
 
-export default function EvaluacionFormDialog({ open, onOpenChange, evaluation, preselectedCollaboratorId }: Props) {
+export default function EvaluacionFormDialog({ open, onOpenChange, evaluation, preselectedCollaboratorId, preselectedType }: Props) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { data: profiles = [] } = useProfiles();
@@ -200,6 +201,7 @@ export default function EvaluacionFormDialog({ open, onOpenChange, evaluation, p
       setForm({
         ...defaultForm,
         collaborator_user_id: preselectedCollaboratorId || '',
+        type: preselectedType || defaultForm.type,
       });
       setCriteriaScores({});
       setCriteriaComments({});

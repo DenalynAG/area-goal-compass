@@ -10,6 +10,9 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
+  Popover, PopoverContent, PopoverTrigger,
+} from '@/components/ui/popover';
+import {
   Plus, Star, MessageSquare, ClipboardCheck, Users2, Calendar, Pencil,
   Search, CheckCircle2, Clock, ChevronDown, ChevronRight, User,
 } from 'lucide-react';
@@ -56,6 +59,7 @@ export default function EvaluacionesPage({ areaFilterName }: EvaluacionesPagePro
   const [open, setOpen] = useState(false);
   const [editingEval, setEditingEval] = useState<Tables<'evaluations'> | null>(null);
   const [preselectedCollaborator, setPreselectedCollaborator] = useState<string | null>(null);
+  const [preselectedType, setPreselectedType] = useState<EvalType | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedAreas, setExpandedAreas] = useState<Set<string>>(new Set());
   const [filterType, setFilterType] = useState<string>('all');
@@ -198,8 +202,9 @@ export default function EvaluacionesPage({ areaFilterName }: EvaluacionesPagePro
     return { userEvals, completedTypes, total: userEvals.length };
   };
 
-  const handleEvaluateCollaborator = (collaboratorId: string) => {
+  const handleEvaluateCollaborator = (collaboratorId: string, type: EvalType) => {
     setPreselectedCollaborator(collaboratorId);
+    setPreselectedType(type);
     setEditingEval(null);
     setOpen(true);
   };
@@ -239,6 +244,7 @@ export default function EvaluacionesPage({ areaFilterName }: EvaluacionesPagePro
         onOpenChange={setOpen}
         evaluation={editingEval}
         preselectedCollaboratorId={preselectedCollaborator}
+        preselectedType={preselectedType}
       />
 
       {/* Summary cards */}
@@ -410,13 +416,33 @@ export default function EvaluacionesPage({ areaFilterName }: EvaluacionesPagePro
                                       </div>
                                     </TableCell>
                                     <TableCell className="text-center">
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => handleEvaluateCollaborator(collab.id)}
-                                      >
-                                        <Plus className="w-3.5 h-3.5 mr-1" />Evaluar
-                                      </Button>
+                                      <Popover>
+                                        <PopoverTrigger asChild>
+                                          <Button size="sm" variant="outline">
+                                            <Plus className="w-3.5 h-3.5 mr-1" />Evaluar
+                                          </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-56 p-1" align="end">
+                                          <p className="px-3 py-2 text-xs font-medium text-muted-foreground">Tipo de Evaluación</p>
+                                          {evalTypes.map(t => {
+                                            const Icon = typeIcons[t];
+                                            const done = completedTypes.has(t);
+                                            return (
+                                              <button
+                                                key={t}
+                                                onClick={() => handleEvaluateCollaborator(collab.id, t)}
+                                                className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors text-left"
+                                              >
+                                                <Icon className="w-4 h-4 text-primary shrink-0" />
+                                                <span className="flex-1">{typeLabels[t]}</span>
+                                                {done && (
+                                                  <CheckCircle2 className="w-3.5 h-3.5 text-green-600 shrink-0" />
+                                                )}
+                                              </button>
+                                            );
+                                          })}
+                                        </PopoverContent>
+                                      </Popover>
                                     </TableCell>
                                   </TableRow>
                                 );
