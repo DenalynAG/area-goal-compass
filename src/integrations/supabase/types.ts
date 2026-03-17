@@ -1277,6 +1277,54 @@ export type Database = {
           },
         ]
       }
+      sampling_records: {
+        Row: {
+          area_name: string
+          created_at: string
+          created_by: string | null
+          id: string
+          indicator_name: string
+          notes: string | null
+          numeric_value: number | null
+          period: string
+          sampling_type: string
+          status: string
+          unit: string | null
+          updated_at: string
+          zone_name: string
+        }
+        Insert: {
+          area_name: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          indicator_name: string
+          notes?: string | null
+          numeric_value?: number | null
+          period: string
+          sampling_type?: string
+          status?: string
+          unit?: string | null
+          updated_at?: string
+          zone_name: string
+        }
+        Update: {
+          area_name?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          indicator_name?: string
+          notes?: string | null
+          numeric_value?: number | null
+          period?: string
+          sampling_type?: string
+          status?: string
+          unit?: string | null
+          updated_at?: string
+          zone_name?: string
+        }
+        Relationships: []
+      }
       subareas: {
         Row: {
           area_id: string

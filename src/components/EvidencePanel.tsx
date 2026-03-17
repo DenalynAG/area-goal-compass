@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { Upload, FileText, Image, FileSpreadsheet, Check, X, Trash2, Clock, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 
 interface Props {
-  entityType: 'objective' | 'kpi' | 'leader_pass' | 'audit_finding';
+  entityType: 'objective' | 'kpi' | 'leader_pass' | 'audit_finding' | 'sampling';
   entityId: string;
   entityName: string;
   open: boolean;
