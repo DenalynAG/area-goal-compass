@@ -16,6 +16,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import EvidencePanel from "@/components/EvidencePanel";
+import MuestreosTab from "@/components/MuestreosTab";
 import {
   Plus, ClipboardCheck, AlertTriangle, CheckCircle2, Clock, Search,
   ChevronDown, ChevronUp, MessageSquare, Send, Trash2, Pencil,
