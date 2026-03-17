@@ -488,8 +488,8 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                   isOpen={isOpen}
                   onToggle={() => toggleObj(obj.id)}
                   onEdit={() => openEdit(obj)}
-                  onNewKPI={() => openNewKPI(obj.id)}
-                  onEditKPI={openEditKPI}
+                  onNewKPI={(month) => openNewKPI(obj.id, month)}
+                  onEditKPI={(k, month) => openEditKPI(k, month)}
                   profiles={profiles}
                   areas={areas}
                   subareas={subareas}
