@@ -248,6 +248,31 @@ export default function EvaluacionesPage({ areaFilterName }: EvaluacionesPagePro
         preselectedType={preselectedType}
       />
 
+      {/* Progress bar by area */}
+      {areaStructure.length > 0 && (
+        <div className="bg-card rounded-xl border p-5 space-y-4">
+          <h2 className="font-semibold text-sm">Progreso de Evaluaciones por Área</h2>
+          <div className="space-y-3">
+            {areaStructure.map(area => {
+              const pct = area.totalCollaborators > 0
+                ? Math.round((area.evaluatedCount / area.totalCollaborators) * 100)
+                : 0;
+              return (
+                <div key={area.areaId} className="space-y-1">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium truncate max-w-[220px]">{area.areaName}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {area.evaluatedCount}/{area.totalCollaborators} — {pct}%
+                    </span>
+                  </div>
+                  <Progress value={pct} className="h-2" />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-card rounded-xl border p-4 flex items-center gap-3">
@@ -287,31 +312,6 @@ export default function EvaluacionesPage({ areaFilterName }: EvaluacionesPagePro
           </div>
         </div>
       </div>
-
-      {/* Progress bar by area */}
-      {areaStructure.length > 0 && (
-        <div className="bg-card rounded-xl border p-5 space-y-4">
-          <h2 className="font-semibold text-sm">Progreso de Evaluaciones por Área</h2>
-          <div className="space-y-3">
-            {areaStructure.map(area => {
-              const pct = area.totalCollaborators > 0
-                ? Math.round((area.evaluatedCount / area.totalCollaborators) * 100)
-                : 0;
-              return (
-                <div key={area.areaId} className="space-y-1">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium truncate max-w-[220px]">{area.areaName}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {area.evaluatedCount}/{area.totalCollaborators} — {pct}%
-                    </span>
-                  </div>
-                  <Progress value={pct} className="h-2" />
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       <Tabs defaultValue="collaborators" className="space-y-4">
         <TabsList>
