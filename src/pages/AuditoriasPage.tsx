@@ -773,9 +773,35 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
               <Label>Fecha límite</Label>
               <Input type="date" value={findingForm.due_date} onChange={(e) => setFindingForm({ ...findingForm, due_date: e.target.value })} />
             </div>
+            {/* File attachments */}
+            <div>
+              <Label>Adjuntos (Fotos, PDF)</Label>
+              <input ref={findingFileRef} type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.webp" className="hidden" onChange={handleFindingFileChange} />
+              <Button type="button" variant="outline" size="sm" className="gap-2 mt-1" onClick={() => findingFileRef.current?.click()}>
+                <Upload className="w-3.5 h-3.5" /> Seleccionar archivos
+              </Button>
+              <p className="text-[11px] text-muted-foreground mt-1">PDF, PNG, JPG · Máx. 10MB por archivo</p>
+              {findingFiles.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {findingFiles.map((f, i) => (
+                    <div key={i} className="flex items-center gap-2 text-xs bg-muted/50 rounded px-2 py-1">
+                      <Paperclip className="w-3 h-3 text-muted-foreground shrink-0" />
+                      <span className="truncate flex-1">{f.name}</span>
+                      <span className="text-muted-foreground shrink-0">{(f.size / 1024).toFixed(0)} KB</span>
+                      <button type="button" onClick={() => removeFindingFile(i)} className="text-destructive hover:text-destructive/80">
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setFindingDialogOpen(false)}>Cancelar</Button>
-              <Button onClick={saveFinding}>Guardar</Button>
+              <Button variant="outline" onClick={() => { setFindingDialogOpen(false); setFindingFiles([]); }}>Cancelar</Button>
+              <Button onClick={saveFinding} disabled={uploadingFiles}>
+                {uploadingFiles && <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />}
+                Guardar
+              </Button>
             </div>
           </div>
         </DialogContent>
