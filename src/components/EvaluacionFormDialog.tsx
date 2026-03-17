@@ -53,7 +53,7 @@ const defaultForm = {
   notes: '',
 };
 
-export default function EvaluacionFormDialog({ open, onOpenChange, evaluation, preselectedCollaboratorId }: Props) {
+export default function EvaluacionFormDialog({ open, onOpenChange, evaluation, preselectedCollaboratorId, preselectedType }: Props) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { data: profiles = [] } = useProfiles();
