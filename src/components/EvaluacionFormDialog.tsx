@@ -197,7 +197,10 @@ export default function EvaluacionFormDialog({ open, onOpenChange, evaluation, p
         notes: evaluation.notes ?? '',
       });
     } else {
-      setForm({ ...defaultForm });
+      setForm({
+        ...defaultForm,
+        collaborator_user_id: preselectedCollaboratorId || '',
+      });
       setCriteriaScores({});
       setCriteriaComments({});
       setSearchQuery('');
