@@ -119,6 +119,25 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, are
     setMeasurementMonth(initialMonth && initialMonth !== 'total' ? initialMonth : defaultMonth());
   }, [kpi, open]);
 
+  // Load existing measurement value when month changes (for editing)
+  useEffect(() => {
+    if (!open || !kpi?.id || !measurementMonth) return;
+    const loadMeasurement = async () => {
+      const periodDate = `${measurementMonth}-01`;
+      const [yyyy, mm] = measurementMonth.split('-');
+      const nextMonth = parseInt(mm) === 12 ? `${parseInt(yyyy) + 1}-01` : `${yyyy}-${String(parseInt(mm) + 1).padStart(2, '0')}`;
+      const { data } = await supabase
+        .from('kpi_measurements')
+        .select('value')
+        .eq('kpi_id', kpi.id)
+        .gte('period_date', periodDate)
+        .lt('period_date', `${nextMonth}-01`)
+        .maybeSingle();
+      setCurrentValue(data?.value ?? 0);
+    };
+    loadMeasurement();
+  }, [measurementMonth, kpi?.id, open]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = name.trim();
