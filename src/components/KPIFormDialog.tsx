@@ -22,7 +22,7 @@ interface Props {
   selectedMonth?: string | null;
 }
 
-export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, areas = [], subareas = [], preselectedObjectiveId }: Props) {
+export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, areas = [], subareas = [], preselectedObjectiveId, selectedMonth: initialMonth }: Props) {
   const qc = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState('');
