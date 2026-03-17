@@ -619,8 +619,8 @@ function ObjectiveCard({
   isOpen: boolean;
   onToggle: () => void;
   onEdit: () => void;
-  onNewKPI: () => void;
-  onEditKPI: (k: Tables<'kpis'>) => void;
+  onNewKPI: (month?: string) => void;
+  onEditKPI: (k: Tables<'kpis'>, month?: string) => void;
   profiles: Tables<'profiles'>[];
   areas: Tables<'areas'>[];
   subareas: Tables<'subareas'>[];
