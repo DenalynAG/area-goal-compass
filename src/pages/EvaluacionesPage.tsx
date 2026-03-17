@@ -5,7 +5,6 @@ import { useProfiles, useMemberships, useAreas, useSubareas } from '@/hooks/useS
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
@@ -247,31 +246,6 @@ export default function EvaluacionesPage({ areaFilterName }: EvaluacionesPagePro
         preselectedCollaboratorId={preselectedCollaborator}
         preselectedType={preselectedType}
       />
-
-      {/* Progress bar by area */}
-      {areaStructure.length > 0 && (
-        <div className="bg-card rounded-xl border p-5 space-y-4">
-          <h2 className="font-semibold text-sm">Progreso de Evaluaciones por Área</h2>
-          <div className="space-y-3">
-            {areaStructure.map(area => {
-              const pct = area.totalCollaborators > 0
-                ? Math.round((area.evaluatedCount / area.totalCollaborators) * 100)
-                : 0;
-              return (
-                <div key={area.areaId} className="space-y-1">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium truncate max-w-[220px]">{area.areaName}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {area.evaluatedCount}/{area.totalCollaborators} — {pct}%
-                    </span>
-                  </div>
-                  <Progress value={pct} className="h-2" />
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
