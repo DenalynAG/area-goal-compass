@@ -244,6 +244,7 @@ export default function EvaluacionesPage({ areaFilterName }: EvaluacionesPagePro
         onOpenChange={setOpen}
         evaluation={editingEval}
         preselectedCollaboratorId={preselectedCollaborator}
+        preselectedType={preselectedType}
       />
 
       {/* Summary cards */}
