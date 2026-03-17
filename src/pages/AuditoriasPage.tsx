@@ -596,6 +596,11 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
           )}
         </TabsContent>
 
+        {/* ─── Muestreos Tab ─── */}
+        <TabsContent value="muestreos">
+          <MuestreosTab />
+        </TabsContent>
+
         {/* ─── Summary Tab ─── */}
         <TabsContent value="resumen" className="space-y-4">
           {/* Severity & findings summary */}
