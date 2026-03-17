@@ -59,6 +59,7 @@ export default function EvaluacionesPage({ areaFilterName }: EvaluacionesPagePro
   const [open, setOpen] = useState(false);
   const [editingEval, setEditingEval] = useState<Tables<'evaluations'> | null>(null);
   const [preselectedCollaborator, setPreselectedCollaborator] = useState<string | null>(null);
+  const [preselectedType, setPreselectedType] = useState<EvalType | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedAreas, setExpandedAreas] = useState<Set<string>>(new Set());
   const [filterType, setFilterType] = useState<string>('all');
