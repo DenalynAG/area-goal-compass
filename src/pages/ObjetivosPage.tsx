@@ -636,10 +636,12 @@ function ObjectiveCard({
   const relevantMeasurements = (measurements ?? []).filter(m => kpiIds.includes(m.kpi_id));
   const currentYear = new Date().getFullYear();
   const availableMonths = useMemo(() => {
-    return Array.from({ length: 12 }, (_, i) => {
+    const months = Array.from({ length: 12 }, (_, i) => {
       const mm = String(i + 1).padStart(2, '0');
       return `${currentYear}-${mm}`;
     });
+    months.push('total');
+    return months;
   }, [currentYear]);
 
   const monthLabels: Record<string, string> = {
