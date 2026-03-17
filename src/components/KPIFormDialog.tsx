@@ -19,6 +19,7 @@ interface Props {
   areas?: Tables<'areas'>[];
   subareas?: Tables<'subareas'>[];
   preselectedObjectiveId?: string | null;
+  selectedMonth?: string | null;
 }
 
 export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, areas = [], subareas = [], preselectedObjectiveId }: Props) {
