@@ -824,6 +824,15 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* ─── Evidence Panel for Findings ─── */}
+      <EvidencePanel
+        entityType="audit_finding"
+        entityId={evidenceFindingId ?? ''}
+        entityName={evidenceFindingName}
+        open={!!evidenceFindingId}
+        onOpenChange={(open) => { if (!open) setEvidenceFindingId(null); }}
+      />
     </div>
   );
 }
