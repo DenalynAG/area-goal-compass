@@ -1,8 +1,8 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAreas, useProfiles, getProfileName, getAreaNameFromList } from "@/hooks/useSupabaseData";
+import { useAreas, useProfiles, getProfileName, getAreaNameFromList, useEvidences } from "@/hooks/useSupabaseData";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,10 +15,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import EvidencePanel from "@/components/EvidencePanel";
 import {
   Plus, ClipboardCheck, AlertTriangle, CheckCircle2, Clock, Search,
   ChevronDown, ChevronUp, MessageSquare, Send, Trash2, Pencil,
-  ShieldAlert, ShieldCheck, Shield, BarChart3
+  ShieldAlert, ShieldCheck, Shield, BarChart3, Paperclip, Upload, Loader2
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
