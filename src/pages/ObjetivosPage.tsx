@@ -44,19 +44,22 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   const [kpiDialogOpen, setKpiDialogOpen] = useState(false);
   const [editingKPI, setEditingKPI] = useState<Tables<'kpis'> | null>(null);
   const [preselectedObjectiveId, setPreselectedObjectiveId] = useState<string | null>(null);
+  const [kpiSelectedMonth, setKpiSelectedMonth] = useState<string | null>(null);
 
   const openNew = () => { setEditingObj(null); setDialogOpen(true); };
   const openEdit = (o: Tables<'objectives'>) => { setEditingObj(o); setDialogOpen(true); };
   const toggleObj = (id: string) => setExpandedObj(prev => ({ ...prev, [id]: !prev[id] }));
 
-  const openNewKPI = (objectiveId: string) => {
+  const openNewKPI = (objectiveId: string, month?: string) => {
     setEditingKPI(null);
     setPreselectedObjectiveId(objectiveId);
+    setKpiSelectedMonth(month ?? null);
     setKpiDialogOpen(true);
   };
-  const openEditKPI = (k: Tables<'kpis'>) => {
+  const openEditKPI = (k: Tables<'kpis'>, month?: string) => {
     setEditingKPI(k);
     setPreselectedObjectiveId(null);
+    setKpiSelectedMonth(month ?? null);
     setKpiDialogOpen(true);
   };
 
