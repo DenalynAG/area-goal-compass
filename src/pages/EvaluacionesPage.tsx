@@ -10,9 +10,13 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
+  Popover, PopoverContent, PopoverTrigger,
+} from '@/components/ui/popover';
+import {
   Plus, Star, MessageSquare, ClipboardCheck, Users2, Calendar, Pencil,
   Search, CheckCircle2, Clock, ChevronDown, ChevronRight, User,
 } from 'lucide-react';
+import type { Tables } from '@/integrations/supabase/types';
 import type { Tables } from '@/integrations/supabase/types';
 import EvaluacionFormDialog from '@/components/EvaluacionFormDialog';
 
