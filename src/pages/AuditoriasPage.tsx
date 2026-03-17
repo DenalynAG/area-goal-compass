@@ -541,7 +541,7 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
                                         </Button>
                                       )}
                                     </div>
-
+                                  </div>
                                   {/* Comments */}
                                   {findingComments.length > 0 && (
                                     <div className="space-y-2 pl-3 border-l-2 border-muted">
