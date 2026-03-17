@@ -201,6 +201,7 @@ export default function EvaluacionFormDialog({ open, onOpenChange, evaluation, p
       setForm({
         ...defaultForm,
         collaborator_user_id: preselectedCollaboratorId || '',
+        type: preselectedType || defaultForm.type,
       });
       setCriteriaScores({});
       setCriteriaComments({});
