@@ -771,6 +771,7 @@ export type Database = {
           threshold_red: number
           threshold_yellow: number
           unit: string | null
+          weight_percent: number
         }
         Insert: {
           baseline?: number
@@ -786,6 +787,7 @@ export type Database = {
           threshold_red?: number
           threshold_yellow?: number
           unit?: string | null
+          weight_percent?: number
         }
         Update: {
           baseline?: number
@@ -801,6 +803,7 @@ export type Database = {
           threshold_red?: number
           threshold_yellow?: number
           unit?: string | null
+          weight_percent?: number
         }
         Relationships: [
           {
