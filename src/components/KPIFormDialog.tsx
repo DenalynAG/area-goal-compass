@@ -254,9 +254,15 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, are
               <Input type="number" value={target} onChange={e => setTarget(Number(e.target.value))} />
             </div>
           </div>
-          <div className="space-y-2">
-            <Label>Valor Actual</Label>
-            <Input type="number" value={currentValue} onChange={e => setCurrentValue(Number(e.target.value))} />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Valor Actual</Label>
+              <Input type="number" value={currentValue} onChange={e => setCurrentValue(Number(e.target.value))} />
+            </div>
+            <div className="space-y-2">
+              <Label>Peso (%)</Label>
+              <Input type="number" value={weightPercent} onChange={e => setWeightPercent(Number(e.target.value))} min={0} max={100} />
+            </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
