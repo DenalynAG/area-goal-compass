@@ -417,6 +417,7 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="planes">Planes de Auditoría</TabsTrigger>
+          <TabsTrigger value="muestreos">Muestreos</TabsTrigger>
           <TabsTrigger value="resumen">Resumen por Área</TabsTrigger>
         </TabsList>
 
