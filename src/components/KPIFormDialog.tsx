@@ -19,9 +19,10 @@ interface Props {
   areas?: Tables<'areas'>[];
   subareas?: Tables<'subareas'>[];
   preselectedObjectiveId?: string | null;
+  selectedMonth?: string | null;
 }
 
-export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, areas = [], subareas = [], preselectedObjectiveId }: Props) {
+export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, areas = [], subareas = [], preselectedObjectiveId, selectedMonth: initialMonth }: Props) {
   const qc = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState('');
@@ -36,6 +37,11 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, are
   const [thresholdYellow, setThresholdYellow] = useState(0);
   const [thresholdRed, setThresholdRed] = useState(0);
   const [weightPercent, setWeightPercent] = useState(0);
+  const defaultMonth = () => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  };
+  const [measurementMonth, setMeasurementMonth] = useState(defaultMonth());
   const [filterAreaId, setFilterAreaId] = useState('all');
   const [filterSubareaId, setFilterSubareaId] = useState('all');
 
@@ -109,7 +115,28 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, are
         setFilterAreaId('all'); setFilterSubareaId('all');
       }
     }
+    // Set measurement month from prop or default
+    setMeasurementMonth(initialMonth && initialMonth !== 'total' ? initialMonth : defaultMonth());
   }, [kpi, open]);
+
+  // Load existing measurement value when month changes (for editing)
+  useEffect(() => {
+    if (!open || !kpi?.id || !measurementMonth) return;
+    const loadMeasurement = async () => {
+      const periodDate = `${measurementMonth}-01`;
+      const [yyyy, mm] = measurementMonth.split('-');
+      const nextMonth = parseInt(mm) === 12 ? `${parseInt(yyyy) + 1}-01` : `${yyyy}-${String(parseInt(mm) + 1).padStart(2, '0')}`;
+      const { data } = await supabase
+        .from('kpi_measurements')
+        .select('value')
+        .eq('kpi_id', kpi.id)
+        .gte('period_date', periodDate)
+        .lt('period_date', `${nextMonth}-01`)
+        .maybeSingle();
+      setCurrentValue(data?.value ?? 0);
+    };
+    loadMeasurement();
+  }, [measurementMonth, kpi?.id, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -144,17 +171,18 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, are
       kpiId = data.id;
     }
 
-    // Upsert a kpi_measurement for the current month so the grid reflects the value
+    // Upsert a kpi_measurement for the selected month so the grid reflects the value
     if (kpiId && currentValue > 0) {
-      const now = new Date();
-      const periodDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+      const periodDate = `${measurementMonth}-01`;
+      const [yyyy, mm] = measurementMonth.split('-');
+      const nextMonth = parseInt(mm) === 12 ? `${parseInt(yyyy) + 1}-01` : `${yyyy}-${String(parseInt(mm) + 1).padStart(2, '0')}`;
       // Check if measurement already exists for this month
       const { data: existing } = await supabase
         .from('kpi_measurements')
         .select('id')
         .eq('kpi_id', kpiId)
         .gte('period_date', periodDate)
-        .lt('period_date', `${now.getFullYear()}-${String(now.getMonth() + 2).padStart(2, '0')}-01`)
+        .lt('period_date', `${nextMonth}-01`)
         .maybeSingle();
 
       if (existing) {
@@ -254,7 +282,21 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, are
               <Input type="number" value={target} onChange={e => setTarget(Number(e.target.value))} />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>Mes de Medición</Label>
+              <Select value={measurementMonth} onValueChange={setMeasurementMonth}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 12 }, (_, i) => {
+                    const mm = String(i + 1).padStart(2, '0');
+                    const year = new Date().getFullYear();
+                    const labels: Record<string, string> = { '01': 'Ene', '02': 'Feb', '03': 'Mar', '04': 'Abr', '05': 'May', '06': 'Jun', '07': 'Jul', '08': 'Ago', '09': 'Sep', '10': 'Oct', '11': 'Nov', '12': 'Dic' };
+                    return <SelectItem key={mm} value={`${year}-${mm}`}>{labels[mm]} {year}</SelectItem>;
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
               <Label>Valor Actual</Label>
               <Input type="number" value={currentValue} onChange={e => setCurrentValue(Number(e.target.value))} />

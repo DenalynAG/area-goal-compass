@@ -44,19 +44,22 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   const [kpiDialogOpen, setKpiDialogOpen] = useState(false);
   const [editingKPI, setEditingKPI] = useState<Tables<'kpis'> | null>(null);
   const [preselectedObjectiveId, setPreselectedObjectiveId] = useState<string | null>(null);
+  const [kpiSelectedMonth, setKpiSelectedMonth] = useState<string | null>(null);
 
   const openNew = () => { setEditingObj(null); setDialogOpen(true); };
   const openEdit = (o: Tables<'objectives'>) => { setEditingObj(o); setDialogOpen(true); };
   const toggleObj = (id: string) => setExpandedObj(prev => ({ ...prev, [id]: !prev[id] }));
 
-  const openNewKPI = (objectiveId: string) => {
+  const openNewKPI = (objectiveId: string, month?: string) => {
     setEditingKPI(null);
     setPreselectedObjectiveId(objectiveId);
+    setKpiSelectedMonth(month ?? null);
     setKpiDialogOpen(true);
   };
-  const openEditKPI = (k: Tables<'kpis'>) => {
+  const openEditKPI = (k: Tables<'kpis'>, month?: string) => {
     setEditingKPI(k);
     setPreselectedObjectiveId(null);
+    setKpiSelectedMonth(month ?? null);
     setKpiDialogOpen(true);
   };
 
@@ -369,7 +372,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                     const isOpen = expandedObj[obj.id];
                     return (
                       <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
-                        onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={() => openNewKPI(obj.id)} onEditKPI={openEditKPI}
+                        onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={(month) => openNewKPI(obj.id, month)} onEditKPI={(k, month) => openEditKPI(k, month)}
                         profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} />
                     );
                   })}
@@ -418,7 +421,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                       const isOpen = expandedObj[obj.id];
                       return (
                         <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
-                          onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={() => openNewKPI(obj.id)} onEditKPI={openEditKPI}
+                          onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={(month) => openNewKPI(obj.id, month)} onEditKPI={(k, month) => openEditKPI(k, month)}
                           profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} />
                       );
                     })}
@@ -485,8 +488,8 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                   isOpen={isOpen}
                   onToggle={() => toggleObj(obj.id)}
                   onEdit={() => openEdit(obj)}
-                  onNewKPI={() => openNewKPI(obj.id)}
-                  onEditKPI={openEditKPI}
+                  onNewKPI={(month) => openNewKPI(obj.id, month)}
+                  onEditKPI={(k, month) => openEditKPI(k, month)}
                   profiles={profiles}
                   areas={areas}
                   subareas={subareas}
@@ -580,8 +583,8 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                           isOpen={isOpen}
                           onToggle={() => toggleObj(obj.id)}
                           onEdit={() => openEdit(obj)}
-                          onNewKPI={() => openNewKPI(obj.id)}
-                          onEditKPI={openEditKPI}
+                          onNewKPI={(month) => openNewKPI(obj.id, month)}
+                          onEditKPI={(k, month) => openEditKPI(k, month)}
                           profiles={profiles}
                           areas={areas}
                           subareas={subareas}
@@ -601,7 +604,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
       </section>
 
       <ObjetivoFormDialog open={dialogOpen} onOpenChange={setDialogOpen} objective={editingObj} areas={areas} subareas={subareas} profiles={profiles} />
-      <KPIFormDialog open={kpiDialogOpen} onOpenChange={setKpiDialogOpen} kpi={editingKPI} objectives={objectives} areas={areas} subareas={subareas} preselectedObjectiveId={preselectedObjectiveId} />
+      <KPIFormDialog open={kpiDialogOpen} onOpenChange={setKpiDialogOpen} kpi={editingKPI} objectives={objectives} areas={areas} subareas={subareas} preselectedObjectiveId={preselectedObjectiveId} selectedMonth={kpiSelectedMonth} />
     </div>
   );
 }
@@ -616,8 +619,8 @@ function ObjectiveCard({
   isOpen: boolean;
   onToggle: () => void;
   onEdit: () => void;
-  onNewKPI: () => void;
-  onEditKPI: (k: Tables<'kpis'>) => void;
+  onNewKPI: (month?: string) => void;
+  onEditKPI: (k: Tables<'kpis'>, month?: string) => void;
   profiles: Tables<'profiles'>[];
   areas: Tables<'areas'>[];
   subareas: Tables<'subareas'>[];
@@ -721,7 +724,7 @@ function ObjectiveCard({
                 {objKpis.length} indicadores
               </button>
             )}
-            <button onClick={onNewKPI} className="flex items-center gap-1 text-xs text-primary font-medium hover:underline">
+            <button onClick={() => onNewKPI(selectedMonth)} className="flex items-center gap-1 text-xs text-primary font-medium hover:underline">
               <Plus className="w-3 h-3" /> Indicador
             </button>
             <button onClick={() => setEvidenceOpen(true)} className="flex items-center gap-1 text-xs text-muted-foreground font-medium hover:underline hover:text-foreground">
@@ -828,7 +831,7 @@ function ObjectiveCard({
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setKpiEvidenceId(k.id); setKpiEvidenceName(k.name); }}>
                           <Paperclip className="w-3 h-3" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEditKPI(k)}>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEditKPI(k, selectedMonth)}>
                           <Edit className="w-3 h-3" />
                         </Button>
                       </div>
