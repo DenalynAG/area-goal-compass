@@ -130,7 +130,8 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, are
       threshold_green: thresholdGreen,
       threshold_yellow: thresholdYellow,
       threshold_red: thresholdRed,
-    };
+      weight_percent: weightPercent,
+    } as any;
 
     let kpiId = kpi?.id;
 
