@@ -650,12 +650,18 @@ function ObjectiveCard({
   };
 
   const getMonthLabel = (ym: string) => {
+    if (ym === 'total') return 'Total KPI';
     const [year, month] = ym.split('-');
     return `${monthLabels[month] ?? month} ${year}`;
   };
 
-  // Get KPI value for a given month
+  // Get KPI value for a given month (or annual average for 'total')
   const getKpiMonthValue = (kpiId: string) => {
+    if (selectedMonth === 'total') {
+      const kpiMeasurements = relevantMeasurements.filter(m => m.kpi_id === kpiId && m.period_date.startsWith(String(currentYear)));
+      if (kpiMeasurements.length === 0) return null;
+      return Math.round((kpiMeasurements.reduce((s, m) => s + m.value, 0) / kpiMeasurements.length) * 100) / 100;
+    }
     const m = relevantMeasurements.find(m => m.kpi_id === kpiId && m.period_date.startsWith(selectedMonth));
     return m ? m.value : null;
   };
