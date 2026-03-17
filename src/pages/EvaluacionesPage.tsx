@@ -288,7 +288,31 @@ export default function EvaluacionesPage({ areaFilterName }: EvaluacionesPagePro
         </div>
       </div>
 
-      <Tabs defaultValue="collaborators" className="space-y-4">
+      {/* Progress bar by area */}
+      {areaStructure.length > 0 && (
+        <div className="bg-card rounded-xl border p-5 space-y-4">
+          <h2 className="font-semibold text-sm">Progreso de Evaluaciones por Área</h2>
+          <div className="space-y-3">
+            {areaStructure.map(area => {
+              const pct = area.totalCollaborators > 0
+                ? Math.round((area.evaluatedCount / area.totalCollaborators) * 100)
+                : 0;
+              return (
+                <div key={area.areaId} className="space-y-1">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium truncate max-w-[220px]">{area.areaName}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {area.evaluatedCount}/{area.totalCollaborators} — {pct}%
+                    </span>
+                  </div>
+                  <Progress value={pct} className="h-2" />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
         <TabsList>
           <TabsTrigger value="collaborators">
             <User className="w-4 h-4 mr-1.5" />
