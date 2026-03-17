@@ -217,6 +217,47 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
     setFindingDialogOpen(true);
   };
 
+  // File attachments for findings
+  const findingFileRef = useRef<HTMLInputElement>(null);
+  const [findingFiles, setFindingFiles] = useState<File[]>([]);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
+
+  // Evidence panel state
+  const [evidenceFindingId, setEvidenceFindingId] = useState<string | null>(null);
+  const [evidenceFindingName, setEvidenceFindingName] = useState("");
+
+  const handleFindingFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    const valid = Array.from(files).filter(f => {
+      if (f.size > 10 * 1024 * 1024) { toast.error(`${f.name} excede 10MB`); return false; }
+      return true;
+    });
+    setFindingFiles(prev => [...prev, ...valid]);
+    if (findingFileRef.current) findingFileRef.current.value = '';
+  };
+
+  const removeFindingFile = (idx: number) => setFindingFiles(prev => prev.filter((_, i) => i !== idx));
+
+  const uploadFindingFiles = async (findingId: string) => {
+    if (findingFiles.length === 0 || !user) return;
+    setUploadingFiles(true);
+    try {
+      for (const file of findingFiles) {
+        const filePath = `audit_finding/${findingId}/${Date.now()}_${file.name}`;
+        const { error: upErr } = await supabase.storage.from('evidencias').upload(filePath, file);
+        if (upErr) { toast.error(`Error subiendo ${file.name}`); continue; }
+        await supabase.from('evidences').insert({
+          entity_type: 'audit_finding', entity_id: findingId,
+          file_name: file.name, file_path: filePath,
+          file_type: file.type, file_size: file.size,
+          uploaded_by: user.id, uploaded_by_name: profile?.name ?? user.email,
+        });
+      }
+      qc.invalidateQueries({ queryKey: ['evidences'] });
+    } finally { setUploadingFiles(false); }
+  };
+
   const saveFinding = async () => {
     if (!findingForm.description.trim()) { toast.error("La descripción es obligatoria"); return; }
     const payload = {
@@ -225,12 +266,19 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
       responsible_user_id: findingForm.responsible_user_id || null,
       due_date: findingForm.due_date || null,
     };
-    const { error } = editingFinding
-      ? await supabase.from("audit_findings").update(payload).eq("id", editingFinding.id)
-      : await supabase.from("audit_findings").insert(payload);
-    if (error) { toast.error(error.message); return; }
+    let findingId = editingFinding?.id;
+    if (editingFinding) {
+      const { error } = await supabase.from("audit_findings").update(payload).eq("id", editingFinding.id);
+      if (error) { toast.error(error.message); return; }
+    } else {
+      const { data, error } = await supabase.from("audit_findings").insert(payload).select('id').single();
+      if (error) { toast.error(error.message); return; }
+      findingId = data.id;
+    }
+    if (findingId && findingFiles.length > 0) await uploadFindingFiles(findingId);
     toast.success(editingFinding ? "Hallazgo actualizado" : "Hallazgo registrado");
     qc.invalidateQueries({ queryKey: ["audit_findings"] });
+    setFindingFiles([]);
     setFindingDialogOpen(false);
   };
 
