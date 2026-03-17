@@ -263,7 +263,21 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, are
               <Input type="number" value={target} onChange={e => setTarget(Number(e.target.value))} />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>Mes de Medición</Label>
+              <Select value={measurementMonth} onValueChange={setMeasurementMonth}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 12 }, (_, i) => {
+                    const mm = String(i + 1).padStart(2, '0');
+                    const year = new Date().getFullYear();
+                    const labels: Record<string, string> = { '01': 'Ene', '02': 'Feb', '03': 'Mar', '04': 'Abr', '05': 'May', '06': 'Jun', '07': 'Jul', '08': 'Ago', '09': 'Sep', '10': 'Oct', '11': 'Nov', '12': 'Dic' };
+                    return <SelectItem key={mm} value={`${year}-${mm}`}>{labels[mm]} {year}</SelectItem>;
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
               <Label>Valor Actual</Label>
               <Input type="number" value={currentValue} onChange={e => setCurrentValue(Number(e.target.value))} />
