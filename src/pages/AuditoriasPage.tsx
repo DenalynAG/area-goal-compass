@@ -531,12 +531,16 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
                                         {finding.due_date && <span>Vence: {format(new Date(finding.due_date), "d MMM yyyy", { locale: es })}</span>}
                                       </div>
                                     </div>
-                                    {canManage && (
-                                      <Button variant="ghost" size="icon" className="w-7 h-7 shrink-0" onClick={() => openFindingDialog(plan.id, finding)}>
-                                        <Pencil className="w-3 h-3" />
+                                    <div className="flex items-center gap-1 shrink-0">
+                                      <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => { setEvidenceFindingId(finding.id); setEvidenceFindingName(finding.description.substring(0, 50)); }}>
+                                        <Paperclip className="w-3 h-3" />
                                       </Button>
-                                    )}
-                                  </div>
+                                      {canManage && (
+                                        <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => openFindingDialog(plan.id, finding)}>
+                                          <Pencil className="w-3 h-3" />
+                                        </Button>
+                                      )}
+                                    </div>
 
                                   {/* Comments */}
                                   {findingComments.length > 0 && (
