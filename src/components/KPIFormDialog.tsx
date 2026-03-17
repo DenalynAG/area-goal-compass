@@ -115,6 +115,8 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, are
         setFilterAreaId('all'); setFilterSubareaId('all');
       }
     }
+    // Set measurement month from prop or default
+    setMeasurementMonth(initialMonth && initialMonth !== 'total' ? initialMonth : defaultMonth());
   }, [kpi, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
