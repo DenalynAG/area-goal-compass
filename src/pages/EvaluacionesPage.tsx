@@ -202,8 +202,9 @@ export default function EvaluacionesPage({ areaFilterName }: EvaluacionesPagePro
     return { userEvals, completedTypes, total: userEvals.length };
   };
 
-  const handleEvaluateCollaborator = (collaboratorId: string) => {
+  const handleEvaluateCollaborator = (collaboratorId: string, type: EvalType) => {
     setPreselectedCollaborator(collaboratorId);
+    setPreselectedType(type);
     setEditingEval(null);
     setOpen(true);
   };
