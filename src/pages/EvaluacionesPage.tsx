@@ -17,7 +17,6 @@ import {
   Search, CheckCircle2, Clock, ChevronDown, ChevronRight, User,
 } from 'lucide-react';
 import type { Tables } from '@/integrations/supabase/types';
-import type { Tables } from '@/integrations/supabase/types';
 import EvaluacionFormDialog from '@/components/EvaluacionFormDialog';
 
 type EvalType = 'feedback' | 'desempeno' | 'performance' | 'one_to_one';
