@@ -89,7 +89,7 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, are
     } else {
       setName(''); setDefinition(''); setUnit('');
       setFrequency('mensual'); setBaseline(0); setTarget(0); setCurrentValue(0);
-      setThresholdGreen(0); setThresholdYellow(0); setThresholdRed(0);
+      setThresholdGreen(0); setThresholdYellow(0); setThresholdRed(0); setWeightPercent(0);
       // Pre-select objective if provided
       if (preselectedObjectiveId) {
         setObjectiveId(preselectedObjectiveId);
