@@ -37,6 +37,11 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, are
   const [thresholdYellow, setThresholdYellow] = useState(0);
   const [thresholdRed, setThresholdRed] = useState(0);
   const [weightPercent, setWeightPercent] = useState(0);
+  const defaultMonth = () => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  };
+  const [measurementMonth, setMeasurementMonth] = useState(defaultMonth());
   const [filterAreaId, setFilterAreaId] = useState('all');
   const [filterSubareaId, setFilterSubareaId] = useState('all');
 
