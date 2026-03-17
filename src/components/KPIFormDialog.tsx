@@ -73,6 +73,7 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, are
       setThresholdGreen(kpi.threshold_green);
       setThresholdYellow(kpi.threshold_yellow);
       setThresholdRed(kpi.threshold_red);
+      setWeightPercent((kpi as any).weight_percent ?? 0);
       // Set filters based on existing objective
       const obj = objectives.find(o => o.id === kpi.objective_id);
       if (obj) {
