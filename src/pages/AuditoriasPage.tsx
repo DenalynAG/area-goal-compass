@@ -1,8 +1,8 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAreas, useProfiles, getProfileName, getAreaNameFromList } from "@/hooks/useSupabaseData";
+import { useAreas, useProfiles, getProfileName, getAreaNameFromList, useEvidences } from "@/hooks/useSupabaseData";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,10 +15,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import EvidencePanel from "@/components/EvidencePanel";
 import {
   Plus, ClipboardCheck, AlertTriangle, CheckCircle2, Clock, Search,
   ChevronDown, ChevronUp, MessageSquare, Send, Trash2, Pencil,
-  ShieldAlert, ShieldCheck, Shield, BarChart3
+  ShieldAlert, ShieldCheck, Shield, BarChart3, Paperclip, Upload, Loader2
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -216,6 +217,47 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
     setFindingDialogOpen(true);
   };
 
+  // File attachments for findings
+  const findingFileRef = useRef<HTMLInputElement>(null);
+  const [findingFiles, setFindingFiles] = useState<File[]>([]);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
+
+  // Evidence panel state
+  const [evidenceFindingId, setEvidenceFindingId] = useState<string | null>(null);
+  const [evidenceFindingName, setEvidenceFindingName] = useState("");
+
+  const handleFindingFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    const valid = Array.from(files).filter(f => {
+      if (f.size > 10 * 1024 * 1024) { toast.error(`${f.name} excede 10MB`); return false; }
+      return true;
+    });
+    setFindingFiles(prev => [...prev, ...valid]);
+    if (findingFileRef.current) findingFileRef.current.value = '';
+  };
+
+  const removeFindingFile = (idx: number) => setFindingFiles(prev => prev.filter((_, i) => i !== idx));
+
+  const uploadFindingFiles = async (findingId: string) => {
+    if (findingFiles.length === 0 || !user) return;
+    setUploadingFiles(true);
+    try {
+      for (const file of findingFiles) {
+        const filePath = `audit_finding/${findingId}/${Date.now()}_${file.name}`;
+        const { error: upErr } = await supabase.storage.from('evidencias').upload(filePath, file);
+        if (upErr) { toast.error(`Error subiendo ${file.name}`); continue; }
+        await supabase.from('evidences').insert({
+          entity_type: 'audit_finding', entity_id: findingId,
+          file_name: file.name, file_path: filePath,
+          file_type: file.type, file_size: file.size,
+          uploaded_by: user.id, uploaded_by_name: profile?.name ?? user.email,
+        });
+      }
+      qc.invalidateQueries({ queryKey: ['evidences'] });
+    } finally { setUploadingFiles(false); }
+  };
+
   const saveFinding = async () => {
     if (!findingForm.description.trim()) { toast.error("La descripción es obligatoria"); return; }
     const payload = {
@@ -224,12 +266,19 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
       responsible_user_id: findingForm.responsible_user_id || null,
       due_date: findingForm.due_date || null,
     };
-    const { error } = editingFinding
-      ? await supabase.from("audit_findings").update(payload).eq("id", editingFinding.id)
-      : await supabase.from("audit_findings").insert(payload);
-    if (error) { toast.error(error.message); return; }
+    let findingId = editingFinding?.id;
+    if (editingFinding) {
+      const { error } = await supabase.from("audit_findings").update(payload).eq("id", editingFinding.id);
+      if (error) { toast.error(error.message); return; }
+    } else {
+      const { data, error } = await supabase.from("audit_findings").insert(payload).select('id').single();
+      if (error) { toast.error(error.message); return; }
+      findingId = data.id;
+    }
+    if (findingId && findingFiles.length > 0) await uploadFindingFiles(findingId);
     toast.success(editingFinding ? "Hallazgo actualizado" : "Hallazgo registrado");
     qc.invalidateQueries({ queryKey: ["audit_findings"] });
+    setFindingFiles([]);
     setFindingDialogOpen(false);
   };
 
@@ -482,13 +531,17 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
                                         {finding.due_date && <span>Vence: {format(new Date(finding.due_date), "d MMM yyyy", { locale: es })}</span>}
                                       </div>
                                     </div>
-                                    {canManage && (
-                                      <Button variant="ghost" size="icon" className="w-7 h-7 shrink-0" onClick={() => openFindingDialog(plan.id, finding)}>
-                                        <Pencil className="w-3 h-3" />
+                                    <div className="flex items-center gap-1 shrink-0">
+                                      <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => { setEvidenceFindingId(finding.id); setEvidenceFindingName(finding.description.substring(0, 50)); }}>
+                                        <Paperclip className="w-3 h-3" />
                                       </Button>
-                                    )}
+                                      {canManage && (
+                                        <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => openFindingDialog(plan.id, finding)}>
+                                          <Pencil className="w-3 h-3" />
+                                        </Button>
+                                      )}
+                                    </div>
                                   </div>
-
                                   {/* Comments */}
                                   {findingComments.length > 0 && (
                                     <div className="space-y-2 pl-3 border-l-2 border-muted">
@@ -724,9 +777,35 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
               <Label>Fecha límite</Label>
               <Input type="date" value={findingForm.due_date} onChange={(e) => setFindingForm({ ...findingForm, due_date: e.target.value })} />
             </div>
+            {/* File attachments */}
+            <div>
+              <Label>Adjuntos (Fotos, PDF)</Label>
+              <input ref={findingFileRef} type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.webp" className="hidden" onChange={handleFindingFileChange} />
+              <Button type="button" variant="outline" size="sm" className="gap-2 mt-1" onClick={() => findingFileRef.current?.click()}>
+                <Upload className="w-3.5 h-3.5" /> Seleccionar archivos
+              </Button>
+              <p className="text-[11px] text-muted-foreground mt-1">PDF, PNG, JPG · Máx. 10MB por archivo</p>
+              {findingFiles.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {findingFiles.map((f, i) => (
+                    <div key={i} className="flex items-center gap-2 text-xs bg-muted/50 rounded px-2 py-1">
+                      <Paperclip className="w-3 h-3 text-muted-foreground shrink-0" />
+                      <span className="truncate flex-1">{f.name}</span>
+                      <span className="text-muted-foreground shrink-0">{(f.size / 1024).toFixed(0)} KB</span>
+                      <button type="button" onClick={() => removeFindingFile(i)} className="text-destructive hover:text-destructive/80">
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setFindingDialogOpen(false)}>Cancelar</Button>
-              <Button onClick={saveFinding}>Guardar</Button>
+              <Button variant="outline" onClick={() => { setFindingDialogOpen(false); setFindingFiles([]); }}>Cancelar</Button>
+              <Button onClick={saveFinding} disabled={uploadingFiles}>
+                {uploadingFiles && <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />}
+                Guardar
+              </Button>
             </div>
           </div>
         </DialogContent>
@@ -745,6 +824,15 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* ─── Evidence Panel for Findings ─── */}
+      <EvidencePanel
+        entityType="audit_finding"
+        entityId={evidenceFindingId ?? ''}
+        entityName={evidenceFindingName}
+        open={!!evidenceFindingId}
+        onOpenChange={(open) => { if (!open) setEvidenceFindingId(null); }}
+      />
     </div>
   );
 }
