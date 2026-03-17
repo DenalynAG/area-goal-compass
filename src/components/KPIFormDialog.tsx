@@ -35,6 +35,7 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, are
   const [thresholdGreen, setThresholdGreen] = useState(0);
   const [thresholdYellow, setThresholdYellow] = useState(0);
   const [thresholdRed, setThresholdRed] = useState(0);
+  const [weightPercent, setWeightPercent] = useState(0);
   const [filterAreaId, setFilterAreaId] = useState('all');
   const [filterSubareaId, setFilterSubareaId] = useState('all');
 
