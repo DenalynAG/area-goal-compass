@@ -636,10 +636,12 @@ function ObjectiveCard({
   const relevantMeasurements = (measurements ?? []).filter(m => kpiIds.includes(m.kpi_id));
   const currentYear = new Date().getFullYear();
   const availableMonths = useMemo(() => {
-    return Array.from({ length: 12 }, (_, i) => {
+    const months = Array.from({ length: 12 }, (_, i) => {
       const mm = String(i + 1).padStart(2, '0');
       return `${currentYear}-${mm}`;
     });
+    months.push('total');
+    return months;
   }, [currentYear]);
 
   const monthLabels: Record<string, string> = {
@@ -648,12 +650,18 @@ function ObjectiveCard({
   };
 
   const getMonthLabel = (ym: string) => {
+    if (ym === 'total') return 'Total KPI';
     const [year, month] = ym.split('-');
     return `${monthLabels[month] ?? month} ${year}`;
   };
 
-  // Get KPI value for a given month
+  // Get KPI value for a given month (or annual average for 'total')
   const getKpiMonthValue = (kpiId: string) => {
+    if (selectedMonth === 'total') {
+      const kpiMeasurements = relevantMeasurements.filter(m => m.kpi_id === kpiId && m.period_date.startsWith(String(currentYear)));
+      if (kpiMeasurements.length === 0) return null;
+      return Math.round((kpiMeasurements.reduce((s, m) => s + m.value, 0) / kpiMeasurements.length) * 100) / 100;
+    }
     const m = relevantMeasurements.find(m => m.kpi_id === kpiId && m.period_date.startsWith(selectedMonth));
     return m ? m.value : null;
   };
