@@ -771,8 +771,10 @@ function ObjectiveCard({
             <thead>
               <tr className="text-xs text-muted-foreground">
                 <th className="text-left py-1">KPI</th>
+                <th className="text-center py-1">Peso %</th>
                 <th className="text-left py-1">Meta</th>
                 <th className="text-left py-1">Actual</th>
+                <th className="text-center py-1">Prom. Acumulado</th>
                 <th className="text-left py-1">Semáforo</th>
                 <th className="text-right py-1"></th>
               </tr>
@@ -782,14 +784,29 @@ function ObjectiveCard({
                 const monthValue = getKpiMonthValue(k.id);
                 const displayValue = monthValue ?? 0;
                 const kpiForLight = { ...k, current_value: displayValue };
+                const weight = (k as any).weight_percent ?? 0;
+                // Cumulative average: average of all measurements across all months for this KPI
+                const allKpiMeasurements = relevantMeasurements.filter(m => m.kpi_id === k.id);
+                const cumulativeAvg = allKpiMeasurements.length > 0
+                  ? Math.round((allKpiMeasurements.reduce((s, m) => s + m.value, 0) / allKpiMeasurements.length) * 100) / 100
+                  : null;
                 return (
                   <tr key={k.id} className="border-t border-border/50">
                     <td className="py-2 font-medium">{k.name}</td>
+                    <td className="py-2 text-center">
+                      {weight > 0 ? <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-accent/10 text-accent">{weight}%</span> : <span className="text-muted-foreground">—</span>}
+                    </td>
                     <td className="py-2">{k.target} {k.unit}</td>
                     <td className="py-2">
                       {monthValue === null
                         ? <span className="text-muted-foreground italic">Sin dato</span>
                         : <>{displayValue} {k.unit}</>
+                      }
+                    </td>
+                    <td className="py-2 text-center">
+                      {cumulativeAvg !== null
+                        ? <span className="font-semibold">{cumulativeAvg} {k.unit}</span>
+                        : <span className="text-muted-foreground">—</span>
                       }
                     </td>
                     <td className="py-2">
@@ -814,7 +831,14 @@ function ObjectiveCard({
             </tbody>
             <tfoot>
               <tr className="border-t-2 border-border">
-                <td colSpan={2} className="py-2 text-right font-semibold text-sm">Promedio General:</td>
+                <td className="py-2 font-semibold text-sm">Promedio General:</td>
+                <td className="py-2 text-center font-semibold text-xs">
+                  {(() => {
+                    const totalWeight = objKpis.reduce((s, k) => s + ((k as any).weight_percent ?? 0), 0);
+                    return totalWeight > 0 ? `${totalWeight}%` : '—';
+                  })()}
+                </td>
+                <td></td>
                 <td className="py-2 font-bold text-sm">
                   {(() => {
                     const values = objKpis.map(k => {
@@ -823,6 +847,14 @@ function ObjectiveCard({
                       return k.target > 0 ? (monthValue / k.target) * 100 : 0;
                     }).filter((v): v is number => v !== null);
                     const avg = values.length > 0 ? Math.round(values.reduce((s, v) => s + v, 0) / values.length) : 0;
+                    return `${avg}%`;
+                  })()}
+                </td>
+                <td className="py-2 text-center font-bold text-sm">
+                  {(() => {
+                    // Overall cumulative average across all KPIs
+                    const allVals = objKpis.flatMap(k => relevantMeasurements.filter(m => m.kpi_id === k.id).map(m => k.target > 0 ? (m.value / k.target) * 100 : 0));
+                    const avg = allVals.length > 0 ? Math.round(allVals.reduce((s, v) => s + v, 0) / allVals.length) : 0;
                     return `${avg}%`;
                   })()}
                 </td>

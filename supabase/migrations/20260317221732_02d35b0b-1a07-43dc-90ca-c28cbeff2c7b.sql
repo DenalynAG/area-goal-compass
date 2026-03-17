@@ -1,0 +1,1 @@
+ALTER TABLE public.kpis ADD COLUMN weight_percent numeric NOT NULL DEFAULT 0;

@@ -35,6 +35,7 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, are
   const [thresholdGreen, setThresholdGreen] = useState(0);
   const [thresholdYellow, setThresholdYellow] = useState(0);
   const [thresholdRed, setThresholdRed] = useState(0);
+  const [weightPercent, setWeightPercent] = useState(0);
   const [filterAreaId, setFilterAreaId] = useState('all');
   const [filterSubareaId, setFilterSubareaId] = useState('all');
 
@@ -72,6 +73,7 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, are
       setThresholdGreen(kpi.threshold_green);
       setThresholdYellow(kpi.threshold_yellow);
       setThresholdRed(kpi.threshold_red);
+      setWeightPercent((kpi as any).weight_percent ?? 0);
       // Set filters based on existing objective
       const obj = objectives.find(o => o.id === kpi.objective_id);
       if (obj) {
@@ -87,7 +89,7 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, are
     } else {
       setName(''); setDefinition(''); setUnit('');
       setFrequency('mensual'); setBaseline(0); setTarget(0); setCurrentValue(0);
-      setThresholdGreen(0); setThresholdYellow(0); setThresholdRed(0);
+      setThresholdGreen(0); setThresholdYellow(0); setThresholdRed(0); setWeightPercent(0);
       // Pre-select objective if provided
       if (preselectedObjectiveId) {
         setObjectiveId(preselectedObjectiveId);
@@ -128,7 +130,8 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, are
       threshold_green: thresholdGreen,
       threshold_yellow: thresholdYellow,
       threshold_red: thresholdRed,
-    };
+      weight_percent: weightPercent,
+    } as any;
 
     let kpiId = kpi?.id;
 
@@ -251,9 +254,15 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, are
               <Input type="number" value={target} onChange={e => setTarget(Number(e.target.value))} />
             </div>
           </div>
-          <div className="space-y-2">
-            <Label>Valor Actual</Label>
-            <Input type="number" value={currentValue} onChange={e => setCurrentValue(Number(e.target.value))} />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Valor Actual</Label>
+              <Input type="number" value={currentValue} onChange={e => setCurrentValue(Number(e.target.value))} />
+            </div>
+            <div className="space-y-2">
+              <Label>Peso (%)</Label>
+              <Input type="number" value={weightPercent} onChange={e => setWeightPercent(Number(e.target.value))} min={0} max={100} />
+            </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
