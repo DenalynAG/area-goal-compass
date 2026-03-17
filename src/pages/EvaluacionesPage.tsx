@@ -313,6 +313,7 @@ export default function EvaluacionesPage({ areaFilterName }: EvaluacionesPagePro
         </div>
       )}
 
+      <Tabs defaultValue="collaborators" className="space-y-4">
         <TabsList>
           <TabsTrigger value="collaborators">
             <User className="w-4 h-4 mr-1.5" />
