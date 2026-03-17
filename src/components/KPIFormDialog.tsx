@@ -152,17 +152,18 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, are
       kpiId = data.id;
     }
 
-    // Upsert a kpi_measurement for the current month so the grid reflects the value
+    // Upsert a kpi_measurement for the selected month so the grid reflects the value
     if (kpiId && currentValue > 0) {
-      const now = new Date();
-      const periodDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+      const periodDate = `${measurementMonth}-01`;
+      const [yyyy, mm] = measurementMonth.split('-');
+      const nextMonth = parseInt(mm) === 12 ? `${parseInt(yyyy) + 1}-01` : `${yyyy}-${String(parseInt(mm) + 1).padStart(2, '0')}`;
       // Check if measurement already exists for this month
       const { data: existing } = await supabase
         .from('kpi_measurements')
         .select('id')
         .eq('kpi_id', kpiId)
         .gte('period_date', periodDate)
-        .lt('period_date', `${now.getFullYear()}-${String(now.getMonth() + 2).padStart(2, '0')}-01`)
+        .lt('period_date', `${nextMonth}-01`)
         .maybeSingle();
 
       if (existing) {
