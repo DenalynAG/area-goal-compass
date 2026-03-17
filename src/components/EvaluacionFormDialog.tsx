@@ -30,6 +30,7 @@ interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   evaluation?: Tables<'evaluations'> | null;
+  preselectedCollaboratorId?: string | null;
 }
 
 interface CriterionRow {
