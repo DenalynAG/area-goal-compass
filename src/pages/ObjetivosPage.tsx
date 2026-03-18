@@ -247,14 +247,18 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
     return m ? m.value : null;
   };
 
+  const elapsedMonths = new Date().getMonth() + 1; // months elapsed in current year (1-12)
+
   const getObjProgress = (obj: Tables<'objectives'>) => {
     const objKpis = kpis.filter(k => k.objective_id === obj.id);
     if (objKpis.length === 0) return obj.progress_percent;
+    const currentYear = new Date().getFullYear();
     const values = objKpis.map(k => {
-      // Use accumulated average across ALL months
-      const kpiMeasurements = measurements.filter(m => m.kpi_id === k.id);
+      // Sum all measurements up to current month, divide by elapsed months
+      const kpiMeasurements = measurements.filter(m => m.kpi_id === k.id && m.period_date.startsWith(String(currentYear)));
       if (kpiMeasurements.length === 0) return null;
-      const avg = kpiMeasurements.reduce((s, m) => s + Number(m.value), 0) / kpiMeasurements.length;
+      const sum = kpiMeasurements.reduce((s, m) => s + Number(m.value), 0);
+      const avg = sum / elapsedMonths;
       return k.target > 0 ? (avg / k.target) * 100 : 0;
     }).filter((v): v is number => v !== null);
     if (values.length === 0) return 0;
@@ -671,13 +675,16 @@ function ObjectiveCard({
     return m ? m.value : null;
   };
 
-  // Progress computed from accumulated average across ALL months (not month-specific)
+  // Progress: sum of measurements up to current month / elapsed months
+  const elapsedMonths = new Date().getMonth() + 1;
   const computedProgress = useMemo(() => {
     if (objKpis.length === 0) return obj.progress_percent;
+    const cy = new Date().getFullYear();
     const values = objKpis.map(k => {
-      const kpiMeasurements = relevantMeasurements.filter(m => m.kpi_id === k.id);
+      const kpiMeasurements = relevantMeasurements.filter(m => m.kpi_id === k.id && m.period_date.startsWith(String(cy)));
       if (kpiMeasurements.length === 0) return null;
-      const avg = kpiMeasurements.reduce((s, m) => s + Number(m.value), 0) / kpiMeasurements.length;
+      const sum = kpiMeasurements.reduce((s, m) => s + Number(m.value), 0);
+      const avg = sum / elapsedMonths;
       return k.target > 0 ? (avg / k.target) * 100 : 0;
     }).filter((v): v is number => v !== null);
     if (values.length === 0) return 0;
