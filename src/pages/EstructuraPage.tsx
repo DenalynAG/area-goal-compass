@@ -98,17 +98,11 @@ export default function EstructuraPage() {
 
   const confirmDeleteColab = async () => {
     if (!deleteColabId) return;
-    // Remove membership first, then profile
+    // Only remove membership (area/subarea assignment), keep profile and role intact
     const { error: memError } = await supabase.from('memberships').delete().eq('user_id', deleteColabId);
     if (memError) { toast.error(memError.message); return; }
-    const { error: roleError } = await supabase.from('user_roles').delete().eq('user_id', deleteColabId);
-    if (roleError) { toast.error(roleError.message); return; }
-    const { error: profError } = await supabase.from('profiles').delete().eq('id', deleteColabId);
-    if (profError) { toast.error(profError.message); return; }
-    toast.success('Colaborador eliminado');
+    toast.success('Colaborador removido del área');
     qc.invalidateQueries({ queryKey: ['memberships'] });
-    qc.invalidateQueries({ queryKey: ['profiles'] });
-    qc.invalidateQueries({ queryKey: ['user_roles'] });
     setDeleteColabId(null);
   };
 
