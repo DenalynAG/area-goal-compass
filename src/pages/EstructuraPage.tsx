@@ -328,9 +328,9 @@ export default function EstructuraPage() {
       <AlertDialog open={!!deleteColabId} onOpenChange={(open) => !open && setDeleteColabId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar colaborador?</AlertDialogTitle>
+             <AlertDialogTitle>¿Remover colaborador del área?</AlertDialogTitle>
             <AlertDialogDescription>
-              Estás a punto de eliminar al colaborador <strong>{deleteColabName}</strong>. Se eliminarán su perfil, membresía y rol asignado. Esta acción no se puede deshacer.
+              Estás a punto de remover a <strong>{deleteColabName}</strong> de esta área. El colaborador seguirá existiendo en el sistema pero ya no estará asignado a ningún área.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
