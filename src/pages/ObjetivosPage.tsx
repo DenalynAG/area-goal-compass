@@ -671,17 +671,18 @@ function ObjectiveCard({
     return m ? m.value : null;
   };
 
-  // Progress computed from KPI average using selected month measurements
+  // Progress computed from accumulated average across ALL months (not month-specific)
   const computedProgress = useMemo(() => {
     if (objKpis.length === 0) return obj.progress_percent;
     const values = objKpis.map(k => {
-      const monthVal = getKpiMonthValue(k.id);
-      if (monthVal === null) return null;
-      return k.target > 0 ? (monthVal / k.target) * 100 : 0;
+      const kpiMeasurements = relevantMeasurements.filter(m => m.kpi_id === k.id);
+      if (kpiMeasurements.length === 0) return null;
+      const avg = kpiMeasurements.reduce((s, m) => s + Number(m.value), 0) / kpiMeasurements.length;
+      return k.target > 0 ? (avg / k.target) * 100 : 0;
     }).filter((v): v is number => v !== null);
     if (values.length === 0) return 0;
     return Math.round(values.reduce((s, v) => s + v, 0) / values.length);
-  }, [objKpis, obj.progress_percent, selectedMonth, relevantMeasurements]);
+  }, [objKpis, obj.progress_percent, relevantMeasurements]);
 
   const circumference = 2 * Math.PI * 28;
   const strokeDashoffset = circumference - (Math.min(computedProgress, 100) / 100) * circumference;
