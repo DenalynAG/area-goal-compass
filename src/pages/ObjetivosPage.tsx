@@ -247,22 +247,28 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
     return m ? m.value : null;
   };
 
-  const elapsedMonths = new Date().getMonth() + 1; // months elapsed in current year (1-12)
+  const elapsedMonths = new Date().getMonth() + 1;
 
   const getObjProgress = (obj: Tables<'objectives'>) => {
     const objKpis = kpis.filter(k => k.objective_id === obj.id);
     if (objKpis.length === 0) return obj.progress_percent;
+
     const currentYear = new Date().getFullYear();
     const values = objKpis.map(k => {
-      // Sum all measurements up to current month, divide by elapsed months
-      const kpiMeasurements = measurements.filter(m => m.kpi_id === k.id && m.period_date.startsWith(String(currentYear)));
+      const kpiMeasurements = measurements.filter(m => {
+        if (m.kpi_id !== k.id) return false;
+        const measurementDate = new Date(m.period_date);
+        return measurementDate.getFullYear() === currentYear && (measurementDate.getMonth() + 1) <= elapsedMonths;
+      });
+
       if (kpiMeasurements.length === 0) return null;
-      const sum = kpiMeasurements.reduce((s, m) => s + Number(m.value), 0);
-      const avg = sum / elapsedMonths;
-      return k.target > 0 ? (avg / k.target) * 100 : 0;
+
+      const accumulatedAverage = kpiMeasurements.reduce((sum, m) => sum + Number(m.value), 0) / elapsedMonths;
+      return k.target > 0 ? (accumulatedAverage / k.target) * 100 : 0;
     }).filter((v): v is number => v !== null);
+
     if (values.length === 0) return 0;
-    return Math.round(values.reduce((s, v) => s + v, 0) / values.length);
+    return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
   };
 
   const getAreaProgress = (areaId: string) => {
@@ -664,32 +670,40 @@ function ObjectiveCard({
     return `${monthLabels[month] ?? month} ${year}`;
   };
 
-  // Get KPI value for a given month (or annual average for 'total')
+  // Get KPI accumulated average up to current month in current year
+  const getKpiAccumulatedAverage = (kpiId: string) => {
+    const kpiMeasurements = relevantMeasurements.filter(m => {
+      if (m.kpi_id !== kpiId) return false;
+      const measurementDate = new Date(m.period_date);
+      return measurementDate.getFullYear() === currentYear && (measurementDate.getMonth() + 1) <= elapsedMonths;
+    });
+    if (kpiMeasurements.length === 0) return null;
+    return Math.round((kpiMeasurements.reduce((sum, m) => sum + m.value, 0) / elapsedMonths) * 100) / 100;
+  };
+
+  // Get KPI value for a given month (or accumulated average up to date for 'total')
   const getKpiMonthValue = (kpiId: string) => {
     if (selectedMonth === 'total') {
-      const kpiMeasurements = relevantMeasurements.filter(m => m.kpi_id === kpiId && m.period_date.startsWith(String(currentYear)));
-      if (kpiMeasurements.length === 0) return null;
-      return Math.round((kpiMeasurements.reduce((s, m) => s + m.value, 0) / kpiMeasurements.length) * 100) / 100;
+      return getKpiAccumulatedAverage(kpiId);
     }
     const m = relevantMeasurements.find(m => m.kpi_id === kpiId && m.period_date.startsWith(selectedMonth));
     return m ? m.value : null;
   };
 
-  // Progress: sum of measurements up to current month / elapsed months
+  // Progress: accumulated average up to date / target
   const elapsedMonths = new Date().getMonth() + 1;
   const computedProgress = useMemo(() => {
     if (objKpis.length === 0) return obj.progress_percent;
-    const cy = new Date().getFullYear();
+
     const values = objKpis.map(k => {
-      const kpiMeasurements = relevantMeasurements.filter(m => m.kpi_id === k.id && m.period_date.startsWith(String(cy)));
-      if (kpiMeasurements.length === 0) return null;
-      const sum = kpiMeasurements.reduce((s, m) => s + Number(m.value), 0);
-      const avg = sum / elapsedMonths;
-      return k.target > 0 ? (avg / k.target) * 100 : 0;
+      const accumulatedAverage = getKpiAccumulatedAverage(k.id);
+      if (accumulatedAverage === null) return null;
+      return k.target > 0 ? (accumulatedAverage / k.target) * 100 : 0;
     }).filter((v): v is number => v !== null);
+
     if (values.length === 0) return 0;
-    return Math.round(values.reduce((s, v) => s + v, 0) / values.length);
-  }, [objKpis, obj.progress_percent, relevantMeasurements]);
+    return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
+  }, [objKpis, obj.progress_percent, relevantMeasurements, currentYear, elapsedMonths]);
 
   const circumference = 2 * Math.PI * 28;
   const strokeDashoffset = circumference - (Math.min(computedProgress, 100) / 100) * circumference;
@@ -806,11 +820,7 @@ function ObjectiveCard({
                 const displayValue = monthValue ?? 0;
                 const kpiForLight = { ...k, current_value: displayValue };
                 const weight = (k as any).weight_percent ?? 0;
-                // Cumulative average: average of all measurements across all months for this KPI
-                const allKpiMeasurements = relevantMeasurements.filter(m => m.kpi_id === k.id);
-                const cumulativeAvg = allKpiMeasurements.length > 0
-                  ? Math.round((allKpiMeasurements.reduce((s, m) => s + m.value, 0) / allKpiMeasurements.length) * 100) / 100
-                  : null;
+                const cumulativeAvg = getKpiAccumulatedAverage(k.id);
                 return (
                   <tr key={k.id} className="border-t border-border/50">
                     <td className="py-2 font-medium">{k.name}</td>
