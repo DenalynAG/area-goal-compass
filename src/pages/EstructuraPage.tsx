@@ -98,17 +98,11 @@ export default function EstructuraPage() {
 
   const confirmDeleteColab = async () => {
     if (!deleteColabId) return;
-    // Remove membership first, then profile
+    // Only remove membership (area/subarea assignment), keep profile and role intact
     const { error: memError } = await supabase.from('memberships').delete().eq('user_id', deleteColabId);
     if (memError) { toast.error(memError.message); return; }
-    const { error: roleError } = await supabase.from('user_roles').delete().eq('user_id', deleteColabId);
-    if (roleError) { toast.error(roleError.message); return; }
-    const { error: profError } = await supabase.from('profiles').delete().eq('id', deleteColabId);
-    if (profError) { toast.error(profError.message); return; }
-    toast.success('Colaborador eliminado');
+    toast.success('Colaborador removido del área');
     qc.invalidateQueries({ queryKey: ['memberships'] });
-    qc.invalidateQueries({ queryKey: ['profiles'] });
-    qc.invalidateQueries({ queryKey: ['user_roles'] });
     setDeleteColabId(null);
   };
 
@@ -334,9 +328,9 @@ export default function EstructuraPage() {
       <AlertDialog open={!!deleteColabId} onOpenChange={(open) => !open && setDeleteColabId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar colaborador?</AlertDialogTitle>
+             <AlertDialogTitle>¿Remover colaborador del área?</AlertDialogTitle>
             <AlertDialogDescription>
-              Estás a punto de eliminar al colaborador <strong>{deleteColabName}</strong>. Se eliminarán su perfil, membresía y rol asignado. Esta acción no se puede deshacer.
+              Estás a punto de remover a <strong>{deleteColabName}</strong> de esta área. El colaborador seguirá existiendo en el sistema pero ya no estará asignado a ningún área.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
