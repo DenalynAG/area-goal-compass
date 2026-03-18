@@ -247,22 +247,28 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
     return m ? m.value : null;
   };
 
-  const elapsedMonths = new Date().getMonth() + 1; // months elapsed in current year (1-12)
+  const elapsedMonths = new Date().getMonth() + 1;
 
   const getObjProgress = (obj: Tables<'objectives'>) => {
     const objKpis = kpis.filter(k => k.objective_id === obj.id);
     if (objKpis.length === 0) return obj.progress_percent;
+
     const currentYear = new Date().getFullYear();
     const values = objKpis.map(k => {
-      // Sum all measurements up to current month, divide by elapsed months
-      const kpiMeasurements = measurements.filter(m => m.kpi_id === k.id && m.period_date.startsWith(String(currentYear)));
+      const kpiMeasurements = measurements.filter(m => {
+        if (m.kpi_id !== k.id) return false;
+        const measurementDate = new Date(m.period_date);
+        return measurementDate.getFullYear() === currentYear && (measurementDate.getMonth() + 1) <= elapsedMonths;
+      });
+
       if (kpiMeasurements.length === 0) return null;
-      const sum = kpiMeasurements.reduce((s, m) => s + Number(m.value), 0);
-      const avg = sum / elapsedMonths;
-      return k.target > 0 ? (avg / k.target) * 100 : 0;
+
+      const accumulatedAverage = kpiMeasurements.reduce((sum, m) => sum + Number(m.value), 0) / elapsedMonths;
+      return k.target > 0 ? (accumulatedAverage / k.target) * 100 : 0;
     }).filter((v): v is number => v !== null);
+
     if (values.length === 0) return 0;
-    return Math.round(values.reduce((s, v) => s + v, 0) / values.length);
+    return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
   };
 
   const getAreaProgress = (areaId: string) => {
