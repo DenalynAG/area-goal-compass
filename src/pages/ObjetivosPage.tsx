@@ -670,32 +670,35 @@ function ObjectiveCard({
     return `${monthLabels[month] ?? month} ${year}`;
   };
 
-  // Get KPI value for a given month (or annual average for 'total')
+  // Get KPI value for a given month (or accumulated average up to date for 'total')
   const getKpiMonthValue = (kpiId: string) => {
     if (selectedMonth === 'total') {
-      const kpiMeasurements = relevantMeasurements.filter(m => m.kpi_id === kpiId && m.period_date.startsWith(String(currentYear)));
+      const kpiMeasurements = relevantMeasurements.filter(m => {
+        if (m.kpi_id !== kpiId) return false;
+        const measurementDate = new Date(m.period_date);
+        return measurementDate.getFullYear() === currentYear && (measurementDate.getMonth() + 1) <= elapsedMonths;
+      });
       if (kpiMeasurements.length === 0) return null;
-      return Math.round((kpiMeasurements.reduce((s, m) => s + m.value, 0) / kpiMeasurements.length) * 100) / 100;
+      return Math.round(((kpiMeasurements.reduce((sum, m) => sum + m.value, 0) / elapsedMonths)) * 100) / 100;
     }
     const m = relevantMeasurements.find(m => m.kpi_id === kpiId && m.period_date.startsWith(selectedMonth));
     return m ? m.value : null;
   };
 
-  // Progress: sum of measurements up to current month / elapsed months
+  // Progress: accumulated average up to date / target
   const elapsedMonths = new Date().getMonth() + 1;
   const computedProgress = useMemo(() => {
     if (objKpis.length === 0) return obj.progress_percent;
-    const cy = new Date().getFullYear();
+
     const values = objKpis.map(k => {
-      const kpiMeasurements = relevantMeasurements.filter(m => m.kpi_id === k.id && m.period_date.startsWith(String(cy)));
-      if (kpiMeasurements.length === 0) return null;
-      const sum = kpiMeasurements.reduce((s, m) => s + Number(m.value), 0);
-      const avg = sum / elapsedMonths;
-      return k.target > 0 ? (avg / k.target) * 100 : 0;
+      const accumulatedAverage = getKpiMonthValue(k.id);
+      if (accumulatedAverage === null) return null;
+      return k.target > 0 ? (accumulatedAverage / k.target) * 100 : 0;
     }).filter((v): v is number => v !== null);
+
     if (values.length === 0) return 0;
-    return Math.round(values.reduce((s, v) => s + v, 0) / values.length);
-  }, [objKpis, obj.progress_percent, relevantMeasurements]);
+    return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
+  }, [objKpis, obj.progress_percent, relevantMeasurements, selectedMonth, currentYear, elapsedMonths]);
 
   const circumference = 2 * Math.PI * 28;
   const strokeDashoffset = circumference - (Math.min(computedProgress, 100) / 100) * circumference;
