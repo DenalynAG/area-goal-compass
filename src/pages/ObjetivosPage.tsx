@@ -820,11 +820,7 @@ function ObjectiveCard({
                 const displayValue = monthValue ?? 0;
                 const kpiForLight = { ...k, current_value: displayValue };
                 const weight = (k as any).weight_percent ?? 0;
-                // Cumulative average: average of all measurements across all months for this KPI
-                const allKpiMeasurements = relevantMeasurements.filter(m => m.kpi_id === k.id);
-                const cumulativeAvg = allKpiMeasurements.length > 0
-                  ? Math.round((allKpiMeasurements.reduce((s, m) => s + m.value, 0) / allKpiMeasurements.length) * 100) / 100
-                  : null;
+                const cumulativeAvg = getKpiAccumulatedAverage(k.id);
                 return (
                   <tr key={k.id} className="border-t border-border/50">
                     <td className="py-2 font-medium">{k.name}</td>
