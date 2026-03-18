@@ -251,9 +251,11 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
     const objKpis = kpis.filter(k => k.objective_id === obj.id);
     if (objKpis.length === 0) return obj.progress_percent;
     const values = objKpis.map(k => {
-      const monthVal = getKpiCurrentMonthValue(k.id);
-      if (monthVal === null) return null;
-      return k.target > 0 ? (monthVal / k.target) * 100 : 0;
+      // Use accumulated average across ALL months
+      const kpiMeasurements = measurements.filter(m => m.kpi_id === k.id);
+      if (kpiMeasurements.length === 0) return null;
+      const avg = kpiMeasurements.reduce((s, m) => s + Number(m.value), 0) / kpiMeasurements.length;
+      return k.target > 0 ? (avg / k.target) * 100 : 0;
     }).filter((v): v is number => v !== null);
     if (values.length === 0) return 0;
     return Math.round(values.reduce((s, v) => s + v, 0) / values.length);
