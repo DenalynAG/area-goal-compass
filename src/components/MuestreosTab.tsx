@@ -327,6 +327,9 @@ export default function MuestreosTab() {
             {SAMPLING_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
           </SelectContent>
         </Select>
+        <Button variant="outline" onClick={handleExportExcel} disabled={filteredRecords.length === 0}>
+          <Download className="w-4 h-4 mr-1" /> Exportar Excel
+        </Button>
         {canManage && (
           <Button onClick={() => openDialog()}>
             <Plus className="w-4 h-4 mr-1" /> Nuevo Muestreo
