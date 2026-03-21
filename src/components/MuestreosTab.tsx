@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import EvidencePanel from '@/components/EvidencePanel';
 import {
   Plus, Trash2, Pencil, FlaskConical, CheckCircle2, XCircle,
-  Upload, Paperclip, Loader2, Search, FileText
+  Upload, Paperclip, Loader2, Search, FileText, Download
 } from 'lucide-react';
 import { format } from 'date-fns';
 import * as XLSX from 'xlsx';
