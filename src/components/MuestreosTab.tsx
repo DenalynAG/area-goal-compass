@@ -17,6 +17,7 @@ import {
   Upload, Paperclip, Loader2, Search, FileText
 } from 'lucide-react';
 import { format } from 'date-fns';
+import * as XLSX from 'xlsx';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 
