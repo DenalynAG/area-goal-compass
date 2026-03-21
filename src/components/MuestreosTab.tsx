@@ -14,9 +14,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import EvidencePanel from '@/components/EvidencePanel';
 import {
   Plus, Trash2, Pencil, FlaskConical, CheckCircle2, XCircle,
-  Upload, Paperclip, Loader2, Search, FileText
+  Upload, Paperclip, Loader2, Search, FileText, Download
 } from 'lucide-react';
 import { format } from 'date-fns';
+import * as XLSX from 'xlsx';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 
@@ -251,6 +252,27 @@ export default function MuestreosTab() {
 
   const typeLabel = (t: string) => SAMPLING_TYPES.find(s => s.value === t)?.label ?? t;
 
+  const handleExportExcel = () => {
+    const data = filteredRecords.map(r => ({
+      'Período': r.period,
+      'Tipo': typeLabel(r.sampling_type),
+      'Área': r.area_name,
+      'Zona': r.zone_name,
+      'Indicador': r.indicator_name,
+      'Valor': r.numeric_value ?? '',
+      'Unidad': r.unit ?? '',
+      'Estado': r.status === 'conforme' ? 'Conforme' : 'No Conforme',
+      'Notas': r.notes ?? '',
+      'Fecha Registro': r.created_at ? format(new Date(r.created_at), 'dd/MM/yyyy HH:mm') : '',
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Muestreos');
+    ws['!cols'] = [{ wch: 12 }, { wch: 16 }, { wch: 22 }, { wch: 18 }, { wch: 18 }, { wch: 10 }, { wch: 10 }, { wch: 14 }, { wch: 30 }, { wch: 18 }];
+    XLSX.writeFile(wb, `Reporte_Muestreos_${filterPeriod === 'all' ? 'Todos' : filterPeriod}.xlsx`);
+    toast.success('Reporte exportado');
+  };
+
   return (
     <div className="space-y-4">
       {/* Summary cards */}
@@ -305,6 +327,9 @@ export default function MuestreosTab() {
             {SAMPLING_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
           </SelectContent>
         </Select>
+        <Button variant="outline" onClick={handleExportExcel} disabled={filteredRecords.length === 0}>
+          <Download className="w-4 h-4 mr-1" /> Exportar Excel
+        </Button>
         {canManage && (
           <Button onClick={() => openDialog()}>
             <Plus className="w-4 h-4 mr-1" /> Nuevo Muestreo
