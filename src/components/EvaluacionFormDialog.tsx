@@ -372,46 +372,48 @@ export default function EvaluacionFormDialog({ open, onOpenChange, evaluation, p
                   )}
 
                   {hasPositionCriteria && (
-                    <div className="space-y-1">
-                      {positionCriteria.map(criterion => (
-                        <div key={criterion.id} className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 rounded-md px-2 py-1.5 bg-background/50`}>
-                          <span className="text-sm font-medium flex items-center gap-1 min-w-0 flex-1">
-                            <span className="text-muted-foreground text-xs shrink-0">{criterion.sort_order}.</span>
-                            <span className="break-words">{criterion.criterion_name}</span>
-                          </span>
-                          {criterion.is_comment ? (
-                            <Textarea
-                              placeholder="Escribe un comentario..."
-                              value={criteriaComments[criterion.id] || ''}
-                              onChange={e => setCriteriaComments(prev => ({ ...prev, [criterion.id]: e.target.value }))}
-                              rows={1}
-                              className="w-full text-xs"
-                            />
-                          ) : (
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              {([
-                                { value: 1, label: 'B', color: 'bg-destructive/10 text-destructive border-destructive/30' },
-                                { value: 2, label: 'M', color: 'bg-yellow-500/10 text-yellow-700 border-yellow-500/30' },
-                                { value: 3, label: 'A', color: 'bg-green-500/10 text-green-700 border-green-500/30' },
-                              ] as const).map(opt => (
-                                <button
-                                  key={opt.value}
-                                  type="button"
-                                  onClick={() => setCriteriaScores(prev => ({ ...prev, [criterion.id]: prev[criterion.id] === opt.value ? null : opt.value }))}
-                                  className={`w-8 h-7 rounded text-xs font-bold border transition-all ${
-                                    criteriaScores[criterion.id] === opt.value
-                                      ? opt.color + ' ring-2 ring-offset-1 ring-current'
-                                      : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
-                                  }`}
-                                >
-                                  {opt.label}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
+                    <ScrollArea className="max-h-[40vh]">
+                      <div className="space-y-1 pr-3">
+                        {positionCriteria.map(criterion => (
+                          <div key={criterion.id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 rounded-md px-2 py-1.5 bg-background/50">
+                            <span className="text-sm font-medium flex items-center gap-1 min-w-0 flex-1">
+                              <span className="text-muted-foreground text-xs shrink-0">{criterion.sort_order}.</span>
+                              <span className="break-words">{criterion.criterion_name}</span>
+                            </span>
+                            {criterion.is_comment ? (
+                              <Textarea
+                                placeholder="Escribe un comentario..."
+                                value={criteriaComments[criterion.id] || ''}
+                                onChange={e => setCriteriaComments(prev => ({ ...prev, [criterion.id]: e.target.value }))}
+                                rows={2}
+                                className="w-full sm:max-w-[280px] text-xs resize-y"
+                              />
+                            ) : (
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                {([
+                                  { value: 1, label: 'B', color: 'bg-destructive/10 text-destructive border-destructive/30' },
+                                  { value: 2, label: 'M', color: 'bg-yellow-500/10 text-yellow-700 border-yellow-500/30' },
+                                  { value: 3, label: 'A', color: 'bg-green-500/10 text-green-700 border-green-500/30' },
+                                ] as const).map(opt => (
+                                  <button
+                                    key={opt.value}
+                                    type="button"
+                                    onClick={() => setCriteriaScores(prev => ({ ...prev, [criterion.id]: prev[criterion.id] === opt.value ? null : opt.value }))}
+                                    className={`w-8 h-7 rounded text-xs font-bold border transition-all ${
+                                      criteriaScores[criterion.id] === opt.value
+                                        ? opt.color + ' ring-2 ring-offset-1 ring-current'
+                                        : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
+                                    }`}
+                                  >
+                                    {opt.label}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
                   )}
 
                   {hasPositionCriteria && (() => {
