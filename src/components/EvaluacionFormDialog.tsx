@@ -304,91 +304,18 @@ export default function EvaluacionFormDialog({ open, onOpenChange, evaluation, p
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
           <ScrollArea className="flex-1 px-4 sm:px-6">
             <div className="space-y-4 pb-4">
-              {/* Type */}
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium">Tipo de Evaluación</label>
-                <Select value={form.type} onValueChange={v => handleTypeChange(v as EvalType)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {(Object.keys(typeLabels) as EvalType[]).map(t => (
-                      <SelectItem key={t} value={t}>{typeLabels[t]}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Collaborator search & filters */}
-              <div className="space-y-2 border rounded-lg p-3 bg-muted/30">
-                <label className="text-sm font-medium">Colaborador</label>
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Buscar por nombre, cargo o correo..."
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <Select value={filterAreaId} onValueChange={v => { setFilterAreaId(v); setFilterSubareaId('all'); }}>
-                    <SelectTrigger className="text-xs h-8">
-                      <SelectValue placeholder="Área" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas las Áreas</SelectItem>
-                      {areas.map(a => (
-                        <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select value={filterSubareaId} onValueChange={setFilterSubareaId}>
-                    <SelectTrigger className="text-xs h-8">
-                      <SelectValue placeholder="Subárea" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas las Subáreas</SelectItem>
-                      {filteredSubareas.map(s => (
-                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select value={filterPosition} onValueChange={setFilterPosition}>
-                    <SelectTrigger className="text-xs h-8">
-                      <SelectValue placeholder="Cargo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos los Cargos</SelectItem>
-                      {uniquePositions.map(pos => (
-                        <SelectItem key={pos} value={pos}>{pos}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Select
-                  value={form.collaborator_user_id}
-                  onValueChange={v => {
-                    setForm(f => ({ ...f, collaborator_user_id: v }));
-                    setCriteriaScores({});
-                    setCriteriaComments({});
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar colaborador..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filteredProfiles.length === 0 && (
-                      <div className="px-2 py-4 text-sm text-muted-foreground text-center">
-                        No se encontraron colaboradores
-                      </div>
-                    )}
-                    {filteredProfiles.map(p => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.name} {p.position ? `— ${p.position}` : ''}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Collaborator & Type info (read-only) */}
+              {(() => {
+                const collab = profiles.find(p => p.id === form.collaborator_user_id);
+                return collab ? (
+                  <div className="border rounded-lg p-3 bg-muted/30 space-y-1">
+                    <p className="text-sm font-semibold">{collab.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {collab.position ? `${collab.position} · ` : ''}{typeLabels[form.type]}
+                    </p>
+                  </div>
+                ) : null;
+              })()}
 
               {/* Title & Description (non-desempeno types) */}
               {form.type !== 'desempeno' && (
