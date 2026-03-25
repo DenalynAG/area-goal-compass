@@ -11,17 +11,7 @@ import { toast } from 'sonner';
 import { CheckCircle2, Circle, ClipboardList, MessageSquare, Save, Paperclip, Filter, ChevronDown, ChevronUp, Info } from 'lucide-react';
 import EvidencePanel from '@/components/EvidencePanel';
 
-const LEADER_PASS_INFO = [
-  { title: 'One to One (Feedback Consciente)', frequency: 'Mensual', description: 'Cumplir con One to One mensual de toda el área asignada. Equipos de más de 20 personas realizar el 10% y para equipos de 1-12 personas, 1 persona mensual' },
-  { title: 'Evaluación de Performance', frequency: 'Diario / Anual', description: 'Oper: en el mes se deben evaluar el 100% de los colab. (Mínimo 22 días). Admón: Anual' },
-  { title: 'Desarrollo del equipo (IDP admón. o Cronograma de Capacitación)', frequency: 'Mensual', description: 'Toda el área o personal a cargo admón. debe tener el 100% IDPs en Buk. Para los colab. operativos el 90% de Cumpl. OSH University' },
-  { title: 'People Review & Planes de Sucesión', frequency: 'Trimestral', description: '1 Trimestral (oper.) / 1 Semestral (adm.) — decisiones documentadas' },
-  { title: 'ADN OSH', frequency: 'Semanal / Mensual', description: '100% Briefing Semanal y STAR mensual' },
-  { title: 'Upward Feedback', frequency: 'Semestral', description: '100% del Upward Feedback 2 veces al año' },
-  { title: 'Programa OSH People', frequency: 'Mensual', description: 'Reconocer 1 persona por mes del programa de forma correcta y consciente hacia otras áreas' },
-  { title: 'Misión CerOSH', frequency: 'Mensual', description: 'Proponer 1 acción preventiva de su área al mes' },
-  { title: 'Orden y Limpieza', frequency: 'Mensual', description: 'Gestión de una jornada de Orden y Limpieza mensual de su área' },
-];
+// Activities info is now loaded dynamically from leader_pass_activities table
 
 interface Activity {
   id: string;
