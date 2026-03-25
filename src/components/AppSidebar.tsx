@@ -178,19 +178,19 @@ export default function AppSidebar() {
   // Filter nav items based on permissions
   const filteredNavItems = useMemo(() => {
     return navItems
-      .filter(item => visibleMenuKeys.has(item.to))
-      .map(item => {
+      .filter((item) => visibleMenuKeys.has(item.to))
+      .map((item) => {
         if (!item.children) return item;
         const filteredChildren = item.children
-          .filter(child => visibleMenuKeys.has(child.to))
-          .map(child => {
+          .filter((child) => visibleMenuKeys.has(child.to))
+          .map((child) => {
             if (!child.children) return child;
             return {
               ...child,
-              children: child.children.filter(sub => visibleMenuKeys.has(sub.to)),
+              children: child.children.filter((sub) => visibleMenuKeys.has(sub.to)),
             };
           })
-          .filter(child => !child.children || child.children.length > 0);
+          .filter((child) => !child.children || child.children.length > 0);
         if (filteredChildren.length === 0) return null;
         return { ...item, children: filteredChildren };
       })
@@ -205,7 +205,8 @@ export default function AppSidebar() {
   const toggleGroup = (to: string) => {
     setExpandedGroups((prev) => {
       const next = new Set(prev);
-      if (next.has(to)) next.delete(to); else next.add(to);
+      if (next.has(to)) next.delete(to);
+      else next.add(to);
       return next;
     });
   };
@@ -223,10 +224,8 @@ export default function AppSidebar() {
         />
         {!collapsed && (
           <div className="overflow-hidden">
-            <h1 className="text-sm font-display font-extrabold truncate text-sidebar-foreground">
-              Bienvenido a
-            </h1>
-            <p className="text-xs font-bold text-sidebar-primary tracking-wide">EasyConnect</p>
+            <h1 className="text-sm font-display font-extrabold truncate text-sidebar-foreground">Bienvenido a</h1>
+            <p className="text-xs font-bold text-sidebar-primary tracking-wide">🙌</p>
           </div>
         )}
         <button
@@ -266,7 +265,12 @@ export default function AppSidebar() {
                   {!collapsed && (
                     <>
                       <span className="truncate flex-1 text-left">{item.label}</span>
-                      <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-200 opacity-50", isGroupExpanded && "rotate-180")} />
+                      <ChevronDown
+                        className={cn(
+                          "w-3.5 h-3.5 transition-transform duration-200 opacity-50",
+                          isGroupExpanded && "rotate-180",
+                        )}
+                      />
                     </>
                   )}
                 </button>
@@ -289,9 +293,16 @@ export default function AppSidebar() {
                                   : "text-sidebar-foreground/60 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground",
                               )}
                             >
-                              {child.icon && <child.icon className={cn("w-4 h-4 shrink-0", childActive && "text-sidebar-primary")} />}
+                              {child.icon && (
+                                <child.icon className={cn("w-4 h-4 shrink-0", childActive && "text-sidebar-primary")} />
+                              )}
                               <span className="truncate flex-1 text-left">{child.label}</span>
-                              <ChevronDown className={cn("w-3 h-3 transition-transform duration-200 opacity-50", isSubExpanded && "rotate-180")} />
+                              <ChevronDown
+                                className={cn(
+                                  "w-3 h-3 transition-transform duration-200 opacity-50",
+                                  isSubExpanded && "rotate-180",
+                                )}
+                              />
                             </button>
                             {isSubExpanded && (
                               <div className="ml-4 pl-3 border-l border-sidebar-border/50 space-y-0.5 mt-0.5">
@@ -330,7 +341,9 @@ export default function AppSidebar() {
                               : "text-sidebar-foreground/60 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground",
                           )}
                         >
-                          {child.icon && <child.icon className={cn("w-4 h-4 shrink-0", childActive && "text-sidebar-primary")} />}
+                          {child.icon && (
+                            <child.icon className={cn("w-4 h-4 shrink-0", childActive && "text-sidebar-primary")} />
+                          )}
                           <span className="truncate">{child.label}</span>
                         </NavLink>
                       );
@@ -414,9 +427,7 @@ export default function AppSidebar() {
         className={cn(
           "fixed top-0 left-0 h-full z-40 transition-all duration-300 shadow-xl",
           collapsed ? "w-[68px]" : "w-64",
-          mobileOpen
-            ? "translate-x-0"
-            : "-translate-x-full lg:translate-x-0",
+          mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         )}
       >
         {sidebarContent}
