@@ -1,21 +1,24 @@
 import { useState, useRef } from 'react';
 import { useActivityLog, usePositions, useAreas, useSubareas, useSystemParameters } from '@/hooks/useSupabaseData';
 import { useAuth } from '@/contexts/AuthContext';
-import { Settings, Clock, User, Briefcase, Plus, Pencil, Trash2, Upload, ChevronDown, ChevronRight, Building2, FolderOpen, Check, X } from 'lucide-react';
+import { Settings, Clock, User, Briefcase, Plus, Pencil, Trash2, Upload, ChevronDown, ChevronRight, Building2, FolderOpen, Check, X, GripVertical, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import CargoFormDialog from '@/components/CargoFormDialog';
 import EvaluacionCriteriaSection from '@/components/EvaluacionCriteriaSection';
 import MenuPermissionsSection from '@/components/MenuPermissionsSection';
+import LeaderPassAdminSection from '@/components/LeaderPassAdminSection';
 import * as XLSX from 'xlsx';
 import { cn } from '@/lib/utils';
 
 const TABS = [
   { key: 'parametros', label: 'Parámetros del Sistema' },
   { key: 'cargos', label: 'Cargos por Área y Subárea' },
+  { key: 'leaderpass', label: 'Leader Pass' },
   { key: 'evaluacion', label: 'Indicadores de Evaluación' },
   { key: 'menus', label: 'Gestión de Menús' },
   { key: 'auditoria', label: 'Registro de Auditoría' },
