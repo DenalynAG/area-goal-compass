@@ -10,11 +10,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <header className="border-b bg-card px-4 md:px-6 lg:px-8 py-3">
           <div>
             <h1 className="text-sm font-bold text-foreground leading-tight">
-              EasyConnect – Plataforma de Gestión Estratégica Hotelera
+              Plataforma de Gestión Objetivos, Indicadores y Performance Admón
             </h1>
-            <p className="text-[11px] text-muted-foreground leading-tight">
-              Sistema de Gestión de Objetivos e Indicadores Administrativa y Operativos.
-            </p>
+            <p className="text-[11px] text-muted-foreground leading-tight">V1.0.</p>
           </div>
         </header>
         <div className="p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto">{children}</div>
