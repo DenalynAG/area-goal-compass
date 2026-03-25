@@ -225,7 +225,7 @@ export default function AppSidebar() {
         {!collapsed && (
           <div className="overflow-hidden">
             <h1 className="text-sm font-display font-extrabold truncate text-sidebar-foreground">¡Bienvenidos! 🙌</h1>
-            <p className="text-xs font-bold text-sidebar-primary tracking-wide">RH</p>
+            {/*<p className="text-xs font-bold text-sidebar-primary tracking-wide">RH</p>*/}
           </div>
         )}
         <button
