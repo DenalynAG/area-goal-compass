@@ -276,23 +276,23 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
           <>
             {/* Desktop: horizontal table */}
             <div className="hidden lg:block overflow-x-auto">
-              <div className="grid grid-cols-9 min-w-[1200px]">
-                {LEADER_PASS_INFO.map((item, i) => (
+              <div className={`grid min-w-[1200px]`} style={{ gridTemplateColumns: `repeat(${activities.length}, 1fr)` }}>
+                {activities.map((item, i) => (
                   <div
-                    key={`h-${i}`}
+                    key={`h-${item.id}`}
                     className={`p-3 text-xs font-bold text-center border-r border-b last:border-r-0 ${
                       i % 2 === 0
                         ? 'bg-muted text-foreground'
                         : 'bg-accent/80 text-accent-foreground'
                     }`}
                   >
-                    <div className="leading-tight">{item.title}</div>
+                    <div className="leading-tight">{item.name}</div>
                     <div className="font-medium mt-1.5 opacity-80 text-[10px] uppercase tracking-wide">{item.frequency}</div>
                   </div>
                 ))}
-                {LEADER_PASS_INFO.map((item, i) => (
+                {activities.map((item, i) => (
                   <div
-                    key={`d-${i}`}
+                    key={`d-${item.id}`}
                     className={`p-3 text-[11px] leading-relaxed border-r last:border-r-0 ${
                       i % 2 === 0
                         ? 'bg-accent/5 text-foreground'
@@ -306,15 +306,15 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
             </div>
             {/* Mobile/Tablet: vertical cards */}
             <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-0">
-              {LEADER_PASS_INFO.map((item, i) => (
+              {activities.map((item, i) => (
                 <div
-                  key={i}
+                  key={item.id}
                   className={`p-4 border-b sm:odd:border-r ${
                     i % 2 === 0 ? 'bg-accent/5' : 'bg-muted/40'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2 mb-1.5">
-                    <h4 className="text-sm font-bold text-foreground leading-tight">{item.title}</h4>
+                    <h4 className="text-sm font-bold text-foreground leading-tight">{item.name}</h4>
                     <span className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-accent text-accent-foreground">
                       {item.frequency}
                     </span>
