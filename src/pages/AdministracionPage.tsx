@@ -311,6 +311,9 @@ export default function AdministracionPage() {
             </div>
           )}
 
+          {/* Leader Pass */}
+          {activeTab === 'leaderpass' && <LeaderPassAdminSection canManage={canManage} />}
+
           {/* Indicadores de Evaluación */}
           {activeTab === 'evaluacion' && <EvaluacionCriteriaSection canManage={canManage} />}
 
