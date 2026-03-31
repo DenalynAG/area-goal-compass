@@ -15,7 +15,10 @@ import {
 import {
   Plus, Star, MessageSquare, ClipboardCheck, Users2, Calendar, Pencil,
   Search, CheckCircle2, Clock, ChevronDown, ChevronRight, User,
+  ChevronLeft, CalendarDays,
 } from 'lucide-react';
+import { startOfWeek, endOfWeek, addDays, addWeeks, subWeeks, format, isSameDay, parseISO } from 'date-fns';
+import { es } from 'date-fns/locale';
 import type { Tables } from '@/integrations/supabase/types';
 import EvaluacionFormDialog from '@/components/EvaluacionFormDialog';
 
@@ -63,6 +66,7 @@ export default function EvaluacionesPage({ areaFilterName }: EvaluacionesPagePro
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedAreas, setExpandedAreas] = useState<Set<string>>(new Set());
   const [filterType, setFilterType] = useState<string>('all');
+  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
 
   const { data: evaluations = [], isLoading } = useQuery({
     queryKey: ['evaluations'],
@@ -293,6 +297,10 @@ export default function EvaluacionesPage({ areaFilterName }: EvaluacionesPagePro
             <User className="w-4 h-4 mr-1.5" />
             Colaboradores
           </TabsTrigger>
+          <TabsTrigger value="calendar">
+            <CalendarDays className="w-4 h-4 mr-1.5" />
+            Calendario
+          </TabsTrigger>
           <TabsTrigger value="history">
             <Calendar className="w-4 h-4 mr-1.5" />
             Historial
@@ -459,7 +467,143 @@ export default function EvaluacionesPage({ areaFilterName }: EvaluacionesPagePro
           )}
         </TabsContent>
 
-        {/* Tab: Evaluation History */}
+        {/* Tab: Weekly Calendar */}
+        <TabsContent value="calendar" className="space-y-4">
+          {(() => {
+            const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
+            const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+            const today = new Date();
+
+            // Group evaluations by day
+            const evalsByDay = new Map<string, Tables<'evaluations'>[]>();
+            areaFilteredEvaluations.forEach(ev => {
+              const dateKey = ev.evaluation_date;
+              if (!evalsByDay.has(dateKey)) evalsByDay.set(dateKey, []);
+              evalsByDay.get(dateKey)!.push(ev);
+            });
+
+            // Pending collaborators (no evaluations at all)
+            const evaluatedUserIds = new Set(areaFilteredEvaluations.map(e => e.collaborator_user_id));
+            const pendingProfiles = relevantProfiles.filter(p => !evaluatedUserIds.has(p.id));
+
+            return (
+              <>
+                {/* Week navigation */}
+                <div className="flex items-center justify-between">
+                  <Button variant="outline" size="sm" onClick={() => setWeekStart(subWeeks(weekStart, 1))}>
+                    <ChevronLeft className="w-4 h-4 mr-1" />Anterior
+                  </Button>
+                  <div className="text-sm font-semibold">
+                    {format(weekStart, "d MMM", { locale: es })} — {format(weekEnd, "d MMM yyyy", { locale: es })}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}>
+                      Hoy
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setWeekStart(addWeeks(weekStart, 1))}>
+                      Siguiente<ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Weekly grid */}
+                <div className="grid grid-cols-7 gap-2">
+                  {days.map(day => {
+                    const dateKey = format(day, 'yyyy-MM-dd');
+                    const dayEvals = evalsByDay.get(dateKey) || [];
+                    const isToday = isSameDay(day, today);
+                    return (
+                      <div
+                        key={dateKey}
+                        className={`bg-card rounded-xl border p-3 min-h-[180px] ${isToday ? 'ring-2 ring-primary' : ''}`}
+                      >
+                        <div className={`text-center mb-2 ${isToday ? 'text-primary font-bold' : 'text-muted-foreground'}`}>
+                          <div className="text-xs uppercase">{format(day, 'EEE', { locale: es })}</div>
+                          <div className="text-lg font-semibold">{format(day, 'd')}</div>
+                        </div>
+                        {dayEvals.length === 0 ? (
+                          <p className="text-xs text-muted-foreground text-center mt-4">Sin evaluaciones</p>
+                        ) : (
+                          <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
+                            {dayEvals.map(ev => (
+                              <button
+                                key={ev.id}
+                                onClick={() => handleEdit(ev)}
+                                className="w-full text-left p-1.5 rounded-md bg-primary/10 hover:bg-primary/20 transition-colors"
+                              >
+                                <div className="text-xs font-medium truncate">{getCollaboratorName(ev.collaborator_user_id)}</div>
+                                <div className="text-[10px] text-muted-foreground truncate">{typeLabels[ev.type as EvalType]}</div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Pending collaborators */}
+                <div className="bg-card rounded-xl border">
+                  <div className="p-4 border-b flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-yellow-600" />
+                    <span className="font-semibold text-sm">Colaboradores Pendientes por Evaluar</span>
+                    <Badge variant="outline" className="ml-auto">{pendingProfiles.length}</Badge>
+                  </div>
+                  {pendingProfiles.length === 0 ? (
+                    <div className="p-4 text-center text-sm text-muted-foreground">Todos los colaboradores han sido evaluados</div>
+                  ) : (
+                    <div className="divide-y max-h-[300px] overflow-y-auto">
+                      {pendingProfiles.map(p => {
+                        const membership = memberships.find(m => m.user_id === p.id);
+                        const area = membership ? areas.find(a => a.id === membership.area_id) : null;
+                        const subarea = membership?.subarea_id ? subareas.find(s => s.id === membership.subarea_id) : null;
+                        return (
+                          <div key={p.id} className="flex items-center justify-between px-4 py-2.5">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-muted-foreground shrink-0">
+                                {p.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                              </div>
+                              <div>
+                                <div className="text-sm font-medium">{p.name}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {area?.name || '—'}{subarea ? ` / ${subarea.name}` : ''} · {p.position || 'Sin cargo'}
+                                </div>
+                              </div>
+                            </div>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button size="sm" variant="outline">
+                                  <Plus className="w-3.5 h-3.5 mr-1" />Evaluar
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-56 p-1" align="end">
+                                <p className="px-3 py-2 text-xs font-medium text-muted-foreground">Tipo de Evaluación</p>
+                                {evalTypes.map(t => {
+                                  const Icon = typeIcons[t];
+                                  return (
+                                    <button
+                                      key={t}
+                                      onClick={() => handleEvaluateCollaborator(p.id, t)}
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors text-left"
+                                    >
+                                      <Icon className="w-4 h-4 text-primary shrink-0" />
+                                      <span className="flex-1">{typeLabels[t]}</span>
+                                    </button>
+                                  );
+                                })}
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </>
+            );
+          })()}
+        </TabsContent>
+
         <TabsContent value="history" className="space-y-4">
           {/* Filters */}
           <div className="flex items-center gap-2 flex-wrap">
