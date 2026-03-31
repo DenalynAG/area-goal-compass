@@ -334,6 +334,7 @@ export type Database = {
           planned_date: string
           responsible_user_id: string
           status: Database["public"]["Enums"]["audit_plan_status"]
+          subarea_id: string | null
           title: string
           updated_at: string
         }
@@ -346,6 +347,7 @@ export type Database = {
           planned_date?: string
           responsible_user_id: string
           status?: Database["public"]["Enums"]["audit_plan_status"]
+          subarea_id?: string | null
           title: string
           updated_at?: string
         }
@@ -358,6 +360,7 @@ export type Database = {
           planned_date?: string
           responsible_user_id?: string
           status?: Database["public"]["Enums"]["audit_plan_status"]
+          subarea_id?: string | null
           title?: string
           updated_at?: string
         }
@@ -367,6 +370,13 @@ export type Database = {
             columns: ["area_id"]
             isOneToOne: false
             referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_plans_subarea_id_fkey"
+            columns: ["subarea_id"]
+            isOneToOne: false
+            referencedRelation: "subareas"
             referencedColumns: ["id"]
           },
         ]

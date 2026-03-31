@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAreas, useProfiles, getProfileName, getAreaNameFromList, useEvidences } from "@/hooks/useSupabaseData";
+import { useAreas, useSubareas, useProfiles, getProfileName, getAreaNameFromList, getSubareaNameFromList, useEvidences } from "@/hooks/useSupabaseData";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -123,6 +123,7 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
   const { data: findings = [] } = useAuditFindings();
   const { data: comments = [] } = useAuditComments();
   const { data: areas = [] } = useAreas();
+  const { data: subareas = [] } = useSubareas();
   const { data: profiles = [] } = useProfiles();
 
   const canManage = isSuperAdmin || hasRole("admin_area");
@@ -159,19 +160,22 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
   const [expandedPlanId, setExpandedPlanId] = useState<string | null>(null);
 
   // ─── Plan CRUD ───
-  const [planForm, setPlanForm] = useState({ title: "", description: "", area_id: "", responsible_user_id: "", auditor_user_id: "", planned_date: "", status: "pendiente" as "pendiente" | "en_proceso" | "cumple" | "no_cumple" | "pendiente_cierre" });
+  const [planForm, setPlanForm] = useState({ title: "", description: "", area_id: "", subarea_id: "", responsible_user_id: "", auditor_user_id: "", planned_date: "", status: "pendiente" as "pendiente" | "en_proceso" | "cumple" | "no_cumple" | "pendiente_cierre" });
+
+  const subareasForPlanArea = useMemo(() => subareas.filter(s => s.area_id === planForm.area_id && s.status === 'activo'), [subareas, planForm.area_id]);
 
   const openPlanDialog = (plan?: AuditPlan) => {
     if (plan) {
       setEditingPlan(plan);
       setPlanForm({
         title: plan.title, description: plan.description ?? "", area_id: plan.area_id,
+        subarea_id: (plan as any).subarea_id ?? "",
         responsible_user_id: plan.responsible_user_id, auditor_user_id: plan.auditor_user_id,
         planned_date: plan.planned_date, status: plan.status as typeof planForm.status,
       });
     } else {
       setEditingPlan(null);
-      setPlanForm({ title: "", description: "", area_id: "", responsible_user_id: "", auditor_user_id: "", planned_date: format(new Date(), "yyyy-MM-dd"), status: "pendiente" as const });
+      setPlanForm({ title: "", description: "", area_id: "", subarea_id: "", responsible_user_id: "", auditor_user_id: "", planned_date: format(new Date(), "yyyy-MM-dd"), status: "pendiente" as const });
     }
     setPlanDialogOpen(true);
   };
@@ -180,7 +184,7 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
     if (!planForm.title.trim() || !planForm.area_id || !planForm.responsible_user_id || !planForm.auditor_user_id) {
       toast.error("Completa todos los campos obligatorios"); return;
     }
-    const payload = { ...planForm };
+    const payload = { ...planForm, subarea_id: planForm.subarea_id || null };
     const { error } = editingPlan
       ? await supabase.from("audit_plans").update(payload).eq("id", editingPlan.id)
       : await supabase.from("audit_plans").insert(payload);
@@ -690,11 +694,21 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
             <div>
               <Label>Área *</Label>
               <SearchableSelect
-                value={planForm.area_id} onValueChange={(v) => setPlanForm({ ...planForm, area_id: v })}
+                value={planForm.area_id} onValueChange={(v) => setPlanForm({ ...planForm, area_id: v, subarea_id: "" })}
                 options={areas.map((a) => ({ value: a.id, label: a.name }))}
                 placeholder="Seleccionar área" searchPlaceholder="Buscar área…"
               />
             </div>
+            {subareasForPlanArea.length > 0 && (
+              <div>
+                <Label>Subárea</Label>
+                <SearchableSelect
+                  value={planForm.subarea_id} onValueChange={(v) => setPlanForm({ ...planForm, subarea_id: v })}
+                  options={subareasForPlanArea.map((s) => ({ value: s.id, label: s.name }))}
+                  placeholder="Seleccionar subárea (opcional)" searchPlaceholder="Buscar subárea…"
+                />
+              </div>
+            )}
             <div>
               <Label>Responsable (Líder de Área) *</Label>
               <SearchableSelect

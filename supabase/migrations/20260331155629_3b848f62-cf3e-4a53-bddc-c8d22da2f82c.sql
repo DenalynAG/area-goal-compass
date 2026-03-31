@@ -1,0 +1,1 @@
+ALTER TABLE public.audit_plans ADD COLUMN subarea_id uuid REFERENCES public.subareas(id) ON DELETE SET NULL DEFAULT NULL;
