@@ -66,6 +66,7 @@ export default function EvaluacionesPage({ areaFilterName }: EvaluacionesPagePro
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedAreas, setExpandedAreas] = useState<Set<string>>(new Set());
   const [filterType, setFilterType] = useState<string>('all');
+  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
 
   const { data: evaluations = [], isLoading } = useQuery({
     queryKey: ['evaluations'],
