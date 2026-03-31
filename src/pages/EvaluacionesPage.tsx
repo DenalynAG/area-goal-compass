@@ -485,6 +485,7 @@ export default function EvaluacionesPage({ areaFilterName }: EvaluacionesPagePro
             // Pending collaborators (no evaluations at all)
             const evaluatedUserIds = new Set(areaFilteredEvaluations.map(e => e.collaborator_user_id));
             const pendingProfiles = relevantProfiles.filter(p => !evaluatedUserIds.has(p.id));
+            const evaluatedProfiles = relevantProfiles.filter(p => evaluatedUserIds.has(p.id));
 
             return (
               <>
@@ -506,40 +507,99 @@ export default function EvaluacionesPage({ areaFilterName }: EvaluacionesPagePro
                   </div>
                 </div>
 
-                {/* Weekly grid */}
+                {/* Weekly grid with counters only */}
                 <div className="grid grid-cols-7 gap-2">
                   {days.map(day => {
                     const dateKey = format(day, 'yyyy-MM-dd');
                     const dayEvals = evalsByDay.get(dateKey) || [];
                     const isToday = isSameDay(day, today);
+                    const dayEvaluatedCount = dayEvals.length;
                     return (
                       <div
                         key={dateKey}
-                        className={`bg-card rounded-xl border p-3 min-h-[180px] ${isToday ? 'ring-2 ring-primary' : ''}`}
+                        className={`bg-card rounded-xl border p-3 min-h-[120px] ${isToday ? 'ring-2 ring-primary' : ''}`}
                       >
                         <div className={`text-center mb-2 ${isToday ? 'text-primary font-bold' : 'text-muted-foreground'}`}>
                           <div className="text-xs uppercase">{format(day, 'EEE', { locale: es })}</div>
                           <div className="text-lg font-semibold">{format(day, 'd')}</div>
                         </div>
-                        {dayEvals.length === 0 ? (
-                          <p className="text-xs text-muted-foreground text-center mt-4">Sin evaluaciones</p>
+                        {dayEvaluatedCount === 0 ? (
+                          <p className="text-xs text-muted-foreground text-center mt-2">Sin evaluaciones</p>
                         ) : (
-                          <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
-                            {dayEvals.map(ev => (
-                              <button
-                                key={ev.id}
-                                onClick={() => handleEdit(ev)}
-                                className="w-full text-left p-1.5 rounded-md bg-primary/10 hover:bg-primary/20 transition-colors"
-                              >
-                                <div className="text-xs font-medium truncate">{getCollaboratorName(ev.collaborator_user_id)}</div>
-                                <div className="text-[10px] text-muted-foreground truncate">{typeLabels[ev.type as EvalType]}</div>
-                              </button>
-                            ))}
+                          <div className="flex flex-col items-center gap-1 mt-2">
+                            <Badge variant="outline" className="bg-green-500/10 text-green-700 border-green-200 text-xs">
+                              <CheckCircle2 className="w-3 h-3 mr-1" />{dayEvaluatedCount} evaluado{dayEvaluatedCount > 1 ? 's' : ''}
+                            </Badge>
                           </div>
                         )}
                       </div>
                     );
                   })}
+                </div>
+
+                {/* Counters summary */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-card rounded-xl border p-4 flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-green-500/10">
+                      <CheckCircle2 className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{evaluatedUserIds.size}</p>
+                      <p className="text-xs text-muted-foreground">Colaboradores Evaluados</p>
+                    </div>
+                  </div>
+                  <div className="bg-card rounded-xl border p-4 flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-yellow-500/10">
+                      <Clock className="w-5 h-5 text-yellow-600" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{pendingProfiles.length}</p>
+                      <p className="text-xs text-muted-foreground">Colaboradores Pendientes</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Evaluated collaborators */}
+                <div className="bg-card rounded-xl border">
+                  <div className="p-4 border-b flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    <span className="font-semibold text-sm">Colaboradores Evaluados</span>
+                    <Badge variant="outline" className="ml-auto bg-green-500/10 text-green-700 border-green-200">{evaluatedProfiles.length}</Badge>
+                  </div>
+                  {evaluatedProfiles.length === 0 ? (
+                    <div className="p-4 text-center text-sm text-muted-foreground">No hay colaboradores evaluados</div>
+                  ) : (
+                    <div className="divide-y max-h-[300px] overflow-y-auto">
+                      {evaluatedProfiles.map(p => {
+                        const membership = memberships.find(m => m.user_id === p.id);
+                        const area = membership ? areas.find(a => a.id === membership.area_id) : null;
+                        const subarea = membership?.subarea_id ? subareas.find(s => s.id === membership.subarea_id) : null;
+                        const userEvals = areaFilteredEvaluations.filter(e => e.collaborator_user_id === p.id);
+                        return (
+                          <div key={p.id} className="flex items-center justify-between px-4 py-2.5">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center text-xs font-medium text-green-700 shrink-0">
+                                {p.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                              </div>
+                              <div>
+                                <div className="text-sm font-medium">{p.name}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {area?.name || '—'}{subarea ? ` / ${subarea.name}` : ''} · {p.position || 'Sin cargo'}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              {userEvals.map(ev => (
+                                <Badge key={ev.id} variant="outline" className="text-[10px] bg-green-500/10 text-green-700 border-green-200">
+                                  {typeLabels[ev.type as EvalType]}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 {/* Pending collaborators */}
