@@ -297,6 +297,10 @@ export default function EvaluacionesPage({ areaFilterName }: EvaluacionesPagePro
             <User className="w-4 h-4 mr-1.5" />
             Colaboradores
           </TabsTrigger>
+          <TabsTrigger value="calendar">
+            <CalendarDays className="w-4 h-4 mr-1.5" />
+            Calendario
+          </TabsTrigger>
           <TabsTrigger value="history">
             <Calendar className="w-4 h-4 mr-1.5" />
             Historial
