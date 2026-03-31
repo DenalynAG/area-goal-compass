@@ -123,6 +123,7 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
   const { data: findings = [] } = useAuditFindings();
   const { data: comments = [] } = useAuditComments();
   const { data: areas = [] } = useAreas();
+  const { data: subareas = [] } = useSubareas();
   const { data: profiles = [] } = useProfiles();
 
   const canManage = isSuperAdmin || hasRole("admin_area");
