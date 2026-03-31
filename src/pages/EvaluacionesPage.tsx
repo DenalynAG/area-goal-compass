@@ -235,12 +235,9 @@ export default function EvaluacionesPage({ areaFilterName }: EvaluacionesPagePro
 
   return (
     <div className="animate-fade-in space-y-6">
-      <div className="flex items-center justify-between page-header">
-        <div>
-          <h1 className="page-title">Evaluaciones</h1>
-          <p className="page-subtitle">Gestión de evaluaciones por colaborador</p>
-        </div>
-        <Button onClick={handleNew}><Plus className="w-4 h-4 mr-2" />Nueva Evaluación</Button>
+      <div className="page-header">
+        <h1 className="page-title">Evaluaciones</h1>
+        <p className="page-subtitle">Gestión de evaluaciones por colaborador</p>
       </div>
 
       <EvaluacionFormDialog
@@ -250,46 +247,6 @@ export default function EvaluacionesPage({ areaFilterName }: EvaluacionesPagePro
         preselectedCollaboratorId={preselectedCollaborator}
         preselectedType={preselectedType}
       />
-
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-card rounded-xl border p-4 flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-muted">
-            <Users2 className="w-5 h-5 text-primary" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold">{totalCollabs}</p>
-            <p className="text-xs text-muted-foreground">Total Colaboradores</p>
-          </div>
-        </div>
-        <div className="bg-card rounded-xl border p-4 flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-green-500/10">
-            <CheckCircle2 className="w-5 h-5 text-green-600" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold">{evaluatedCollabs}</p>
-            <p className="text-xs text-muted-foreground">Evaluados</p>
-          </div>
-        </div>
-        <div className="bg-card rounded-xl border p-4 flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-yellow-500/10">
-            <Clock className="w-5 h-5 text-yellow-600" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold">{pendingCollabs}</p>
-            <p className="text-xs text-muted-foreground">Pendientes</p>
-          </div>
-        </div>
-        <div className="bg-card rounded-xl border p-4 flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-muted">
-            <ClipboardCheck className="w-5 h-5 text-primary" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold">{areaFilteredEvaluations.length}</p>
-            <p className="text-xs text-muted-foreground">Total Evaluaciones</p>
-          </div>
-        </div>
-      </div>
 
       <Tabs defaultValue="collaborators" className="space-y-4">
         <TabsList>
