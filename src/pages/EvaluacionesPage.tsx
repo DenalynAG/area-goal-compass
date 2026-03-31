@@ -485,6 +485,7 @@ export default function EvaluacionesPage({ areaFilterName }: EvaluacionesPagePro
             // Pending collaborators (no evaluations at all)
             const evaluatedUserIds = new Set(areaFilteredEvaluations.map(e => e.collaborator_user_id));
             const pendingProfiles = relevantProfiles.filter(p => !evaluatedUserIds.has(p.id));
+            const evaluatedProfiles = relevantProfiles.filter(p => evaluatedUserIds.has(p.id));
 
             return (
               <>
