@@ -694,11 +694,21 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
             <div>
               <Label>Área *</Label>
               <SearchableSelect
-                value={planForm.area_id} onValueChange={(v) => setPlanForm({ ...planForm, area_id: v })}
+                value={planForm.area_id} onValueChange={(v) => setPlanForm({ ...planForm, area_id: v, subarea_id: "" })}
                 options={areas.map((a) => ({ value: a.id, label: a.name }))}
                 placeholder="Seleccionar área" searchPlaceholder="Buscar área…"
               />
             </div>
+            {subareasForPlanArea.length > 0 && (
+              <div>
+                <Label>Subárea</Label>
+                <SearchableSelect
+                  value={planForm.subarea_id} onValueChange={(v) => setPlanForm({ ...planForm, subarea_id: v })}
+                  options={subareasForPlanArea.map((s) => ({ value: s.id, label: s.name }))}
+                  placeholder="Seleccionar subárea (opcional)" searchPlaceholder="Buscar subárea…"
+                />
+              </div>
+            )}
             <div>
               <Label>Responsable (Líder de Área) *</Label>
               <SearchableSelect
