@@ -602,6 +602,8 @@ export default function EvaluacionesPage({ areaFilterName }: EvaluacionesPagePro
               </>
             );
           })()}
+        </TabsContent>
+
         <TabsContent value="history" className="space-y-4">
           {/* Filters */}
           <div className="flex items-center gap-2 flex-wrap">
