@@ -15,7 +15,10 @@ import {
 import {
   Plus, Star, MessageSquare, ClipboardCheck, Users2, Calendar, Pencil,
   Search, CheckCircle2, Clock, ChevronDown, ChevronRight, User,
+  ChevronLeft, CalendarDays,
 } from 'lucide-react';
+import { startOfWeek, endOfWeek, addDays, addWeeks, subWeeks, format, isSameDay, parseISO } from 'date-fns';
+import { es } from 'date-fns/locale';
 import type { Tables } from '@/integrations/supabase/types';
 import EvaluacionFormDialog from '@/components/EvaluacionFormDialog';
 
