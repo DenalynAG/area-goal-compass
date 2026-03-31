@@ -67,6 +67,7 @@ export default function EvaluacionesPage({ areaFilterName }: EvaluacionesPagePro
   const [expandedAreas, setExpandedAreas] = useState<Set<string>>(new Set());
   const [filterType, setFilterType] = useState<string>('all');
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
+  const [selectedCalendarDay, setSelectedCalendarDay] = useState<string | null>(null);
 
   const { data: evaluations = [], isLoading } = useQuery({
     queryKey: ['evaluations'],
@@ -471,10 +472,12 @@ export default function EvaluacionesPage({ areaFilterName }: EvaluacionesPagePro
                     const dayEvals = evalsByDay.get(dateKey) || [];
                     const isToday = isSameDay(day, today);
                     const dayEvaluatedCount = dayEvals.length;
+                    const isSelected = selectedCalendarDay === dateKey;
                     return (
-                      <div
+                      <button
                         key={dateKey}
-                        className={`bg-card rounded-xl border p-3 min-h-[120px] ${isToday ? 'ring-2 ring-primary' : ''}`}
+                        onClick={() => setSelectedCalendarDay(isSelected ? null : dateKey)}
+                        className={`bg-card rounded-xl border p-3 min-h-[120px] text-left transition-all hover:shadow-md ${isToday ? 'ring-2 ring-primary' : ''} ${isSelected ? 'ring-2 ring-accent-foreground bg-accent/30' : ''}`}
                       >
                         <div className={`text-center mb-2 ${isToday ? 'text-primary font-bold' : 'text-muted-foreground'}`}>
                           <div className="text-xs uppercase">{format(day, 'EEE', { locale: es })}</div>
@@ -489,10 +492,136 @@ export default function EvaluacionesPage({ areaFilterName }: EvaluacionesPagePro
                             </Badge>
                           </div>
                         )}
-                      </div>
+                      </button>
                     );
                   })}
                 </div>
+
+                {/* Selected day panel - evaluate collaborators for this day */}
+                {selectedCalendarDay && (() => {
+                  const selectedDate = parseISO(selectedCalendarDay);
+                  const dayEvals = evalsByDay.get(selectedCalendarDay) || [];
+                  const dayEvaluatedUserIds = new Set(dayEvals.map(e => e.collaborator_user_id));
+                  const dayPending = relevantProfiles.filter(p => !dayEvaluatedUserIds.has(p.id));
+                  const dayCompleted = relevantProfiles.filter(p => dayEvaluatedUserIds.has(p.id));
+
+                  return (
+                    <div className="bg-card rounded-xl border">
+                      <div className="p-4 border-b flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <CalendarDays className="w-4 h-4 text-primary" />
+                          <span className="font-semibold text-sm">
+                            {format(selectedDate, "EEEE d 'de' MMMM yyyy", { locale: es })}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="bg-green-500/10 text-green-700 border-green-200 text-xs">
+                            <CheckCircle2 className="w-3 h-3 mr-1" />{dayCompleted.length} evaluado{dayCompleted.length !== 1 ? 's' : ''}
+                          </Badge>
+                          <Badge variant="outline" className="bg-yellow-500/10 text-yellow-700 border-yellow-200 text-xs">
+                            <Clock className="w-3 h-3 mr-1" />{dayPending.length} pendiente{dayPending.length !== 1 ? 's' : ''}
+                          </Badge>
+                          <Button size="sm" variant="ghost" onClick={() => setSelectedCalendarDay(null)}>✕</Button>
+                        </div>
+                      </div>
+
+                      {/* Pending for this day */}
+                      {dayPending.length > 0 && (
+                        <div>
+                          <div className="px-4 py-2 bg-yellow-500/5 border-b">
+                            <span className="text-xs font-medium text-yellow-700 uppercase tracking-wider">Pendientes por evaluar</span>
+                          </div>
+                          <div className="divide-y max-h-[250px] overflow-y-auto">
+                            {dayPending.map(p => {
+                              const membership = memberships.find(m => m.user_id === p.id);
+                              const area = membership ? areas.find(a => a.id === membership.area_id) : null;
+                              const subarea = membership?.subarea_id ? subareas.find(s => s.id === membership.subarea_id) : null;
+                              return (
+                                <div key={p.id} className="flex items-center justify-between px-4 py-2.5">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-muted-foreground shrink-0">
+                                      {p.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                                    </div>
+                                    <div>
+                                      <div className="text-sm font-medium">{p.name}</div>
+                                      <div className="text-xs text-muted-foreground">
+                                        {area?.name || '—'}{subarea ? ` / ${subarea.name}` : ''} · {p.position || 'Sin cargo'}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <Button size="sm" variant="outline">
+                                        <Plus className="w-3.5 h-3.5 mr-1" />Evaluar
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-56 p-1" align="end">
+                                      <p className="px-3 py-2 text-xs font-medium text-muted-foreground">Tipo de Evaluación</p>
+                                      {evalTypes.map(t => {
+                                        const Icon = typeIcons[t];
+                                        return (
+                                          <button
+                                            key={t}
+                                            onClick={() => handleEvaluateCollaborator(p.id, t)}
+                                            className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors text-left"
+                                          >
+                                            <Icon className="w-4 h-4 text-primary shrink-0" />
+                                            <span className="flex-1">{typeLabels[t]}</span>
+                                          </button>
+                                        );
+                                      })}
+                                    </PopoverContent>
+                                  </Popover>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Completed for this day */}
+                      {dayCompleted.length > 0 && (
+                        <div>
+                          <div className="px-4 py-2 bg-green-500/5 border-b border-t">
+                            <span className="text-xs font-medium text-green-700 uppercase tracking-wider">Evaluados este día</span>
+                          </div>
+                          <div className="divide-y max-h-[200px] overflow-y-auto">
+                            {dayCompleted.map(p => {
+                              const membership = memberships.find(m => m.user_id === p.id);
+                              const area = membership ? areas.find(a => a.id === membership.area_id) : null;
+                              const subarea = membership?.subarea_id ? subareas.find(s => s.id === membership.subarea_id) : null;
+                              const pEvals = dayEvals.filter(e => e.collaborator_user_id === p.id);
+                              return (
+                                <div key={p.id} className="flex items-center justify-between px-4 py-2.5">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center text-xs font-medium text-green-700 shrink-0">
+                                      {p.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                                    </div>
+                                    <div>
+                                      <div className="text-sm font-medium">{p.name}</div>
+                                      <div className="text-xs text-muted-foreground">
+                                        {area?.name || '—'}{subarea ? ` / ${subarea.name}` : ''} · {p.position || 'Sin cargo'}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-1.5">
+                                    {pEvals.map(ev => (
+                                      <button key={ev.id} onClick={() => handleEdit(ev)}>
+                                        <Badge variant="outline" className="text-[10px] bg-green-500/10 text-green-700 border-green-200 cursor-pointer hover:bg-green-500/20">
+                                          {typeLabels[ev.type as EvalType]}
+                                        </Badge>
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 {/* Counters summary */}
                 <div className="grid grid-cols-2 gap-4">
