@@ -184,7 +184,7 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
     if (!planForm.title.trim() || !planForm.area_id || !planForm.responsible_user_id || !planForm.auditor_user_id) {
       toast.error("Completa todos los campos obligatorios"); return;
     }
-    const payload = { ...planForm };
+    const payload = { ...planForm, subarea_id: planForm.subarea_id || null };
     const { error } = editingPlan
       ? await supabase.from("audit_plans").update(payload).eq("id", editingPlan.id)
       : await supabase.from("audit_plans").insert(payload);
