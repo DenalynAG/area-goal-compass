@@ -35,6 +35,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
   const [editingMembership, setEditingMembership] = useState<Tables<'memberships'> | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Tables<'profiles'> | null>(null);
   const [detailProfile, setDetailProfile] = useState<Tables<'profiles'> | null>(null);
+  const [importReport, setImportReport] = useState<{ success: { row: number; name: string; action: string }[]; errors: { row: number; name: string; reason: string }[] } | null>(null);
 
   const getRole = (userId: string): Enums<'app_role'> | null => userRoles.find(r => r.user_id === userId)?.role ?? null;
   const getMembership = (userId: string) => memberships.find(m => m.user_id === userId);
@@ -109,14 +110,18 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
 
       let imported = 0;
       let errors = 0;
+      const reportSuccess: { row: number; name: string; action: string }[] = [];
+      const reportErrors: { row: number; name: string; reason: string }[] = [];
 
-      for (const row of rows) {
+      for (let rowIdx = 0; rowIdx < rows.length; rowIdx++) {
+        const row = rows[rowIdx];
+        const rowNum = rowIdx + 2; // Excel row (header = 1)
         try {
           const rawName = getRowValue(row, ['Nombre', 'Nombre completo', 'Nombre Completo']);
           const name = rawName ? toTitleCase(rawName.toString().trim()) : '';
           const emailValue = getRowValue(row, ['Correo', 'Email', 'Correo Corporativo']);
           const email = emailValue ? emailValue.toString().trim().toLowerCase() : '';
-          if (!name) { errors++; continue; }
+          if (!name) { errors++; reportErrors.push({ row: rowNum, name: '(vacío)', reason: 'Nombre vacío o no encontrado' }); continue; }
 
           const identificationValue = getRowValue(row, ['Cedula', 'Cédula', 'Identificación', 'Identificacion']);
           const identification = identificationValue == null
@@ -131,6 +136,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
             ?? null;
 
           let userId = matchedProfile?.id ?? '';
+          const isUpdate = !!matchedProfile;
 
           if (!userId) {
             if (email && isSuperAdmin) {
@@ -140,7 +146,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
                 body: JSON.stringify({ email, name }),
               });
               const result = await res.json().catch(() => ({}));
-              if (!res.ok) { errors++; continue; }
+              if (!res.ok) { errors++; reportErrors.push({ row: rowNum, name, reason: `Error creando usuario: ${result.error || res.statusText}` }); continue; }
               userId = result.user_id;
             } else {
               userId = crypto.randomUUID();
@@ -241,7 +247,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
           };
 
           const { error: profileError } = await supabase.from('profiles').upsert(profilePayload);
-          if (profileError) { errors++; continue; }
+          if (profileError) { errors++; reportErrors.push({ row: rowNum, name, reason: `Error perfil: ${profileError.message}` }); continue; }
 
           matchedProfile = { ...(matchedProfile ?? {}), ...profilePayload } as Tables<'profiles'>;
           profileByEmail.set(resolvedEmail.toLowerCase(), matchedProfile);
@@ -263,7 +269,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
                   .select('*')
                   .maybeSingle();
 
-                if (membershipError) { errors++; continue; }
+                if (membershipError) { errors++; reportErrors.push({ row: rowNum, name, reason: `Error membresía: ${membershipError.message}` }); continue; }
                 membershipByUserId.set(userId, updatedMembership ?? { ...existingMembership, area_id: foundArea.id, subarea_id: foundSub?.id || null });
               } else {
                 const { data: insertedMembership, error: membershipError } = await supabase
@@ -272,7 +278,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
                   .select('*')
                   .maybeSingle();
 
-                if (membershipError) { errors++; continue; }
+                if (membershipError) { errors++; reportErrors.push({ row: rowNum, name, reason: `Error membresía: ${membershipError.message}` }); continue; }
                 if (insertedMembership) membershipByUserId.set(userId, insertedMembership);
               }
             }
@@ -301,7 +307,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
                 .select('*')
                 .maybeSingle();
 
-              if (roleError) { errors++; continue; }
+              if (roleError) { errors++; reportErrors.push({ row: rowNum, name, reason: `Error rol: ${roleError.message}` }); continue; }
               roleByUserId.set(userId, updatedRole ?? { ...existingRole, role: mappedRole });
             } else {
               const { data: insertedRole, error: roleError } = await supabase
@@ -310,18 +316,20 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
                 .select('*')
                 .maybeSingle();
 
-              if (roleError) { errors++; continue; }
+              if (roleError) { errors++; reportErrors.push({ row: rowNum, name, reason: `Error rol: ${roleError.message}` }); continue; }
               if (insertedRole) roleByUserId.set(userId, insertedRole);
             }
           }
 
           imported++;
+          reportSuccess.push({ row: rowNum, name, action: isUpdate ? 'Actualizado' : 'Creado' });
         } catch {
           errors++;
+          reportErrors.push({ row: rowNum, name: `Fila ${rowNum}`, reason: 'Error inesperado' });
         }
       }
 
-      toast.success(`Importación completada: ${imported} colaboradores procesados${errors > 0 ? `, ${errors} errores` : ''}`);
+      setImportReport({ success: reportSuccess, errors: reportErrors });
       qc.invalidateQueries({ queryKey: ['profiles'] });
       qc.invalidateQueries({ queryKey: ['memberships'] });
       qc.invalidateQueries({ queryKey: ['user_roles'] });
