@@ -133,6 +133,16 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
           }
         }
 
+        // Helper to convert ALL CAPS to Title Case
+        const toTitleCase = (s: string) => s.replace(/\b\w+/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+
+        // Title case text fields that come in ALL CAPS
+        for (const tf of ['position', 'lugar_nacimiento', 'jefe_inmediato', 'municipio', 'direccion', 'entidad_salud', 'fondo_pensiones', 'fondo_cesantias', 'arl']) {
+          if (profileUpdate[tf] && typeof profileUpdate[tf] === 'string') {
+            profileUpdate[tf] = toTitleCase(profileUpdate[tf]);
+          }
+        }
+
         // Normalize sexo
         if (profileUpdate.sexo) {
           profileUpdate.sexo = profileUpdate.sexo.toLowerCase();
