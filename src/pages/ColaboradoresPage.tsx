@@ -3,7 +3,7 @@ import { useProfiles, useMemberships, useUserRoles, useAreas, useSubareas, getAr
 import { getRoleLabel } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, Mail, Phone, Edit, Upload, Trash2 } from 'lucide-react';
+import { Plus, Search, Edit, Upload, Trash2, Eye } from 'lucide-react';
 import type { Enums, Tables } from '@/integrations/supabase/types';
 import ColaboradorFormDialog from '@/components/ColaboradorFormDialog';
 import { supabase } from '@/integrations/supabase/client';
