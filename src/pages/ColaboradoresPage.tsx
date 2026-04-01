@@ -122,6 +122,9 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
           // Handle Date objects from xlsx (date cells)
           if (rawVal instanceof Date) {
             profileUpdate[field] = rawVal.toISOString().split('T')[0];
+          } else if (typeof rawVal === 'number') {
+            // Numbers like Cedula or Teléfono – keep as string without decimals
+            profileUpdate[field] = String(Math.round(rawVal));
           } else {
             const str = rawVal.toString().trim();
             if (str) profileUpdate[field] = str;
