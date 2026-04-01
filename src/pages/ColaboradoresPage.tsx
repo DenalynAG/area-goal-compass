@@ -117,8 +117,15 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
         ];
 
         for (const [keys, field] of fieldMap) {
-          const val = keys.reduce<string>((acc, k) => acc || (row[k] ?? '').toString().trim(), '');
-          if (val) profileUpdate[field] = val;
+          const rawVal = keys.reduce<any>((acc, k) => acc || row[k], undefined);
+          if (rawVal == null) continue;
+          // Handle Date objects from xlsx (date cells)
+          if (rawVal instanceof Date) {
+            profileUpdate[field] = rawVal.toISOString().split('T')[0];
+          } else {
+            const str = rawVal.toString().trim();
+            if (str) profileUpdate[field] = str;
+          }
         }
 
         // Normalize sexo
