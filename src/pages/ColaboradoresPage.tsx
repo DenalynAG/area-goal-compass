@@ -48,7 +48,15 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
       const data = await file.arrayBuffer();
       const wb = XLSX.read(data);
       const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows: any[] = XLSX.utils.sheet_to_json(ws);
+      const rawRows: any[] = XLSX.utils.sheet_to_json(ws);
+      // Trim header keys (some Excel files have trailing spaces)
+      const rows = rawRows.map(row => {
+        const clean: any = {};
+        for (const [k, v] of Object.entries(row)) {
+          clean[k.trim()] = v;
+        }
+        return clean;
+      });
 
       if (rows.length === 0) { toast.error('El archivo está vacío'); setImporting(false); return; }
 
