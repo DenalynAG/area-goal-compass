@@ -6,6 +6,23 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+async function findExistingUserByEmail(serviceClient: any, email: string) {
+  const normalizedEmail = email.trim().toLowerCase();
+  const perPage = 200;
+
+  for (let page = 1; page <= 25; page++) {
+    const { data, error } = await serviceClient.auth.admin.listUsers({ page, perPage });
+    if (error) throw error;
+
+    const users = data?.users ?? [];
+    const existingUser = users.find((user: any) => user.email?.toLowerCase() === normalizedEmail);
+    if (existingUser) return existingUser;
+    if (users.length < perPage) break;
+  }
+
+  return null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -66,9 +83,11 @@ Deno.serve(async (req) => {
       });
     }
 
+    const normalizedEmail = email.toString().trim().toLowerCase();
+
     // Create user via admin API (won't affect caller's session)
     const { data: newUser, error: createError } = await serviceClient.auth.admin.createUser({
-      email,
+      email: normalizedEmail,
       email_confirm: true,
       user_metadata: { name },
     });
@@ -76,8 +95,7 @@ Deno.serve(async (req) => {
     if (createError) {
       // If user already exists, look up their ID and return it
       if (createError.message?.includes('already been registered') || createError.message?.includes('already exists')) {
-        const { data: existingUsers } = await serviceClient.auth.admin.listUsers();
-        const existing = existingUsers?.users?.find((u: any) => u.email === email);
+        const existing = await findExistingUserByEmail(serviceClient, normalizedEmail);
         if (existing) {
           return new Response(
             JSON.stringify({ user_id: existing.id, message: "User already exists", existing: true }),
@@ -94,7 +112,7 @@ Deno.serve(async (req) => {
     // Generate magic link so user can set password
     const { data: linkData } = await serviceClient.auth.admin.generateLink({
       type: "magiclink",
-      email,
+      email: normalizedEmail,
     });
 
     return new Response(
