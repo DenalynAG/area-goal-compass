@@ -166,11 +166,10 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
           else if (ne.includes('primar')) profileUpdate.nivel_educativo = 'basica_primaria';
         }
 
-        // Parse dates (handle MM/DD/YY or various formats)
+        // Parse dates that are still strings (Date objects already handled above)
         for (const dateField of ['fecha_ingreso', 'birthday']) {
-          if (profileUpdate[dateField]) {
-            const raw = profileUpdate[dateField];
-            const parsed = new Date(raw);
+          if (profileUpdate[dateField] && !/^\d{4}-\d{2}-\d{2}$/.test(profileUpdate[dateField])) {
+            const parsed = new Date(profileUpdate[dateField]);
             if (!isNaN(parsed.getTime())) {
               profileUpdate[dateField] = parsed.toISOString().split('T')[0];
             }
