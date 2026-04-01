@@ -46,7 +46,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
     setImporting(true);
     try {
       const data = await file.arrayBuffer();
-      const wb = XLSX.read(data);
+      const wb = XLSX.read(data, { cellDates: true });
       const ws = wb.Sheets[wb.SheetNames[0]];
       const rawRows: any[] = XLSX.utils.sheet_to_json(ws);
       // Trim header keys (some Excel files have trailing spaces)
