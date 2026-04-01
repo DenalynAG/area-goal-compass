@@ -187,6 +187,12 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
       entidad_salud: entidadSalud.trim() || null,
       fondo_pensiones: fondoPensiones.trim() || null,
       fondo_cesantias: fondoCesantias.trim() || null,
+      lugar_nacimiento: lugarNacimiento.trim() || null,
+      rh: rh.trim() || null,
+      estado_civil: estadoCivil || null,
+      nivel_educativo: nivelEducativo || null,
+      arl: arlField.trim() || null,
+      jefe_inmediato: jefeInmediato.trim() || null,
     };
 
     if (isEditing) {
