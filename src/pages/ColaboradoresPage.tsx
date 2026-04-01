@@ -46,7 +46,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
     setImporting(true);
     try {
       const data = await file.arrayBuffer();
-      const wb = XLSX.read(data);
+      const wb = XLSX.read(data, { cellDates: true });
       const ws = wb.Sheets[wb.SheetNames[0]];
       const rawRows: any[] = XLSX.utils.sheet_to_json(ws);
       // Trim header keys (some Excel files have trailing spaces)
@@ -67,7 +67,9 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
       let errors = 0;
 
       for (const row of rows) {
-        const name = (row['Nombre'] || row['Nombre completo'] || row['Nombre Completo'] || '').toString().trim();
+        const rawName = (row['Nombre'] || row['Nombre completo'] || row['Nombre Completo'] || '').toString().trim();
+        // Convert ALL CAPS to Title Case
+        const name = rawName.replace(/\b\w+/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
         const email = (row['Correo'] || row['Email'] || row['Correo Corporativo'] || row['Correo'] || '').toString().trim();
         if (!name) { errors++; continue; }
 
@@ -122,9 +124,22 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
           // Handle Date objects from xlsx (date cells)
           if (rawVal instanceof Date) {
             profileUpdate[field] = rawVal.toISOString().split('T')[0];
+          } else if (typeof rawVal === 'number') {
+            // Numbers like Cedula or Teléfono – keep as string without decimals
+            profileUpdate[field] = String(Math.round(rawVal));
           } else {
             const str = rawVal.toString().trim();
             if (str) profileUpdate[field] = str;
+          }
+        }
+
+        // Helper to convert ALL CAPS to Title Case
+        const toTitleCase = (s: string) => s.replace(/\b\w+/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+
+        // Title case text fields that come in ALL CAPS
+        for (const tf of ['position', 'lugar_nacimiento', 'jefe_inmediato', 'municipio', 'direccion', 'entidad_salud', 'fondo_pensiones', 'fondo_cesantias', 'arl']) {
+          if (profileUpdate[tf] && typeof profileUpdate[tf] === 'string') {
+            profileUpdate[tf] = toTitleCase(profileUpdate[tf]);
           }
         }
 
