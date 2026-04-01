@@ -59,14 +59,13 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
       let errors = 0;
 
       for (const row of rows) {
-        const name = (row['Nombre'] || row['Nombre completo'] || '').toString().trim();
-        const email = (row['Correo'] || row['Email'] || row['Correo Corporativo'] || '').toString().trim();
+        const name = (row['Nombre'] || row['Nombre completo'] || row['Nombre Completo'] || '').toString().trim();
+        const email = (row['Correo'] || row['Email'] || row['Correo Corporativo'] || row['Correo'] || '').toString().trim();
         if (!name) { errors++; continue; }
 
         let userId: string;
 
         if (email) {
-          // Create auth user via edge function
           const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-user`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
@@ -76,7 +75,6 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
           if (!res.ok) { errors++; continue; }
           userId = result.user_id;
         } else {
-          // Profile-only (no auth account)
           userId = crypto.randomUUID();
           const { error } = await supabase.from('profiles').insert({
             id: userId,
@@ -88,15 +86,81 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
 
         // Update profile with extra fields
         const profileUpdate: any = {};
-        if (row['Identificación'] || row['Identificacion']) profileUpdate.identificacion = (row['Identificación'] || row['Identificacion']).toString().trim();
-        if (row['Teléfono'] || row['Telefono']) profileUpdate.phone = (row['Teléfono'] || row['Telefono']).toString().trim();
-        if (row['Cargo']) profileUpdate.position = row['Cargo'].toString().trim();
-        if (row['Municipio']) profileUpdate.municipio = row['Municipio'].toString().trim();
-        if (row['Dirección'] || row['Direccion']) profileUpdate.direccion = (row['Dirección'] || row['Direccion']).toString().trim();
-        if (row['Fecha de Ingreso'] || row['Fecha Ingreso']) profileUpdate.fecha_ingreso = (row['Fecha de Ingreso'] || row['Fecha Ingreso']).toString().trim();
-        if (row['Correo Personal']) profileUpdate.correo_personal = row['Correo Personal'].toString().trim();
-        if (row['Tipo Contrato']) profileUpdate.tipo_contrato = row['Tipo Contrato'].toString().trim();
-        if (row['Sexo']) profileUpdate.sexo = row['Sexo'].toString().trim().toLowerCase();
+        const fieldMap: [string[], string][] = [
+          [['Cedula', 'Identificación', 'Identificacion'], 'identificacion'],
+          [['Teléfono', 'Telefono'], 'phone'],
+          [['Cargo'], 'position'],
+          [['Municipio'], 'municipio'],
+          [['Dirección', 'Direccion'], 'direccion'],
+          [['Fecha de Ingreso', 'Fecha Ingreso', 'Fecha De Ingreso'], 'fecha_ingreso'],
+          [['Correo Personal'], 'correo_personal'],
+          [['Tipo Contrato', 'T. Contrato'], 'tipo_contrato'],
+          [['Genero', 'Género', 'Sexo'], 'sexo'],
+          [['Lugar Nacimiento', 'Lugar de Nacimiento'], 'lugar_nacimiento'],
+          [['RH'], 'rh'],
+          [['Estado Civil'], 'estado_civil'],
+          [['Nivel Educativo'], 'nivel_educativo'],
+          [['Arl', 'ARL'], 'arl'],
+          [['Jefe Inmediato'], 'jefe_inmediato'],
+          [['Fecha De Nacimiento', 'Fecha Nacimiento', 'Cumpleaños'], 'birthday'],
+          [['Salud', 'EPS', 'Entidad Salud'], 'entidad_salud'],
+          [['Pensión', 'Pension', 'Fondo Pensiones'], 'fondo_pensiones'],
+          [['Cesantías', 'Cesantias', 'Fondo Cesantias'], 'fondo_cesantias'],
+        ];
+
+        for (const [keys, field] of fieldMap) {
+          const val = keys.reduce<string>((acc, k) => acc || (row[k] ?? '').toString().trim(), '');
+          if (val) profileUpdate[field] = val;
+        }
+
+        // Normalize sexo
+        if (profileUpdate.sexo) {
+          profileUpdate.sexo = profileUpdate.sexo.toLowerCase();
+        }
+
+        // Normalize tipo_contrato
+        if (profileUpdate.tipo_contrato) {
+          const tc = profileUpdate.tipo_contrato.toLowerCase();
+          if (tc.includes('indefinido')) profileUpdate.tipo_contrato = 'indefinido';
+          else if (tc.includes('fijo')) profileUpdate.tipo_contrato = 'fijo';
+          else if (tc.includes('obra') || tc.includes('labor')) profileUpdate.tipo_contrato = 'obra_labor';
+          else if (tc.includes('prestaci')) profileUpdate.tipo_contrato = 'prestacion_servicios';
+          else if (tc.includes('aprendiz')) profileUpdate.tipo_contrato = 'aprendizaje';
+        }
+
+        // Normalize estado_civil
+        if (profileUpdate.estado_civil) {
+          const ec = profileUpdate.estado_civil.toLowerCase();
+          if (ec.includes('solter')) profileUpdate.estado_civil = 'soltero';
+          else if (ec.includes('casad')) profileUpdate.estado_civil = 'casado';
+          else if (ec.includes('uni')) profileUpdate.estado_civil = 'union_libre';
+          else if (ec.includes('divorc')) profileUpdate.estado_civil = 'divorciado';
+          else if (ec.includes('viud')) profileUpdate.estado_civil = 'viudo';
+        }
+
+        // Normalize nivel_educativo
+        if (profileUpdate.nivel_educativo) {
+          const ne = profileUpdate.nivel_educativo.toLowerCase();
+          if (ne.includes('doctor')) profileUpdate.nivel_educativo = 'doctorado';
+          else if (ne.includes('maestr')) profileUpdate.nivel_educativo = 'maestria';
+          else if (ne.includes('especial')) profileUpdate.nivel_educativo = 'especializacion';
+          else if (ne.includes('profesional')) profileUpdate.nivel_educativo = 'profesional';
+          else if (ne.includes('tecnologo') || ne.includes('tecnólogo')) profileUpdate.nivel_educativo = 'tecnologo';
+          else if (ne.includes('tecnico') || ne.includes('técnico')) profileUpdate.nivel_educativo = 'tecnico';
+          else if (ne.includes('secundar')) profileUpdate.nivel_educativo = 'basica_secundaria';
+          else if (ne.includes('primar')) profileUpdate.nivel_educativo = 'basica_primaria';
+        }
+
+        // Parse dates (handle MM/DD/YY or various formats)
+        for (const dateField of ['fecha_ingreso', 'birthday']) {
+          if (profileUpdate[dateField]) {
+            const raw = profileUpdate[dateField];
+            const parsed = new Date(raw);
+            if (!isNaN(parsed.getTime())) {
+              profileUpdate[dateField] = parsed.toISOString().split('T')[0];
+            }
+          }
+        }
 
         if (Object.keys(profileUpdate).length > 0) {
           await supabase.from('profiles').update(profileUpdate).eq('id', userId);
@@ -242,7 +306,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
 
       <div className="bg-muted/30 rounded-lg px-4 py-3">
         <p className="text-xs text-muted-foreground">
-          📋 Para importar, usa un archivo Excel con columnas: <strong>Nombre</strong>, <strong>Correo</strong> (obligatorios), y opcionalmente: <strong>Identificación</strong>, <strong>Teléfono</strong>, <strong>Cargo</strong>, <strong>Área</strong>, <strong>Subárea</strong>, <strong>Rol</strong>, <strong>Sexo</strong>, <strong>Municipio</strong>, <strong>Dirección</strong>, <strong>Fecha de Ingreso</strong>, <strong>Tipo Contrato</strong>, <strong>Correo Personal</strong>.
+          📋 Para importar, usa un archivo Excel con columnas: <strong>Nombre Completo</strong> (obligatorio), y opcionalmente: <strong>Cedula</strong>, <strong>Correo</strong>, <strong>Correo Personal</strong>, <strong>Genero</strong>, <strong>Fecha De Nacimiento</strong>, <strong>Lugar Nacimiento</strong>, <strong>RH</strong>, <strong>Estado Civil</strong>, <strong>Nivel Educativo</strong>, <strong>Fecha Ingreso</strong>, <strong>T. Contrato</strong>, <strong>Cargo</strong>, <strong>Área</strong>, <strong>Subárea</strong>, <strong>Jefe Inmediato</strong>, <strong>Arl</strong>, <strong>Salud</strong>, <strong>Pensión</strong>, <strong>Cesantías</strong>, <strong>Teléfono</strong>, <strong>Dirección</strong>, <strong>Municipio</strong>, <strong>Rol</strong>.
         </p>
       </div>
 

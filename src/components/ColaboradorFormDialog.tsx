@@ -56,6 +56,14 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
   const [tallaCamisa, setTallaCamisa] = useState('');
   const [tallaZapatos, setTallaZapatos] = useState('');
 
+  // Nuevos campos
+  const [lugarNacimiento, setLugarNacimiento] = useState('');
+  const [rh, setRh] = useState('');
+  const [estadoCivil, setEstadoCivil] = useState('');
+  const [nivelEducativo, setNivelEducativo] = useState('');
+  const [arlField, setArlField] = useState('');
+  const [jefeInmediato, setJefeInmediato] = useState('');
+
   // Seguridad social
   const [entidadSalud, setEntidadSalud] = useState('');
   const [fondoPensiones, setFondoPensiones] = useState('');
@@ -93,6 +101,12 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
       setEntidadSalud(p.entidad_salud ?? '');
       setFondoPensiones(p.fondo_pensiones ?? '');
       setFondoCesantias(p.fondo_cesantias ?? '');
+      setLugarNacimiento(p.lugar_nacimiento ?? '');
+      setRh(p.rh ?? '');
+      setEstadoCivil(p.estado_civil ?? '');
+      setNivelEducativo(p.nivel_educativo ?? '');
+      setArlField(p.arl ?? '');
+      setJefeInmediato(p.jefe_inmediato ?? '');
       setAvatarPreview(p.avatar || null);
       setAreaId(membership?.area_id ?? '');
       setSubareaId(membership?.subarea_id ?? '');
@@ -103,6 +117,8 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
       setFechaIngreso(''); setCorreoPersonal(''); setTipoContrato('');
       setTallaPantalon(''); setTallaCamisa(''); setTallaZapatos('');
       setEntidadSalud(''); setFondoPensiones(''); setFondoCesantias('');
+      setLugarNacimiento(''); setRh(''); setEstadoCivil('');
+      setNivelEducativo(''); setArlField(''); setJefeInmediato('');
       setAvatarPreview(null); setAvatarFile(null);
       setAreaId(defaultAreaId || ''); setSubareaId(defaultSubareaId || ''); setRole('');
     }
@@ -171,6 +187,12 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
       entidad_salud: entidadSalud.trim() || null,
       fondo_pensiones: fondoPensiones.trim() || null,
       fondo_cesantias: fondoCesantias.trim() || null,
+      lugar_nacimiento: lugarNacimiento.trim() || null,
+      rh: rh.trim() || null,
+      estado_civil: estadoCivil || null,
+      nivel_educativo: nivelEducativo || null,
+      arl: arlField.trim() || null,
+      jefe_inmediato: jefeInmediato.trim() || null,
     };
 
     if (isEditing) {
@@ -296,7 +318,7 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
                 <Input value={identificacion} onChange={e => setIdentificacion(e.target.value)} maxLength={30} placeholder="Cédula / Pasaporte" required />
               </div>
               <div className="space-y-1.5">
-                <Label>Sexo</Label>
+                <Label>Género</Label>
                 <Select value={sexo} onValueChange={setSexo}>
                   <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
                   <SelectContent>
@@ -307,8 +329,52 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Cumpleaños</Label>
+                <Label>Fecha de Nacimiento</Label>
                 <Input type="date" value={birthday} onChange={e => setBirthday(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Lugar de Nacimiento</Label>
+                <Input value={lugarNacimiento} onChange={e => setLugarNacimiento(e.target.value)} maxLength={100} placeholder="Ej: Cartagena de Indias" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>RH (Tipo de Sangre)</Label>
+                <Select value={rh} onValueChange={setRh}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                  <SelectContent>
+                    {['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'].map(t => (
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Estado Civil</Label>
+                <Select value={estadoCivil} onValueChange={setEstadoCivil}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="soltero">Soltero(a)</SelectItem>
+                    <SelectItem value="casado">Casado(a)</SelectItem>
+                    <SelectItem value="union_libre">Unión Libre</SelectItem>
+                    <SelectItem value="divorciado">Divorciado(a)</SelectItem>
+                    <SelectItem value="viudo">Viudo(a)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Nivel Educativo</Label>
+                <Select value={nivelEducativo} onValueChange={setNivelEducativo}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="basica_primaria">Básica Primaria</SelectItem>
+                    <SelectItem value="basica_secundaria">Básica Secundaria</SelectItem>
+                    <SelectItem value="tecnico">Técnico</SelectItem>
+                    <SelectItem value="tecnologo">Tecnólogo</SelectItem>
+                    <SelectItem value="profesional">Profesional</SelectItem>
+                    <SelectItem value="especializacion">Especialización</SelectItem>
+                    <SelectItem value="maestria">Maestría</SelectItem>
+                    <SelectItem value="doctorado">Doctorado</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1.5">
                 <Label>Municipio</Label>
@@ -400,6 +466,10 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
                 <Label>Fecha de Ingreso</Label>
                 <Input type="date" value={fechaIngreso} onChange={e => setFechaIngreso(e.target.value)} />
               </div>
+              <div className="space-y-1.5">
+                <Label>Jefe Inmediato</Label>
+                <Input value={jefeInmediato} onChange={e => setJefeInmediato(e.target.value)} maxLength={100} placeholder="Nombre del jefe inmediato" />
+              </div>
             </div>
 
             {/* Tallas de Uniformes */}
@@ -433,6 +503,10 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
               <div className="space-y-1.5">
                 <Label>Fondo de Cesantías</Label>
                 <Input value={fondoCesantias} onChange={e => setFondoCesantias(e.target.value)} maxLength={100} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>ARL</Label>
+                <Input value={arlField} onChange={e => setArlField(e.target.value)} maxLength={100} placeholder="Ej: SURA" />
               </div>
             </div>
 
