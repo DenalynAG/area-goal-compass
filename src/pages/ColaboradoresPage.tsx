@@ -122,8 +122,14 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
           const rawName = getRowValue(row, ['Nombre', 'Nombre completo', 'Nombre Completo']);
           const name = rawName ? toTitleCase(rawName.toString().trim()) : '';
           const emailValue = getRowValue(row, ['Correo', 'Email', 'Correo Corporativo']);
-          const email = emailValue ? emailValue.toString().trim().toLowerCase() : '';
+          let email = emailValue ? emailValue.toString().trim().toLowerCase() : '';
           if (!name) { errors++; reportErrors.push({ row: rowNum, name: '(vacío)', reason: 'Nombre vacío o no encontrado' }); continue; }
+
+          // Si no hay correo corporativo, usar correo personal
+          if (!email) {
+            const personalEmailValue = getRowValue(row, ['Correo Personal']);
+            email = personalEmailValue ? personalEmailValue.toString().trim().toLowerCase() : '';
+          }
 
           const identificationValue = getRowValue(row, ['Cedula', 'Cédula', 'Identificación', 'Identificacion']);
           const identification = identificationValue == null
