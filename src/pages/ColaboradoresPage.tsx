@@ -300,7 +300,6 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
                 <th className="text-left px-5 py-3 font-medium text-muted-foreground">Área</th>
                 <th className="text-left px-5 py-3 font-medium text-muted-foreground">Subárea</th>
                 <th className="text-left px-5 py-3 font-medium text-muted-foreground">Rol</th>
-                <th className="text-left px-5 py-3 font-medium text-muted-foreground">Contacto</th>
                 <th className="px-3 py-3"></th>
               </tr>
             </thead>
@@ -332,14 +331,9 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
                         </span>
                       ) : <span className="text-muted-foreground text-xs">Sin rol</span>}
                     </td>
-                    <td className="px-5 py-3">
-                      <div className="flex items-center gap-2">
-                        <a href={`mailto:${c.email}`} className="text-muted-foreground hover:text-accent" title={c.email}><Mail className="w-4 h-4" /></a>
-                        {c.phone && <a href={`tel:${c.phone}`} className="text-muted-foreground hover:text-accent" title={c.phone}><Phone className="w-4 h-4" /></a>}
-                      </div>
-                    </td>
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => setDetailProfile(c)} title="Ver detalle"><Eye className="w-4 h-4" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => openEdit(c)}><Edit className="w-4 h-4" /></Button>
                         {isSuperAdmin && (
                           <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(c)} className="text-destructive hover:text-destructive">
@@ -352,7 +346,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
                 );
               })}
               {filtered.length === 0 && (
-                <tr><td colSpan={7} className="px-5 py-8 text-center text-muted-foreground">No se encontraron colaboradores</td></tr>
+                <tr><td colSpan={6} className="px-5 py-8 text-center text-muted-foreground">No se encontraron colaboradores</td></tr>
               )}
             </tbody>
           </table>
