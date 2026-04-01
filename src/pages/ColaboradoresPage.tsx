@@ -67,7 +67,9 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
       let errors = 0;
 
       for (const row of rows) {
-        const name = (row['Nombre'] || row['Nombre completo'] || row['Nombre Completo'] || '').toString().trim();
+        const rawName = (row['Nombre'] || row['Nombre completo'] || row['Nombre Completo'] || '').toString().trim();
+        // Convert ALL CAPS to Title Case
+        const name = rawName.replace(/\b\w+/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
         const email = (row['Correo'] || row['Email'] || row['Correo Corporativo'] || row['Correo'] || '').toString().trim();
         if (!name) { errors++; continue; }
 
