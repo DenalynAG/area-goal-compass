@@ -318,7 +318,7 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
                 <Input value={identificacion} onChange={e => setIdentificacion(e.target.value)} maxLength={30} placeholder="Cédula / Pasaporte" required />
               </div>
               <div className="space-y-1.5">
-                <Label>Sexo</Label>
+                <Label>Género</Label>
                 <Select value={sexo} onValueChange={setSexo}>
                   <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
                   <SelectContent>
@@ -329,8 +329,52 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Cumpleaños</Label>
+                <Label>Fecha de Nacimiento</Label>
                 <Input type="date" value={birthday} onChange={e => setBirthday(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Lugar de Nacimiento</Label>
+                <Input value={lugarNacimiento} onChange={e => setLugarNacimiento(e.target.value)} maxLength={100} placeholder="Ej: Cartagena de Indias" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>RH (Tipo de Sangre)</Label>
+                <Select value={rh} onValueChange={setRh}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                  <SelectContent>
+                    {['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'].map(t => (
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Estado Civil</Label>
+                <Select value={estadoCivil} onValueChange={setEstadoCivil}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="soltero">Soltero(a)</SelectItem>
+                    <SelectItem value="casado">Casado(a)</SelectItem>
+                    <SelectItem value="union_libre">Unión Libre</SelectItem>
+                    <SelectItem value="divorciado">Divorciado(a)</SelectItem>
+                    <SelectItem value="viudo">Viudo(a)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Nivel Educativo</Label>
+                <Select value={nivelEducativo} onValueChange={setNivelEducativo}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="basica_primaria">Básica Primaria</SelectItem>
+                    <SelectItem value="basica_secundaria">Básica Secundaria</SelectItem>
+                    <SelectItem value="tecnico">Técnico</SelectItem>
+                    <SelectItem value="tecnologo">Tecnólogo</SelectItem>
+                    <SelectItem value="profesional">Profesional</SelectItem>
+                    <SelectItem value="especializacion">Especialización</SelectItem>
+                    <SelectItem value="maestria">Maestría</SelectItem>
+                    <SelectItem value="doctorado">Doctorado</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1.5">
                 <Label>Municipio</Label>
