@@ -463,6 +463,11 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
             {importing ? 'Importando...' : 'Importar Excel'}
           </Button>
           <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" />Nuevo Colaborador</Button>
+          {isSuperAdmin && (
+            <Button variant="destructive" onClick={() => setDeleteAllOpen(true)}>
+              <Trash2 className="w-4 h-4 mr-2" />Eliminar Todo
+            </Button>
+          )}
         </div>
       </div>
 
