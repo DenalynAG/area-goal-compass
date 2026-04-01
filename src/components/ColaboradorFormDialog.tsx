@@ -466,6 +466,10 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
                 <Label>Fecha de Ingreso</Label>
                 <Input type="date" value={fechaIngreso} onChange={e => setFechaIngreso(e.target.value)} />
               </div>
+              <div className="space-y-1.5">
+                <Label>Jefe Inmediato</Label>
+                <Input value={jefeInmediato} onChange={e => setJefeInmediato(e.target.value)} maxLength={100} placeholder="Nombre del jefe inmediato" />
+              </div>
             </div>
 
             {/* Tallas de Uniformes */}
