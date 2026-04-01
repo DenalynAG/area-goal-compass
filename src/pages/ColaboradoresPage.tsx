@@ -83,165 +83,245 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { toast.error('Debes iniciar sesión'); setImporting(false); return; }
 
+      const normalizeDigits = (value: unknown) => String(value ?? '').replace(/\D/g, '');
+      const toTitleCase = (value: string) => value.replace(/\b\w+/g, word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
+      const getRowValue = (rowData: Record<string, any>, keys: string[]) => {
+        for (const key of keys) {
+          const value = rowData[key];
+          if (value !== undefined && value !== null && `${value}`.trim() !== '') return value;
+        }
+        return undefined;
+      };
+
+      const profileByEmail = new Map(
+        profiles
+          .filter(profile => profile.email)
+          .map(profile => [profile.email.trim().toLowerCase(), profile] as const)
+      );
+      const profileByIdentification = new Map(
+        profiles
+          .filter(profile => profile.identificacion)
+          .map(profile => [normalizeDigits(profile.identificacion), profile] as const)
+          .filter(([identification]) => identification)
+      );
+      const membershipByUserId = new Map(memberships.map(membership => [membership.user_id, membership] as const));
+      const roleByUserId = new Map(userRoles.map(roleItem => [roleItem.user_id, roleItem] as const));
+
       let imported = 0;
       let errors = 0;
 
       for (const row of rows) {
-        const rawName = (row['Nombre'] || row['Nombre completo'] || row['Nombre Completo'] || '').toString().trim();
-        // Convert ALL CAPS to Title Case
-        const name = rawName.replace(/\b\w+/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
-        const email = (row['Correo'] || row['Email'] || row['Correo Corporativo'] || row['Correo'] || '').toString().trim();
-        if (!name) { errors++; continue; }
+        try {
+          const rawName = getRowValue(row, ['Nombre', 'Nombre completo', 'Nombre Completo']);
+          const name = rawName ? toTitleCase(rawName.toString().trim()) : '';
+          const emailValue = getRowValue(row, ['Correo', 'Email', 'Correo Corporativo']);
+          const email = emailValue ? emailValue.toString().trim().toLowerCase() : '';
+          if (!name) { errors++; continue; }
 
-        let userId: string;
+          const identificationValue = getRowValue(row, ['Cedula', 'Cédula', 'Identificación', 'Identificacion']);
+          const identification = identificationValue == null
+            ? ''
+            : typeof identificationValue === 'number'
+              ? String(Math.round(identificationValue))
+              : identificationValue.toString().trim();
+          const normalizedIdentification = normalizeDigits(identification);
 
-        if (email) {
-          const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-user`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-            body: JSON.stringify({ email, name }),
-          });
-          const result = await res.json();
-          if (!res.ok) { errors++; continue; }
-          userId = result.user_id;
-        } else {
-          userId = crypto.randomUUID();
-          const { error } = await supabase.from('profiles').insert({
-            id: userId,
-            name,
-            email: `sin-correo-${userId.slice(0, 8)}@placeholder.local`,
-          });
-          if (error) { errors++; continue; }
-        }
+          let matchedProfile = (email ? profileByEmail.get(email) : undefined)
+            ?? (normalizedIdentification ? profileByIdentification.get(normalizedIdentification) : undefined)
+            ?? null;
 
-        // Update profile with extra fields
-        const profileUpdate: any = {};
-        const fieldMap: [string[], string][] = [
-          [['Cedula', 'Identificación', 'Identificacion'], 'identificacion'],
-          [['Teléfono', 'Telefono'], 'phone'],
-          [['Cargo'], 'position'],
-          [['Municipio'], 'municipio'],
-          [['Dirección', 'Direccion'], 'direccion'],
-          [['Fecha de Ingreso', 'Fecha Ingreso', 'Fecha De Ingreso'], 'fecha_ingreso'],
-          [['Correo Personal'], 'correo_personal'],
-          [['Tipo Contrato', 'T. Contrato'], 'tipo_contrato'],
-          [['Genero', 'Género', 'Sexo'], 'sexo'],
-          [['Lugar Nacimiento', 'Lugar de Nacimiento'], 'lugar_nacimiento'],
-          [['RH'], 'rh'],
-          [['Estado Civil'], 'estado_civil'],
-          [['Nivel Educativo'], 'nivel_educativo'],
-          [['Arl', 'ARL'], 'arl'],
-          [['Jefe Inmediato'], 'jefe_inmediato'],
-          [['Fecha De Nacimiento', 'Fecha Nacimiento', 'Cumpleaños'], 'birthday'],
-          [['Salud', 'EPS', 'Entidad Salud'], 'entidad_salud'],
-          [['Pensión', 'Pension', 'Fondo Pensiones'], 'fondo_pensiones'],
-          [['Cesantías', 'Cesantias', 'Fondo Cesantias'], 'fondo_cesantias'],
-        ];
+          let userId = matchedProfile?.id ?? '';
 
-        for (const [keys, field] of fieldMap) {
-          const rawVal = keys.reduce<any>((acc, k) => acc || row[k], undefined);
-          if (rawVal == null) continue;
-          // Handle Date objects from xlsx (date cells)
-          if (rawVal instanceof Date) {
-            profileUpdate[field] = rawVal.toISOString().split('T')[0];
-          } else if (typeof rawVal === 'number') {
-            // Numbers like Cedula or Teléfono – keep as string without decimals
-            profileUpdate[field] = String(Math.round(rawVal));
-          } else {
-            const str = rawVal.toString().trim();
-            if (str) profileUpdate[field] = str;
-          }
-        }
-
-        // Helper to convert ALL CAPS to Title Case
-        const toTitleCase = (s: string) => s.replace(/\b\w+/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
-
-        // Title case text fields that come in ALL CAPS
-        for (const tf of ['position', 'lugar_nacimiento', 'jefe_inmediato', 'municipio', 'direccion', 'entidad_salud', 'fondo_pensiones', 'fondo_cesantias', 'arl']) {
-          if (profileUpdate[tf] && typeof profileUpdate[tf] === 'string') {
-            profileUpdate[tf] = toTitleCase(profileUpdate[tf]);
-          }
-        }
-
-        // Normalize sexo
-        if (profileUpdate.sexo) {
-          profileUpdate.sexo = profileUpdate.sexo.toLowerCase();
-        }
-
-        // Normalize tipo_contrato
-        if (profileUpdate.tipo_contrato) {
-          const tc = profileUpdate.tipo_contrato.toLowerCase();
-          if (tc.includes('indefinido')) profileUpdate.tipo_contrato = 'indefinido';
-          else if (tc.includes('fijo')) profileUpdate.tipo_contrato = 'fijo';
-          else if (tc.includes('obra') || tc.includes('labor')) profileUpdate.tipo_contrato = 'obra_labor';
-          else if (tc.includes('prestaci')) profileUpdate.tipo_contrato = 'prestacion_servicios';
-          else if (tc.includes('aprendiz')) profileUpdate.tipo_contrato = 'aprendizaje';
-        }
-
-        // Normalize estado_civil
-        if (profileUpdate.estado_civil) {
-          const ec = profileUpdate.estado_civil.toLowerCase();
-          if (ec.includes('solter')) profileUpdate.estado_civil = 'soltero';
-          else if (ec.includes('casad')) profileUpdate.estado_civil = 'casado';
-          else if (ec.includes('uni')) profileUpdate.estado_civil = 'union_libre';
-          else if (ec.includes('divorc')) profileUpdate.estado_civil = 'divorciado';
-          else if (ec.includes('viud')) profileUpdate.estado_civil = 'viudo';
-        }
-
-        // Normalize nivel_educativo
-        if (profileUpdate.nivel_educativo) {
-          const ne = profileUpdate.nivel_educativo.toLowerCase();
-          if (ne.includes('doctor')) profileUpdate.nivel_educativo = 'doctorado';
-          else if (ne.includes('maestr')) profileUpdate.nivel_educativo = 'maestria';
-          else if (ne.includes('especial')) profileUpdate.nivel_educativo = 'especializacion';
-          else if (ne.includes('profesional')) profileUpdate.nivel_educativo = 'profesional';
-          else if (ne.includes('tecnologo') || ne.includes('tecnólogo')) profileUpdate.nivel_educativo = 'tecnologo';
-          else if (ne.includes('tecnico') || ne.includes('técnico')) profileUpdate.nivel_educativo = 'tecnico';
-          else if (ne.includes('secundar')) profileUpdate.nivel_educativo = 'basica_secundaria';
-          else if (ne.includes('primar')) profileUpdate.nivel_educativo = 'basica_primaria';
-        }
-
-        // Parse dates that are still strings (Date objects already handled above)
-        for (const dateField of ['fecha_ingreso', 'birthday']) {
-          if (profileUpdate[dateField] && !/^\d{4}-\d{2}-\d{2}$/.test(profileUpdate[dateField])) {
-            const parsed = new Date(profileUpdate[dateField]);
-            if (!isNaN(parsed.getTime())) {
-              profileUpdate[dateField] = parsed.toISOString().split('T')[0];
+          if (!userId) {
+            if (email && isSuperAdmin) {
+              const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-user`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+                body: JSON.stringify({ email, name }),
+              });
+              const result = await res.json().catch(() => ({}));
+              if (!res.ok) { errors++; continue; }
+              userId = result.user_id;
+            } else {
+              userId = crypto.randomUUID();
             }
           }
-        }
 
-        if (Object.keys(profileUpdate).length > 0) {
-          await supabase.from('profiles').update(profileUpdate).eq('id', userId);
-        }
+          const profileUpdate: Record<string, any> = {};
+          const fieldMap: [string[], string][] = [
+            [['Cedula', 'Cédula', 'Identificación', 'Identificacion'], 'identificacion'],
+            [['Teléfono', 'Telefono'], 'phone'],
+            [['Cargo'], 'position'],
+            [['Municipio'], 'municipio'],
+            [['Dirección', 'Direccion'], 'direccion'],
+            [['Fecha de Ingreso', 'Fecha Ingreso', 'Fecha De Ingreso'], 'fecha_ingreso'],
+            [['Correo Personal'], 'correo_personal'],
+            [['Tipo Contrato', 'T. Contrato'], 'tipo_contrato'],
+            [['Genero', 'Género', 'Sexo'], 'sexo'],
+            [['Lugar Nacimiento', 'Lugar de Nacimiento'], 'lugar_nacimiento'],
+            [['RH'], 'rh'],
+            [['Estado Civil'], 'estado_civil'],
+            [['Nivel Educativo'], 'nivel_educativo'],
+            [['Arl', 'ARL'], 'arl'],
+            [['Jefe Inmediato'], 'jefe_inmediato'],
+            [['Fecha De Nacimiento', 'Fecha Nacimiento', 'Cumpleaños'], 'birthday'],
+            [['Salud', 'EPS', 'Entidad Salud'], 'entidad_salud'],
+            [['Pensión', 'Pension', 'Fondo Pensiones'], 'fondo_pensiones'],
+            [['Cesantías', 'Cesantias', 'Fondo Cesantias'], 'fondo_cesantias'],
+          ];
 
-        // Assign area/subarea membership
-        const areaName = (row['Área'] || row['Area'] || '').toString().trim();
-        if (areaName) {
-          const foundArea = areas.find(a => a.name.toLowerCase() === areaName.toLowerCase());
-          if (foundArea) {
-            const subareaName = (row['Subárea'] || row['Subarea'] || row['Sub Área'] || '').toString().trim();
-            const foundSub = subareaName ? subareas.find(s => s.area_id === foundArea.id && s.name.toLowerCase() === subareaName.toLowerCase()) : null;
-            await supabase.from('memberships').insert({ user_id: userId, area_id: foundArea.id, subarea_id: foundSub?.id || null });
+          for (const [keys, field] of fieldMap) {
+            const rawVal = getRowValue(row, keys);
+            if (rawVal == null) continue;
+            if (rawVal instanceof Date) {
+              profileUpdate[field] = rawVal.toISOString().split('T')[0];
+            } else if (typeof rawVal === 'number') {
+              profileUpdate[field] = String(Math.round(rawVal));
+            } else {
+              const str = rawVal.toString().trim();
+              if (str) profileUpdate[field] = str;
+            }
           }
-        }
 
-        // Assign role
-        const roleName = (row['Rol'] || '').toString().trim().toLowerCase();
-        const roleMap: Record<string, string> = {
-          'super admin': 'super_admin', 'admin de área': 'admin_area', 'admin area': 'admin_area',
-          'líder de subárea': 'lider_subarea', 'lider subarea': 'lider_subarea',
-          'colaborador': 'colaborador', 'solo lectura': 'solo_lectura',
-        };
-        const mappedRole = roleMap[roleName];
-        if (mappedRole) {
-          await supabase.from('user_roles').insert({ user_id: userId, role: mappedRole as Enums<'app_role'> });
-        }
+          for (const tf of ['position', 'lugar_nacimiento', 'jefe_inmediato', 'municipio', 'direccion', 'entidad_salud', 'fondo_pensiones', 'fondo_cesantias', 'arl']) {
+            if (profileUpdate[tf] && typeof profileUpdate[tf] === 'string') {
+              profileUpdate[tf] = toTitleCase(profileUpdate[tf]);
+            }
+          }
 
-        imported++;
+          if (profileUpdate.sexo) {
+            profileUpdate.sexo = profileUpdate.sexo.toLowerCase();
+          }
+
+          if (profileUpdate.tipo_contrato) {
+            const tc = profileUpdate.tipo_contrato.toLowerCase();
+            if (tc.includes('indefinido')) profileUpdate.tipo_contrato = 'indefinido';
+            else if (tc.includes('fijo')) profileUpdate.tipo_contrato = 'fijo';
+            else if (tc.includes('obra') || tc.includes('labor')) profileUpdate.tipo_contrato = 'obra_labor';
+            else if (tc.includes('prestaci')) profileUpdate.tipo_contrato = 'prestacion_servicios';
+            else if (tc.includes('aprendiz')) profileUpdate.tipo_contrato = 'aprendizaje';
+          }
+
+          if (profileUpdate.estado_civil) {
+            const ec = profileUpdate.estado_civil.toLowerCase();
+            if (ec.includes('solter')) profileUpdate.estado_civil = 'soltero';
+            else if (ec.includes('casad')) profileUpdate.estado_civil = 'casado';
+            else if (ec.includes('uni')) profileUpdate.estado_civil = 'union_libre';
+            else if (ec.includes('divorc')) profileUpdate.estado_civil = 'divorciado';
+            else if (ec.includes('viud')) profileUpdate.estado_civil = 'viudo';
+          }
+
+          if (profileUpdate.nivel_educativo) {
+            const ne = profileUpdate.nivel_educativo.toLowerCase();
+            if (ne.includes('doctor')) profileUpdate.nivel_educativo = 'doctorado';
+            else if (ne.includes('maestr')) profileUpdate.nivel_educativo = 'maestria';
+            else if (ne.includes('especial')) profileUpdate.nivel_educativo = 'especializacion';
+            else if (ne.includes('profesional')) profileUpdate.nivel_educativo = 'profesional';
+            else if (ne.includes('tecnologo') || ne.includes('tecnólogo')) profileUpdate.nivel_educativo = 'tecnologo';
+            else if (ne.includes('tecnico') || ne.includes('técnico')) profileUpdate.nivel_educativo = 'tecnico';
+            else if (ne.includes('secundar')) profileUpdate.nivel_educativo = 'basica_secundaria';
+            else if (ne.includes('primar')) profileUpdate.nivel_educativo = 'basica_primaria';
+          }
+
+          for (const dateField of ['fecha_ingreso', 'birthday']) {
+            if (profileUpdate[dateField] && !/^\d{4}-\d{2}-\d{2}$/.test(profileUpdate[dateField])) {
+              const parsed = new Date(profileUpdate[dateField]);
+              if (!isNaN(parsed.getTime())) {
+                profileUpdate[dateField] = parsed.toISOString().split('T')[0];
+              }
+            }
+          }
+
+          const resolvedEmail = email || matchedProfile?.email || `sin-correo-${userId.slice(0, 8)}@placeholder.local`;
+          const profilePayload = {
+            id: userId,
+            name,
+            email: resolvedEmail,
+            ...profileUpdate,
+          };
+
+          const { error: profileError } = await supabase.from('profiles').upsert(profilePayload);
+          if (profileError) { errors++; continue; }
+
+          matchedProfile = { ...(matchedProfile ?? {}), ...profilePayload } as Tables<'profiles'>;
+          profileByEmail.set(resolvedEmail.toLowerCase(), matchedProfile);
+          if (normalizedIdentification) profileByIdentification.set(normalizedIdentification, matchedProfile);
+
+          const areaName = (getRowValue(row, ['Área', 'Area']) || '').toString().trim();
+          if (areaName) {
+            const foundArea = areas.find(a => a.name.toLowerCase() === areaName.toLowerCase());
+            if (foundArea) {
+              const subareaName = (getRowValue(row, ['Subárea', 'Subarea', 'Sub Área']) || '').toString().trim();
+              const foundSub = subareaName ? subareas.find(s => s.area_id === foundArea.id && s.name.toLowerCase() === subareaName.toLowerCase()) : null;
+              const existingMembership = membershipByUserId.get(userId);
+
+              if (existingMembership) {
+                const { data: updatedMembership, error: membershipError } = await supabase
+                  .from('memberships')
+                  .update({ area_id: foundArea.id, subarea_id: foundSub?.id || null })
+                  .eq('id', existingMembership.id)
+                  .select('*')
+                  .maybeSingle();
+
+                if (membershipError) { errors++; continue; }
+                membershipByUserId.set(userId, updatedMembership ?? { ...existingMembership, area_id: foundArea.id, subarea_id: foundSub?.id || null });
+              } else {
+                const { data: insertedMembership, error: membershipError } = await supabase
+                  .from('memberships')
+                  .insert({ user_id: userId, area_id: foundArea.id, subarea_id: foundSub?.id || null })
+                  .select('*')
+                  .maybeSingle();
+
+                if (membershipError) { errors++; continue; }
+                if (insertedMembership) membershipByUserId.set(userId, insertedMembership);
+              }
+            }
+          }
+
+          const roleName = (getRowValue(row, ['Rol']) || '').toString().trim().toLowerCase();
+          const roleMap: Record<string, Enums<'app_role'>> = {
+            'super admin': 'super_admin',
+            'admin de área': 'admin_area',
+            'admin area': 'admin_area',
+            'líder de subárea': 'lider_subarea',
+            'lider subarea': 'lider_subarea',
+            'colaborador': 'colaborador',
+            'solo lectura': 'solo_lectura',
+          };
+          const mappedRole = roleMap[roleName];
+
+          if (mappedRole) {
+            const existingRole = roleByUserId.get(userId);
+
+            if (existingRole) {
+              const { data: updatedRole, error: roleError } = await supabase
+                .from('user_roles')
+                .update({ role: mappedRole })
+                .eq('id', existingRole.id)
+                .select('*')
+                .maybeSingle();
+
+              if (roleError) { errors++; continue; }
+              roleByUserId.set(userId, updatedRole ?? { ...existingRole, role: mappedRole });
+            } else {
+              const { data: insertedRole, error: roleError } = await supabase
+                .from('user_roles')
+                .insert({ user_id: userId, role: mappedRole })
+                .select('*')
+                .maybeSingle();
+
+              if (roleError) { errors++; continue; }
+              if (insertedRole) roleByUserId.set(userId, insertedRole);
+            }
+          }
+
+          imported++;
+        } catch {
+          errors++;
+        }
       }
 
-      toast.success(`Importación completada: ${imported} colaboradores creados${errors > 0 ? `, ${errors} errores` : ''}`);
+      toast.success(`Importación completada: ${imported} colaboradores procesados${errors > 0 ? `, ${errors} errores` : ''}`);
       qc.invalidateQueries({ queryKey: ['profiles'] });
       qc.invalidateQueries({ queryKey: ['memberships'] });
       qc.invalidateQueries({ queryKey: ['user_roles'] });
