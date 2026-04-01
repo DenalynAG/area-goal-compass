@@ -594,7 +594,23 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Detail Card Dialog */}
+      <AlertDialog open={deleteAllOpen} onOpenChange={setDeleteAllOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>⚠️ ¿Eliminar TODOS los colaboradores?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminarán permanentemente <strong>{profiles.length - 1}</strong> colaboradores y todos sus datos asociados (membresías, roles, evaluaciones, etc.). Tu perfil de administrador se mantendrá. <strong>Esta acción no se puede deshacer.</strong>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingAll}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteAll} disabled={deletingAll} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {deletingAll ? 'Eliminando...' : 'Sí, eliminar todo'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <Dialog open={!!detailProfile} onOpenChange={open => !open && setDetailProfile(null)}>
         <DialogContent className="sm:max-w-md p-0 overflow-hidden">
           {detailProfile && (() => {
