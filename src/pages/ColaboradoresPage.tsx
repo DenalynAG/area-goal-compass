@@ -48,7 +48,15 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
       const data = await file.arrayBuffer();
       const wb = XLSX.read(data);
       const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows: any[] = XLSX.utils.sheet_to_json(ws);
+      const rawRows: any[] = XLSX.utils.sheet_to_json(ws);
+      // Trim header keys (some Excel files have trailing spaces)
+      const rows = rawRows.map(row => {
+        const clean: any = {};
+        for (const [k, v] of Object.entries(row)) {
+          clean[k.trim()] = v;
+        }
+        return clean;
+      });
 
       if (rows.length === 0) { toast.error('El archivo está vacío'); setImporting(false); return; }
 
@@ -109,8 +117,15 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
         ];
 
         for (const [keys, field] of fieldMap) {
-          const val = keys.reduce<string>((acc, k) => acc || (row[k] ?? '').toString().trim(), '');
-          if (val) profileUpdate[field] = val;
+          const rawVal = keys.reduce<any>((acc, k) => acc || row[k], undefined);
+          if (rawVal == null) continue;
+          // Handle Date objects from xlsx (date cells)
+          if (rawVal instanceof Date) {
+            profileUpdate[field] = rawVal.toISOString().split('T')[0];
+          } else {
+            const str = rawVal.toString().trim();
+            if (str) profileUpdate[field] = str;
+          }
         }
 
         // Normalize sexo
@@ -151,11 +166,10 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
           else if (ne.includes('primar')) profileUpdate.nivel_educativo = 'basica_primaria';
         }
 
-        // Parse dates (handle MM/DD/YY or various formats)
+        // Parse dates that are still strings (Date objects already handled above)
         for (const dateField of ['fecha_ingreso', 'birthday']) {
-          if (profileUpdate[dateField]) {
-            const raw = profileUpdate[dateField];
-            const parsed = new Date(raw);
+          if (profileUpdate[dateField] && !/^\d{4}-\d{2}-\d{2}$/.test(profileUpdate[dateField])) {
+            const parsed = new Date(profileUpdate[dateField]);
             if (!isNaN(parsed.getTime())) {
               profileUpdate[dateField] = parsed.toISOString().split('T')[0];
             }
