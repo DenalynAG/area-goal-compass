@@ -53,7 +53,10 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
     if (!deleteTarget) return;
     const id = deleteTarget.id;
     try {
-      // Delete related records first to avoid FK constraints
+      // Clear FK references on areas/subareas where this user is leader
+      await supabase.from('areas').update({ leader_user_id: null }).eq('leader_user_id', id);
+      await supabase.from('subareas').update({ leader_user_id: null }).eq('leader_user_id', id);
+      // Delete related records to avoid FK constraints
       await supabase.from('evaluation_scores').delete().in('evaluation_id',
         (await supabase.from('evaluations').select('id').eq('collaborator_user_id', id)).data?.map(e => e.id) ?? []
       );
@@ -61,6 +64,12 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
       await supabase.from('evaluations').delete().eq('evaluator_user_id', id);
       await supabase.from('leader_pass_records').delete().eq('user_id', id);
       await supabase.from('comfort_assignments').delete().eq('assigned_user_id', id);
+      await supabase.from('recognition_posts').delete().eq('nominee_user_id', id);
+      await supabase.from('recognition_posts').delete().eq('nominated_by', id);
+      await supabase.from('access_control').update({ companion_user_id: null }).eq('companion_user_id', id);
+      await supabase.from('access_control').update({ created_by: null }).eq('created_by', id);
+      await supabase.from('asset_movements').update({ collaborator_user_id: null }).eq('collaborator_user_id', id);
+      await supabase.from('asset_movements').update({ created_by: null }).eq('created_by', id);
       await supabase.from('notifications').delete().eq('user_id', id);
       await supabase.from('memberships').delete().eq('user_id', id);
       await supabase.from('user_roles').delete().eq('user_id', id);
