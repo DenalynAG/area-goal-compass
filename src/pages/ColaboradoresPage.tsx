@@ -23,7 +23,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
   const { data: userRoles = [] } = useUserRoles();
   const { data: areas = [] } = useAreas();
   const { data: subareas = [] } = useSubareas();
-  const { userRole } = useAuth();
+  const { isSuperAdmin } = useAuth();
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
   const [importing, setImporting] = useState(false);
@@ -33,7 +33,6 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
   const [editingProfile, setEditingProfile] = useState<Tables<'profiles'> | null>(null);
   const [editingMembership, setEditingMembership] = useState<Tables<'memberships'> | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Tables<'profiles'> | null>(null);
-  const isSuperAdmin = userRole === 'super_admin';
 
   const getRole = (userId: string): Enums<'app_role'> | null => userRoles.find(r => r.user_id === userId)?.role ?? null;
   const getMembership = (userId: string) => memberships.find(m => m.user_id === userId);
