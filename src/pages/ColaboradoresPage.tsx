@@ -36,6 +36,8 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
   const [editingProfile, setEditingProfile] = useState<Tables<'profiles'> | null>(null);
   const [editingMembership, setEditingMembership] = useState<Tables<'memberships'> | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Tables<'profiles'> | null>(null);
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false);
+  const [deletingAll, setDeletingAll] = useState(false);
   const [detailProfile, setDetailProfile] = useState<Tables<'profiles'> | null>(null);
   const [importReport, setImportReport] = useState<{ success: { row: number; name: string; action: string }[]; errors: { row: number; name: string; reason: string }[] } | null>(null);
 
@@ -88,6 +90,48 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
     qc.invalidateQueries({ queryKey: ['profiles'] });
     qc.invalidateQueries({ queryKey: ['memberships'] });
     qc.invalidateQueries({ queryKey: ['user_roles'] });
+  };
+
+  const handleDeleteAll = async () => {
+    setDeletingAll(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const currentUserId = user?.id;
+      const toDelete = profiles.filter(p => p.id !== currentUserId);
+      let deleted = 0;
+      for (const p of toDelete) {
+        const id = p.id;
+        await supabase.from('areas').update({ leader_user_id: null }).eq('leader_user_id', id);
+        await supabase.from('subareas').update({ leader_user_id: null }).eq('leader_user_id', id);
+        await supabase.from('objectives').update({ owner_user_id: null }).eq('owner_user_id', id);
+        await supabase.from('evaluation_scores').delete().in('evaluation_id',
+          (await supabase.from('evaluations').select('id').eq('collaborator_user_id', id)).data?.map(e => e.id) ?? []
+        );
+        await supabase.from('evaluations').delete().eq('collaborator_user_id', id);
+        await supabase.from('evaluations').delete().eq('evaluator_user_id', id);
+        await supabase.from('leader_pass_records').delete().eq('user_id', id);
+        await supabase.from('comfort_assignments').delete().eq('assigned_user_id', id);
+        await supabase.from('recognition_posts').delete().eq('nominee_user_id', id);
+        await supabase.from('recognition_posts').delete().eq('nominated_by', id);
+        await supabase.from('access_control').update({ companion_user_id: null }).eq('companion_user_id', id);
+        await supabase.from('access_control').update({ created_by: null }).eq('created_by', id);
+        await supabase.from('asset_movements').update({ collaborator_user_id: null }).eq('collaborator_user_id', id);
+        await supabase.from('asset_movements').update({ created_by: null }).eq('created_by', id);
+        await supabase.from('notifications').delete().eq('user_id', id);
+        await supabase.from('memberships').delete().eq('user_id', id);
+        await supabase.from('user_roles').delete().eq('user_id', id);
+        const { error } = await supabase.from('profiles').delete().eq('id', id);
+        if (!error) deleted++;
+      }
+      toast.success(`${deleted} colaboradores eliminados`);
+      qc.invalidateQueries({ queryKey: ['profiles'] });
+      qc.invalidateQueries({ queryKey: ['memberships'] });
+      qc.invalidateQueries({ queryKey: ['user_roles'] });
+    } catch (err: any) {
+      toast.error(`Error: ${err.message || 'Error desconocido'}`);
+    }
+    setDeletingAll(false);
+    setDeleteAllOpen(false);
   };
 
   const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -419,6 +463,11 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
             {importing ? 'Importando...' : 'Importar Excel'}
           </Button>
           <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" />Nuevo Colaborador</Button>
+          {isSuperAdmin && (
+            <Button variant="destructive" onClick={() => setDeleteAllOpen(true)}>
+              <Trash2 className="w-4 h-4 mr-2" />Eliminar Todo
+            </Button>
+          )}
         </div>
       </div>
 
@@ -545,7 +594,23 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Detail Card Dialog */}
+      <AlertDialog open={deleteAllOpen} onOpenChange={setDeleteAllOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>⚠️ ¿Eliminar TODOS los colaboradores?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminarán permanentemente <strong>{profiles.length - 1}</strong> colaboradores y todos sus datos asociados (membresías, roles, evaluaciones, etc.). Tu perfil de administrador se mantendrá. <strong>Esta acción no se puede deshacer.</strong>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingAll}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteAll} disabled={deletingAll} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {deletingAll ? 'Eliminando...' : 'Sí, eliminar todo'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <Dialog open={!!detailProfile} onOpenChange={open => !open && setDetailProfile(null)}>
         <DialogContent className="sm:max-w-md p-0 overflow-hidden">
           {detailProfile && (() => {
