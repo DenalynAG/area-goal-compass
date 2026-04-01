@@ -387,48 +387,58 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
 
       {/* Detail Card Dialog */}
       <Dialog open={!!detailProfile} onOpenChange={open => !open && setDetailProfile(null)}>
-        <DialogContent className="sm:max-w-md p-0 overflow-hidden">
+        <DialogContent className="sm:max-w-sm p-0 overflow-hidden border-0 shadow-2xl rounded-2xl">
           {detailProfile && (() => {
             const dm = getMembership(detailProfile.id);
             const dr = getRole(detailProfile.id);
-            const areaName = dm ? getAreaNameFromList(areas, dm.area_id) : '—';
+            const areaName = dm ? getAreaNameFromList(areas, dm.area_id) : '';
             const subareaName = dm?.subarea_id ? getSubareaNameFromList(subareas, dm.subarea_id) : '';
             return (
               <div className="flex flex-col">
-                {/* Header band */}
-                <div className="bg-gradient-to-r from-primary to-primary/70 px-6 py-5 flex items-center gap-5">
+                {/* Top accent line */}
+                <div className="h-1.5 bg-gradient-to-r from-primary via-primary/60 to-primary/30" />
+
+                {/* Photo + Name */}
+                <div className="flex flex-col items-center pt-6 pb-4 px-6">
                   {detailProfile.avatar ? (
-                    <img src={detailProfile.avatar} alt={detailProfile.name} className="w-20 h-20 rounded-xl object-cover border-2 border-primary-foreground/30 shadow-lg" />
+                    <img src={detailProfile.avatar} alt={detailProfile.name} className="w-24 h-24 rounded-full object-cover ring-4 ring-primary/10" />
                   ) : (
-                    <div className="w-20 h-20 rounded-xl bg-primary-foreground/20 flex items-center justify-center text-2xl font-bold text-primary-foreground shadow-lg">
+                    <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center text-3xl font-bold text-primary ring-4 ring-primary/5">
                       {detailProfile.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                     </div>
                   )}
-                  <div className="min-w-0">
-                    <h3 className="text-lg font-bold text-primary-foreground truncate">{detailProfile.name}</h3>
-                    <p className="text-sm text-primary-foreground/80 truncate">{detailProfile.position || 'Sin cargo'}</p>
-                    {dr && (
-                      <span className="mt-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-foreground/20 text-primary-foreground">
-                        {getRoleLabel(dr)}
-                      </span>
-                    )}
-                  </div>
+                  <h3 className="mt-3 text-base font-semibold text-foreground text-center">{detailProfile.name}</h3>
+                  <p className="text-sm text-muted-foreground">{detailProfile.position || 'Sin cargo'}</p>
+                  {dr && (
+                    <span className="mt-1.5 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                      {getRoleLabel(dr)}
+                    </span>
+                  )}
                 </div>
 
-                {/* Body */}
-                <div className="px-6 py-4 space-y-3 text-sm">
-                  <DetailRow label="Área" value={areaName} />
-                  {subareaName && <DetailRow label="Subárea" value={subareaName} />}
-                  <DetailRow label="Correo" value={detailProfile.email} />
-                  {detailProfile.phone && <DetailRow label="Teléfono" value={detailProfile.phone} />}
-                  {detailProfile.identificacion && <DetailRow label="Identificación" value={detailProfile.identificacion} />}
-                  {detailProfile.fecha_ingreso && <DetailRow label="Fecha de ingreso" value={new Date(detailProfile.fecha_ingreso + 'T12:00:00').toLocaleDateString('es-CO')} />}
-                  {detailProfile.tipo_contrato && <DetailRow label="Tipo contrato" value={detailProfile.tipo_contrato} />}
-                  {detailProfile.jefe_inmediato && <DetailRow label="Jefe inmediato" value={detailProfile.jefe_inmediato} />}
-                  {detailProfile.municipio && <DetailRow label="Municipio" value={detailProfile.municipio} />}
-                  {detailProfile.entidad_salud && <DetailRow label="EPS" value={detailProfile.entidad_salud} />}
-                  {detailProfile.arl && <DetailRow label="ARL" value={detailProfile.arl} />}
-                  {detailProfile.rh && <DetailRow label="RH" value={detailProfile.rh} />}
+                {/* Divider */}
+                <div className="mx-6 border-t border-border" />
+
+                {/* Info grid */}
+                <div className="px-6 py-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                  {detailProfile.identificacion && <InfoCell label="Identificación" value={detailProfile.identificacion} />}
+                  {detailProfile.sexo && <InfoCell label="Género" value={detailProfile.sexo} />}
+                  {detailProfile.rh && <InfoCell label="RH" value={detailProfile.rh} />}
+                  {areaName && <InfoCell label="Área" value={areaName} />}
+                  {subareaName && <InfoCell label="Subárea" value={subareaName} />}
+                  {detailProfile.arl && <InfoCell label="ARL" value={detailProfile.arl} />}
+                  {detailProfile.entidad_salud && <InfoCell label="EPS" value={detailProfile.entidad_salud} />}
+                  {detailProfile.fecha_ingreso && <InfoCell label="Ingreso" value={new Date(detailProfile.fecha_ingreso + 'T12:00:00').toLocaleDateString('es-CO')} />}
+                  {detailProfile.tipo_contrato && <InfoCell label="Contrato" value={detailProfile.tipo_contrato} />}
+                  {detailProfile.jefe_inmediato && <InfoCell label="Jefe inmediato" value={detailProfile.jefe_inmediato} full />}
+                </div>
+
+                {/* Contact footer */}
+                <div className="mx-6 border-t border-border" />
+                <div className="px-6 py-3 flex flex-col gap-1 text-xs text-muted-foreground">
+                  <span className="truncate">{detailProfile.email}</span>
+                  {detailProfile.phone && <span>{detailProfile.phone}</span>}
+                  {detailProfile.municipio && <span>{detailProfile.municipio}</span>}
                 </div>
               </div>
             );
@@ -439,11 +449,11 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
   );
 }
 
-function DetailRow({ label, value }: { label: string; value: string }) {
+function InfoCell({ label, value, full }: { label: string; value: string; full?: boolean }) {
   return (
-    <div className="flex justify-between items-start gap-4">
-      <span className="text-muted-foreground whitespace-nowrap">{label}</span>
-      <span className="font-medium text-right truncate">{value}</span>
+    <div className={full ? 'col-span-2' : ''}>
+      <p className="text-[11px] text-muted-foreground uppercase tracking-wide">{label}</p>
+      <p className="font-medium text-foreground truncate">{value}</p>
     </div>
   );
 }
