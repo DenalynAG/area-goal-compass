@@ -387,7 +387,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
 
       {/* Detail Card Dialog */}
       <Dialog open={!!detailProfile} onOpenChange={open => !open && setDetailProfile(null)}>
-        <DialogContent className="sm:max-w-sm p-0 overflow-hidden border-0 rounded-2xl shadow-xl bg-destructive/5">
+        <DialogContent className="sm:max-w-sm p-0 overflow-hidden border-0 rounded-2xl shadow-xl bg-card">
           {detailProfile && (() => {
             const dm = getMembership(detailProfile.id);
             const dr = getRole(detailProfile.id);
