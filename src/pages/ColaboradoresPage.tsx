@@ -448,7 +448,3 @@ function DetailRow({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-      <p className="font-medium text-foreground truncate">{value}</p>
-    </div>
-  );
-}
