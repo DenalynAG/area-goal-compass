@@ -306,7 +306,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
 
       <div className="bg-muted/30 rounded-lg px-4 py-3">
         <p className="text-xs text-muted-foreground">
-          📋 Para importar, usa un archivo Excel con columnas: <strong>Nombre</strong>, <strong>Correo</strong> (obligatorios), y opcionalmente: <strong>Identificación</strong>, <strong>Teléfono</strong>, <strong>Cargo</strong>, <strong>Área</strong>, <strong>Subárea</strong>, <strong>Rol</strong>, <strong>Sexo</strong>, <strong>Municipio</strong>, <strong>Dirección</strong>, <strong>Fecha de Ingreso</strong>, <strong>Tipo Contrato</strong>, <strong>Correo Personal</strong>.
+          📋 Para importar, usa un archivo Excel con columnas: <strong>Nombre Completo</strong> (obligatorio), y opcionalmente: <strong>Cedula</strong>, <strong>Correo</strong>, <strong>Correo Personal</strong>, <strong>Genero</strong>, <strong>Fecha De Nacimiento</strong>, <strong>Lugar Nacimiento</strong>, <strong>RH</strong>, <strong>Estado Civil</strong>, <strong>Nivel Educativo</strong>, <strong>Fecha Ingreso</strong>, <strong>T. Contrato</strong>, <strong>Cargo</strong>, <strong>Área</strong>, <strong>Subárea</strong>, <strong>Jefe Inmediato</strong>, <strong>Arl</strong>, <strong>Salud</strong>, <strong>Pensión</strong>, <strong>Cesantías</strong>, <strong>Teléfono</strong>, <strong>Dirección</strong>, <strong>Municipio</strong>, <strong>Rol</strong>.
         </p>
       </div>
 
