@@ -151,7 +151,9 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
               if (!res.ok) { errors++; reportErrors.push({ row: rowNum, name, reason: `Error creando usuario: ${result.error || res.statusText}` }); continue; }
               userId = result.user_id;
             } else {
-              userId = crypto.randomUUID();
+              errors++;
+              reportErrors.push({ row: rowNum, name, reason: 'Sin correo corporativo — no se puede crear el usuario' });
+              continue;
             }
           }
 
