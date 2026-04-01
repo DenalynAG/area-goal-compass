@@ -33,6 +33,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
   const [editingProfile, setEditingProfile] = useState<Tables<'profiles'> | null>(null);
   const [editingMembership, setEditingMembership] = useState<Tables<'memberships'> | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Tables<'profiles'> | null>(null);
+  const [detailProfile, setDetailProfile] = useState<Tables<'profiles'> | null>(null);
 
   const getRole = (userId: string): Enums<'app_role'> | null => userRoles.find(r => r.user_id === userId)?.role ?? null;
   const getMembership = (userId: string) => memberships.find(m => m.user_id === userId);
