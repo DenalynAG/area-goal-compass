@@ -504,6 +504,10 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
                 <Label>Fondo de Cesantías</Label>
                 <Input value={fondoCesantias} onChange={e => setFondoCesantias(e.target.value)} maxLength={100} />
               </div>
+              <div className="space-y-1.5">
+                <Label>ARL</Label>
+                <Input value={arlField} onChange={e => setArlField(e.target.value)} maxLength={100} placeholder="Ej: SURA" />
+              </div>
             </div>
 
             <div className="flex justify-end gap-2 pt-4">
