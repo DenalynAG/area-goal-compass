@@ -52,11 +52,29 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
   const handleDeleteColaborador = async () => {
     if (!deleteTarget) return;
     const id = deleteTarget.id;
-    await supabase.from('memberships').delete().eq('user_id', id);
-    await supabase.from('user_roles').delete().eq('user_id', id);
-    const { error } = await supabase.from('profiles').delete().eq('id', id);
-    if (error) { toast.error('Error al eliminar colaborador'); }
-    else { toast.success('Colaborador eliminado'); }
+    try {
+      // Delete related records first to avoid FK constraints
+      await supabase.from('evaluation_scores').delete().in('evaluation_id',
+        (await supabase.from('evaluations').select('id').eq('collaborator_user_id', id)).data?.map(e => e.id) ?? []
+      );
+      await supabase.from('evaluations').delete().eq('collaborator_user_id', id);
+      await supabase.from('evaluations').delete().eq('evaluator_user_id', id);
+      await supabase.from('leader_pass_records').delete().eq('user_id', id);
+      await supabase.from('comfort_assignments').delete().eq('assigned_user_id', id);
+      await supabase.from('notifications').delete().eq('user_id', id);
+      await supabase.from('memberships').delete().eq('user_id', id);
+      await supabase.from('user_roles').delete().eq('user_id', id);
+      const { error } = await supabase.from('profiles').delete().eq('id', id);
+      if (error) {
+        console.error('Error deleting profile:', error);
+        toast.error(`Error al eliminar: ${error.message}`);
+      } else {
+        toast.success('Colaborador eliminado');
+      }
+    } catch (err: any) {
+      console.error('Delete error:', err);
+      toast.error(`Error al eliminar: ${err.message || 'Error desconocido'}`);
+    }
     setDeleteTarget(null);
     qc.invalidateQueries({ queryKey: ['profiles'] });
     qc.invalidateQueries({ queryKey: ['memberships'] });
