@@ -92,7 +92,48 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
     qc.invalidateQueries({ queryKey: ['user_roles'] });
   };
 
-  const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDeleteAll = async () => {
+    setDeletingAll(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const currentUserId = user?.id;
+      const toDelete = profiles.filter(p => p.id !== currentUserId);
+      let deleted = 0;
+      for (const p of toDelete) {
+        const id = p.id;
+        await supabase.from('areas').update({ leader_user_id: null }).eq('leader_user_id', id);
+        await supabase.from('subareas').update({ leader_user_id: null }).eq('leader_user_id', id);
+        await supabase.from('objectives').update({ owner_user_id: null }).eq('owner_user_id', id);
+        await supabase.from('evaluation_scores').delete().in('evaluation_id',
+          (await supabase.from('evaluations').select('id').eq('collaborator_user_id', id)).data?.map(e => e.id) ?? []
+        );
+        await supabase.from('evaluations').delete().eq('collaborator_user_id', id);
+        await supabase.from('evaluations').delete().eq('evaluator_user_id', id);
+        await supabase.from('leader_pass_records').delete().eq('user_id', id);
+        await supabase.from('comfort_assignments').delete().eq('assigned_user_id', id);
+        await supabase.from('recognition_posts').delete().eq('nominee_user_id', id);
+        await supabase.from('recognition_posts').delete().eq('nominated_by', id);
+        await supabase.from('access_control').update({ companion_user_id: null }).eq('companion_user_id', id);
+        await supabase.from('access_control').update({ created_by: null }).eq('created_by', id);
+        await supabase.from('asset_movements').update({ collaborator_user_id: null }).eq('collaborator_user_id', id);
+        await supabase.from('asset_movements').update({ created_by: null }).eq('created_by', id);
+        await supabase.from('notifications').delete().eq('user_id', id);
+        await supabase.from('memberships').delete().eq('user_id', id);
+        await supabase.from('user_roles').delete().eq('user_id', id);
+        const { error } = await supabase.from('profiles').delete().eq('id', id);
+        if (!error) deleted++;
+      }
+      toast.success(`${deleted} colaboradores eliminados`);
+      qc.invalidateQueries({ queryKey: ['profiles'] });
+      qc.invalidateQueries({ queryKey: ['memberships'] });
+      qc.invalidateQueries({ queryKey: ['user_roles'] });
+    } catch (err: any) {
+      toast.error(`Error: ${err.message || 'Error desconocido'}`);
+    }
+    setDeletingAll(false);
+    setDeleteAllOpen(false);
+  };
+
     const file = e.target.files?.[0];
     if (!file) return;
     setImporting(true);
