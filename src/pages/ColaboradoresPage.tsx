@@ -387,7 +387,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
 
       {/* Detail Card Dialog */}
       <Dialog open={!!detailProfile} onOpenChange={open => !open && setDetailProfile(null)}>
-        <DialogContent className="sm:max-w-md p-0 overflow-hidden">
+        <DialogContent className="sm:max-w-sm p-0 overflow-hidden border-0 rounded-2xl shadow-xl bg-destructive/5">
           {detailProfile && (() => {
             const dm = getMembership(detailProfile.id);
             const dr = getRole(detailProfile.id);
@@ -395,41 +395,51 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
             const subareaName = dm?.subarea_id ? getSubareaNameFromList(subareas, dm.subarea_id) : '';
             return (
               <div className="flex flex-col">
-                {/* Header band */}
-                <div className="bg-gradient-to-r from-primary to-primary/70 px-6 py-5 flex items-center gap-5">
-                  {detailProfile.avatar ? (
-                    <img src={detailProfile.avatar} alt={detailProfile.name} className="w-20 h-20 rounded-xl object-cover border-2 border-primary-foreground/30 shadow-lg" />
-                  ) : (
-                    <div className="w-20 h-20 rounded-xl bg-primary-foreground/20 flex items-center justify-center text-2xl font-bold text-primary-foreground shadow-lg">
-                      {detailProfile.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                    </div>
+                {/* Top bar with role badge */}
+                <div className="flex items-center justify-between px-5 pt-4 pb-2">
+                  <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-destructive">
+                    <span className="text-base">👤</span>
+                    {detailProfile.position || 'Colaborador'}
+                  </span>
+                  {dr && (
+                    <span className="w-9 h-9 rounded-full bg-destructive flex items-center justify-center shadow-md">
+                      <span className="text-destructive-foreground text-sm">🏅</span>
+                    </span>
                   )}
-                  <div className="min-w-0">
-                    <h3 className="text-lg font-bold text-primary-foreground truncate">{detailProfile.name}</h3>
-                    <p className="text-sm text-primary-foreground/80 truncate">{detailProfile.position || 'Sin cargo'}</p>
-                    {dr && (
-                      <span className="mt-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-foreground/20 text-primary-foreground">
-                        {getRoleLabel(dr)}
-                      </span>
-                    )}
-                  </div>
                 </div>
 
-                {/* Body */}
-                <div className="px-6 py-4 space-y-3 text-sm">
-                  {detailProfile.identificacion && <DetailRow label="Identificación" value={detailProfile.identificacion} />}
-                  {detailProfile.sexo && <DetailRow label="Género" value={detailProfile.sexo} />}
-                  {detailProfile.rh && <DetailRow label="RH" value={detailProfile.rh} />}
-                  <DetailRow label="Área" value={areaName} />
-                  {subareaName && <DetailRow label="Subárea" value={subareaName} />}
-                  <DetailRow label="Correo" value={detailProfile.email} />
-                  {detailProfile.phone && <DetailRow label="Teléfono" value={detailProfile.phone} />}
-                  {detailProfile.arl && <DetailRow label="ARL" value={detailProfile.arl} />}
-                  {detailProfile.entidad_salud && <DetailRow label="EPS" value={detailProfile.entidad_salud} />}
-                  {detailProfile.fecha_ingreso && <DetailRow label="Fecha de ingreso" value={new Date(detailProfile.fecha_ingreso + 'T12:00:00').toLocaleDateString('es-CO')} />}
-                  {detailProfile.tipo_contrato && <DetailRow label="Tipo contrato" value={detailProfile.tipo_contrato} />}
-                  {detailProfile.jefe_inmediato && <DetailRow label="Jefe inmediato" value={detailProfile.jefe_inmediato} />}
-                  {detailProfile.municipio && <DetailRow label="Municipio" value={detailProfile.municipio} />}
+                {/* Card body */}
+                <div className="mx-4 mb-4 bg-card rounded-xl border shadow-sm overflow-hidden">
+                  {/* Name + avatar row */}
+                  <div className="flex items-center gap-4 px-5 py-4 border-b">
+                    {detailProfile.avatar ? (
+                      <img src={detailProfile.avatar} alt={detailProfile.name} className="w-14 h-14 rounded-full object-cover ring-2 ring-border" />
+                    ) : (
+                      <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-xl font-bold text-primary ring-2 ring-border">
+                        {detailProfile.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <h3 className="text-base font-bold text-foreground truncate">{detailProfile.name}</h3>
+                      <p className="text-xs text-muted-foreground">{areaName}{subareaName ? ` · ${subareaName}` : ''}</p>
+                      {dr && <p className="text-xs text-muted-foreground">{getRoleLabel(dr)}</p>}
+                    </div>
+                  </div>
+
+                  {/* Details */}
+                  <div className="px-5 py-3 space-y-2 text-sm">
+                    {detailProfile.identificacion && <DetailRow label="Identificación" value={detailProfile.identificacion} />}
+                    {detailProfile.sexo && <DetailRow label="Género" value={detailProfile.sexo} />}
+                    {detailProfile.rh && <DetailRow label="RH" value={detailProfile.rh} />}
+                    <DetailRow label="Correo" value={detailProfile.email} />
+                    {detailProfile.phone && <DetailRow label="Teléfono" value={detailProfile.phone} />}
+                    {detailProfile.arl && <DetailRow label="ARL" value={detailProfile.arl} />}
+                    {detailProfile.entidad_salud && <DetailRow label="EPS" value={detailProfile.entidad_salud} />}
+                    {detailProfile.fecha_ingreso && <DetailRow label="Ingreso" value={new Date(detailProfile.fecha_ingreso + 'T12:00:00').toLocaleDateString('es-CO')} />}
+                    {detailProfile.tipo_contrato && <DetailRow label="Contrato" value={detailProfile.tipo_contrato} />}
+                    {detailProfile.jefe_inmediato && <DetailRow label="Jefe inmediato" value={detailProfile.jefe_inmediato} />}
+                    {detailProfile.municipio && <DetailRow label="Municipio" value={detailProfile.municipio} />}
+                  </div>
                 </div>
               </div>
             );
@@ -443,8 +453,8 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between items-start gap-4">
-      <span className="text-muted-foreground whitespace-nowrap">{label}</span>
-      <span className="font-medium text-right truncate">{value}</span>
+      <span className="text-muted-foreground whitespace-nowrap text-xs">{label}</span>
+      <span className="font-medium text-right truncate text-xs">{value}</span>
     </div>
   );
 }
