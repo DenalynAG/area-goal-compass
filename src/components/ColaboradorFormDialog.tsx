@@ -101,6 +101,12 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
       setEntidadSalud(p.entidad_salud ?? '');
       setFondoPensiones(p.fondo_pensiones ?? '');
       setFondoCesantias(p.fondo_cesantias ?? '');
+      setLugarNacimiento(p.lugar_nacimiento ?? '');
+      setRh(p.rh ?? '');
+      setEstadoCivil(p.estado_civil ?? '');
+      setNivelEducativo(p.nivel_educativo ?? '');
+      setArlField(p.arl ?? '');
+      setJefeInmediato(p.jefe_inmediato ?? '');
       setAvatarPreview(p.avatar || null);
       setAreaId(membership?.area_id ?? '');
       setSubareaId(membership?.subarea_id ?? '');
