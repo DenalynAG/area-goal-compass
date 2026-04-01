@@ -3,7 +3,7 @@ import { useProfiles, useMemberships, useUserRoles, useAreas, useSubareas, getAr
 import { getRoleLabel } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, Edit, Upload, Trash2, Eye } from 'lucide-react';
+import { Plus, Search, Edit, Upload, Trash2, Eye, CheckCircle2, XCircle, FileText, Download } from 'lucide-react';
 import type { Enums, Tables } from '@/integrations/supabase/types';
 import ColaboradorFormDialog from '@/components/ColaboradorFormDialog';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,6 +12,8 @@ import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface ColaboradoresPageProps {
@@ -35,6 +37,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
   const [editingMembership, setEditingMembership] = useState<Tables<'memberships'> | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Tables<'profiles'> | null>(null);
   const [detailProfile, setDetailProfile] = useState<Tables<'profiles'> | null>(null);
+  const [importReport, setImportReport] = useState<{ success: { row: number; name: string; action: string }[]; errors: { row: number; name: string; reason: string }[] } | null>(null);
 
   const getRole = (userId: string): Enums<'app_role'> | null => userRoles.find(r => r.user_id === userId)?.role ?? null;
   const getMembership = (userId: string) => memberships.find(m => m.user_id === userId);
@@ -109,14 +112,18 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
 
       let imported = 0;
       let errors = 0;
+      const reportSuccess: { row: number; name: string; action: string }[] = [];
+      const reportErrors: { row: number; name: string; reason: string }[] = [];
 
-      for (const row of rows) {
+      for (let rowIdx = 0; rowIdx < rows.length; rowIdx++) {
+        const row = rows[rowIdx];
+        const rowNum = rowIdx + 2; // Excel row (header = 1)
         try {
           const rawName = getRowValue(row, ['Nombre', 'Nombre completo', 'Nombre Completo']);
           const name = rawName ? toTitleCase(rawName.toString().trim()) : '';
           const emailValue = getRowValue(row, ['Correo', 'Email', 'Correo Corporativo']);
           const email = emailValue ? emailValue.toString().trim().toLowerCase() : '';
-          if (!name) { errors++; continue; }
+          if (!name) { errors++; reportErrors.push({ row: rowNum, name: '(vacío)', reason: 'Nombre vacío o no encontrado' }); continue; }
 
           const identificationValue = getRowValue(row, ['Cedula', 'Cédula', 'Identificación', 'Identificacion']);
           const identification = identificationValue == null
@@ -131,6 +138,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
             ?? null;
 
           let userId = matchedProfile?.id ?? '';
+          const isUpdate = !!matchedProfile;
 
           if (!userId) {
             if (email && isSuperAdmin) {
@@ -140,7 +148,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
                 body: JSON.stringify({ email, name }),
               });
               const result = await res.json().catch(() => ({}));
-              if (!res.ok) { errors++; continue; }
+              if (!res.ok) { errors++; reportErrors.push({ row: rowNum, name, reason: `Error creando usuario: ${result.error || res.statusText}` }); continue; }
               userId = result.user_id;
             } else {
               userId = crypto.randomUUID();
@@ -241,7 +249,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
           };
 
           const { error: profileError } = await supabase.from('profiles').upsert(profilePayload);
-          if (profileError) { errors++; continue; }
+          if (profileError) { errors++; reportErrors.push({ row: rowNum, name, reason: `Error perfil: ${profileError.message}` }); continue; }
 
           matchedProfile = { ...(matchedProfile ?? {}), ...profilePayload } as Tables<'profiles'>;
           profileByEmail.set(resolvedEmail.toLowerCase(), matchedProfile);
@@ -263,7 +271,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
                   .select('*')
                   .maybeSingle();
 
-                if (membershipError) { errors++; continue; }
+                if (membershipError) { errors++; reportErrors.push({ row: rowNum, name, reason: `Error membresía: ${membershipError.message}` }); continue; }
                 membershipByUserId.set(userId, updatedMembership ?? { ...existingMembership, area_id: foundArea.id, subarea_id: foundSub?.id || null });
               } else {
                 const { data: insertedMembership, error: membershipError } = await supabase
@@ -272,7 +280,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
                   .select('*')
                   .maybeSingle();
 
-                if (membershipError) { errors++; continue; }
+                if (membershipError) { errors++; reportErrors.push({ row: rowNum, name, reason: `Error membresía: ${membershipError.message}` }); continue; }
                 if (insertedMembership) membershipByUserId.set(userId, insertedMembership);
               }
             }
@@ -301,7 +309,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
                 .select('*')
                 .maybeSingle();
 
-              if (roleError) { errors++; continue; }
+              if (roleError) { errors++; reportErrors.push({ row: rowNum, name, reason: `Error rol: ${roleError.message}` }); continue; }
               roleByUserId.set(userId, updatedRole ?? { ...existingRole, role: mappedRole });
             } else {
               const { data: insertedRole, error: roleError } = await supabase
@@ -310,18 +318,20 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
                 .select('*')
                 .maybeSingle();
 
-              if (roleError) { errors++; continue; }
+              if (roleError) { errors++; reportErrors.push({ row: rowNum, name, reason: `Error rol: ${roleError.message}` }); continue; }
               if (insertedRole) roleByUserId.set(userId, insertedRole);
             }
           }
 
           imported++;
+          reportSuccess.push({ row: rowNum, name, action: isUpdate ? 'Actualizado' : 'Creado' });
         } catch {
           errors++;
+          reportErrors.push({ row: rowNum, name: `Fila ${rowNum}`, reason: 'Error inesperado' });
         }
       }
 
-      toast.success(`Importación completada: ${imported} colaboradores procesados${errors > 0 ? `, ${errors} errores` : ''}`);
+      setImportReport({ success: reportSuccess, errors: reportErrors });
       qc.invalidateQueries({ queryKey: ['profiles'] });
       qc.invalidateQueries({ queryKey: ['memberships'] });
       qc.invalidateQueries({ queryKey: ['user_roles'] });
@@ -514,6 +524,118 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
               </div>
             );
           })()}
+        </DialogContent>
+      </Dialog>
+
+      {/* Import Report Dialog */}
+      <Dialog open={!!importReport} onOpenChange={open => !open && setImportReport(null)}>
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-3">
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Reporte de Importación
+            </DialogTitle>
+          </DialogHeader>
+          {importReport && (
+            <div className="px-6 pb-6 space-y-4">
+              {/* Summary counters */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg border bg-green-50 dark:bg-green-950/30 p-3 flex items-center gap-3">
+                  <CheckCircle2 className="w-8 h-8 text-green-600" />
+                  <div>
+                    <p className="text-2xl font-bold text-green-700 dark:text-green-400">{importReport.success.length}</p>
+                    <p className="text-xs text-green-600 dark:text-green-500">Exitosos</p>
+                  </div>
+                </div>
+                <div className="rounded-lg border bg-red-50 dark:bg-red-950/30 p-3 flex items-center gap-3">
+                  <XCircle className="w-8 h-8 text-red-600" />
+                  <div>
+                    <p className="text-2xl font-bold text-red-700 dark:text-red-400">{importReport.errors.length}</p>
+                    <p className="text-xs text-red-600 dark:text-red-500">Con errores</p>
+                  </div>
+                </div>
+              </div>
+
+              <ScrollArea className="max-h-[45vh]">
+                {/* Errors section */}
+                {importReport.errors.length > 0 && (
+                  <div className="space-y-2 mb-4">
+                    <h4 className="text-sm font-semibold text-destructive flex items-center gap-1.5">
+                      <XCircle className="w-4 h-4" /> Filas con errores
+                    </h4>
+                    <div className="rounded-lg border border-destructive/30 overflow-hidden">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="bg-destructive/10">
+                            <th className="text-left px-3 py-2 font-medium w-14">Fila</th>
+                            <th className="text-left px-3 py-2 font-medium">Nombre</th>
+                            <th className="text-left px-3 py-2 font-medium">Motivo</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {importReport.errors.map((err, i) => (
+                            <tr key={i} className="border-t border-destructive/10">
+                              <td className="px-3 py-1.5 text-muted-foreground">{err.row}</td>
+                              <td className="px-3 py-1.5 font-medium">{err.name}</td>
+                              <td className="px-3 py-1.5 text-destructive">{err.reason}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Success section */}
+                {importReport.success.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-semibold text-green-700 dark:text-green-400 flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4" /> Filas procesadas exitosamente
+                    </h4>
+                    <div className="rounded-lg border border-green-300/50 overflow-hidden">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="bg-green-50 dark:bg-green-950/30">
+                            <th className="text-left px-3 py-2 font-medium w-14">Fila</th>
+                            <th className="text-left px-3 py-2 font-medium">Nombre</th>
+                            <th className="text-left px-3 py-2 font-medium w-24">Acción</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {importReport.success.map((s, i) => (
+                            <tr key={i} className="border-t border-green-200/30">
+                              <td className="px-3 py-1.5 text-muted-foreground">{s.row}</td>
+                              <td className="px-3 py-1.5 font-medium">{s.name}</td>
+                              <td className="px-3 py-1.5">
+                                <Badge variant={s.action === 'Creado' ? 'default' : 'secondary'} className="text-[10px]">
+                                  {s.action}
+                                </Badge>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </ScrollArea>
+
+              <div className="flex justify-end pt-2">
+                <Button variant="outline" size="sm" onClick={() => {
+                  const lines = ['Fila,Nombre,Estado,Detalle'];
+                  importReport.success.forEach(s => lines.push(`${s.row},"${s.name}",Exitoso,${s.action}`));
+                  importReport.errors.forEach(e => lines.push(`${e.row},"${e.name}",Error,"${e.reason}"`));
+                  const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url; a.download = 'reporte_importacion.csv'; a.click();
+                  URL.revokeObjectURL(url);
+                }}>
+                  <Download className="w-4 h-4 mr-2" />Descargar reporte CSV
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
