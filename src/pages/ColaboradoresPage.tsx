@@ -131,6 +131,11 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
             email = personalEmailValue ? personalEmailValue.toString().trim().toLowerCase() : '';
           }
 
+          // Validar formato de email
+          if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            email = '';
+          }
+
           const identificationValue = getRowValue(row, ['Cedula', 'Cédula', 'Identificación', 'Identificacion']);
           const identification = identificationValue == null
             ? ''
