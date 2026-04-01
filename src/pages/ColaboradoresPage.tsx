@@ -338,7 +338,14 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
                       </div>
                     </td>
                     <td className="px-3 py-3">
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(c)}><Edit className="w-4 h-4" /></Button>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => openEdit(c)}><Edit className="w-4 h-4" /></Button>
+                        {isSuperAdmin && (
+                          <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(c)} className="text-destructive hover:text-destructive">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
