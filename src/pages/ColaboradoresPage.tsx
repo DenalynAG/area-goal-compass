@@ -384,6 +384,66 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Detail Card Dialog */}
+      <Dialog open={!!detailProfile} onOpenChange={open => !open && setDetailProfile(null)}>
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden">
+          {detailProfile && (() => {
+            const dm = getMembership(detailProfile.id);
+            const dr = getRole(detailProfile.id);
+            const areaName = dm ? getAreaNameFromList(areas, dm.area_id) : '—';
+            const subareaName = dm?.subarea_id ? getSubareaNameFromList(subareas, dm.subarea_id) : '';
+            return (
+              <div className="flex flex-col">
+                {/* Header band */}
+                <div className="bg-gradient-to-r from-primary to-primary/70 px-6 py-5 flex items-center gap-5">
+                  {detailProfile.avatar ? (
+                    <img src={detailProfile.avatar} alt={detailProfile.name} className="w-20 h-20 rounded-xl object-cover border-2 border-primary-foreground/30 shadow-lg" />
+                  ) : (
+                    <div className="w-20 h-20 rounded-xl bg-primary-foreground/20 flex items-center justify-center text-2xl font-bold text-primary-foreground shadow-lg">
+                      {detailProfile.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <h3 className="text-lg font-bold text-primary-foreground truncate">{detailProfile.name}</h3>
+                    <p className="text-sm text-primary-foreground/80 truncate">{detailProfile.position || 'Sin cargo'}</p>
+                    {dr && (
+                      <span className="mt-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-foreground/20 text-primary-foreground">
+                        {getRoleLabel(dr)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Body */}
+                <div className="px-6 py-4 space-y-3 text-sm">
+                  <DetailRow label="Área" value={areaName} />
+                  {subareaName && <DetailRow label="Subárea" value={subareaName} />}
+                  <DetailRow label="Correo" value={detailProfile.email} />
+                  {detailProfile.phone && <DetailRow label="Teléfono" value={detailProfile.phone} />}
+                  {detailProfile.identificacion && <DetailRow label="Identificación" value={detailProfile.identificacion} />}
+                  {detailProfile.fecha_ingreso && <DetailRow label="Fecha de ingreso" value={new Date(detailProfile.fecha_ingreso + 'T12:00:00').toLocaleDateString('es-CO')} />}
+                  {detailProfile.tipo_contrato && <DetailRow label="Tipo contrato" value={detailProfile.tipo_contrato} />}
+                  {detailProfile.jefe_inmediato && <DetailRow label="Jefe inmediato" value={detailProfile.jefe_inmediato} />}
+                  {detailProfile.municipio && <DetailRow label="Municipio" value={detailProfile.municipio} />}
+                  {detailProfile.entidad_salud && <DetailRow label="EPS" value={detailProfile.entidad_salud} />}
+                  {detailProfile.arl && <DetailRow label="ARL" value={detailProfile.arl} />}
+                  {detailProfile.rh && <DetailRow label="RH" value={detailProfile.rh} />}
+                </div>
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between items-start gap-4">
+      <span className="text-muted-foreground whitespace-nowrap">{label}</span>
+      <span className="font-medium text-right truncate">{value}</span>
     </div>
   );
 }
