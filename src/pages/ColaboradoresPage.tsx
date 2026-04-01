@@ -224,9 +224,12 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
 
           if (!userId) {
             if (email && isSuperAdmin) {
+              // Refresh token to avoid JWT expiry during long imports
+              const { data: { session: freshSession } } = await supabase.auth.getSession();
+              if (!freshSession) { errors++; reportErrors.push({ row: rowNum, name, reason: 'Sesión expirada' }); continue; }
               const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-user`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${freshSession.access_token}` },
                 body: JSON.stringify({ email, name }),
               });
               const result = await res.json().catch(() => ({}));
