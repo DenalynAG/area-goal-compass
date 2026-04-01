@@ -117,6 +117,8 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
       setFechaIngreso(''); setCorreoPersonal(''); setTipoContrato('');
       setTallaPantalon(''); setTallaCamisa(''); setTallaZapatos('');
       setEntidadSalud(''); setFondoPensiones(''); setFondoCesantias('');
+      setLugarNacimiento(''); setRh(''); setEstadoCivil('');
+      setNivelEducativo(''); setArlField(''); setJefeInmediato('');
       setAvatarPreview(null); setAvatarFile(null);
       setAreaId(defaultAreaId || ''); setSubareaId(defaultSubareaId || ''); setRole('');
     }
