@@ -56,6 +56,14 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
   const [tallaCamisa, setTallaCamisa] = useState('');
   const [tallaZapatos, setTallaZapatos] = useState('');
 
+  // Nuevos campos
+  const [lugarNacimiento, setLugarNacimiento] = useState('');
+  const [rh, setRh] = useState('');
+  const [estadoCivil, setEstadoCivil] = useState('');
+  const [nivelEducativo, setNivelEducativo] = useState('');
+  const [arlField, setArlField] = useState('');
+  const [jefeInmediato, setJefeInmediato] = useState('');
+
   // Seguridad social
   const [entidadSalud, setEntidadSalud] = useState('');
   const [fondoPensiones, setFondoPensiones] = useState('');
