@@ -1169,6 +1169,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          arl: string | null
           avatar: string | null
           birthday: string | null
           correo_personal: string | null
@@ -1176,15 +1177,20 @@ export type Database = {
           direccion: string | null
           email: string
           entidad_salud: string | null
+          estado_civil: string | null
           fecha_ingreso: string | null
           fondo_cesantias: string | null
           fondo_pensiones: string | null
           id: string
           identificacion: string | null
+          jefe_inmediato: string | null
+          lugar_nacimiento: string | null
           municipio: string | null
           name: string
+          nivel_educativo: string | null
           phone: string | null
           position: string | null
+          rh: string | null
           sexo: string | null
           talla_camisa: string | null
           talla_pantalon: string | null
@@ -1193,6 +1199,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          arl?: string | null
           avatar?: string | null
           birthday?: string | null
           correo_personal?: string | null
@@ -1200,15 +1207,20 @@ export type Database = {
           direccion?: string | null
           email: string
           entidad_salud?: string | null
+          estado_civil?: string | null
           fecha_ingreso?: string | null
           fondo_cesantias?: string | null
           fondo_pensiones?: string | null
           id: string
           identificacion?: string | null
+          jefe_inmediato?: string | null
+          lugar_nacimiento?: string | null
           municipio?: string | null
           name: string
+          nivel_educativo?: string | null
           phone?: string | null
           position?: string | null
+          rh?: string | null
           sexo?: string | null
           talla_camisa?: string | null
           talla_pantalon?: string | null
@@ -1217,6 +1229,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          arl?: string | null
           avatar?: string | null
           birthday?: string | null
           correo_personal?: string | null
@@ -1224,15 +1237,20 @@ export type Database = {
           direccion?: string | null
           email?: string
           entidad_salud?: string | null
+          estado_civil?: string | null
           fecha_ingreso?: string | null
           fondo_cesantias?: string | null
           fondo_pensiones?: string | null
           id?: string
           identificacion?: string | null
+          jefe_inmediato?: string | null
+          lugar_nacimiento?: string | null
           municipio?: string | null
           name?: string
+          nivel_educativo?: string | null
           phone?: string | null
           position?: string | null
+          rh?: string | null
           sexo?: string | null
           talla_camisa?: string | null
           talla_pantalon?: string | null
