@@ -74,6 +74,17 @@ Deno.serve(async (req) => {
     });
 
     if (createError) {
+      // If user already exists, look up their ID and return it
+      if (createError.message?.includes('already been registered') || createError.message?.includes('already exists')) {
+        const { data: existingUsers } = await serviceClient.auth.admin.listUsers();
+        const existing = existingUsers?.users?.find((u: any) => u.email === email);
+        if (existing) {
+          return new Response(
+            JSON.stringify({ user_id: existing.id, message: "User already exists", existing: true }),
+            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
       return new Response(JSON.stringify({ error: createError.message }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
