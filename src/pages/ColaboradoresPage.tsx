@@ -3,13 +3,15 @@ import { useProfiles, useMemberships, useUserRoles, useAreas, useSubareas, getAr
 import { getRoleLabel } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, Mail, Phone, Edit, Upload } from 'lucide-react';
+import { Plus, Search, Mail, Phone, Edit, Upload, Trash2 } from 'lucide-react';
 import type { Enums, Tables } from '@/integrations/supabase/types';
 import ColaboradorFormDialog from '@/components/ColaboradorFormDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ColaboradoresPageProps {
   areaFilterName?: string;
