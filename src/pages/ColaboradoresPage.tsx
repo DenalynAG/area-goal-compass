@@ -3,13 +3,15 @@ import { useProfiles, useMemberships, useUserRoles, useAreas, useSubareas, getAr
 import { getRoleLabel } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, Mail, Phone, Edit, Upload } from 'lucide-react';
+import { Plus, Search, Mail, Phone, Edit, Upload, Trash2 } from 'lucide-react';
 import type { Enums, Tables } from '@/integrations/supabase/types';
 import ColaboradorFormDialog from '@/components/ColaboradorFormDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ColaboradoresPageProps {
   areaFilterName?: string;
@@ -21,6 +23,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
   const { data: userRoles = [] } = useUserRoles();
   const { data: areas = [] } = useAreas();
   const { data: subareas = [] } = useSubareas();
+  const { isSuperAdmin } = useAuth();
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
   const [importing, setImporting] = useState(false);
@@ -29,6 +32,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState<Tables<'profiles'> | null>(null);
   const [editingMembership, setEditingMembership] = useState<Tables<'memberships'> | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Tables<'profiles'> | null>(null);
 
   const getRole = (userId: string): Enums<'app_role'> | null => userRoles.find(r => r.user_id === userId)?.role ?? null;
   const getMembership = (userId: string) => memberships.find(m => m.user_id === userId);
@@ -38,6 +42,20 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
     setEditingProfile(p);
     setEditingMembership(getMembership(p.id) ?? null);
     setDialogOpen(true);
+  };
+
+  const handleDeleteColaborador = async () => {
+    if (!deleteTarget) return;
+    const id = deleteTarget.id;
+    await supabase.from('memberships').delete().eq('user_id', id);
+    await supabase.from('user_roles').delete().eq('user_id', id);
+    const { error } = await supabase.from('profiles').delete().eq('id', id);
+    if (error) { toast.error('Error al eliminar colaborador'); }
+    else { toast.success('Colaborador eliminado'); }
+    setDeleteTarget(null);
+    qc.invalidateQueries({ queryKey: ['profiles'] });
+    qc.invalidateQueries({ queryKey: ['memberships'] });
+    qc.invalidateQueries({ queryKey: ['user_roles'] });
   };
 
   const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -320,7 +338,14 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
                       </div>
                     </td>
                     <td className="px-3 py-3">
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(c)}><Edit className="w-4 h-4" /></Button>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => openEdit(c)}><Edit className="w-4 h-4" /></Button>
+                        {isSuperAdmin && (
+                          <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(c)} className="text-destructive hover:text-destructive">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -348,6 +373,21 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
         membership={editingMembership}
         userRole={editingProfile ? getRole(editingProfile.id) : null}
       />
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={open => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar colaborador?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminará permanentemente a <strong>{deleteTarget?.name}</strong> y sus asignaciones. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteColaborador} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Eliminar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
