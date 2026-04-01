@@ -44,6 +44,20 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
     setDialogOpen(true);
   };
 
+  const handleDeleteColaborador = async () => {
+    if (!deleteTarget) return;
+    const id = deleteTarget.id;
+    await supabase.from('memberships').delete().eq('user_id', id);
+    await supabase.from('user_roles').delete().eq('user_id', id);
+    const { error } = await supabase.from('profiles').delete().eq('id', id);
+    if (error) { toast.error('Error al eliminar colaborador'); }
+    else { toast.success('Colaborador eliminado'); }
+    setDeleteTarget(null);
+    qc.invalidateQueries({ queryKey: ['profiles'] });
+    qc.invalidateQueries({ queryKey: ['memberships'] });
+    qc.invalidateQueries({ queryKey: ['user_roles'] });
+  };
+
   const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
