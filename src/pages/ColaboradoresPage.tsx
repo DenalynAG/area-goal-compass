@@ -36,6 +36,8 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
   const [editingProfile, setEditingProfile] = useState<Tables<'profiles'> | null>(null);
   const [editingMembership, setEditingMembership] = useState<Tables<'memberships'> | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Tables<'profiles'> | null>(null);
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false);
+  const [deletingAll, setDeletingAll] = useState(false);
   const [detailProfile, setDetailProfile] = useState<Tables<'profiles'> | null>(null);
   const [importReport, setImportReport] = useState<{ success: { row: number; name: string; action: string }[]; errors: { row: number; name: string; reason: string }[] } | null>(null);
 
