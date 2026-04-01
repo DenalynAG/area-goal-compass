@@ -368,6 +368,14 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
     (c.position ?? '').toLowerCase().includes(search.toLowerCase())
   );
 
+  const PAGE_SIZE = 20;
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginatedFiltered = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  // Reset page when search changes
+  useEffect(() => { setCurrentPage(1); }, [search, areaFilterName]);
+
   if (isLoading) return <div className="flex items-center justify-center py-20 text-muted-foreground">Cargando colaboradores...</div>;
 
   return (
@@ -406,7 +414,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
               </tr>
             </thead>
             <tbody>
-              {filtered.map(c => {
+              {paginatedFiltered.map(c => {
                 const membership = getMembership(c.id);
                 const role = getRole(c.id);
                 return (
@@ -447,13 +455,37 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
                   </tr>
                 );
               })}
-              {filtered.length === 0 && (
+              {paginatedFiltered.length === 0 && (
                 <tr><td colSpan={6} className="px-5 py-8 text-center text-muted-foreground">No se encontraron colaboradores</td></tr>
               )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-2">
+          <p className="text-sm text-muted-foreground">
+            Mostrando {((currentPage - 1) * PAGE_SIZE) + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} de {filtered.length}
+          </p>
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="sm" disabled={currentPage <= 1} onClick={() => setCurrentPage(p => p - 1)}>Anterior</Button>
+            {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+              let page: number;
+              if (totalPages <= 7) { page = i + 1; }
+              else if (currentPage <= 4) { page = i + 1; }
+              else if (currentPage >= totalPages - 3) { page = totalPages - 6 + i; }
+              else { page = currentPage - 3 + i; }
+              return (
+                <Button key={page} variant={page === currentPage ? 'default' : 'outline'} size="sm" className="w-9" onClick={() => setCurrentPage(page)}>
+                  {page}
+                </Button>
+              );
+            })}
+            <Button variant="outline" size="sm" disabled={currentPage >= totalPages} onClick={() => setCurrentPage(p => p + 1)}>Siguiente</Button>
+          </div>
+        </div>
+      )}
 
       <div className="bg-muted/30 rounded-lg px-4 py-3">
         <p className="text-xs text-muted-foreground">
