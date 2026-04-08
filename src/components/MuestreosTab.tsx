@@ -339,6 +339,7 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
                   {MONTHS.map(m => (
                     <th key={m} className="text-center px-1 py-2.5 font-semibold border-b border-r border-border min-w-[70px]">{m}</th>
                   ))}
+                  <th className="text-center px-2 py-2.5 font-semibold border-b border-border min-w-[70px] bg-primary/15">% Acum.</th>
                 </tr>
               </thead>
               <tbody>
