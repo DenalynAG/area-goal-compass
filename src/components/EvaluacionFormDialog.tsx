@@ -384,7 +384,7 @@ export default function EvaluacionFormDialog({ open, onOpenChange, evaluation, p
                     <>
                       <div className="space-y-0 divide-y divide-border rounded-md border bg-background overflow-hidden">
                         {paginatedCriteria.map(criterion => (
-                          <div key={criterion.id} className="flex items-center justify-between gap-3 px-3 py-2.5 hover:bg-muted/30 transition-colors">
+                          <div key={criterion.id} className={`px-3 py-2.5 hover:bg-muted/30 transition-colors ${criterion.is_comment ? 'flex flex-col gap-2' : 'flex items-center justify-between gap-3'}`}>
                             <span className="text-sm leading-snug flex-1 min-w-0">
                               <span className="text-muted-foreground font-medium mr-1.5">{criterion.sort_order}.</span>
                               {criterion.criterion_name}
@@ -394,8 +394,8 @@ export default function EvaluacionFormDialog({ open, onOpenChange, evaluation, p
                                 placeholder="Escribe un comentario..."
                                 value={criteriaComments[criterion.id] || ''}
                                 onChange={e => setCriteriaComments(prev => ({ ...prev, [criterion.id]: e.target.value }))}
-                                rows={1}
-                                className="w-full max-w-[200px] text-xs"
+                                rows={2}
+                                className="w-full text-xs"
                               />
                             ) : (
                               <div className="flex items-center gap-1 shrink-0">
