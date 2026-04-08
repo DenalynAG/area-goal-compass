@@ -22,6 +22,7 @@ import {
   ChevronDown, ChevronUp, MessageSquare, Send, Trash2, Pencil,
   ShieldAlert, ShieldCheck, Shield, BarChart3, Paperclip, Upload, Loader2
 } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { toast } from "sonner";
