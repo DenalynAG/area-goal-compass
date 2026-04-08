@@ -137,6 +137,7 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
   }, [areaFilterName, areas]);
 
   const [activeTab, setActiveTab] = useState("planes");
+  const [resumenYear, setResumenYear] = useState(new Date().getFullYear());
   const [searchTerm, setSearchTerm] = useState("");
   const [filterArea, setFilterArea] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
