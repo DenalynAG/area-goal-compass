@@ -13,7 +13,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { AlertCircle, Search } from 'lucide-react';
+import { AlertCircle, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Tables } from '@/integrations/supabase/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
