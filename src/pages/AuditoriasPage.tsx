@@ -360,64 +360,7 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
         )}
       </div>
 
-      {/* ─── Summary Cards ─── */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <Card>
-          <CardContent className="pt-4 pb-3 px-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <ClipboardCheck className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{plans.length}</p>
-              <p className="text-[11px] text-muted-foreground">Total Planes</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-3 px-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[hsl(var(--success)/0.1)] flex items-center justify-center">
-              <CheckCircle2 className="w-5 h-5 text-[hsl(var(--success))]" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{plans.filter(p => p.status === "cumple").length}</p>
-              <p className="text-[11px] text-muted-foreground">Cumple</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-3 px-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center">
-              <AlertTriangle className="w-5 h-5 text-destructive" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{plans.filter(p => p.status === "no_cumple").length}</p>
-              <p className="text-[11px] text-muted-foreground">No Cumple</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-3 px-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[hsl(var(--warning)/0.1)] flex items-center justify-center">
-              <Clock className="w-5 h-5 text-[hsl(var(--warning))]" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{plans.filter(p => p.status === "pendiente_cierre").length}</p>
-              <p className="text-[11px] text-muted-foreground">Pend. Cierre</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-3 px-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
-              <BarChart3 className="w-5 h-5 text-muted-foreground" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{findings.length}</p>
-              <p className="text-[11px] text-muted-foreground">Hallazgos</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Summary cards removed */}
 
       {/* ─── Tabs ─── */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
