@@ -381,46 +381,79 @@ export default function EvaluacionFormDialog({ open, onOpenChange, evaluation, p
                   )}
 
                   {hasPositionCriteria && (
-                    <div className="space-y-0 divide-y divide-border rounded-md border bg-background overflow-hidden">
-                      {positionCriteria.map(criterion => (
-                        <div key={criterion.id} className="flex items-center justify-between gap-3 px-3 py-2.5 hover:bg-muted/30 transition-colors">
-                          <span className="text-sm leading-snug flex-1 min-w-0">
-                            <span className="text-muted-foreground font-medium mr-1.5">{criterion.sort_order}.</span>
-                            {criterion.criterion_name}
+                    <>
+                      <div className="space-y-0 divide-y divide-border rounded-md border bg-background overflow-hidden">
+                        {paginatedCriteria.map(criterion => (
+                          <div key={criterion.id} className="flex items-center justify-between gap-3 px-3 py-2.5 hover:bg-muted/30 transition-colors">
+                            <span className="text-sm leading-snug flex-1 min-w-0">
+                              <span className="text-muted-foreground font-medium mr-1.5">{criterion.sort_order}.</span>
+                              {criterion.criterion_name}
+                            </span>
+                            {criterion.is_comment ? (
+                              <Textarea
+                                placeholder="Escribe un comentario..."
+                                value={criteriaComments[criterion.id] || ''}
+                                onChange={e => setCriteriaComments(prev => ({ ...prev, [criterion.id]: e.target.value }))}
+                                rows={1}
+                                className="w-full max-w-[200px] text-xs"
+                              />
+                            ) : (
+                              <div className="flex items-center gap-1 shrink-0">
+                                {([
+                                  { value: 1, label: 'B', activeClass: 'bg-destructive/15 text-destructive border-destructive/40 ring-destructive/30' },
+                                  { value: 2, label: 'M', activeClass: 'bg-yellow-500/15 text-yellow-700 border-yellow-500/40 ring-yellow-500/30' },
+                                  { value: 3, label: 'A', activeClass: 'bg-green-500/15 text-green-700 border-green-500/40 ring-green-500/30' },
+                                ] as const).map(opt => (
+                                  <button
+                                    key={opt.value}
+                                    type="button"
+                                    onClick={() => setCriteriaScores(prev => ({ ...prev, [criterion.id]: prev[criterion.id] === opt.value ? null : opt.value }))}
+                                    className={`w-9 h-8 rounded-md text-xs font-bold border transition-all ${
+                                      criteriaScores[criterion.id] === opt.value
+                                        ? `${opt.activeClass} ring-2 ring-offset-1`
+                                        : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
+                                    }`}
+                                  >
+                                    {opt.label}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Pagination controls */}
+                      {totalCriteriaPages > 1 && (
+                        <div className="flex items-center justify-between pt-1">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={criteriaPage === 0}
+                            onClick={() => setCriteriaPage(p => p - 1)}
+                            className="h-7 text-xs gap-1"
+                          >
+                            <ChevronLeft className="w-3.5 h-3.5" />
+                            Anterior
+                          </Button>
+                          <span className="text-xs text-muted-foreground">
+                            Página {criteriaPage + 1} de {totalCriteriaPages}
                           </span>
-                          {criterion.is_comment ? (
-                            <Textarea
-                              placeholder="Escribe un comentario..."
-                              value={criteriaComments[criterion.id] || ''}
-                              onChange={e => setCriteriaComments(prev => ({ ...prev, [criterion.id]: e.target.value }))}
-                              rows={1}
-                              className="w-full max-w-[200px] text-xs"
-                            />
-                          ) : (
-                            <div className="flex items-center gap-1 shrink-0">
-                              {([
-                                { value: 1, label: 'B', activeClass: 'bg-destructive/15 text-destructive border-destructive/40 ring-destructive/30' },
-                                { value: 2, label: 'M', activeClass: 'bg-yellow-500/15 text-yellow-700 border-yellow-500/40 ring-yellow-500/30' },
-                                { value: 3, label: 'A', activeClass: 'bg-green-500/15 text-green-700 border-green-500/40 ring-green-500/30' },
-                              ] as const).map(opt => (
-                                <button
-                                  key={opt.value}
-                                  type="button"
-                                  onClick={() => setCriteriaScores(prev => ({ ...prev, [criterion.id]: prev[criterion.id] === opt.value ? null : opt.value }))}
-                                  className={`w-9 h-8 rounded-md text-xs font-bold border transition-all ${
-                                    criteriaScores[criterion.id] === opt.value
-                                      ? `${opt.activeClass} ring-2 ring-offset-1`
-                                      : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
-                                  }`}
-                                >
-                                  {opt.label}
-                                </button>
-                              ))}
-                            </div>
-                          )}
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={criteriaPage >= totalCriteriaPages - 1}
+                            onClick={() => setCriteriaPage(p => p + 1)}
+                            className="h-7 text-xs gap-1"
+                          >
+                            Siguiente
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </Button>
                         </div>
-                      ))}
-                    </div>
+                      )}
+                    </>
                   )}
 
                   {hasPositionCriteria && (() => {
