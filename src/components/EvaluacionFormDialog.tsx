@@ -331,17 +331,7 @@ export default function EvaluacionFormDialog({ open, onOpenChange, evaluation, p
                 </div>
               )}
 
-              {/* Period & Date */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium">Período</label>
-                  <Input placeholder="Q1 2026" value={form.period} onChange={e => setForm(f => ({ ...f, period: e.target.value }))} />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium">Fecha</label>
-                  <Input type="date" value={form.evaluation_date} onChange={e => setForm(f => ({ ...f, evaluation_date: e.target.value }))} required />
-                </div>
-              </div>
+              {/* Period & Date removed — auto-set */}
 
               {/* Position-specific criteria */}
               {selectedPosition && (
