@@ -81,11 +81,16 @@ function getPeriodOptions() {
   return options;
 }
 
-export default function MuestreosTab() {
+interface MuestreosTabProps {
+  areaFilterName?: string;
+}
+
+export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {}) {
   const { user, profile, isSuperAdmin, hasRole } = useAuth();
   const qc = useQueryClient();
   const { data: records = [], isLoading } = useSamplingRecords();
-  const canManage = isSuperAdmin || hasRole('admin_area');
+  const isRRHH = !areaFilterName || areaFilterName === 'Recursos Humanos';
+  const canManage = (isSuperAdmin || hasRole('admin_area')) && isRRHH;
 
   // Filters
   const [filterPeriod, setFilterPeriod] = useState(format(new Date(), 'yyyy-MM'));
@@ -129,6 +134,8 @@ export default function MuestreosTab() {
   // Filtered records
   const filteredRecords = useMemo(() => {
     return records.filter(r => {
+      // Non-RRHH areas only see their own area's records
+      if (!isRRHH && areaFilterName && r.area_name !== areaFilterName) return false;
       if (filterPeriod !== 'all' && r.period !== filterPeriod) return false;
       if (filterArea !== 'all' && r.area_name !== filterArea) return false;
       if (filterType !== 'all' && r.sampling_type !== filterType) return false;
@@ -138,7 +145,7 @@ export default function MuestreosTab() {
       }
       return true;
     });
-  }, [records, filterPeriod, filterArea, filterType, searchTerm]);
+  }, [records, filterPeriod, filterArea, filterType, searchTerm, isRRHH, areaFilterName]);
 
   const openDialog = (record?: SamplingRecord) => {
     if (record) {
