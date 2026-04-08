@@ -370,12 +370,12 @@ export default function EvaluacionFormDialog({ open, onOpenChange, evaluation, p
                   )}
 
                   {hasPositionCriteria && (
-                    <div className="space-y-1">
+                    <div className="space-y-0 divide-y divide-border rounded-md border bg-background overflow-hidden">
                       {positionCriteria.map(criterion => (
-                        <div key={criterion.id} className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 rounded-md px-2 py-1.5 bg-background/50`}>
-                          <span className="text-sm font-medium flex items-center gap-1 min-w-0 flex-1">
-                            <span className="text-muted-foreground text-xs shrink-0">{criterion.sort_order}.</span>
-                            <span className="break-words">{criterion.criterion_name}</span>
+                        <div key={criterion.id} className="flex items-center justify-between gap-3 px-3 py-2.5 hover:bg-muted/30 transition-colors">
+                          <span className="text-sm leading-snug flex-1 min-w-0">
+                            <span className="text-muted-foreground font-medium mr-1.5">{criterion.sort_order}.</span>
+                            {criterion.criterion_name}
                           </span>
                           {criterion.is_comment ? (
                             <Textarea
@@ -383,22 +383,22 @@ export default function EvaluacionFormDialog({ open, onOpenChange, evaluation, p
                               value={criteriaComments[criterion.id] || ''}
                               onChange={e => setCriteriaComments(prev => ({ ...prev, [criterion.id]: e.target.value }))}
                               rows={1}
-                              className="w-full text-xs"
+                              className="w-full max-w-[200px] text-xs"
                             />
                           ) : (
-                            <div className="flex items-center gap-1.5 shrink-0">
+                            <div className="flex items-center gap-1 shrink-0">
                               {([
-                                { value: 1, label: 'B', color: 'bg-destructive/10 text-destructive border-destructive/30' },
-                                { value: 2, label: 'M', color: 'bg-yellow-500/10 text-yellow-700 border-yellow-500/30' },
-                                { value: 3, label: 'A', color: 'bg-green-500/10 text-green-700 border-green-500/30' },
+                                { value: 1, label: 'B', activeClass: 'bg-destructive/15 text-destructive border-destructive/40 ring-destructive/30' },
+                                { value: 2, label: 'M', activeClass: 'bg-yellow-500/15 text-yellow-700 border-yellow-500/40 ring-yellow-500/30' },
+                                { value: 3, label: 'A', activeClass: 'bg-green-500/15 text-green-700 border-green-500/40 ring-green-500/30' },
                               ] as const).map(opt => (
                                 <button
                                   key={opt.value}
                                   type="button"
                                   onClick={() => setCriteriaScores(prev => ({ ...prev, [criterion.id]: prev[criterion.id] === opt.value ? null : opt.value }))}
-                                  className={`w-8 h-7 rounded text-xs font-bold border transition-all ${
+                                  className={`w-9 h-8 rounded-md text-xs font-bold border transition-all ${
                                     criteriaScores[criterion.id] === opt.value
-                                      ? opt.color + ' ring-2 ring-offset-1 ring-current'
+                                      ? `${opt.activeClass} ring-2 ring-offset-1`
                                       : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
                                   }`}
                                 >
@@ -414,14 +414,18 @@ export default function EvaluacionFormDialog({ open, onOpenChange, evaluation, p
 
                   {hasPositionCriteria && (() => {
                     const scoreToPercent: Record<number, number> = { 1: 80, 2: 100, 3: 120 };
-                    const scored = Object.values(criteriaScores).filter((v): v is number => v !== null && v !== undefined);
+                    const scorableCriteria = positionCriteria.filter(c => !c.is_comment);
+                    const scored = scorableCriteria
+                      .map(c => criteriaScores[c.id])
+                      .filter((v): v is number => v !== null && v !== undefined);
                     if (scored.length === 0) return null;
-                    const avgPercent = scored.reduce((a, v) => a + (scoreToPercent[v] || 0), 0) / scored.length;
-                    const avgLabel = avgPercent < 100 ? 'Bajo' : avgPercent === 100 ? 'Medio' : 'Alto';
+                    const avgPercent = scored.reduce((a, v) => a + (scoreToPercent[v] || 0), 0) / scorableCriteria.length;
+                    const avgLabel = avgPercent < 90 ? 'Bajo' : avgPercent < 100 ? 'Medio' : avgPercent === 100 ? 'Medio' : 'Alto';
+                    const avgColor = avgPercent < 90 ? 'text-destructive' : avgPercent <= 100 ? 'text-yellow-700' : 'text-green-700';
                     return (
-                      <div className="flex items-center justify-end gap-2 pt-1 border-t text-sm">
-                        <span className="font-medium">Promedio:</span>
-                        <span className="font-bold">{avgLabel} ({avgPercent.toFixed(0)}%)</span>
+                      <div className="flex items-center justify-between pt-2 border-t text-sm">
+                        <span className="text-muted-foreground text-xs">{scored.length}/{scorableCriteria.length} indicadores evaluados</span>
+                        <span className={`font-bold ${avgColor}`}>{avgLabel} ({avgPercent.toFixed(0)}%)</span>
                       </div>
                     );
                   })()}
