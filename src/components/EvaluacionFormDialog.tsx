@@ -73,6 +73,8 @@ export default function EvaluacionFormDialog({ open, onOpenChange, evaluation, p
   // Scores per criterion
   const [criteriaScores, setCriteriaScores] = useState<Record<string, number | null>>({});
   const [criteriaComments, setCriteriaComments] = useState<Record<string, string>>({});
+  const [criteriaPage, setCriteriaPage] = useState(0);
+  const CRITERIA_PER_PAGE = 5;
 
   // Fetch all criteria
   const { data: allCriteria = [] } = useQuery({
