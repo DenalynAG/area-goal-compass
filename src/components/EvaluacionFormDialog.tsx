@@ -236,21 +236,29 @@ export default function EvaluacionFormDialog({ open, onOpenChange, evaluation, p
 
     // Calculate average score as percentage (B=80%, M=100%, A=120%)
     const scoreToPercent: Record<number, number> = { 1: 80, 2: 100, 3: 120 };
-    const scoredValues = Object.values(criteriaScores).filter((v): v is number => v !== null && v !== undefined);
+    const scorableCriteria = positionCriteria.filter(c => !c.is_comment);
+    const scoredValues = scorableCriteria
+      .map(c => criteriaScores[c.id])
+      .filter((v): v is number => v !== null && v !== undefined);
     const avgScore = scoredValues.length > 0
-      ? Math.round(scoredValues.reduce((a, v) => a + (scoreToPercent[v] || 0), 0) / scoredValues.length)
+      ? Math.round(scoredValues.reduce((a, v) => a + (scoreToPercent[v] || 0), 0) / scorableCriteria.length)
       : null;
+
+    // Auto-generate period from current date
+    const now = new Date();
+    const quarter = Math.ceil((now.getMonth() + 1) / 3);
+    const autoPeriod = form.period || `Q${quarter} ${now.getFullYear()}`;
 
     const payload = {
       collaborator_user_id: form.collaborator_user_id,
       type: form.type,
       title: form.type === 'desempeno'
-        ? `Evaluación de Desempeño - ${form.period || form.evaluation_date}`
+        ? `Evaluación de Desempeño - ${autoPeriod}`
         : form.title,
       description: form.type === 'desempeno' ? '' : form.description,
       score: avgScore,
       evaluation_date: form.evaluation_date,
-      period: form.period,
+      period: autoPeriod,
       notes: form.type === 'desempeno' ? '' : form.notes,
     };
 
