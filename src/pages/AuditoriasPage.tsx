@@ -603,7 +603,7 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
 
         {/* ─── Muestreos Tab ─── */}
         <TabsContent value="muestreos">
-          <MuestreosTab />
+          <MuestreosTab areaFilterName={areaFilterName} />
         </TabsContent>
 
         {/* ─── Summary Tab ─── */}
