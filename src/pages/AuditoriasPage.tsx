@@ -22,6 +22,7 @@ import {
   ChevronDown, ChevronUp, MessageSquare, Send, Trash2, Pencil,
   ShieldAlert, ShieldCheck, Shield, BarChart3, Paperclip, Upload, Loader2
 } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { toast } from "sonner";
@@ -136,6 +137,7 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
   }, [areaFilterName, areas]);
 
   const [activeTab, setActiveTab] = useState("planes");
+  const [resumenYear, setResumenYear] = useState(new Date().getFullYear());
   const [searchTerm, setSearchTerm] = useState("");
   const [filterArea, setFilterArea] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -359,64 +361,7 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
         )}
       </div>
 
-      {/* ─── Summary Cards ─── */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <Card>
-          <CardContent className="pt-4 pb-3 px-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <ClipboardCheck className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{plans.length}</p>
-              <p className="text-[11px] text-muted-foreground">Total Planes</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-3 px-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[hsl(var(--success)/0.1)] flex items-center justify-center">
-              <CheckCircle2 className="w-5 h-5 text-[hsl(var(--success))]" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{plans.filter(p => p.status === "cumple").length}</p>
-              <p className="text-[11px] text-muted-foreground">Cumple</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-3 px-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center">
-              <AlertTriangle className="w-5 h-5 text-destructive" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{plans.filter(p => p.status === "no_cumple").length}</p>
-              <p className="text-[11px] text-muted-foreground">No Cumple</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-3 px-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[hsl(var(--warning)/0.1)] flex items-center justify-center">
-              <Clock className="w-5 h-5 text-[hsl(var(--warning))]" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{plans.filter(p => p.status === "pendiente_cierre").length}</p>
-              <p className="text-[11px] text-muted-foreground">Pend. Cierre</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-3 px-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
-              <BarChart3 className="w-5 h-5 text-muted-foreground" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{findings.length}</p>
-              <p className="text-[11px] text-muted-foreground">Hallazgos</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Summary cards removed */}
 
       {/* ─── Tabs ─── */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -608,72 +553,117 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
 
         {/* ─── Summary Tab ─── */}
         <TabsContent value="resumen" className="space-y-4">
-          {/* Severity & findings summary */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            <Card><CardContent className="pt-4 pb-3 px-4 text-center">
-              <ShieldAlert className="w-5 h-5 text-destructive mx-auto mb-1" />
-              <p className="text-xl font-bold">{severitySummary.critico}</p>
-              <p className="text-[11px] text-muted-foreground">Crítico</p>
-            </CardContent></Card>
-            <Card><CardContent className="pt-4 pb-3 px-4 text-center">
-              <Shield className="w-5 h-5 text-[hsl(var(--warning))] mx-auto mb-1" />
-              <p className="text-xl font-bold">{severitySummary.leve}</p>
-              <p className="text-[11px] text-muted-foreground">Leve</p>
-            </CardContent></Card>
-            <Card><CardContent className="pt-4 pb-3 px-4 text-center">
-              <ShieldCheck className="w-5 h-5 text-[hsl(var(--success))] mx-auto mb-1" />
-              <p className="text-xl font-bold">{severitySummary.bajo}</p>
-              <p className="text-[11px] text-muted-foreground">Bajo</p>
-            </CardContent></Card>
-            <Card><CardContent className="pt-4 pb-3 px-4 text-center">
-              <AlertTriangle className="w-5 h-5 text-destructive mx-auto mb-1" />
-              <p className="text-xl font-bold">{findingsSummary.abiertas}</p>
-              <p className="text-[11px] text-muted-foreground">Acc. Abiertas</p>
-            </CardContent></Card>
-            <Card><CardContent className="pt-4 pb-3 px-4 text-center">
-              <CheckCircle2 className="w-5 h-5 text-[hsl(var(--success))] mx-auto mb-1" />
-              <p className="text-xl font-bold">{findingsSummary.cerradas}</p>
-              <p className="text-[11px] text-muted-foreground">Acc. Cerradas</p>
-            </CardContent></Card>
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg font-semibold">Auditoría Interna General</h2>
+            <Select value={String(resumenYear)} onValueChange={(v) => setResumenYear(Number(v))}>
+              <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map(y => (
+                  <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          {areaSummary.length === 0 ? (
-            <Card><CardContent className="py-12 text-center text-muted-foreground">No hay datos de auditoría aún</CardContent></Card>
-          ) : (
-            <Card>
-              <CardHeader><CardTitle className="text-base">Indicadores por Área</CardTitle></CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Área</TableHead>
-                      <TableHead className="text-center">Cumple</TableHead>
-                      <TableHead className="text-center">No Cumple</TableHead>
-                      <TableHead className="text-center">Pend. Cierre</TableHead>
-                      <TableHead className="text-center">Total</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {areaSummary.map((s) => (
-                      <TableRow key={s.area.id}>
-                        <TableCell className="font-medium">{s.area.name}</TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="default" className="bg-[hsl(var(--success))] text-white">{s.cumple}</Badge>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="destructive">{s.no_cumple}</Badge>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="outline">{s.pendiente_cierre}</Badge>
-                        </TableCell>
-                        <TableCell className="text-center font-semibold">{s.total}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          )}
+          {(() => {
+            const AREA_COLORS = ['hsl(217,91%,60%)', 'hsl(25,95%,53%)', 'hsl(0,0%,45%)', 'hsl(48,96%,53%)', 'hsl(142,71%,45%)', 'hsl(262,83%,58%)'];
+
+            const yearPlans = plans.filter(p => {
+              const yr = new Date(p.planned_date).getFullYear();
+              return yr === resumenYear;
+            });
+
+            const yearFindings = findings.filter(f => {
+              const plan = plans.find(p => p.id === f.audit_plan_id);
+              if (!plan) return false;
+              return new Date(plan.planned_date).getFullYear() === resumenYear;
+            });
+
+            const areaNames = areas.map(a => a.name);
+
+            const tableData = areas.map((area, idx) => {
+              const ap = yearPlans.filter(p => p.area_id === area.id);
+              const areaFindingIds = ap.map(p => p.id);
+              const af = yearFindings.filter(f => areaFindingIds.includes(f.audit_plan_id));
+              return {
+                name: area.name,
+                color: AREA_COLORS[idx % AREA_COLORS.length],
+                abierto: af.filter(f => f.finding_type === 'abierta').length,
+                cerrado: af.filter(f => f.finding_type === 'cerrada').length,
+              };
+            }).filter(d => d.abierto > 0 || d.cerrado > 0);
+
+            const chartData = [
+              { name: 'Abierto', ...Object.fromEntries(tableData.map(d => [d.name, d.abierto])) },
+              { name: 'Cerrado', ...Object.fromEntries(tableData.map(d => [d.name, d.cerrado])) },
+            ];
+
+            const totalAbierto = tableData.reduce((s, d) => s + d.abierto, 0);
+            const totalCerrado = tableData.reduce((s, d) => s + d.cerrado, 0);
+
+            return (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {/* Table */}
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm">{resumenYear}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>{resumenYear}</TableHead>
+                            <TableHead className="text-center">Abierto</TableHead>
+                            <TableHead className="text-center">Cerrado</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {tableData.map(d => (
+                            <TableRow key={d.name}>
+                              <TableCell className="font-medium" style={{ color: d.color }}>{d.name}</TableCell>
+                              <TableCell className="text-center">{d.abierto}</TableCell>
+                              <TableCell className="text-center">{d.cerrado}</TableCell>
+                            </TableRow>
+                          ))}
+                          <TableRow className="font-bold border-t-2">
+                            <TableCell className="text-destructive">Total</TableCell>
+                            <TableCell className="text-center">{totalAbierto}</TableCell>
+                            <TableCell className="text-center">{totalCerrado}</TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  </Card>
+
+                  {/* Chart */}
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm">{resumenYear}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {tableData.length === 0 ? (
+                        <p className="text-center text-muted-foreground py-8">Sin datos para este año</p>
+                      ) : (
+                        <ResponsiveContainer width="100%" height={280}>
+                          <BarChart data={chartData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="name" />
+                            <YAxis allowDecimals={false} />
+                            <Tooltip />
+                            <Legend />
+                            {tableData.map(d => (
+                              <Bar key={d.name} dataKey={d.name} fill={d.color} />
+                            ))}
+                          </BarChart>
+                        </ResponsiveContainer>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            );
+          })()}
         </TabsContent>
       </Tabs>
 
