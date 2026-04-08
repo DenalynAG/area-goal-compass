@@ -164,8 +164,17 @@ export default function EvaluacionFormDialog({ open, onOpenChange, evaluation, p
   // Filter criteria for the selected position
   const positionCriteria = useMemo(() => {
     if (!selectedPosition) return [];
-    return allCriteria.filter(c => c.position_name === selectedPosition);
+    const criteria = allCriteria.filter(c => c.position_name === selectedPosition);
+    setCriteriaPage(0);
+    return criteria;
   }, [selectedPosition, allCriteria]);
+
+  // Paginated criteria
+  const totalCriteriaPages = Math.ceil(positionCriteria.length / CRITERIA_PER_PAGE);
+  const paginatedCriteria = positionCriteria.slice(
+    criteriaPage * CRITERIA_PER_PAGE,
+    (criteriaPage + 1) * CRITERIA_PER_PAGE
+  );
 
   // Available positions in criteria
   const availablePositions = useMemo(() => {
