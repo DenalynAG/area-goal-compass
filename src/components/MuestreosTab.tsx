@@ -339,6 +339,7 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
                   {MONTHS.map(m => (
                     <th key={m} className="text-center px-1 py-2.5 font-semibold border-b border-r border-border min-w-[70px]">{m}</th>
                   ))}
+                  <th className="text-center px-2 py-2.5 font-semibold border-b border-border min-w-[70px] bg-primary/15">% Acum.</th>
                 </tr>
               </thead>
               <tbody>
@@ -399,6 +400,26 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
                             </td>
                           );
                         })}
+                        {/* % Acumulado */}
+                        {(() => {
+                          let filled = 0;
+                          let total = 0;
+                          for (let m = 0; m < 12; m++) {
+                            const val = getCellValue(row.area, row.indicator, m);
+                            if (val) {
+                              total++;
+                              const num = parseFloat(val);
+                              if (!isNaN(num)) filled += num;
+                            }
+                          }
+                          if (total === 0) return <td className="text-center px-1 py-1.5 bg-muted/30 font-semibold text-muted-foreground">—</td>;
+                          const avg = Math.round(filled / total);
+                          return (
+                            <td className={`text-center px-1 py-1.5 font-bold bg-muted/30 ${avg >= 100 ? 'text-[hsl(var(--success))]' : 'text-destructive'}`}>
+                              {avg}%
+                            </td>
+                          );
+                        })()}
                       </tr>
                     );
                   })
