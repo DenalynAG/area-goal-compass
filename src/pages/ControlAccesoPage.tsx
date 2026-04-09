@@ -190,9 +190,10 @@ export default function ControlAccesoPage() {
   };
 
   const handleMarkExit = async (id: string) => {
+    const now = new Date().toISOString();
     const { error } = await supabase
       .from("access_control" as any)
-      .update({ exit_datetime: new Date().toISOString() } as any)
+      .update({ exit_datetime: now, estimated_exit_time: now } as any)
       .eq("id", id);
     if (error) { toast.error("Error al registrar salida"); return; }
     toast.success("Salida registrada");
