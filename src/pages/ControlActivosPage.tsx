@@ -292,12 +292,7 @@ export default function ControlActivosPage() {
                 <Plus className="h-4 w-4 mr-2" /> Nuevo Movimiento
               </Button>
             </div>
-            <Input
-              placeholder="Buscar por tipo, serie, colaborador..."
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              className="max-w-xs"
-            />
+            </div>
           </div>
         </CardHeader>
         <CardContent>
