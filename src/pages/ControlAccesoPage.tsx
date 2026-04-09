@@ -315,10 +315,30 @@ export default function ControlAccesoPage() {
                   className="w-full"
                 />
               </div>
-              <div className="space-y-2">
-                <Label>Zona o Requerimiento</Label>
-                <Input value={zoneReq} onChange={(e) => setZoneReq(e.target.value)} placeholder="Ej: Lobby, Piso 3..." />
-              </div>
+               <div className="space-y-2">
+                 <Label>Zona o Requerimiento</Label>
+                 <Input value={zoneReq} onChange={(e) => setZoneReq(e.target.value)} placeholder="Ej: Lobby, Piso 3..." />
+               </div>
+               <div className="space-y-2">
+                 <Label>Bloque</Label>
+                 <div className="flex gap-2">
+                   {[
+                     { value: 'A', label: 'Bloque A', color: 'bg-blue-600 hover:bg-blue-700 text-white' },
+                     { value: 'B', label: 'Bloque B', color: 'bg-orange-500 hover:bg-orange-600 text-white' },
+                     { value: 'C', label: 'Bloque C', color: 'bg-green-600 hover:bg-green-700 text-white' },
+                   ].map((b) => (
+                     <Button
+                       key={b.value}
+                       type="button"
+                       size="sm"
+                       className={bloque === b.value ? b.color : 'bg-muted text-muted-foreground hover:bg-muted/80'}
+                       onClick={() => setBloque(bloque === b.value ? '' : b.value)}
+                     >
+                       {b.label}
+                     </Button>
+                   ))}
+                 </div>
+               </div>
               <div className="space-y-2 md:col-span-2">
                 <Label>Foto / Imagen del Visitante</Label>
                 <input ref={photoInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoChange} />
