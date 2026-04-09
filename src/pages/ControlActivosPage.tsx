@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Package, ArrowDownToLine, ArrowUpFromLine, Camera, X, Image as ImageIcon, Eye, Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 
 const ASSET_TYPES = [
   "Portátil",
@@ -178,6 +179,19 @@ export default function ControlActivosPage() {
     qc.invalidateQueries({ queryKey: ["asset_movements"] });
   };
 
+  const handleToggleStatus = async (record: any) => {
+    const newStatus = record.status === "recibido" ? "pendiente" : "recibido";
+    const updates: any = { status: newStatus };
+    if (newStatus === "recibido") {
+      updates.movement_type = "entrada";
+      if (!record.entry_datetime) updates.entry_datetime = new Date().toISOString();
+    }
+    const { error } = await supabase.from("asset_movements" as any).update(updates).eq("id", record.id);
+    if (error) { toast.error("Error al actualizar estado"); return; }
+    toast.success(newStatus === "recibido" ? "Activo marcado como Recibido" : "Activo marcado como Pendiente");
+    qc.invalidateQueries({ queryKey: ["asset_movements"] });
+  };
+
   const getProfileName = (id: string | null) => profiles.find((p) => p.id === id)?.name || "—";
 
   const filtered = records.filter((r: any) =>
@@ -277,9 +291,15 @@ export default function ControlActivosPage() {
                           {getAreaName(r.area_id)}{r.subarea_id ? ` / ${getSubareaName(r.subarea_id)}` : ""}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={r.status === "recibido" ? "default" : "outline"} className={r.status === "recibido" ? "bg-emerald-600" : ""}>
-                            {r.status === "recibido" ? "Recibido" : "Pendiente"}
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={r.status === "recibido"}
+                              onCheckedChange={() => handleToggleStatus(r)}
+                            />
+                            <span className={`text-xs font-medium ${r.status === "recibido" ? "text-emerald-600" : "text-muted-foreground"}`}>
+                              {r.status === "recibido" ? "Recibido" : "Pendiente"}
+                            </span>
+                          </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
@@ -431,14 +451,19 @@ export default function ControlActivosPage() {
                 <Input type="datetime-local" value={entryDatetime} onChange={(e) => setEntryDatetime(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label>Estado *</Label>
-                <Select value={status} onValueChange={(v) => setStatus(v as "pendiente" | "recibido")}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pendiente">Pendiente</SelectItem>
-                    <SelectItem value="recibido">Recibido</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label>Estado</Label>
+                <div className="flex items-center gap-3 h-10">
+                  <Switch
+                    checked={status === "recibido"}
+                    onCheckedChange={(checked) => {
+                      setStatus(checked ? "recibido" : "pendiente");
+                      if (checked) setMovementType("entrada");
+                    }}
+                  />
+                  <span className={`text-sm font-medium ${status === "recibido" ? "text-emerald-600" : "text-muted-foreground"}`}>
+                    {status === "recibido" ? "Recibido" : "Pendiente"}
+                  </span>
+                </div>
               </div>
               <div className="space-y-2 md:col-span-2">
                 <Label>Motivo</Label>
