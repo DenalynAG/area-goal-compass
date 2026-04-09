@@ -1,7 +1,7 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAreas, useSubareas, useProfiles } from "@/hooks/useSupabaseData";
+import { useAreas, useSubareas, useProfiles, useMemberships, useUserRoles } from "@/hooks/useSupabaseData";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -16,9 +16,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Package, ArrowDownToLine, ArrowUpFromLine, Camera, X, Image as ImageIcon, Eye, Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Package, ArrowDownToLine, ArrowUpFromLine, Camera, X, Image as ImageIcon, Eye, Pencil, Trash2, ChevronLeft, ChevronRight, Laptop, Monitor } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const ASSET_TYPES = [
   "Portátil",
@@ -50,6 +51,8 @@ export default function ControlActivosPage() {
   const { data: areas = [] } = useAreas();
   const { data: subareas = [] } = useSubareas();
   const { data: profiles = [] } = useProfiles();
+  const { data: memberships = [] } = useMemberships();
+  const { data: userRoles = [] } = useUserRoles();
   const { data: records = [], isLoading } = useAssetMovements();
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -208,6 +211,55 @@ export default function ControlActivosPage() {
   const getAreaName = (id: string | null) => areas.find((a) => a.id === id)?.name || "—";
   const getSubareaName = (id: string | null) => subareas.find((s) => s.id === id)?.name || "";
 
+  // Leaders with assigned laptops
+  const leadersWithLaptops = useMemo(() => {
+    // Get leaders: area leaders + subarea leaders + users with admin_area or lider_subarea roles
+    const leaderUserIds = new Set<string>();
+
+    // From areas table
+    areas.forEach(a => { if (a.leader_user_id) leaderUserIds.add(a.leader_user_id); });
+    // From subareas table
+    subareas.forEach(s => { if (s.leader_user_id) leaderUserIds.add(s.leader_user_id); });
+    // From user_roles
+    userRoles.forEach(r => {
+      if (r.role === "admin_area" || r.role === "lider_subarea") leaderUserIds.add(r.user_id);
+    });
+
+    // Find laptop movements for these leaders
+    return Array.from(leaderUserIds).map(userId => {
+      const profile = profiles.find(p => p.id === userId);
+      if (!profile) return null;
+
+      const membership = memberships.find(m => m.user_id === userId);
+      const area = membership ? areas.find(a => a.id === membership.area_id) : null;
+      const subarea = membership?.subarea_id ? subareas.find(s => s.id === membership.subarea_id) : null;
+
+      // Check roles
+      const roles = userRoles.filter(r => r.user_id === userId).map(r => r.role);
+      const isAreaLeader = roles.includes("admin_area") || areas.some(a => a.leader_user_id === userId);
+      const isSubareaLeader = roles.includes("lider_subarea") || subareas.some(s => s.leader_user_id === userId);
+
+      // Find laptop asset movements for this user
+      const laptopMovements = records.filter(
+        (r: any) => r.collaborator_user_id === userId && (r.asset_type === "Portátil" || r.asset_type === "Computador Escritorio")
+      );
+
+      const lastMovement = laptopMovements.length > 0 ? laptopMovements[0] : null;
+
+      return {
+        userId,
+        name: profile.name,
+        position: profile.position || "Sin cargo",
+        areaName: area?.name || "—",
+        subareaName: subarea?.name || "",
+        roleLabel: isAreaLeader ? "Líder de Área" : isSubareaLeader ? "Líder de Subárea" : "Líder",
+        hasLaptop: laptopMovements.length > 0,
+        lastMovement,
+        totalMovements: laptopMovements.length,
+      };
+    }).filter(Boolean) as any[];
+  }, [areas, subareas, profiles, memberships, userRoles, records]);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -219,6 +271,14 @@ export default function ControlActivosPage() {
           <Plus className="h-4 w-4 mr-2" /> Nuevo Movimiento
         </Button>
       </div>
+
+      <Tabs defaultValue="movements" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="movements" className="gap-1.5"><Package className="h-4 w-4" /> Movimientos</TabsTrigger>
+          <TabsTrigger value="recurring" className="gap-1.5"><Laptop className="h-4 w-4" /> Equipos Asignados</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="movements">
 
       <Card>
         <CardHeader>
@@ -345,6 +405,98 @@ export default function ControlActivosPage() {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="recurring">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Laptop className="h-5 w-5" /> Líderes con Equipos PC Portátiles Asignados ({leadersWithLaptops.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {leadersWithLaptops.length === 0 ? (
+                <div className="text-center py-12 space-y-2">
+                  <Monitor className="h-12 w-12 mx-auto text-muted-foreground/40" />
+                  <p className="text-muted-foreground">No se encontraron líderes con equipos asignados</p>
+                  <p className="text-xs text-muted-foreground">Registra movimientos de activos tipo "Portátil" o "Computador Escritorio" para líderes de área o subárea</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Líder</TableHead>
+                        <TableHead>Cargo</TableHead>
+                        <TableHead>Rol</TableHead>
+                        <TableHead>Área</TableHead>
+                        <TableHead>Subárea</TableHead>
+                        <TableHead>Equipo Asignado</TableHead>
+                        <TableHead>Serie</TableHead>
+                        <TableHead>Último Mov.</TableHead>
+                        <TableHead>Estado</TableHead>
+                        <TableHead>Total Mov.</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {leadersWithLaptops.map((leader: any) => (
+                        <TableRow key={leader.userId}>
+                          <TableCell className="font-medium">{leader.name}</TableCell>
+                          <TableCell>{leader.position}</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary" className="text-xs">{leader.roleLabel}</Badge>
+                          </TableCell>
+                          <TableCell>{leader.areaName}</TableCell>
+                          <TableCell>{leader.subareaName || "—"}</TableCell>
+                          <TableCell>
+                            {leader.hasLaptop ? (
+                              <div className="flex items-center gap-1.5">
+                                <Laptop className="h-4 w-4 text-primary" />
+                                <span>{leader.lastMovement?.asset_type}</span>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">Sin asignación</span>
+                            )}
+                          </TableCell>
+                          <TableCell>{leader.lastMovement?.asset_serial || "—"}</TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            {leader.lastMovement ? (
+                              <div className="space-y-0.5">
+                                {leader.lastMovement.movement_type === "salida" ? (
+                                  <Badge variant="destructive" className="gap-1 text-xs">
+                                    <ArrowUpFromLine className="h-3 w-3" /> Salida
+                                  </Badge>
+                                ) : (
+                                  <Badge className="gap-1 text-xs bg-emerald-600">
+                                    <ArrowDownToLine className="h-3 w-3" /> Entrada
+                                  </Badge>
+                                )}
+                                <p className="text-xs text-muted-foreground">
+                                  {format(new Date(leader.lastMovement.created_at), "dd/MM/yy HH:mm", { locale: es })}
+                                </p>
+                              </div>
+                            ) : "—"}
+                          </TableCell>
+                          <TableCell>
+                            {leader.lastMovement ? (
+                              <span className={`text-xs font-medium ${leader.lastMovement.status === "recibido" ? "text-emerald-600" : "text-destructive"}`}>
+                                {leader.lastMovement.status === "recibido" ? "Recibido" : "Pendiente"}
+                              </span>
+                            ) : "—"}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{leader.totalMovements}</Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Detail Dialog */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
