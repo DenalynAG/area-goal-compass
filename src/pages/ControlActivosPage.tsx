@@ -77,6 +77,7 @@ export default function ControlActivosPage() {
   const [exitDatetime, setExitDatetime] = useState("");
   const [entryDatetime, setEntryDatetime] = useState("");
   const [reason, setReason] = useState("");
+  const [status, setStatus] = useState<"pendiente" | "recibido">("pendiente");
 
   const filteredSubareas = subareas.filter((s) => s.area_id === areaId);
 
