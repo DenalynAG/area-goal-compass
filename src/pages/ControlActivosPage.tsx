@@ -174,6 +174,8 @@ export default function ControlActivosPage() {
     qc.invalidateQueries({ queryKey: ["asset_movements"] });
   };
 
+  const getProfileName = (id: string | null) => profiles.find((p) => p.id === id)?.name || "—";
+
   const filtered = records.filter((r: any) =>
     [r.asset_type, r.asset_serial, r.reason, getProfileName(r.collaborator_user_id)]
       .join(" ").toLowerCase().includes(search.toLowerCase())
