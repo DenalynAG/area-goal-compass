@@ -431,7 +431,7 @@ export default function ControlActivosPage() {
                   />
                   <Button size="sm" onClick={() => {
                     resetForm();
-                    setAssetType("Portátil");
+                    setAssetType("");
                     setIsEquipoMode(true);
                     setDialogOpen(true);
                   }}>
