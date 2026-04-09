@@ -506,6 +506,31 @@ export default function ControlActivosPage() {
                               <span className="text-muted-foreground text-xs">—</span>
                             )}
                           </TableCell>
+                          <TableCell>
+                            {leader.lastMovement ? (
+                              <div className="flex items-center gap-1">
+                                <Button size="icon" variant="ghost" className="h-8 w-8" title="Ver detalle"
+                                  onClick={() => { setDetailRecord(leader.lastMovement); setDetailOpen(true); }}>
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button size="icon" variant="ghost" className="h-8 w-8" title="Editar"
+                                  onClick={() => {
+                                    setEditRecord(leader.lastMovement);
+                                    populateForm(leader.lastMovement);
+                                    setIsEquipoMode(true);
+                                    setDialogOpen(true);
+                                  }}>
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" title="Eliminar"
+                                  onClick={() => setDeleteId(leader.lastMovement.id)}>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground text-xs">—</span>
+                            )}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
