@@ -493,7 +493,7 @@ export default function ControlActivosPage() {
                             <TableCell>
                               {leader.lastMovement ? (
                                 <Badge variant="outline" className="text-xs font-mono">
-                                  {leader.lastMovement.id.substring(0, 8).toUpperCase()}
+                                  {leader.lastMovement.reason || leader.lastMovement.id.substring(0, 8).toUpperCase()}
                                 </Badge>
                               ) : "—"}
                             </TableCell>
