@@ -1,7 +1,7 @@
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAreas, useSubareas, useProfiles, useMemberships } from "@/hooks/useSupabaseData";
+import { useAreas, useSubareas, useProfiles } from "@/hooks/useSupabaseData";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -11,10 +11,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, DoorOpen, Clock, LogOut as LogOutIcon, Camera, X, Image as ImageIcon, Eye, Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, DoorOpen, LogOut as LogOutIcon, Camera, X, Image as ImageIcon, Eye, Pencil, Trash2, ChevronLeft, ChevronRight, FileText, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 function useAccessControl() {
@@ -48,9 +49,9 @@ export default function ControlAccesoPage() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const arlFileInputRef = useRef<HTMLInputElement>(null);
   const [page, setPage] = useState(1);
 
-  // Detail / Edit / Delete state
   const [detailRecord, setDetailRecord] = useState<any>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<any>(null);
@@ -68,6 +69,9 @@ export default function ControlAccesoPage() {
   const [zoneReq, setZoneReq] = useState("");
   const [arl, setArl] = useState("");
   const [bloque, setBloque] = useState("");
+  const [hasActivity, setHasActivity] = useState(false);
+  const [arlFile, setArlFile] = useState<File | null>(null);
+  const [arlFileName, setArlFileName] = useState<string | null>(null);
 
   const filteredSubareas = subareas.filter((s) => s.area_id === areaId);
 
@@ -76,6 +80,8 @@ export default function ControlAccesoPage() {
     setEntryDatetime(""); setEstimatedExit("");
     setAreaId(""); setSubareaId(""); setCompanionId("");
     setZoneReq(""); setArl(""); setBloque("");
+    setHasActivity(false);
+    setArlFile(null); setArlFileName(null);
     setPhotoFile(null); setPhotoPreview(null);
     setEditRecord(null);
   };
@@ -92,6 +98,9 @@ export default function ControlAccesoPage() {
     setZoneReq(r.zone_requirement || "");
     setArl(r.arl || "");
     setBloque(r.bloque || "");
+    setHasActivity(r.has_activity || false);
+    setArlFileName(r.arl_document_url ? "Soporte ARL existente" : null);
+    setArlFile(null);
     setPhotoPreview(r.photo_url || null);
     setPhotoFile(null);
   };
@@ -103,6 +112,15 @@ export default function ControlAccesoPage() {
     if (file.size > 5 * 1024 * 1024) { toast.error("La imagen no puede superar 5MB"); return; }
     setPhotoFile(file);
     setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const handleArlFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.type !== "application/pdf") { toast.error("Solo se permiten archivos PDF"); return; }
+    if (file.size > 10 * 1024 * 1024) { toast.error("El archivo no puede superar 10MB"); return; }
+    setArlFile(file);
+    setArlFileName(file.name);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -125,6 +143,17 @@ export default function ControlAccesoPage() {
       photoUrl = urlData.publicUrl;
     }
 
+    let arlDocUrl: string | null = editRecord?.arl_document_url || null;
+    if (arlFile) {
+      setUploading(true);
+      const filePath = `arl/${Date.now()}_${Math.random().toString(36).slice(2)}.pdf`;
+      const { error: uploadErr } = await supabase.storage.from("evidencias").upload(filePath, arlFile, { contentType: "application/pdf" });
+      setUploading(false);
+      if (uploadErr) { toast.error("Error al subir soporte ARL"); setSaving(false); return; }
+      const { data: urlData } = supabase.storage.from("evidencias").getPublicUrl(filePath);
+      arlDocUrl = urlData.publicUrl;
+    }
+
     const payload: any = {
       company_name: companyName.trim(),
       visitor_name: visitorName.trim(),
@@ -137,6 +166,8 @@ export default function ControlAccesoPage() {
       zone_requirement: zoneReq.trim(),
       arl: arl.trim(),
       bloque: bloque || null,
+      has_activity: hasActivity,
+      arl_document_url: arlDocUrl,
       photo_url: photoUrl,
     };
 
@@ -224,7 +255,7 @@ export default function ControlAccesoPage() {
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                     <TableRow>
+                    <TableRow>
                       <TableHead>Foto</TableHead>
                       <TableHead>Empresa</TableHead>
                       <TableHead>Visitante</TableHead>
@@ -234,6 +265,8 @@ export default function ControlAccesoPage() {
                       <TableHead>Salida Real</TableHead>
                       <TableHead>Área</TableHead>
                       <TableHead>Bloque</TableHead>
+                      <TableHead>Actividad</TableHead>
+                      <TableHead>ARL Doc.</TableHead>
                       <TableHead>Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -280,6 +313,22 @@ export default function ControlAccesoPage() {
                           ) : "—"}
                         </TableCell>
                         <TableCell>
+                          <Badge variant={r.has_activity ? "default" : "outline"}>
+                            {r.has_activity ? "Sí" : "No"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {r.arl_document_url ? (
+                            <a href={r.arl_document_url} target="_blank" rel="noopener noreferrer">
+                              <Button size="icon" variant="ghost" className="h-8 w-8 text-primary" title="Ver soporte ARL">
+                                <FileText className="h-4 w-4" />
+                              </Button>
+                            </a>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
                           <div className="flex items-center gap-1">
                             <Button size="icon" variant="ghost" className="h-8 w-8" title="Ver detalle"
                               onClick={() => { setDetailRecord(r); setDetailOpen(true); }}>
@@ -306,7 +355,6 @@ export default function ControlAccesoPage() {
                 </Table>
               </div>
 
-              {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-between pt-4">
                   <p className="text-sm text-muted-foreground">
@@ -344,6 +392,7 @@ export default function ControlAccesoPage() {
               <DetailRow label="Visitante" value={detailRecord.visitor_name} />
               <DetailRow label="Documento" value={detailRecord.document_id} />
               <DetailRow label="ARL" value={detailRecord.arl || "—"} />
+              <DetailRow label="Actividad por realizar" value={detailRecord.has_activity ? "Sí" : "No"} />
               <DetailRow label="Ingreso" value={detailRecord.entry_datetime ? format(new Date(detailRecord.entry_datetime), "dd/MM/yyyy HH:mm", { locale: es }) : "—"} />
               <DetailRow label="Salida Estimada" value={detailRecord.estimated_exit_time ? format(new Date(detailRecord.estimated_exit_time), "dd/MM/yyyy HH:mm", { locale: es }) : "—"} />
               <DetailRow label="Salida Real" value={detailRecord.exit_datetime ? format(new Date(detailRecord.exit_datetime), "dd/MM/yyyy HH:mm", { locale: es }) : "En sitio"} />
@@ -351,6 +400,14 @@ export default function ControlAccesoPage() {
               <DetailRow label="Acompañante" value={getProfileName(detailRecord.companion_user_id)} />
               <DetailRow label="Zona / Requerimiento" value={detailRecord.zone_requirement || "—"} />
               <DetailRow label="Bloque" value={detailRecord.bloque ? `Bloque ${detailRecord.bloque}` : "—"} />
+              {detailRecord.arl_document_url && (
+                <div className="flex justify-between border-b border-border pb-2">
+                  <span className="text-muted-foreground font-medium">Soporte ARL</span>
+                  <a href={detailRecord.arl_document_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">
+                    <FileText className="h-3 w-3" /> Ver PDF
+                  </a>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
@@ -421,30 +478,58 @@ export default function ControlAccesoPage() {
                   className="w-full"
                 />
               </div>
-               <div className="space-y-2">
-                 <Label>Zona o Requerimiento</Label>
-                 <Input value={zoneReq} onChange={(e) => setZoneReq(e.target.value)} placeholder="Ej: Lobby, Piso 3..." />
-               </div>
-               <div className="space-y-2">
-                 <Label>Bloque</Label>
-                 <div className="flex gap-2">
-                   {[
-                     { value: 'A', label: 'Bloque A', color: 'bg-blue-600 hover:bg-blue-700 text-white' },
-                     { value: 'B', label: 'Bloque B', color: 'bg-orange-500 hover:bg-orange-600 text-white' },
-                     { value: 'C', label: 'Bloque C', color: 'bg-green-600 hover:bg-green-700 text-white' },
-                   ].map((b) => (
-                     <Button
-                       key={b.value}
-                       type="button"
-                       size="sm"
-                       className={bloque === b.value ? b.color : 'bg-muted text-muted-foreground hover:bg-muted/80'}
-                       onClick={() => setBloque(bloque === b.value ? '' : b.value)}
-                     >
-                       {b.label}
-                     </Button>
-                   ))}
-                 </div>
-               </div>
+              <div className="space-y-2">
+                <Label>Zona o Requerimiento</Label>
+                <Input value={zoneReq} onChange={(e) => setZoneReq(e.target.value)} placeholder="Ej: Lobby, Piso 3..." />
+              </div>
+              <div className="space-y-2">
+                <Label>Bloque</Label>
+                <div className="flex gap-2">
+                  {[
+                    { value: 'A', label: 'Bloque A', color: 'bg-blue-600 hover:bg-blue-700 text-white' },
+                    { value: 'B', label: 'Bloque B', color: 'bg-orange-500 hover:bg-orange-600 text-white' },
+                    { value: 'C', label: 'Bloque C', color: 'bg-green-600 hover:bg-green-700 text-white' },
+                  ].map((b) => (
+                    <Button
+                      key={b.value}
+                      type="button"
+                      size="sm"
+                      className={bloque === b.value ? b.color : 'bg-muted text-muted-foreground hover:bg-muted/80'}
+                      onClick={() => setBloque(bloque === b.value ? '' : b.value)}
+                    >
+                      {b.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-2 flex items-center gap-3 pt-6">
+                <Switch checked={hasActivity} onCheckedChange={setHasActivity} id="has-activity" />
+                <Label htmlFor="has-activity" className="cursor-pointer">¿Tiene actividad por realizar?</Label>
+              </div>
+
+              {/* Soporte ARL PDF */}
+              <div className="space-y-2 md:col-span-2">
+                <Label>Soporte ARL (PDF)</Label>
+                <input ref={arlFileInputRef} type="file" accept="application/pdf" className="hidden" onChange={handleArlFileChange} />
+                {arlFileName ? (
+                  <div className="flex items-center gap-2 p-3 border rounded-lg bg-muted/30">
+                    <FileText className="h-5 w-5 text-primary" />
+                    <span className="text-sm flex-1 truncate">{arlFileName}</span>
+                    <Button type="button" variant="ghost" size="icon" className="h-7 w-7"
+                      onClick={() => { setArlFile(null); setArlFileName(null); }}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button type="button" variant="outline" className="w-full max-w-xs h-12 border-dashed flex items-center gap-2"
+                    onClick={() => arlFileInputRef.current?.click()}>
+                    <Upload className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">Subir soporte ARL en PDF</span>
+                  </Button>
+                )}
+              </div>
+
+              {/* Foto */}
               <div className="space-y-2 md:col-span-2">
                 <Label>Foto / Imagen del Visitante</Label>
                 <input ref={photoInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoChange} />

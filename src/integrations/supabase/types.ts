@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           area_id: string | null
           arl: string
+          arl_document_url: string | null
           bloque: string | null
           companion_user_id: string | null
           company_name: string
@@ -27,6 +28,7 @@ export type Database = {
           entry_datetime: string
           estimated_exit_time: string | null
           exit_datetime: string | null
+          has_activity: boolean | null
           id: string
           photo_url: string | null
           subarea_id: string | null
@@ -36,6 +38,7 @@ export type Database = {
         Insert: {
           area_id?: string | null
           arl?: string
+          arl_document_url?: string | null
           bloque?: string | null
           companion_user_id?: string | null
           company_name: string
@@ -45,6 +48,7 @@ export type Database = {
           entry_datetime?: string
           estimated_exit_time?: string | null
           exit_datetime?: string | null
+          has_activity?: boolean | null
           id?: string
           photo_url?: string | null
           subarea_id?: string | null
@@ -54,6 +58,7 @@ export type Database = {
         Update: {
           area_id?: string | null
           arl?: string
+          arl_document_url?: string | null
           bloque?: string | null
           companion_user_id?: string | null
           company_name?: string
@@ -63,6 +68,7 @@ export type Database = {
           entry_datetime?: string
           estimated_exit_time?: string | null
           exit_datetime?: string | null
+          has_activity?: boolean | null
           id?: string
           photo_url?: string | null
           subarea_id?: string | null
