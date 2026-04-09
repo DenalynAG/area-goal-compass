@@ -530,7 +530,7 @@ export default function ControlActivosPage() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" /> {editRecord ? "Editar Movimiento" : "Registrar Movimiento de Activo"}
+              <Package className="h-5 w-5" /> {editRecord ? "Editar Movimiento" : isEquipoMode ? "Asignar Equipo PC" : "Registrar Movimiento de Activo"}
             </DialogTitle>
            </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
