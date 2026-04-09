@@ -65,6 +65,7 @@ export default function ControlActivosPage() {
   const [uploading, setUploading] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [page, setPage] = useState(1);
+  const [equipoPage, setEquipoPage] = useState(1);
 
   // Detail / Edit / Delete
   const [detailRecord, setDetailRecord] = useState<any>(null);
@@ -425,7 +426,7 @@ export default function ControlActivosPage() {
                   <Input
                     placeholder="Buscar por nombre, área, serial..."
                     value={equipoSearch}
-                    onChange={(e) => setEquipoSearch(e.target.value)}
+                    onChange={(e) => { setEquipoSearch(e.target.value); setEquipoPage(1); }}
                     className="max-w-xs"
                   />
                   <Button size="sm" onClick={() => {
@@ -447,6 +448,7 @@ export default function ControlActivosPage() {
                   <p className="text-xs text-muted-foreground">Registra movimientos de activos tipo "Portátil" o "Computador Escritorio" para líderes de área o subárea</p>
                 </div>
               ) : (
+                <>
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
@@ -462,80 +464,110 @@ export default function ControlActivosPage() {
                        </TableRow>
                     </TableHeader>
                     <TableBody>
-                    {leadersWithLaptops
-                      .filter((l: any) =>
+                    {(() => {
+                      const filteredEquipos = leadersWithLaptops.filter((l: any) =>
                         [l.name, l.areaName, l.subareaName, l.position, l.lastMovement?.asset_serial || ""].join(" ").toLowerCase().includes(equipoSearch.toLowerCase())
-                      )
-                      .map((leader: any) => (
-                        <TableRow key={leader.userId}>
-                          <TableCell>
-                            {leader.areaName}{leader.subareaName ? ` / ${leader.subareaName}` : ""}
-                          </TableCell>
-                          <TableCell className="font-medium">{leader.name}</TableCell>
-                          <TableCell>{leader.position}</TableCell>
-                          <TableCell>
-                            {leader.hasLaptop ? (
-                              <div className="flex items-center gap-1.5">
-                                <Laptop className="h-4 w-4 text-primary" />
-                                <span>{leader.lastMovement?.asset_type}</span>
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground">Sin asignación</span>
-                            )}
-                          </TableCell>
-                          <TableCell>{leader.lastMovement?.asset_serial || "—"}</TableCell>
-                          <TableCell>
-                            {leader.lastMovement ? (
-                              <Badge variant="outline" className="text-xs font-mono">
-                                {leader.lastMovement.id.substring(0, 8).toUpperCase()}
-                              </Badge>
-                            ) : "—"}
-                          </TableCell>
-                          <TableCell>
-                            {leader.lastMovement ? (
-                              <div className="flex items-center gap-2">
-                                <Switch
-                                  checked={leader.lastMovement.status === "recibido"}
-                                  onCheckedChange={() => handleToggleStatus(leader.lastMovement)}
-                                />
-                                <span className={`text-xs font-semibold ${leader.lastMovement.status === "recibido" ? "text-emerald-600" : "text-destructive"}`}>
-                                  {leader.lastMovement.status === "recibido" ? "Ingreso" : "Salida"}
-                                </span>
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground text-xs">—</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {leader.lastMovement ? (
-                              <div className="flex items-center gap-1">
-                                <Button size="icon" variant="ghost" className="h-8 w-8" title="Ver detalle"
-                                  onClick={() => { setDetailRecord(leader.lastMovement); setDetailOpen(true); }}>
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                                <Button size="icon" variant="ghost" className="h-8 w-8" title="Editar"
-                                  onClick={() => {
-                                    setEditRecord(leader.lastMovement);
-                                    populateForm(leader.lastMovement);
-                                    setIsEquipoMode(true);
-                                    setDialogOpen(true);
-                                  }}>
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                                <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" title="Eliminar"
-                                  onClick={() => setDeleteId(leader.lastMovement.id)}>
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground text-xs">—</span>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      );
+                      const eqTotalPages = Math.max(1, Math.ceil(filteredEquipos.length / PAGE_SIZE));
+                      const eqCurrentPage = Math.min(equipoPage, eqTotalPages);
+                      const eqPaginated = filteredEquipos.slice((eqCurrentPage - 1) * PAGE_SIZE, eqCurrentPage * PAGE_SIZE);
+                      return (<>
+                        {eqPaginated.map((leader: any) => (
+                          <TableRow key={leader.userId}>
+                            <TableCell>
+                              {leader.areaName}{leader.subareaName ? ` / ${leader.subareaName}` : ""}
+                            </TableCell>
+                            <TableCell className="font-medium">{leader.name}</TableCell>
+                            <TableCell>{leader.position}</TableCell>
+                            <TableCell>
+                              {leader.hasLaptop ? (
+                                <div className="flex items-center gap-1.5">
+                                  <Laptop className="h-4 w-4 text-primary" />
+                                  <span>{leader.lastMovement?.asset_type}</span>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground">Sin asignación</span>
+                              )}
+                            </TableCell>
+                            <TableCell>{leader.lastMovement?.asset_serial || "—"}</TableCell>
+                            <TableCell>
+                              {leader.lastMovement ? (
+                                <Badge variant="outline" className="text-xs font-mono">
+                                  {leader.lastMovement.id.substring(0, 8).toUpperCase()}
+                                </Badge>
+                              ) : "—"}
+                            </TableCell>
+                            <TableCell>
+                              {leader.lastMovement ? (
+                                <div className="flex items-center gap-2">
+                                  <Switch
+                                    checked={leader.lastMovement.status === "recibido"}
+                                    onCheckedChange={() => handleToggleStatus(leader.lastMovement)}
+                                  />
+                                  <span className={`text-xs font-semibold ${leader.lastMovement.status === "recibido" ? "text-emerald-600" : "text-destructive"}`}>
+                                    {leader.lastMovement.status === "recibido" ? "Ingreso" : "Salida"}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground text-xs">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {leader.lastMovement ? (
+                                <div className="flex items-center gap-1">
+                                  <Button size="icon" variant="ghost" className="h-8 w-8" title="Ver detalle"
+                                    onClick={() => { setDetailRecord(leader.lastMovement); setDetailOpen(true); }}>
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                  <Button size="icon" variant="ghost" className="h-8 w-8" title="Editar"
+                                    onClick={() => {
+                                      setEditRecord(leader.lastMovement);
+                                      populateForm(leader.lastMovement);
+                                      setIsEquipoMode(true);
+                                      setDialogOpen(true);
+                                    }}>
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                  <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" title="Eliminar"
+                                    onClick={() => setDeleteId(leader.lastMovement.id)}>
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground text-xs">—</span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </>);
+                    })()}
                     </TableBody>
                   </Table>
                 </div>
+                {(() => {
+                  const filteredEquipos = leadersWithLaptops.filter((l: any) =>
+                    [l.name, l.areaName, l.subareaName, l.position, l.lastMovement?.asset_serial || ""].join(" ").toLowerCase().includes(equipoSearch.toLowerCase())
+                  );
+                  const eqTotalPages = Math.max(1, Math.ceil(filteredEquipos.length / PAGE_SIZE));
+                  const eqCurrentPage = Math.min(equipoPage, eqTotalPages);
+                  return eqTotalPages > 1 ? (
+                    <div className="flex items-center justify-between pt-4">
+                      <p className="text-sm text-muted-foreground">
+                        Mostrando {(eqCurrentPage - 1) * PAGE_SIZE + 1}–{Math.min(eqCurrentPage * PAGE_SIZE, filteredEquipos.length)} de {filteredEquipos.length}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <Button size="sm" variant="outline" disabled={eqCurrentPage <= 1} onClick={() => setEquipoPage(eqCurrentPage - 1)}>
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <span className="text-sm font-medium">{eqCurrentPage} / {eqTotalPages}</span>
+                        <Button size="sm" variant="outline" disabled={eqCurrentPage >= eqTotalPages} onClick={() => setEquipoPage(eqCurrentPage + 1)}>
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ) : null;
+                })()}
+                </>
               )}
             </CardContent>
           </Card>
