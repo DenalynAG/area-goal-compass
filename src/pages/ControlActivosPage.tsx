@@ -435,23 +435,23 @@ export default function ControlActivosPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Líder</TableHead>
-                        <TableHead>Cargo</TableHead>
                         <TableHead>Área / Subárea</TableHead>
+                        <TableHead>Responsable</TableHead>
+                        <TableHead>Cargo</TableHead>
                         <TableHead>Equipo Asignado</TableHead>
-                        <TableHead>Serie</TableHead>
-                        <TableHead>Estado</TableHead>
+                        <TableHead>Nro. Serial</TableHead>
+                        <TableHead>Código Registro OSH</TableHead>
                         <TableHead>Acciones</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {leadersWithLaptops.map((leader: any) => (
                         <TableRow key={leader.userId}>
-                          <TableCell className="font-medium">{leader.name}</TableCell>
-                          <TableCell>{leader.position}</TableCell>
                           <TableCell>
                             {leader.areaName}{leader.subareaName ? ` / ${leader.subareaName}` : ""}
                           </TableCell>
+                          <TableCell className="font-medium">{leader.name}</TableCell>
+                          <TableCell>{leader.position}</TableCell>
                           <TableCell>
                             {leader.hasLaptop ? (
                               <div className="flex items-center gap-1.5">
@@ -465,9 +465,9 @@ export default function ControlActivosPage() {
                           <TableCell>{leader.lastMovement?.asset_serial || "—"}</TableCell>
                           <TableCell>
                             {leader.lastMovement ? (
-                              <span className={`text-xs font-medium ${leader.lastMovement.status === "recibido" ? "text-emerald-600" : "text-destructive"}`}>
-                                {leader.lastMovement.status === "recibido" ? "Recibido" : "Pendiente"}
-                              </span>
+                              <Badge variant="outline" className="text-xs font-mono">
+                                {leader.lastMovement.id.substring(0, 8).toUpperCase()}
+                              </Badge>
                             ) : "—"}
                           </TableCell>
                           <TableCell>
