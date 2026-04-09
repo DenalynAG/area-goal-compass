@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           area_id: string | null
           arl: string
+          bloque: string | null
           companion_user_id: string | null
           company_name: string
           created_at: string
@@ -35,6 +36,7 @@ export type Database = {
         Insert: {
           area_id?: string | null
           arl?: string
+          bloque?: string | null
           companion_user_id?: string | null
           company_name: string
           created_at?: string
@@ -52,6 +54,7 @@ export type Database = {
         Update: {
           area_id?: string | null
           arl?: string
+          bloque?: string | null
           companion_user_id?: string | null
           company_name?: string
           created_at?: string
