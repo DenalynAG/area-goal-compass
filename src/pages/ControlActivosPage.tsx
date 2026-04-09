@@ -93,6 +93,7 @@ export default function ControlActivosPage() {
     setStatus("pendiente");
     setPhotoFile(null); setPhotoPreview(null);
     setEditRecord(null);
+    setIsEquipoMode(false);
   };
 
   const populateForm = (r: any) => {
@@ -418,6 +419,7 @@ export default function ControlActivosPage() {
                 <Button size="sm" onClick={() => {
                   resetForm();
                   setAssetType("Portátil");
+                  setIsEquipoMode(true);
                   setDialogOpen(true);
                 }}>
                   <Plus className="h-4 w-4 mr-2" /> Asignar Equipo
