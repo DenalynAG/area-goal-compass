@@ -410,9 +410,18 @@ export default function ControlActivosPage() {
         <TabsContent value="recurring">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Laptop className="h-5 w-5" /> Líderes con Equipos PC Portátiles Asignados ({leadersWithLaptops.length})
-              </CardTitle>
+              <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Laptop className="h-5 w-5" /> Líderes con Equipos PC Portátiles Asignados ({leadersWithLaptops.length})
+                </CardTitle>
+                <Button size="sm" onClick={() => {
+                  resetForm();
+                  setAssetType("Portátil");
+                  setDialogOpen(true);
+                }}>
+                  <Plus className="h-4 w-4 mr-2" /> Asignar Equipo
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {leadersWithLaptops.length === 0 ? (
@@ -428,14 +437,11 @@ export default function ControlActivosPage() {
                       <TableRow>
                         <TableHead>Líder</TableHead>
                         <TableHead>Cargo</TableHead>
-                        <TableHead>Rol</TableHead>
-                        <TableHead>Área</TableHead>
-                        <TableHead>Subárea</TableHead>
+                        <TableHead>Área / Subárea</TableHead>
                         <TableHead>Equipo Asignado</TableHead>
                         <TableHead>Serie</TableHead>
-                        <TableHead>Último Mov.</TableHead>
                         <TableHead>Estado</TableHead>
-                        <TableHead>Total Mov.</TableHead>
+                        <TableHead>Acciones</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -444,10 +450,8 @@ export default function ControlActivosPage() {
                           <TableCell className="font-medium">{leader.name}</TableCell>
                           <TableCell>{leader.position}</TableCell>
                           <TableCell>
-                            <Badge variant="secondary" className="text-xs">{leader.roleLabel}</Badge>
+                            {leader.areaName}{leader.subareaName ? ` / ${leader.subareaName}` : ""}
                           </TableCell>
-                          <TableCell>{leader.areaName}</TableCell>
-                          <TableCell>{leader.subareaName || "—"}</TableCell>
                           <TableCell>
                             {leader.hasLaptop ? (
                               <div className="flex items-center gap-1.5">
@@ -459,24 +463,6 @@ export default function ControlActivosPage() {
                             )}
                           </TableCell>
                           <TableCell>{leader.lastMovement?.asset_serial || "—"}</TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            {leader.lastMovement ? (
-                              <div className="space-y-0.5">
-                                {leader.lastMovement.movement_type === "salida" ? (
-                                  <Badge variant="destructive" className="gap-1 text-xs">
-                                    <ArrowUpFromLine className="h-3 w-3" /> Salida
-                                  </Badge>
-                                ) : (
-                                  <Badge className="gap-1 text-xs bg-emerald-600">
-                                    <ArrowDownToLine className="h-3 w-3" /> Entrada
-                                  </Badge>
-                                )}
-                                <p className="text-xs text-muted-foreground">
-                                  {format(new Date(leader.lastMovement.created_at), "dd/MM/yy HH:mm", { locale: es })}
-                                </p>
-                              </div>
-                            ) : "—"}
-                          </TableCell>
                           <TableCell>
                             {leader.lastMovement ? (
                               <span className={`text-xs font-medium ${leader.lastMovement.status === "recibido" ? "text-emerald-600" : "text-destructive"}`}>
@@ -485,7 +471,38 @@ export default function ControlActivosPage() {
                             ) : "—"}
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline">{leader.totalMovements}</Badge>
+                            <div className="flex items-center gap-1">
+                              {leader.lastMovement ? (
+                                <>
+                                  <Button size="icon" variant="ghost" className="h-8 w-8" title="Ver detalle"
+                                    onClick={() => { setDetailRecord(leader.lastMovement); setDetailOpen(true); }}>
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                  <Button size="icon" variant="ghost" className="h-8 w-8" title="Editar"
+                                    onClick={() => { setEditRecord(leader.lastMovement); populateForm(leader.lastMovement); setDialogOpen(true); }}>
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                  <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" title="Eliminar"
+                                    onClick={() => setDeleteId(leader.lastMovement.id)}>
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </>
+                              ) : (
+                                <Button size="sm" variant="outline" onClick={() => {
+                                  resetForm();
+                                  setCollaboratorId(leader.userId);
+                                  setAssetType("Portátil");
+                                  const membership = memberships.find(m => m.user_id === leader.userId);
+                                  if (membership) {
+                                    setAreaId(membership.area_id);
+                                    if (membership.subarea_id) setSubareaId(membership.subarea_id);
+                                  }
+                                  setDialogOpen(true);
+                                }}>
+                                  <Plus className="h-3 w-3 mr-1" /> Asignar
+                                </Button>
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
