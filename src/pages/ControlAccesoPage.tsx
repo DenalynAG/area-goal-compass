@@ -289,11 +289,11 @@ export default function ControlAccesoPage() {
                         <TableCell>{getAreaName(r.area_id)}{r.subarea_id ? ` / ${getSubareaName(r.subarea_id)}` : ""}</TableCell>
                         <TableCell>
                           {r.bloque ? (
-                            <Badge className={
+                            <Badge className={`whitespace-nowrap ${
                               r.bloque === 'A' ? 'bg-blue-600 hover:bg-blue-700 text-white' :
                               r.bloque === 'B' ? 'bg-orange-500 hover:bg-orange-600 text-white' :
                               r.bloque === 'C' ? 'bg-green-600 hover:bg-green-700 text-white' : ''
-                            }>
+                            }`}>
                               Bloque {r.bloque}
                             </Badge>
                           ) : "—"}
