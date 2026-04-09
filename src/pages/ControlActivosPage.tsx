@@ -277,6 +277,11 @@ export default function ControlActivosPage() {
                           {getAreaName(r.area_id)}{r.subarea_id ? ` / ${getSubareaName(r.subarea_id)}` : ""}
                         </TableCell>
                         <TableCell>
+                          <Badge variant={r.status === "recibido" ? "default" : "outline"} className={r.status === "recibido" ? "bg-emerald-600" : ""}>
+                            {r.status === "recibido" ? "Recibido" : "Pendiente"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
                           <div className="flex items-center gap-1">
                             <Button size="icon" variant="ghost" className="h-8 w-8" title="Ver detalle"
                               onClick={() => { setDetailRecord(r); setDetailOpen(true); }}>
