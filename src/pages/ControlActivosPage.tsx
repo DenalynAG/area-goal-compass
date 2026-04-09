@@ -51,6 +51,8 @@ export default function ControlActivosPage() {
   const { data: areas = [] } = useAreas();
   const { data: subareas = [] } = useSubareas();
   const { data: profiles = [] } = useProfiles();
+  const { data: memberships = [] } = useMemberships();
+  const { data: userRoles = [] } = useUserRoles();
   const { data: records = [], isLoading } = useAssetMovements();
 
   const [dialogOpen, setDialogOpen] = useState(false);
