@@ -77,6 +77,7 @@ export default function ControlActivosPage() {
   const [exitDatetime, setExitDatetime] = useState("");
   const [entryDatetime, setEntryDatetime] = useState("");
   const [reason, setReason] = useState("");
+  const [status, setStatus] = useState<"pendiente" | "recibido">("pendiente");
 
   const filteredSubareas = subareas.filter((s) => s.area_id === areaId);
 
@@ -84,6 +85,7 @@ export default function ControlActivosPage() {
     setAreaId(""); setSubareaId(""); setCollaboratorId("");
     setMovementType("salida"); setAssetType(""); setCustomAssetType("");
     setAssetSerial(""); setExitDatetime(""); setEntryDatetime(""); setReason("");
+    setStatus("pendiente");
     setPhotoFile(null); setPhotoPreview(null);
     setEditRecord(null);
   };
@@ -100,6 +102,7 @@ export default function ControlActivosPage() {
     setExitDatetime(r.exit_datetime ? r.exit_datetime.slice(0, 16) : "");
     setEntryDatetime(r.entry_datetime ? r.entry_datetime.slice(0, 16) : "");
     setReason(r.reason || "");
+    setStatus(r.status || "pendiente");
     setPhotoPreview(r.photo_url || null);
     setPhotoFile(null);
   };
@@ -145,6 +148,7 @@ export default function ControlActivosPage() {
       entry_datetime: entryDatetime || null,
       reason: reason.trim(),
       photo_url: photoUrl,
+      status,
     };
 
     if (editRecord) {
@@ -231,6 +235,7 @@ export default function ControlActivosPage() {
                       <TableHead>F. Salida</TableHead>
                       <TableHead>F. Entrada</TableHead>
                       <TableHead>Área</TableHead>
+                      <TableHead>Estado</TableHead>
                       <TableHead>Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -270,6 +275,11 @@ export default function ControlActivosPage() {
                         </TableCell>
                         <TableCell>
                           {getAreaName(r.area_id)}{r.subarea_id ? ` / ${getSubareaName(r.subarea_id)}` : ""}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={r.status === "recibido" ? "default" : "outline"} className={r.status === "recibido" ? "bg-emerald-600" : ""}>
+                            {r.status === "recibido" ? "Recibido" : "Pendiente"}
+                          </Badge>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
@@ -334,6 +344,7 @@ export default function ControlActivosPage() {
               <DetailRow label="Fecha Salida" value={detailRecord.exit_datetime ? format(new Date(detailRecord.exit_datetime), "dd/MM/yyyy HH:mm", { locale: es }) : "—"} />
               <DetailRow label="Fecha Entrada" value={detailRecord.entry_datetime ? format(new Date(detailRecord.entry_datetime), "dd/MM/yyyy HH:mm", { locale: es }) : "—"} />
               <DetailRow label="Motivo" value={detailRecord.reason || "—"} />
+              <DetailRow label="Estado" value={detailRecord.status === "recibido" ? "Recibido" : "Pendiente"} />
             </div>
           )}
         </DialogContent>
@@ -418,6 +429,16 @@ export default function ControlActivosPage() {
               <div className="space-y-2">
                 <Label>Fecha y Hora Entrada</Label>
                 <Input type="datetime-local" value={entryDatetime} onChange={(e) => setEntryDatetime(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Estado *</Label>
+                <Select value={status} onValueChange={(v) => setStatus(v as "pendiente" | "recibido")}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pendiente">Pendiente</SelectItem>
+                    <SelectItem value="recibido">Recibido</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2 md:col-span-2">
                 <Label>Motivo</Label>

@@ -185,6 +185,7 @@ export type Database = {
           movement_type: string
           photo_url: string | null
           reason: string
+          status: string
           subarea_id: string | null
         }
         Insert: {
@@ -200,6 +201,7 @@ export type Database = {
           movement_type: string
           photo_url?: string | null
           reason?: string
+          status?: string
           subarea_id?: string | null
         }
         Update: {
@@ -215,6 +217,7 @@ export type Database = {
           movement_type?: string
           photo_url?: string | null
           reason?: string
+          status?: string
           subarea_id?: string | null
         }
         Relationships: [
