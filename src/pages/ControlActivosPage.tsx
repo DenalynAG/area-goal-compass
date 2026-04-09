@@ -56,6 +56,8 @@ export default function ControlActivosPage() {
   const { data: records = [], isLoading } = useAssetMovements();
 
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [equipoSearch, setEquipoSearch] = useState("");
+  const [oshCode, setOshCode] = useState("");
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -94,6 +96,7 @@ export default function ControlActivosPage() {
     setPhotoFile(null); setPhotoPreview(null);
     setEditRecord(null);
     setIsEquipoMode(false);
+    setOshCode("");
   };
 
   const populateForm = (r: any) => {
@@ -410,27 +413,37 @@ export default function ControlActivosPage() {
         </TabsContent>
 
         <TabsContent value="recurring">
-          <Card>
+           <Card>
             <CardHeader>
               <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <Laptop className="h-5 w-5" /> Líderes con Equipos PC Portátiles Asignados ({leadersWithLaptops.length})
+                  <Laptop className="h-5 w-5" /> Control de Equipos Portátiles Asignados ({leadersWithLaptops.filter((l: any) =>
+                    [l.name, l.areaName, l.subareaName, l.position, l.lastMovement?.asset_serial || ""].join(" ").toLowerCase().includes(equipoSearch.toLowerCase())
+                  ).length})
                 </CardTitle>
-                <Button size="sm" onClick={() => {
-                  resetForm();
-                  setAssetType("Portátil");
-                  setIsEquipoMode(true);
-                  setDialogOpen(true);
-                }}>
-                  <Plus className="h-4 w-4 mr-2" /> Asignar Equipo
-                </Button>
+                <div className="flex items-center gap-3">
+                  <Input
+                    placeholder="Buscar por nombre, área, serial..."
+                    value={equipoSearch}
+                    onChange={(e) => setEquipoSearch(e.target.value)}
+                    className="max-w-xs"
+                  />
+                  <Button size="sm" onClick={() => {
+                    resetForm();
+                    setAssetType("Portátil");
+                    setIsEquipoMode(true);
+                    setDialogOpen(true);
+                  }}>
+                    <Plus className="h-4 w-4 mr-2" /> Asignar Equipo
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
               {leadersWithLaptops.length === 0 ? (
                 <div className="text-center py-12 space-y-2">
                   <Monitor className="h-12 w-12 mx-auto text-muted-foreground/40" />
-                  <p className="text-muted-foreground">No se encontraron líderes con equipos asignados</p>
+                  <p className="text-muted-foreground">No se encontraron equipos asignados</p>
                   <p className="text-xs text-muted-foreground">Registra movimientos de activos tipo "Portátil" o "Computador Escritorio" para líderes de área o subárea</p>
                 </div>
               ) : (
@@ -448,7 +461,11 @@ export default function ControlActivosPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {leadersWithLaptops.map((leader: any) => (
+                    {leadersWithLaptops
+                      .filter((l: any) =>
+                        [l.name, l.areaName, l.subareaName, l.position, l.lastMovement?.asset_serial || ""].join(" ").toLowerCase().includes(equipoSearch.toLowerCase())
+                      )
+                      .map((leader: any) => (
                         <TableRow key={leader.userId}>
                           <TableCell>
                             {leader.areaName}{leader.subareaName ? ` / ${leader.subareaName}` : ""}
@@ -599,6 +616,30 @@ export default function ControlActivosPage() {
                 <Label>Nro. Serial</Label>
                 <Input value={assetSerial} onChange={(e) => setAssetSerial(e.target.value)} placeholder="Número de serie del equipo" />
               </div>
+              {isEquipoMode && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Código Registro OSH</Label>
+                    <Input value={oshCode} onChange={(e) => setOshCode(e.target.value)} placeholder="Código de registro OSH" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Estado</Label>
+                    <div className="flex items-center gap-3 h-10">
+                      <Switch
+                        checked={status === "recibido"}
+                        onCheckedChange={(checked) => {
+                          setStatus(checked ? "recibido" : "pendiente");
+                          if (checked) setMovementType("entrada");
+                          else setMovementType("salida");
+                        }}
+                      />
+                      <span className={`text-sm font-medium ${status === "recibido" ? "text-emerald-600" : "text-destructive"}`}>
+                        {status === "recibido" ? "Ingreso" : "Salida"}
+                      </span>
+                    </div>
+                  </div>
+                </>
+              )}
               {!isEquipoMode && (
                 <>
                   <div className="space-y-2">
