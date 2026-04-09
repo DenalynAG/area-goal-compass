@@ -109,6 +109,7 @@ export default function ControlAccesoPage() {
       companion_user_id: companionId || null,
       zone_requirement: zoneReq.trim(),
       arl: arl.trim(),
+      bloque: bloque || null,
       created_by: user?.id,
       photo_url: photoUrl,
     };
