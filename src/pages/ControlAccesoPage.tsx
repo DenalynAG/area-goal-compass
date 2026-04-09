@@ -222,8 +222,19 @@ export default function ControlAccesoPage() {
                       </TableCell>
                       <TableCell>{getAreaName(r.area_id)}{r.subarea_id ? ` / ${getSubareaName(r.subarea_id)}` : ""}</TableCell>
                       <TableCell>{getProfileName(r.companion_user_id)}</TableCell>
-                      <TableCell>{r.zone_requirement || "—"}</TableCell>
-                      <TableCell>{r.arl || "—"}</TableCell>
+                       <TableCell>{r.zone_requirement || "—"}</TableCell>
+                       <TableCell>
+                         {r.bloque ? (
+                           <Badge className={
+                             r.bloque === 'A' ? 'bg-blue-600 hover:bg-blue-700 text-white' :
+                             r.bloque === 'B' ? 'bg-orange-500 hover:bg-orange-600 text-white' :
+                             r.bloque === 'C' ? 'bg-green-600 hover:bg-green-700 text-white' : ''
+                           }>
+                             Bloque {r.bloque}
+                           </Badge>
+                         ) : "—"}
+                       </TableCell>
+                       <TableCell>{r.arl || "—"}</TableCell>
                       <TableCell>
                         {!r.exit_datetime && (
                           <Button size="sm" variant="outline" onClick={() => handleMarkExit(r.id)}>
