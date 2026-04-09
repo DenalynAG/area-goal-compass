@@ -292,7 +292,6 @@ export default function ControlActivosPage() {
                 <Plus className="h-4 w-4 mr-2" /> Nuevo Movimiento
               </Button>
             </div>
-            </div>
           </div>
         </CardHeader>
         <CardContent>
