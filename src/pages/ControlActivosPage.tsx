@@ -655,14 +655,18 @@ export default function ControlActivosPage() {
               )}
               <div className="space-y-2">
                 <Label>{isEquipoMode ? "Equipo Asignado *" : "Tipo de Activo *"}</Label>
-                <Select value={assetType} onValueChange={setAssetType}>
-                  <SelectTrigger><SelectValue placeholder="Seleccionar tipo" /></SelectTrigger>
-                  <SelectContent>
-                    {(isEquipoMode ? ["Portátil", "Computador Escritorio"] : ASSET_TYPES).map((t) => (
-                      <SelectItem key={t} value={t}>{t}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {isEquipoMode ? (
+                  <Input value={assetType} onChange={(e) => setAssetType(e.target.value)} placeholder="Modelo del equipo (ej: HP ProBook 450)" />
+                ) : (
+                  <Select value={assetType} onValueChange={setAssetType}>
+                    <SelectTrigger><SelectValue placeholder="Seleccionar tipo" /></SelectTrigger>
+                    <SelectContent>
+                      {ASSET_TYPES.map((t) => (
+                        <SelectItem key={t} value={t}>{t}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
               {!isEquipoMode && assetType === "Otros" && (
                 <div className="space-y-2 md:col-span-2">
