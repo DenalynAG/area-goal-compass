@@ -85,6 +85,7 @@ export default function ControlActivosPage() {
     setAreaId(""); setSubareaId(""); setCollaboratorId("");
     setMovementType("salida"); setAssetType(""); setCustomAssetType("");
     setAssetSerial(""); setExitDatetime(""); setEntryDatetime(""); setReason("");
+    setStatus("pendiente");
     setPhotoFile(null); setPhotoPreview(null);
     setEditRecord(null);
   };
