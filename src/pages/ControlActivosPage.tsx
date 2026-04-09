@@ -264,14 +264,9 @@ export default function ControlActivosPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Control de Activos</h1>
-          <p className="text-muted-foreground text-sm">Registro de entrada y salida de activos</p>
-        </div>
-        <Button onClick={() => { resetForm(); setDialogOpen(true); }}>
-          <Plus className="h-4 w-4 mr-2" /> Nuevo Movimiento
-        </Button>
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Control de Activos</h1>
+        <p className="text-muted-foreground text-sm">Registro de entrada y salida de activos</p>
       </div>
 
       <Tabs defaultValue="movements" className="space-y-4">
@@ -286,12 +281,17 @@ export default function ControlActivosPage() {
         <CardHeader>
           <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
             <CardTitle className="text-lg">Movimientos de Activos ({filtered.length})</CardTitle>
-            <Input
-              placeholder="Buscar por tipo, serie, colaborador..."
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              className="max-w-xs"
-            />
+            <div className="flex items-center gap-3">
+              <Input
+                placeholder="Buscar por tipo, serie, colaborador..."
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                className="max-w-xs"
+              />
+              <Button onClick={() => { resetForm(); setDialogOpen(true); }}>
+                <Plus className="h-4 w-4 mr-2" /> Nuevo Movimiento
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
