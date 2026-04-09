@@ -57,6 +57,7 @@ export default function ControlAccesoPage() {
   const [companionId, setCompanionId] = useState("");
   const [zoneReq, setZoneReq] = useState("");
   const [arl, setArl] = useState("");
+  const [bloque, setBloque] = useState("");
 
   const filteredSubareas = subareas.filter((s) => s.area_id === areaId);
 
@@ -64,7 +65,7 @@ export default function ControlAccesoPage() {
     setCompanyName(""); setVisitorName(""); setDocumentId("");
     setEntryDatetime(""); setEstimatedExit("");
     setAreaId(""); setSubareaId(""); setCompanionId("");
-    setZoneReq(""); setArl("");
+    setZoneReq(""); setArl(""); setBloque("");
     setPhotoFile(null); setPhotoPreview(null);
   };
 
@@ -108,6 +109,7 @@ export default function ControlAccesoPage() {
       companion_user_id: companionId || null,
       zone_requirement: zoneReq.trim(),
       arl: arl.trim(),
+      bloque: bloque || null,
       created_by: user?.id,
       photo_url: photoUrl,
     };
@@ -182,9 +184,10 @@ export default function ControlAccesoPage() {
                     <TableHead>Salida Real</TableHead>
                     <TableHead>Área</TableHead>
                     <TableHead>Acompañante</TableHead>
-                    <TableHead>Zona</TableHead>
-                    <TableHead>ARL</TableHead>
-                    <TableHead></TableHead>
+                     <TableHead>Zona</TableHead>
+                     <TableHead>Bloque</TableHead>
+                     <TableHead>ARL</TableHead>
+                     <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -219,8 +222,19 @@ export default function ControlAccesoPage() {
                       </TableCell>
                       <TableCell>{getAreaName(r.area_id)}{r.subarea_id ? ` / ${getSubareaName(r.subarea_id)}` : ""}</TableCell>
                       <TableCell>{getProfileName(r.companion_user_id)}</TableCell>
-                      <TableCell>{r.zone_requirement || "—"}</TableCell>
-                      <TableCell>{r.arl || "—"}</TableCell>
+                       <TableCell>{r.zone_requirement || "—"}</TableCell>
+                       <TableCell>
+                         {r.bloque ? (
+                           <Badge className={
+                             r.bloque === 'A' ? 'bg-blue-600 hover:bg-blue-700 text-white' :
+                             r.bloque === 'B' ? 'bg-orange-500 hover:bg-orange-600 text-white' :
+                             r.bloque === 'C' ? 'bg-green-600 hover:bg-green-700 text-white' : ''
+                           }>
+                             Bloque {r.bloque}
+                           </Badge>
+                         ) : "—"}
+                       </TableCell>
+                       <TableCell>{r.arl || "—"}</TableCell>
                       <TableCell>
                         {!r.exit_datetime && (
                           <Button size="sm" variant="outline" onClick={() => handleMarkExit(r.id)}>
@@ -301,10 +315,30 @@ export default function ControlAccesoPage() {
                   className="w-full"
                 />
               </div>
-              <div className="space-y-2">
-                <Label>Zona o Requerimiento</Label>
-                <Input value={zoneReq} onChange={(e) => setZoneReq(e.target.value)} placeholder="Ej: Lobby, Piso 3..." />
-              </div>
+               <div className="space-y-2">
+                 <Label>Zona o Requerimiento</Label>
+                 <Input value={zoneReq} onChange={(e) => setZoneReq(e.target.value)} placeholder="Ej: Lobby, Piso 3..." />
+               </div>
+               <div className="space-y-2">
+                 <Label>Bloque</Label>
+                 <div className="flex gap-2">
+                   {[
+                     { value: 'A', label: 'Bloque A', color: 'bg-blue-600 hover:bg-blue-700 text-white' },
+                     { value: 'B', label: 'Bloque B', color: 'bg-orange-500 hover:bg-orange-600 text-white' },
+                     { value: 'C', label: 'Bloque C', color: 'bg-green-600 hover:bg-green-700 text-white' },
+                   ].map((b) => (
+                     <Button
+                       key={b.value}
+                       type="button"
+                       size="sm"
+                       className={bloque === b.value ? b.color : 'bg-muted text-muted-foreground hover:bg-muted/80'}
+                       onClick={() => setBloque(bloque === b.value ? '' : b.value)}
+                     >
+                       {b.label}
+                     </Button>
+                   ))}
+                 </div>
+               </div>
               <div className="space-y-2 md:col-span-2">
                 <Label>Foto / Imagen del Visitante</Label>
                 <input ref={photoInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoChange} />

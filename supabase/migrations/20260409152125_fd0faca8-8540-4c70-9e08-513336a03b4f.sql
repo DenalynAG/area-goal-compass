@@ -1,0 +1,1 @@
+ALTER TABLE public.access_control ADD COLUMN bloque text DEFAULT null;
