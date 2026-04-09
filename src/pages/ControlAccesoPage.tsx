@@ -184,9 +184,10 @@ export default function ControlAccesoPage() {
                     <TableHead>Salida Real</TableHead>
                     <TableHead>Área</TableHead>
                     <TableHead>Acompañante</TableHead>
-                    <TableHead>Zona</TableHead>
-                    <TableHead>ARL</TableHead>
-                    <TableHead></TableHead>
+                     <TableHead>Zona</TableHead>
+                     <TableHead>Bloque</TableHead>
+                     <TableHead>ARL</TableHead>
+                     <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
