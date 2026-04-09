@@ -185,7 +185,6 @@ export default function ControlActivosPage() {
   const currentPage = Math.min(page, totalPages);
   const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
-  const getProfileName = (id: string | null) => profiles.find((p) => p.id === id)?.name || "—";
   const getAreaName = (id: string | null) => areas.find((a) => a.id === id)?.name || "—";
   const getSubareaName = (id: string | null) => subareas.find((s) => s.id === id)?.name || "";
 
