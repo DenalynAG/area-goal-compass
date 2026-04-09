@@ -65,6 +65,7 @@ export default function ControlActivosPage() {
   const [uploading, setUploading] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [page, setPage] = useState(1);
+  const [equipoPage, setEquipoPage] = useState(1);
 
   // Detail / Edit / Delete
   const [detailRecord, setDetailRecord] = useState<any>(null);
