@@ -291,9 +291,15 @@ export default function ControlActivosPage() {
                           {getAreaName(r.area_id)}{r.subarea_id ? ` / ${getSubareaName(r.subarea_id)}` : ""}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={r.status === "recibido" ? "default" : "outline"} className={r.status === "recibido" ? "bg-emerald-600" : ""}>
-                            {r.status === "recibido" ? "Recibido" : "Pendiente"}
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={r.status === "recibido"}
+                              onCheckedChange={() => handleToggleStatus(r)}
+                            />
+                            <span className={`text-xs font-medium ${r.status === "recibido" ? "text-emerald-600" : "text-muted-foreground"}`}>
+                              {r.status === "recibido" ? "Recibido" : "Pendiente"}
+                            </span>
+                          </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
