@@ -66,6 +66,7 @@ export default function ControlActivosPage() {
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [page, setPage] = useState(1);
   const [equipoPage, setEquipoPage] = useState(1);
+  const [activeTab, setActiveTab] = useState("movements");
 
   // Detail / Edit / Delete
   const [detailRecord, setDetailRecord] = useState<any>(null);
@@ -273,174 +274,162 @@ export default function ControlActivosPage() {
         <p className="text-muted-foreground text-sm">Registro de entrada y salida de activos</p>
       </div>
 
-      <Tabs defaultValue="movements" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="movements" className="gap-1.5"><Package className="h-4 w-4" /> Movimientos</TabsTrigger>
-          <TabsTrigger value="recurring" className="gap-1.5"><Laptop className="h-4 w-4" /> Equipos Asignados</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="movements">
-
       <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
-            <CardTitle className="text-lg">Movimientos de Activos ({filtered.length})</CardTitle>
-            <div className="flex items-center gap-3">
-              <Input
-                placeholder="Buscar por tipo, serie, colaborador..."
-                value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                className="max-w-xs"
-              />
-              <Button onClick={() => { resetForm(); setDialogOpen(true); }}>
-                <Plus className="h-4 w-4 mr-2" /> Nuevo Movimiento
-              </Button>
+        <CardHeader className="pb-3">
+          <Tabs defaultValue="movements" value={activeTab} onValueChange={setActiveTab}>
+            <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
+              <TabsList>
+                <TabsTrigger value="movements" className="gap-1.5"><Package className="h-4 w-4" /> Movimientos</TabsTrigger>
+                <TabsTrigger value="recurring" className="gap-1.5"><Laptop className="h-4 w-4" /> Equipos Asignados</TabsTrigger>
+              </TabsList>
+              <div className="flex items-center gap-3">
+                {activeTab === "movements" ? (
+                  <>
+                    <Input
+                      placeholder="Buscar por tipo, serie, colaborador..."
+                      value={search}
+                      onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                      className="max-w-xs"
+                    />
+                    <Button onClick={() => { resetForm(); setDialogOpen(true); }}>
+                      <Plus className="h-4 w-4 mr-2" /> Nuevo Movimiento
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Input
+                      placeholder="Buscar por nombre, área, serial..."
+                      value={equipoSearch}
+                      onChange={(e) => { setEquipoSearch(e.target.value); setEquipoPage(1); }}
+                      className="max-w-xs"
+                    />
+                    <Button size="sm" onClick={() => {
+                      resetForm();
+                      setAssetType("");
+                      setIsEquipoMode(true);
+                      setDialogOpen(true);
+                    }}>
+                      <Plus className="h-4 w-4 mr-2" /> Asignar Equipo
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <p className="text-muted-foreground text-center py-8">Cargando...</p>
-          ) : filtered.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">No hay registros</p>
-          ) : (
-            <>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Foto</TableHead>
-                      <TableHead>Tipo Mov.</TableHead>
-                      <TableHead>Colaborador</TableHead>
-                      <TableHead>Activo</TableHead>
-                      <TableHead>Serie</TableHead>
-                      <TableHead>F. Salida</TableHead>
-                      <TableHead>F. Entrada</TableHead>
-                      <TableHead>Área</TableHead>
-                      <TableHead>Estado</TableHead>
-                      <TableHead>Acciones</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paginated.map((r: any) => (
-                      <TableRow key={r.id}>
-                        <TableCell>
-                          {r.photo_url ? (
-                            <a href={r.photo_url} target="_blank" rel="noopener noreferrer">
-                              <img src={r.photo_url} alt="Activo" className="w-10 h-10 rounded-md object-cover border hover:opacity-80 transition-opacity" />
-                            </a>
-                          ) : (
-                            <div className="w-10 h-10 rounded-md bg-muted flex items-center justify-center">
-                              <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                            </div>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {r.movement_type === "salida" ? (
-                            <Badge variant="destructive" className="gap-1">
-                              <ArrowUpFromLine className="h-3 w-3" /> Salida
-                            </Badge>
-                          ) : (
-                            <Badge className="gap-1 bg-emerald-600">
-                              <ArrowDownToLine className="h-3 w-3" /> Entrada
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>{getProfileName(r.collaborator_user_id)}</TableCell>
-                        <TableCell className="font-medium">{r.asset_type}</TableCell>
-                        <TableCell>{r.asset_serial || "—"}</TableCell>
-                        <TableCell className="whitespace-nowrap">
-                          {r.exit_datetime ? format(new Date(r.exit_datetime), "dd/MM/yy HH:mm", { locale: es }) : "—"}
-                        </TableCell>
-                        <TableCell className="whitespace-nowrap">
-                          {r.entry_datetime ? format(new Date(r.entry_datetime), "dd/MM/yy HH:mm", { locale: es }) : "—"}
-                        </TableCell>
-                        <TableCell>
-                          {getAreaName(r.area_id)}{r.subarea_id ? ` / ${getSubareaName(r.subarea_id)}` : ""}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Switch
-                              checked={r.status === "recibido"}
-                              onCheckedChange={() => handleToggleStatus(r)}
-                            />
-                            <span className={`text-xs font-medium ${r.status === "recibido" ? "text-emerald-600" : "text-muted-foreground"}`}>
-                              {r.status === "recibido" ? "Recibido" : "Pendiente"}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Button size="icon" variant="ghost" className="h-8 w-8" title="Ver detalle"
-                              onClick={() => { setDetailRecord(r); setDetailOpen(true); }}>
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button size="icon" variant="ghost" className="h-8 w-8" title="Editar"
-                              onClick={() => { setEditRecord(r); populateForm(r); setDialogOpen(true); }}>
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" title="Eliminar"
-                              onClick={() => setDeleteId(r.id)}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
 
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between pt-4">
-                  <p className="text-sm text-muted-foreground">
-                    Mostrando {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} de {filtered.length}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <Button size="sm" variant="outline" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <span className="text-sm font-medium">{currentPage} / {totalPages}</span>
-                    <Button size="sm" variant="outline" disabled={currentPage >= totalPages} onClick={() => setPage(currentPage + 1)}>
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
+            <TabsContent value="movements" className="mt-4">
+              {isLoading ? (
+                <p className="text-muted-foreground text-center py-8">Cargando...</p>
+              ) : filtered.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">No hay registros</p>
+              ) : (
+                <>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Foto</TableHead>
+                          <TableHead>Tipo Mov.</TableHead>
+                          <TableHead>Colaborador</TableHead>
+                          <TableHead>Activo</TableHead>
+                          <TableHead>Serie</TableHead>
+                          <TableHead>F. Salida</TableHead>
+                          <TableHead>F. Entrada</TableHead>
+                          <TableHead>Área</TableHead>
+                          <TableHead>Estado</TableHead>
+                          <TableHead>Acciones</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {paginated.map((r: any) => (
+                          <TableRow key={r.id}>
+                            <TableCell>
+                              {r.photo_url ? (
+                                <a href={r.photo_url} target="_blank" rel="noopener noreferrer">
+                                  <img src={r.photo_url} alt="Activo" className="w-10 h-10 rounded-md object-cover border hover:opacity-80 transition-opacity" />
+                                </a>
+                              ) : (
+                                <div className="w-10 h-10 rounded-md bg-muted flex items-center justify-center">
+                                  <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                                </div>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {r.movement_type === "salida" ? (
+                                <Badge variant="destructive" className="gap-1">
+                                  <ArrowUpFromLine className="h-3 w-3" /> Salida
+                                </Badge>
+                              ) : (
+                                <Badge className="gap-1 bg-emerald-600">
+                                  <ArrowDownToLine className="h-3 w-3" /> Entrada
+                                </Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>{getProfileName(r.collaborator_user_id)}</TableCell>
+                            <TableCell className="font-medium">{r.asset_type}</TableCell>
+                            <TableCell>{r.asset_serial || "—"}</TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              {r.exit_datetime ? format(new Date(r.exit_datetime), "dd/MM/yy HH:mm", { locale: es }) : "—"}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              {r.entry_datetime ? format(new Date(r.entry_datetime), "dd/MM/yy HH:mm", { locale: es }) : "—"}
+                            </TableCell>
+                            <TableCell>
+                              {getAreaName(r.area_id)}{r.subarea_id ? ` / ${getSubareaName(r.subarea_id)}` : ""}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <Switch
+                                  checked={r.status === "recibido"}
+                                  onCheckedChange={() => handleToggleStatus(r)}
+                                />
+                                <span className={`text-xs font-medium ${r.status === "recibido" ? "text-emerald-600" : "text-muted-foreground"}`}>
+                                  {r.status === "recibido" ? "Recibido" : "Pendiente"}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                <Button size="icon" variant="ghost" className="h-8 w-8" title="Ver detalle"
+                                  onClick={() => { setDetailRecord(r); setDetailOpen(true); }}>
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button size="icon" variant="ghost" className="h-8 w-8" title="Editar"
+                                  onClick={() => { setEditRecord(r); populateForm(r); setDialogOpen(true); }}>
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" title="Eliminar"
+                                  onClick={() => setDeleteId(r.id)}>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </div>
-                </div>
-              )}
-            </>
-          )}
-        </CardContent>
-      </Card>
-        </TabsContent>
 
-        <TabsContent value="recurring">
-           <Card>
-            <CardHeader>
-              <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Laptop className="h-5 w-5" /> Control de Equipos Portátiles Asignados ({leadersWithLaptops.filter((l: any) =>
-                    [l.name, l.areaName, l.subareaName, l.position, l.lastMovement?.asset_serial || ""].join(" ").toLowerCase().includes(equipoSearch.toLowerCase())
-                  ).length})
-                </CardTitle>
-                <div className="flex items-center gap-3">
-                  <Input
-                    placeholder="Buscar por nombre, área, serial..."
-                    value={equipoSearch}
-                    onChange={(e) => { setEquipoSearch(e.target.value); setEquipoPage(1); }}
-                    className="max-w-xs"
-                  />
-                  <Button size="sm" onClick={() => {
-                    resetForm();
-                    setAssetType("");
-                    setIsEquipoMode(true);
-                    setDialogOpen(true);
-                  }}>
-                    <Plus className="h-4 w-4 mr-2" /> Asignar Equipo
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between pt-4">
+                      <p className="text-sm text-muted-foreground">
+                        Mostrando {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} de {filtered.length}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <Button size="sm" variant="outline" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <span className="text-sm font-medium">{currentPage} / {totalPages}</span>
+                        <Button size="sm" variant="outline" disabled={currentPage >= totalPages} onClick={() => setPage(currentPage + 1)}>
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </TabsContent>
+
+            <TabsContent value="recurring" className="mt-4">
               {leadersWithLaptops.length === 0 ? (
                 <div className="text-center py-12 space-y-2">
                   <Monitor className="h-12 w-12 mx-auto text-muted-foreground/40" />
@@ -569,10 +558,10 @@ export default function ControlActivosPage() {
                 })()}
                 </>
               )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            </TabsContent>
+          </Tabs>
+        </CardHeader>
+      </Card>
 
       {/* Detail Dialog */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
