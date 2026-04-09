@@ -450,15 +450,16 @@ export default function ControlActivosPage() {
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
-                      <TableRow>
-                        <TableHead>Área / Subárea</TableHead>
-                        <TableHead>Responsable</TableHead>
-                        <TableHead>Cargo</TableHead>
-                        <TableHead>Equipo Asignado</TableHead>
-                        <TableHead>Nro. Serial</TableHead>
-                        <TableHead>Código Registro OSH</TableHead>
-                        <TableHead>Estado</TableHead>
-                      </TableRow>
+                       <TableRow>
+                         <TableHead>Área / Subárea</TableHead>
+                         <TableHead>Responsable</TableHead>
+                         <TableHead>Cargo</TableHead>
+                         <TableHead>Equipo Asignado</TableHead>
+                         <TableHead>Nro. Serial</TableHead>
+                         <TableHead>Código Registro OSH</TableHead>
+                         <TableHead>Estado</TableHead>
+                         <TableHead>Acciones</TableHead>
+                       </TableRow>
                     </TableHeader>
                     <TableBody>
                     {leadersWithLaptops
@@ -500,6 +501,31 @@ export default function ControlActivosPage() {
                                 <span className={`text-xs font-semibold ${leader.lastMovement.status === "recibido" ? "text-emerald-600" : "text-destructive"}`}>
                                   {leader.lastMovement.status === "recibido" ? "Ingreso" : "Salida"}
                                 </span>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground text-xs">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {leader.lastMovement ? (
+                              <div className="flex items-center gap-1">
+                                <Button size="icon" variant="ghost" className="h-8 w-8" title="Ver detalle"
+                                  onClick={() => { setDetailRecord(leader.lastMovement); setDetailOpen(true); }}>
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button size="icon" variant="ghost" className="h-8 w-8" title="Editar"
+                                  onClick={() => {
+                                    setEditRecord(leader.lastMovement);
+                                    populateForm(leader.lastMovement);
+                                    setIsEquipoMode(true);
+                                    setDialogOpen(true);
+                                  }}>
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" title="Eliminar"
+                                  onClick={() => setDeleteId(leader.lastMovement.id)}>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
                               </div>
                             ) : (
                               <span className="text-muted-foreground text-xs">—</span>
