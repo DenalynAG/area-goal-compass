@@ -532,7 +532,7 @@ export default function ControlActivosPage() {
             <DialogTitle className="flex items-center gap-2">
               <Package className="h-5 w-5" /> {editRecord ? "Editar Movimiento" : "Registrar Movimiento de Activo"}
             </DialogTitle>
-          </DialogHeader>
+           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -557,7 +557,7 @@ export default function ControlActivosPage() {
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
-                <Label>Colaborador *</Label>
+                <Label>Responsable *</Label>
                 <SearchableSelect
                   options={profiles.map((p) => ({ value: p.id, label: `${p.name} — ${p.position || "Sin cargo"}` }))}
                   value={collaboratorId}
@@ -566,88 +566,94 @@ export default function ControlActivosPage() {
                   className="w-full"
                 />
               </div>
+              {!isEquipoMode && (
+                <div className="space-y-2">
+                  <Label>Tipo de Movimiento *</Label>
+                  <Select value={movementType} onValueChange={(v) => setMovementType(v as "entrada" | "salida")}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="salida">Salida</SelectItem>
+                      <SelectItem value="entrada">Entrada</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="space-y-2">
-                <Label>Tipo de Movimiento *</Label>
-                <Select value={movementType} onValueChange={(v) => setMovementType(v as "entrada" | "salida")}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="salida">Salida</SelectItem>
-                    <SelectItem value="entrada">Entrada</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Tipo de Activo *</Label>
+                <Label>{isEquipoMode ? "Equipo Asignado *" : "Tipo de Activo *"}</Label>
                 <Select value={assetType} onValueChange={setAssetType}>
                   <SelectTrigger><SelectValue placeholder="Seleccionar tipo" /></SelectTrigger>
                   <SelectContent>
-                    {ASSET_TYPES.map((t) => (
+                    {(isEquipoMode ? ["Portátil", "Computador Escritorio"] : ASSET_TYPES).map((t) => (
                       <SelectItem key={t} value={t}>{t}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-              {assetType === "Otros" && (
+              {!isEquipoMode && assetType === "Otros" && (
                 <div className="space-y-2 md:col-span-2">
                   <Label>Especificar Tipo de Activo *</Label>
                   <Input value={customAssetType} onChange={(e) => setCustomAssetType(e.target.value)} placeholder="Escribir tipo de activo" />
                 </div>
               )}
               <div className="space-y-2">
-                <Label>Número de Serie</Label>
-                <Input value={assetSerial} onChange={(e) => setAssetSerial(e.target.value)} />
+                <Label>Nro. Serial</Label>
+                <Input value={assetSerial} onChange={(e) => setAssetSerial(e.target.value)} placeholder="Número de serie del equipo" />
               </div>
-              <div className="space-y-2">
-                <Label>Fecha y Hora Salida</Label>
-                <Input type="datetime-local" value={exitDatetime} onChange={(e) => setExitDatetime(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label>Fecha y Hora Entrada</Label>
-                <Input type="datetime-local" value={entryDatetime} onChange={(e) => setEntryDatetime(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label>Estado</Label>
-                <div className="flex items-center gap-3 h-10">
-                  <Switch
-                    checked={status === "recibido"}
-                    onCheckedChange={(checked) => {
-                      setStatus(checked ? "recibido" : "pendiente");
-                      if (checked) setMovementType("entrada");
-                    }}
-                  />
-                  <span className={`text-sm font-medium ${status === "recibido" ? "text-emerald-600" : "text-muted-foreground"}`}>
-                    {status === "recibido" ? "Recibido" : "Pendiente"}
-                  </span>
-                </div>
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label>Motivo</Label>
-                <Textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Describir motivo de la entrada o salida del activo" rows={3} />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label>Foto / Imagen del Activo</Label>
-                <input ref={photoInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoChange} />
-                {photoPreview ? (
-                  <div className="relative w-full max-w-xs">
-                    <img src={photoPreview} alt="Preview" className="w-full h-40 object-cover rounded-lg border" />
-                    <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-7 w-7"
-                      onClick={() => { setPhotoFile(null); setPhotoPreview(null); }}>
-                      <X className="h-4 w-4" />
-                    </Button>
+              {!isEquipoMode && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Fecha y Hora Salida</Label>
+                    <Input type="datetime-local" value={exitDatetime} onChange={(e) => setExitDatetime(e.target.value)} />
                   </div>
-                ) : (
-                  <Button type="button" variant="outline" className="w-full max-w-xs h-24 border-dashed flex flex-col gap-1"
-                    onClick={() => photoInputRef.current?.click()}>
-                    <Camera className="h-6 w-6 text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground">Tomar foto o seleccionar imagen</span>
-                  </Button>
-                )}
-              </div>
+                  <div className="space-y-2">
+                    <Label>Fecha y Hora Entrada</Label>
+                    <Input type="datetime-local" value={entryDatetime} onChange={(e) => setEntryDatetime(e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Estado</Label>
+                    <div className="flex items-center gap-3 h-10">
+                      <Switch
+                        checked={status === "recibido"}
+                        onCheckedChange={(checked) => {
+                          setStatus(checked ? "recibido" : "pendiente");
+                          if (checked) setMovementType("entrada");
+                        }}
+                      />
+                      <span className={`text-sm font-medium ${status === "recibido" ? "text-emerald-600" : "text-muted-foreground"}`}>
+                        {status === "recibido" ? "Recibido" : "Pendiente"}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Motivo</Label>
+                    <Textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Describir motivo de la entrada o salida del activo" rows={3} />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Foto / Imagen del Activo</Label>
+                    <input ref={photoInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoChange} />
+                    {photoPreview ? (
+                      <div className="relative w-full max-w-xs">
+                        <img src={photoPreview} alt="Preview" className="w-full h-40 object-cover rounded-lg border" />
+                        <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-7 w-7"
+                          onClick={() => { setPhotoFile(null); setPhotoPreview(null); }}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button type="button" variant="outline" className="w-full max-w-xs h-24 border-dashed flex flex-col gap-1"
+                        onClick={() => photoInputRef.current?.click()}>
+                        <Camera className="h-6 w-6 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">Tomar foto o seleccionar imagen</span>
+                      </Button>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="outline" onClick={() => { setDialogOpen(false); resetForm(); }}>Cancelar</Button>
               <Button type="submit" disabled={saving || uploading}>
-                {saving ? "Guardando..." : editRecord ? "Guardar Cambios" : "Registrar Movimiento"}
+                {saving ? "Guardando..." : editRecord ? "Guardar Cambios" : isEquipoMode ? "Asignar Equipo" : "Registrar Movimiento"}
               </Button>
             </div>
           </form>
