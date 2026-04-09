@@ -450,15 +450,16 @@ export default function ControlActivosPage() {
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
-                      <TableRow>
-                        <TableHead>Área / Subárea</TableHead>
-                        <TableHead>Responsable</TableHead>
-                        <TableHead>Cargo</TableHead>
-                        <TableHead>Equipo Asignado</TableHead>
-                        <TableHead>Nro. Serial</TableHead>
-                        <TableHead>Código Registro OSH</TableHead>
-                        <TableHead>Estado</TableHead>
-                      </TableRow>
+                       <TableRow>
+                         <TableHead>Área / Subárea</TableHead>
+                         <TableHead>Responsable</TableHead>
+                         <TableHead>Cargo</TableHead>
+                         <TableHead>Equipo Asignado</TableHead>
+                         <TableHead>Nro. Serial</TableHead>
+                         <TableHead>Código Registro OSH</TableHead>
+                         <TableHead>Estado</TableHead>
+                         <TableHead>Acciones</TableHead>
+                       </TableRow>
                     </TableHeader>
                     <TableBody>
                     {leadersWithLaptops
