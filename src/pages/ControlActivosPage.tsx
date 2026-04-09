@@ -56,6 +56,8 @@ export default function ControlActivosPage() {
   const { data: records = [], isLoading } = useAssetMovements();
 
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [equipoSearch, setEquipoSearch] = useState("");
+  const [oshCode, setOshCode] = useState("");
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [photoFile, setPhotoFile] = useState<File | null>(null);
