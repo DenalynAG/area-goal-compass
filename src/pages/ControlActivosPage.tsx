@@ -211,6 +211,55 @@ export default function ControlActivosPage() {
   const getAreaName = (id: string | null) => areas.find((a) => a.id === id)?.name || "—";
   const getSubareaName = (id: string | null) => subareas.find((s) => s.id === id)?.name || "";
 
+  // Leaders with assigned laptops
+  const leadersWithLaptops = useMemo(() => {
+    // Get leaders: area leaders + subarea leaders + users with admin_area or lider_subarea roles
+    const leaderUserIds = new Set<string>();
+
+    // From areas table
+    areas.forEach(a => { if (a.leader_user_id) leaderUserIds.add(a.leader_user_id); });
+    // From subareas table
+    subareas.forEach(s => { if (s.leader_user_id) leaderUserIds.add(s.leader_user_id); });
+    // From user_roles
+    userRoles.forEach(r => {
+      if (r.role === "admin_area" || r.role === "lider_subarea") leaderUserIds.add(r.user_id);
+    });
+
+    // Find laptop movements for these leaders
+    return Array.from(leaderUserIds).map(userId => {
+      const profile = profiles.find(p => p.id === userId);
+      if (!profile) return null;
+
+      const membership = memberships.find(m => m.user_id === userId);
+      const area = membership ? areas.find(a => a.id === membership.area_id) : null;
+      const subarea = membership?.subarea_id ? subareas.find(s => s.id === membership.subarea_id) : null;
+
+      // Check roles
+      const roles = userRoles.filter(r => r.user_id === userId).map(r => r.role);
+      const isAreaLeader = roles.includes("admin_area") || areas.some(a => a.leader_user_id === userId);
+      const isSubareaLeader = roles.includes("lider_subarea") || subareas.some(s => s.leader_user_id === userId);
+
+      // Find laptop asset movements for this user
+      const laptopMovements = records.filter(
+        (r: any) => r.collaborator_user_id === userId && (r.asset_type === "Portátil" || r.asset_type === "Computador Escritorio")
+      );
+
+      const lastMovement = laptopMovements.length > 0 ? laptopMovements[0] : null;
+
+      return {
+        userId,
+        name: profile.name,
+        position: profile.position || "Sin cargo",
+        areaName: area?.name || "—",
+        subareaName: subarea?.name || "",
+        roleLabel: isAreaLeader ? "Líder de Área" : isSubareaLeader ? "Líder de Subárea" : "Líder",
+        hasLaptop: laptopMovements.length > 0,
+        lastMovement,
+        totalMovements: laptopMovements.length,
+      };
+    }).filter(Boolean) as any[];
+  }, [areas, subareas, profiles, memberships, userRoles, records]);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -222,6 +271,14 @@ export default function ControlActivosPage() {
           <Plus className="h-4 w-4 mr-2" /> Nuevo Movimiento
         </Button>
       </div>
+
+      <Tabs defaultValue="movements" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="movements" className="gap-1.5"><Package className="h-4 w-4" /> Movimientos</TabsTrigger>
+          <TabsTrigger value="recurring" className="gap-1.5"><Laptop className="h-4 w-4" /> Equipos Asignados</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="movements">
 
       <Card>
         <CardHeader>
