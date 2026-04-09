@@ -344,6 +344,7 @@ export default function ControlActivosPage() {
               <DetailRow label="Fecha Salida" value={detailRecord.exit_datetime ? format(new Date(detailRecord.exit_datetime), "dd/MM/yyyy HH:mm", { locale: es }) : "—"} />
               <DetailRow label="Fecha Entrada" value={detailRecord.entry_datetime ? format(new Date(detailRecord.entry_datetime), "dd/MM/yyyy HH:mm", { locale: es }) : "—"} />
               <DetailRow label="Motivo" value={detailRecord.reason || "—"} />
+              <DetailRow label="Estado" value={detailRecord.status === "recibido" ? "Recibido" : "Pendiente"} />
             </div>
           )}
         </DialogContent>
