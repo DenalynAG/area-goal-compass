@@ -405,6 +405,98 @@ export default function ControlActivosPage() {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="recurring">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Laptop className="h-5 w-5" /> Líderes con Equipos PC Portátiles Asignados ({leadersWithLaptops.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {leadersWithLaptops.length === 0 ? (
+                <div className="text-center py-12 space-y-2">
+                  <Monitor className="h-12 w-12 mx-auto text-muted-foreground/40" />
+                  <p className="text-muted-foreground">No se encontraron líderes con equipos asignados</p>
+                  <p className="text-xs text-muted-foreground">Registra movimientos de activos tipo "Portátil" o "Computador Escritorio" para líderes de área o subárea</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Líder</TableHead>
+                        <TableHead>Cargo</TableHead>
+                        <TableHead>Rol</TableHead>
+                        <TableHead>Área</TableHead>
+                        <TableHead>Subárea</TableHead>
+                        <TableHead>Equipo Asignado</TableHead>
+                        <TableHead>Serie</TableHead>
+                        <TableHead>Último Mov.</TableHead>
+                        <TableHead>Estado</TableHead>
+                        <TableHead>Total Mov.</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {leadersWithLaptops.map((leader: any) => (
+                        <TableRow key={leader.userId}>
+                          <TableCell className="font-medium">{leader.name}</TableCell>
+                          <TableCell>{leader.position}</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary" className="text-xs">{leader.roleLabel}</Badge>
+                          </TableCell>
+                          <TableCell>{leader.areaName}</TableCell>
+                          <TableCell>{leader.subareaName || "—"}</TableCell>
+                          <TableCell>
+                            {leader.hasLaptop ? (
+                              <div className="flex items-center gap-1.5">
+                                <Laptop className="h-4 w-4 text-primary" />
+                                <span>{leader.lastMovement?.asset_type}</span>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">Sin asignación</span>
+                            )}
+                          </TableCell>
+                          <TableCell>{leader.lastMovement?.asset_serial || "—"}</TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            {leader.lastMovement ? (
+                              <div className="space-y-0.5">
+                                {leader.lastMovement.movement_type === "salida" ? (
+                                  <Badge variant="destructive" className="gap-1 text-xs">
+                                    <ArrowUpFromLine className="h-3 w-3" /> Salida
+                                  </Badge>
+                                ) : (
+                                  <Badge className="gap-1 text-xs bg-emerald-600">
+                                    <ArrowDownToLine className="h-3 w-3" /> Entrada
+                                  </Badge>
+                                )}
+                                <p className="text-xs text-muted-foreground">
+                                  {format(new Date(leader.lastMovement.created_at), "dd/MM/yy HH:mm", { locale: es })}
+                                </p>
+                              </div>
+                            ) : "—"}
+                          </TableCell>
+                          <TableCell>
+                            {leader.lastMovement ? (
+                              <span className={`text-xs font-medium ${leader.lastMovement.status === "recibido" ? "text-emerald-600" : "text-destructive"}`}>
+                                {leader.lastMovement.status === "recibido" ? "Recibido" : "Pendiente"}
+                              </span>
+                            ) : "—"}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{leader.totalMovements}</Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Detail Dialog */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
