@@ -179,6 +179,19 @@ export default function ControlActivosPage() {
     qc.invalidateQueries({ queryKey: ["asset_movements"] });
   };
 
+  const handleToggleStatus = async (record: any) => {
+    const newStatus = record.status === "recibido" ? "pendiente" : "recibido";
+    const updates: any = { status: newStatus };
+    if (newStatus === "recibido") {
+      updates.movement_type = "entrada";
+      if (!record.entry_datetime) updates.entry_datetime = new Date().toISOString();
+    }
+    const { error } = await supabase.from("asset_movements" as any).update(updates).eq("id", record.id);
+    if (error) { toast.error("Error al actualizar estado"); return; }
+    toast.success(newStatus === "recibido" ? "Activo marcado como Recibido" : "Activo marcado como Pendiente");
+    qc.invalidateQueries({ queryKey: ["asset_movements"] });
+  };
+
   const getProfileName = (id: string | null) => profiles.find((p) => p.id === id)?.name || "—";
 
   const filtered = records.filter((r: any) =>
