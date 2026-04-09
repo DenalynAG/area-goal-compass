@@ -567,6 +567,7 @@ export default function ControlActivosPage() {
                     </div>
                   ) : null;
                 })()}
+                </>
               )}
             </CardContent>
           </Card>
