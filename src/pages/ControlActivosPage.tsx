@@ -185,6 +185,8 @@ export default function ControlActivosPage() {
     if (newStatus === "recibido") {
       updates.movement_type = "entrada";
       if (!record.entry_datetime) updates.entry_datetime = new Date().toISOString();
+    } else {
+      updates.movement_type = "salida";
     }
     const { error } = await supabase.from("asset_movements" as any).update(updates).eq("id", record.id);
     if (error) { toast.error("Error al actualizar estado"); return; }
