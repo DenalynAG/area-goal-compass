@@ -235,6 +235,7 @@ export default function ControlActivosPage() {
                       <TableHead>F. Salida</TableHead>
                       <TableHead>F. Entrada</TableHead>
                       <TableHead>Área</TableHead>
+                      <TableHead>Estado</TableHead>
                       <TableHead>Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
