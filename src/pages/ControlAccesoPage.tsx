@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAreas, useSubareas, useProfiles, useMemberships } from "@/hooks/useSupabaseData";
@@ -12,8 +12,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, DoorOpen, Clock, LogOut as LogOutIcon, Camera, X, Image as ImageIcon } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Plus, DoorOpen, Clock, LogOut as LogOutIcon, Camera, X, Image as ImageIcon, Eye, Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 function useAccessControl() {
@@ -30,6 +31,8 @@ function useAccessControl() {
   });
 }
 
+const PAGE_SIZE = 10;
+
 export default function ControlAccesoPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -45,6 +48,13 @@ export default function ControlAccesoPage() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const [page, setPage] = useState(1);
+
+  // Detail / Edit / Delete state
+  const [detailRecord, setDetailRecord] = useState<any>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [editRecord, setEditRecord] = useState<any>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   // Form state
   const [companyName, setCompanyName] = useState("");
@@ -67,6 +77,23 @@ export default function ControlAccesoPage() {
     setAreaId(""); setSubareaId(""); setCompanionId("");
     setZoneReq(""); setArl(""); setBloque("");
     setPhotoFile(null); setPhotoPreview(null);
+    setEditRecord(null);
+  };
+
+  const populateForm = (r: any) => {
+    setCompanyName(r.company_name || "");
+    setVisitorName(r.visitor_name || "");
+    setDocumentId(r.document_id || "");
+    setEntryDatetime(r.entry_datetime ? r.entry_datetime.slice(0, 16) : "");
+    setEstimatedExit(r.estimated_exit_time ? r.estimated_exit_time.slice(0, 16) : "");
+    setAreaId(r.area_id || "");
+    setSubareaId(r.subarea_id || "");
+    setCompanionId(r.companion_user_id || "");
+    setZoneReq(r.zone_requirement || "");
+    setArl(r.arl || "");
+    setBloque(r.bloque || "");
+    setPhotoPreview(r.photo_url || null);
+    setPhotoFile(null);
   };
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,7 +113,7 @@ export default function ControlAccesoPage() {
     }
     setSaving(true);
 
-    let photoUrl: string | null = null;
+    let photoUrl: string | null = editRecord?.photo_url || null;
     if (photoFile) {
       setUploading(true);
       const ext = photoFile.name.split(".").pop();
@@ -110,13 +137,22 @@ export default function ControlAccesoPage() {
       zone_requirement: zoneReq.trim(),
       arl: arl.trim(),
       bloque: bloque || null,
-      created_by: user?.id,
       photo_url: photoUrl,
     };
-    const { error } = await supabase.from("access_control" as any).insert(payload);
-    setSaving(false);
-    if (error) { toast.error("Error al registrar"); return; }
-    toast.success("Registro de acceso creado");
+
+    if (editRecord) {
+      const { error } = await supabase.from("access_control" as any).update(payload as any).eq("id", editRecord.id);
+      setSaving(false);
+      if (error) { toast.error("Error al actualizar"); return; }
+      toast.success("Registro actualizado");
+    } else {
+      payload.created_by = user?.id;
+      const { error } = await supabase.from("access_control" as any).insert(payload);
+      setSaving(false);
+      if (error) { toast.error("Error al registrar"); return; }
+      toast.success("Registro de acceso creado");
+    }
+
     qc.invalidateQueries({ queryKey: ["access_control"] });
     resetForm();
     setDialogOpen(false);
@@ -132,10 +168,23 @@ export default function ControlAccesoPage() {
     qc.invalidateQueries({ queryKey: ["access_control"] });
   };
 
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    const { error } = await supabase.from("access_control" as any).delete().eq("id", deleteId);
+    if (error) { toast.error("Error al eliminar registro"); return; }
+    toast.success("Registro eliminado");
+    setDeleteId(null);
+    qc.invalidateQueries({ queryKey: ["access_control"] });
+  };
+
   const filtered = records.filter((r: any) =>
     [r.visitor_name, r.company_name, r.document_id]
       .join(" ").toLowerCase().includes(search.toLowerCase())
   );
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const getProfileName = (id: string | null) => profiles.find((p) => p.id === id)?.name || "—";
   const getAreaName = (id: string | null) => areas.find((a) => a.id === id)?.name || "—";
@@ -156,11 +205,11 @@ export default function ControlAccesoPage() {
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
-            <CardTitle className="text-lg">Registros de Acceso</CardTitle>
+            <CardTitle className="text-lg">Registros de Acceso ({filtered.length})</CardTitle>
             <Input
               placeholder="Buscar visitante, empresa, documento..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               className="max-w-xs"
             />
           </div>
@@ -171,91 +220,148 @@ export default function ControlAccesoPage() {
           ) : filtered.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">No hay registros</p>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                   <TableRow>
-                    <TableHead>Foto</TableHead>
-                    <TableHead>Empresa</TableHead>
-                    <TableHead>Visitante</TableHead>
-                    <TableHead>Documento</TableHead>
-                    <TableHead>Ingreso</TableHead>
-                    <TableHead>Salida Est.</TableHead>
-                    <TableHead>Salida Real</TableHead>
-                    <TableHead>Área</TableHead>
-                    <TableHead>Acompañante</TableHead>
-                     <TableHead>Zona</TableHead>
-                     <TableHead>Bloque</TableHead>
-                     <TableHead>ARL</TableHead>
-                     <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map((r: any) => (
-                    <TableRow key={r.id}>
-                      <TableCell>
-                        {r.photo_url ? (
-                          <a href={r.photo_url} target="_blank" rel="noopener noreferrer">
-                            <img src={r.photo_url} alt="Visitante" className="w-10 h-10 rounded-md object-cover border hover:opacity-80 transition-opacity" />
-                          </a>
-                        ) : (
-                          <div className="w-10 h-10 rounded-md bg-muted flex items-center justify-center">
-                            <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="font-medium">{r.company_name}</TableCell>
-                      <TableCell>{r.visitor_name}</TableCell>
-                      <TableCell>{r.document_id}</TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        {r.entry_datetime ? format(new Date(r.entry_datetime), "dd/MM/yy HH:mm", { locale: es }) : "—"}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        {r.estimated_exit_time ? format(new Date(r.estimated_exit_time), "dd/MM/yy HH:mm", { locale: es }) : "—"}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        {r.exit_datetime ? (
-                          <Badge variant="secondary">{format(new Date(r.exit_datetime), "HH:mm", { locale: es })}</Badge>
-                        ) : (
-                          <Badge variant="destructive">En sitio</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>{getAreaName(r.area_id)}{r.subarea_id ? ` / ${getSubareaName(r.subarea_id)}` : ""}</TableCell>
-                      <TableCell>{getProfileName(r.companion_user_id)}</TableCell>
-                       <TableCell>{r.zone_requirement || "—"}</TableCell>
-                       <TableCell>
-                         {r.bloque ? (
-                           <Badge className={
-                             r.bloque === 'A' ? 'bg-blue-600 hover:bg-blue-700 text-white' :
-                             r.bloque === 'B' ? 'bg-orange-500 hover:bg-orange-600 text-white' :
-                             r.bloque === 'C' ? 'bg-green-600 hover:bg-green-700 text-white' : ''
-                           }>
-                             Bloque {r.bloque}
-                           </Badge>
-                         ) : "—"}
-                       </TableCell>
-                       <TableCell>{r.arl || "—"}</TableCell>
-                      <TableCell>
-                        {!r.exit_datetime && (
-                          <Button size="sm" variant="outline" onClick={() => handleMarkExit(r.id)}>
-                            <LogOutIcon className="h-3 w-3 mr-1" /> Salida
-                          </Button>
-                        )}
-                      </TableCell>
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                     <TableRow>
+                      <TableHead>Foto</TableHead>
+                      <TableHead>Empresa</TableHead>
+                      <TableHead>Visitante</TableHead>
+                      <TableHead>Documento</TableHead>
+                      <TableHead>Ingreso</TableHead>
+                      <TableHead>Salida Est.</TableHead>
+                      <TableHead>Salida Real</TableHead>
+                      <TableHead>Área</TableHead>
+                      <TableHead>Bloque</TableHead>
+                      <TableHead>Acciones</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {paginated.map((r: any) => (
+                      <TableRow key={r.id}>
+                        <TableCell>
+                          {r.photo_url ? (
+                            <a href={r.photo_url} target="_blank" rel="noopener noreferrer">
+                              <img src={r.photo_url} alt="Visitante" className="w-10 h-10 rounded-md object-cover border hover:opacity-80 transition-opacity" />
+                            </a>
+                          ) : (
+                            <div className="w-10 h-10 rounded-md bg-muted flex items-center justify-center">
+                              <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell className="font-medium">{r.company_name}</TableCell>
+                        <TableCell>{r.visitor_name}</TableCell>
+                        <TableCell>{r.document_id}</TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          {r.entry_datetime ? format(new Date(r.entry_datetime), "dd/MM/yy HH:mm", { locale: es }) : "—"}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          {r.estimated_exit_time ? format(new Date(r.estimated_exit_time), "dd/MM/yy HH:mm", { locale: es }) : "—"}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          {r.exit_datetime ? (
+                            <Badge variant="secondary">{format(new Date(r.exit_datetime), "HH:mm", { locale: es })}</Badge>
+                          ) : (
+                            <Badge variant="destructive">En sitio</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>{getAreaName(r.area_id)}{r.subarea_id ? ` / ${getSubareaName(r.subarea_id)}` : ""}</TableCell>
+                        <TableCell>
+                          {r.bloque ? (
+                            <Badge className={
+                              r.bloque === 'A' ? 'bg-blue-600 hover:bg-blue-700 text-white' :
+                              r.bloque === 'B' ? 'bg-orange-500 hover:bg-orange-600 text-white' :
+                              r.bloque === 'C' ? 'bg-green-600 hover:bg-green-700 text-white' : ''
+                            }>
+                              Bloque {r.bloque}
+                            </Badge>
+                          ) : "—"}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Button size="icon" variant="ghost" className="h-8 w-8" title="Ver detalle"
+                              onClick={() => { setDetailRecord(r); setDetailOpen(true); }}>
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-8 w-8" title="Editar"
+                              onClick={() => { setEditRecord(r); populateForm(r); setDialogOpen(true); }}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" title="Eliminar"
+                              onClick={() => setDeleteId(r.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                            {!r.exit_datetime && (
+                              <Button size="sm" variant="outline" onClick={() => handleMarkExit(r.id)}>
+                                <LogOutIcon className="h-3 w-3 mr-1" /> Salida
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between pt-4">
+                  <p className="text-sm text-muted-foreground">
+                    Mostrando {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} de {filtered.length}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" variant="outline" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <span className="text-sm font-medium">{currentPage} / {totalPages}</span>
+                    <Button size="sm" variant="outline" disabled={currentPage >= totalPages} onClick={() => setPage(currentPage + 1)}>
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      {/* Detail Dialog */}
+      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Detalle del Registro</DialogTitle>
+            <DialogDescription>Información completa del visitante</DialogDescription>
+          </DialogHeader>
+          {detailRecord && (
+            <div className="space-y-3 text-sm">
+              {detailRecord.photo_url && (
+                <img src={detailRecord.photo_url} alt="Visitante" className="w-full h-48 object-cover rounded-lg border" />
+              )}
+              <DetailRow label="Empresa" value={detailRecord.company_name} />
+              <DetailRow label="Visitante" value={detailRecord.visitor_name} />
+              <DetailRow label="Documento" value={detailRecord.document_id} />
+              <DetailRow label="ARL" value={detailRecord.arl || "—"} />
+              <DetailRow label="Ingreso" value={detailRecord.entry_datetime ? format(new Date(detailRecord.entry_datetime), "dd/MM/yyyy HH:mm", { locale: es }) : "—"} />
+              <DetailRow label="Salida Estimada" value={detailRecord.estimated_exit_time ? format(new Date(detailRecord.estimated_exit_time), "dd/MM/yyyy HH:mm", { locale: es }) : "—"} />
+              <DetailRow label="Salida Real" value={detailRecord.exit_datetime ? format(new Date(detailRecord.exit_datetime), "dd/MM/yyyy HH:mm", { locale: es }) : "En sitio"} />
+              <DetailRow label="Área" value={`${getAreaName(detailRecord.area_id)}${detailRecord.subarea_id ? ` / ${getSubareaName(detailRecord.subarea_id)}` : ""}`} />
+              <DetailRow label="Acompañante" value={getProfileName(detailRecord.companion_user_id)} />
+              <DetailRow label="Zona / Requerimiento" value={detailRecord.zone_requirement || "—"} />
+              <DetailRow label="Bloque" value={detailRecord.bloque ? `Bloque ${detailRecord.bloque}` : "—"} />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Create / Edit Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <DoorOpen className="h-5 w-5" /> Registro de Acceso
+              <DoorOpen className="h-5 w-5" /> {editRecord ? "Editar Registro" : "Registro de Acceso"}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -360,12 +466,35 @@ export default function ControlAccesoPage() {
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-              <Button type="submit" disabled={saving || uploading}>{saving ? "Guardando..." : "Registrar Ingreso"}</Button>
+              <Button type="button" variant="outline" onClick={() => { setDialogOpen(false); resetForm(); }}>Cancelar</Button>
+              <Button type="submit" disabled={saving || uploading}>{saving ? "Guardando..." : editRecord ? "Guardar Cambios" : "Registrar Ingreso"}</Button>
             </div>
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => { if (!open) setDeleteId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar registro?</AlertDialogTitle>
+            <AlertDialogDescription>Esta acción no se puede deshacer. El registro de acceso será eliminado permanentemente.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Eliminar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between border-b border-border pb-2">
+      <span className="text-muted-foreground font-medium">{label}</span>
+      <span className="text-foreground text-right">{value}</span>
     </div>
   );
 }
