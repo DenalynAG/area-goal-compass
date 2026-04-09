@@ -148,6 +148,7 @@ export default function ControlActivosPage() {
       entry_datetime: entryDatetime || null,
       reason: reason.trim(),
       photo_url: photoUrl,
+      status,
     };
 
     if (editRecord) {
