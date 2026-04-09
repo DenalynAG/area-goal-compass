@@ -57,6 +57,7 @@ export default function ControlAccesoPage() {
   const [companionId, setCompanionId] = useState("");
   const [zoneReq, setZoneReq] = useState("");
   const [arl, setArl] = useState("");
+  const [bloque, setBloque] = useState("");
 
   const filteredSubareas = subareas.filter((s) => s.area_id === areaId);
 
