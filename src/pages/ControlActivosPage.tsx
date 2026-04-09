@@ -441,7 +441,7 @@ export default function ControlActivosPage() {
                         <TableHead>Equipo Asignado</TableHead>
                         <TableHead>Nro. Serial</TableHead>
                         <TableHead>Código Registro OSH</TableHead>
-                        <TableHead>Acciones</TableHead>
+                        <TableHead>Estado</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -471,38 +471,19 @@ export default function ControlActivosPage() {
                             ) : "—"}
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-1">
-                              {leader.lastMovement ? (
-                                <>
-                                  <Button size="icon" variant="ghost" className="h-8 w-8" title="Ver detalle"
-                                    onClick={() => { setDetailRecord(leader.lastMovement); setDetailOpen(true); }}>
-                                    <Eye className="h-4 w-4" />
-                                  </Button>
-                                  <Button size="icon" variant="ghost" className="h-8 w-8" title="Editar"
-                                    onClick={() => { setEditRecord(leader.lastMovement); populateForm(leader.lastMovement); setDialogOpen(true); }}>
-                                    <Pencil className="h-4 w-4" />
-                                  </Button>
-                                  <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" title="Eliminar"
-                                    onClick={() => setDeleteId(leader.lastMovement.id)}>
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </>
-                              ) : (
-                                <Button size="sm" variant="outline" onClick={() => {
-                                  resetForm();
-                                  setCollaboratorId(leader.userId);
-                                  setAssetType("Portátil");
-                                  const membership = memberships.find(m => m.user_id === leader.userId);
-                                  if (membership) {
-                                    setAreaId(membership.area_id);
-                                    if (membership.subarea_id) setSubareaId(membership.subarea_id);
-                                  }
-                                  setDialogOpen(true);
-                                }}>
-                                  <Plus className="h-3 w-3 mr-1" /> Asignar
-                                </Button>
-                              )}
-                            </div>
+                            {leader.lastMovement ? (
+                              <div className="flex items-center gap-2">
+                                <Switch
+                                  checked={leader.lastMovement.status === "recibido"}
+                                  onCheckedChange={() => handleToggleStatus(leader.lastMovement)}
+                                />
+                                <span className={`text-xs font-semibold ${leader.lastMovement.status === "recibido" ? "text-emerald-600" : "text-destructive"}`}>
+                                  {leader.lastMovement.status === "recibido" ? "Ingreso" : "Salida"}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground text-xs">—</span>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))}
