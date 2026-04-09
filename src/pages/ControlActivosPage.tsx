@@ -102,6 +102,7 @@ export default function ControlActivosPage() {
     setExitDatetime(r.exit_datetime ? r.exit_datetime.slice(0, 16) : "");
     setEntryDatetime(r.entry_datetime ? r.entry_datetime.slice(0, 16) : "");
     setReason(r.reason || "");
+    setStatus(r.status || "pendiente");
     setPhotoPreview(r.photo_url || null);
     setPhotoFile(null);
   };
