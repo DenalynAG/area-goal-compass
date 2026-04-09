@@ -69,6 +69,7 @@ export default function ControlActivosPage() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<any>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isEquipoMode, setIsEquipoMode] = useState(false);
 
   // Form
   const [areaId, setAreaId] = useState("");
