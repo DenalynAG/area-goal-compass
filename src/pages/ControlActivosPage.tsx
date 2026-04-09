@@ -430,6 +430,16 @@ export default function ControlActivosPage() {
                 <Label>Fecha y Hora Entrada</Label>
                 <Input type="datetime-local" value={entryDatetime} onChange={(e) => setEntryDatetime(e.target.value)} />
               </div>
+              <div className="space-y-2">
+                <Label>Estado *</Label>
+                <Select value={status} onValueChange={(v) => setStatus(v as "pendiente" | "recibido")}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pendiente">Pendiente</SelectItem>
+                    <SelectItem value="recibido">Recibido</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-2 md:col-span-2">
                 <Label>Motivo</Label>
                 <Textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Describir motivo de la entrada o salida del activo" rows={3} />
