@@ -223,26 +223,26 @@ export default function ControlAccesoPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Control de Acceso Interno</h1>
-          <p className="text-muted-foreground text-sm">Registro de ingreso y salida de visitantes</p>
-        </div>
-        <Button onClick={() => { resetForm(); setDialogOpen(true); }}>
-          <Plus className="h-4 w-4 mr-2" /> Nuevo Registro
-        </Button>
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Control de Acceso Interno</h1>
+        <p className="text-muted-foreground text-sm">Registro de ingreso y salida de visitantes</p>
       </div>
 
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
             <CardTitle className="text-lg">Registros de Acceso ({filtered.length})</CardTitle>
-            <Input
-              placeholder="Buscar visitante, empresa, documento..."
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              className="max-w-xs"
-            />
+            <div className="flex items-center gap-3">
+              <Input
+                placeholder="Buscar visitante, empresa, documento..."
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                className="max-w-xs"
+              />
+              <Button onClick={() => { resetForm(); setDialogOpen(true); }}>
+                <Plus className="h-4 w-4 mr-2" /> Nuevo Registro
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -256,10 +256,8 @@ export default function ControlAccesoPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Foto</TableHead>
                       <TableHead>Empresa</TableHead>
                       <TableHead>Visitante</TableHead>
-                      <TableHead>Documento</TableHead>
                       <TableHead>Ingreso</TableHead>
                       <TableHead>Salida Est.</TableHead>
                       <TableHead>Salida Real</TableHead>
@@ -273,20 +271,8 @@ export default function ControlAccesoPage() {
                   <TableBody>
                     {paginated.map((r: any) => (
                       <TableRow key={r.id}>
-                        <TableCell>
-                          {r.photo_url ? (
-                            <a href={r.photo_url} target="_blank" rel="noopener noreferrer">
-                              <img src={r.photo_url} alt="Visitante" className="w-10 h-10 rounded-md object-cover border hover:opacity-80 transition-opacity" />
-                            </a>
-                          ) : (
-                            <div className="w-10 h-10 rounded-md bg-muted flex items-center justify-center">
-                              <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                            </div>
-                          )}
-                        </TableCell>
                         <TableCell className="font-medium">{r.company_name}</TableCell>
                         <TableCell>{r.visitor_name}</TableCell>
-                        <TableCell>{r.document_id}</TableCell>
                         <TableCell className="whitespace-nowrap">
                           {r.entry_datetime ? format(new Date(r.entry_datetime), "dd/MM/yy HH:mm", { locale: es }) : "—"}
                         </TableCell>
