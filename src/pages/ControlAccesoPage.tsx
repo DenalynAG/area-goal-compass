@@ -65,7 +65,7 @@ export default function ControlAccesoPage() {
     setCompanyName(""); setVisitorName(""); setDocumentId("");
     setEntryDatetime(""); setEstimatedExit("");
     setAreaId(""); setSubareaId(""); setCompanionId("");
-    setZoneReq(""); setArl("");
+    setZoneReq(""); setArl(""); setBloque("");
     setPhotoFile(null); setPhotoPreview(null);
   };
 
