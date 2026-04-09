@@ -175,8 +175,8 @@ export default function ControlActivosPage() {
     }
 
     qc.invalidateQueries({ queryKey: ["asset_movements"] });
-    resetForm();
     setDialogOpen(false);
+    setTimeout(() => resetForm(), 150);
   };
 
   const handleDelete = async () => {
