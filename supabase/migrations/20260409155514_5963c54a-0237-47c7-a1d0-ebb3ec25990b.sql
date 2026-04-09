@@ -1,0 +1,1 @@
+ALTER TABLE public.asset_movements ADD COLUMN status text NOT NULL DEFAULT 'pendiente';
