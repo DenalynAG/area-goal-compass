@@ -34,7 +34,7 @@ function useAccessControl() {
 
 const PAGE_SIZE = 10;
 
-export default function ControlAccesoPage({ embedded = false }: { embedded?: boolean }) {
+export default function ControlAccesoPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { data: areas = [] } = useAreas();
@@ -224,12 +224,10 @@ export default function ControlAccesoPage({ embedded = false }: { embedded?: boo
 
   return (
     <div className="space-y-6">
-      {!embedded && (
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Control de Acceso Interno</h1>
-          <p className="text-muted-foreground text-sm">Registro de ingreso y salida de visitantes</p>
-        </div>
-      )}
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Control de Acceso Interno</h1>
+        <p className="text-muted-foreground text-sm">Registro de ingreso y salida de visitantes</p>
+      </div>
 
       <Card>
         <CardHeader>
