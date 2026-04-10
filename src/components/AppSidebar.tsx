@@ -123,15 +123,7 @@ const navItems: NavItem[] = [
       { to: "/operaciones/glowingdesk", label: "GlowingDesk", icon: Lamp },
       { to: "/operaciones/housekeeping", label: "Comfort & Housekeeping", icon: Sparkles },
       { to: "/operaciones/mantenimiento", label: "Mantenimiento", icon: Hammer },
-      {
-        to: "/operaciones/seguridad",
-        label: "Seguridad",
-        icon: Shield,
-        children: [
-          { to: "/operaciones/seguridad/control-acceso", label: "Control de Acceso", icon: DoorOpen },
-          { to: "/operaciones/seguridad/control-activos", label: "Control de Activos", icon: Package },
-        ],
-      },
+      { to: "/operaciones/seguridad", label: "Seguridad y Control", icon: Shield },
       { to: "/operaciones/objetivos", label: "Objetivos", icon: Target },
       { to: "/operaciones/leader-pass", label: "Leader Pass", icon: ClipboardList },
       { to: "/operaciones/calidad", label: "Calidad", icon: ShieldCheck },

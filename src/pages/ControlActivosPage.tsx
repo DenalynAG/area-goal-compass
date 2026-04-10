@@ -45,7 +45,7 @@ function useAssetMovements() {
 
 const PAGE_SIZE = 10;
 
-export default function ControlActivosPage() {
+export default function ControlActivosPage({ embedded = false }: { embedded?: boolean }) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { data: areas = [] } = useAreas();
@@ -269,10 +269,12 @@ export default function ControlActivosPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Control de Activos</h1>
-        <p className="text-muted-foreground text-sm">Registro de entrada y salida de activos</p>
-      </div>
+      {!embedded && (
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Control de Activos</h1>
+          <p className="text-muted-foreground text-sm">Registro de entrada y salida de activos</p>
+        </div>
+      )}
 
       <Card>
         <CardHeader className="pb-3">

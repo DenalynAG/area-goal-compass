@@ -21,8 +21,7 @@ import OrganigramaPage from "@/pages/OrganigramaPage";
 import LeaderPassPage from "@/pages/LeaderPassPage";
 import AuditoriasPage from "@/pages/AuditoriasPage";
 import AplicacionesPage from "@/pages/AplicacionesPage";
-import ControlAccesoPage from "@/pages/ControlAccesoPage";
-import ControlActivosPage from "@/pages/ControlActivosPage";
+import SeguridadControlPage from "@/pages/SeguridadControlPage";
 import ComfortMapPage from "@/pages/ComfortMapPage";
 import AreaObjetivosPage from "@/pages/AreaObjetivosPage";
 import AreaModulePage from "@/pages/AreaModulePage";
@@ -53,8 +52,7 @@ function ProtectedRoutes() {
         <Route path="/osh-people" element={<OshPeoplePage />} />
         <Route path="/organigrama" element={<OrganigramaPage />} />
         <Route path="/administracion" element={<AdministracionPage />} />
-        <Route path="/operaciones/seguridad/control-acceso" element={<ControlAccesoPage />} />
-        <Route path="/operaciones/seguridad/control-activos" element={<ControlActivosPage />} />
+        <Route path="/operaciones/seguridad" element={<SeguridadControlPage />} />
         <Route path="/operaciones/housekeeping/comfort-map" element={<ComfortMapPage />} />
         
         {/* Area-specific objectives */}
