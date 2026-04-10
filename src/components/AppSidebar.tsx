@@ -29,8 +29,6 @@ import {
   Sparkles,
   Hammer,
   Shield,
-  DoorOpen,
-  Package,
   Map,
   type LucideIcon,
 } from "lucide-react";
