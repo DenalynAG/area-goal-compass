@@ -526,6 +526,38 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
             <p className="text-sm text-muted-foreground">{otherAreas.length} departamentos · Haz clic para expandir o ver detalles</p>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => {
+              const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+              const headers = ['Objetivo', 'Estado', 'Prioridad', 'Área', 'Subárea', 'Responsable', 'Indicador', 'Meta', 'Valor Actual', 'Unidad', 'Línea Base', 'Umbral Verde', 'Umbral Amarillo', 'Umbral Rojo', 'Semáforo', ...months];
+              const rows: any[][] = [];
+              objectives.forEach(obj => {
+                const areaId = obj.scope_type === 'area' ? obj.scope_id : subareas.find(s => s.id === obj.scope_id)?.area_id ?? '';
+                const subareaName = obj.scope_type === 'subarea' ? (subareas.find(s => s.id === obj.scope_id)?.name ?? '') : '';
+                const areaName = getAreaNameFromList(areas, areaId);
+                const ownerName = getProfileName(profiles, obj.owner_user_id);
+                const objKpis = kpis.filter(k => k.objective_id === obj.id);
+                if (objKpis.length === 0) {
+                  rows.push([obj.title, obj.status, obj.priority, areaName, subareaName, ownerName, '', '', '', '', '', '', '', '', '', ...Array(12).fill('')]);
+                } else {
+                  objKpis.forEach(kpi => {
+                    const light = getTrafficLight(kpi as any);
+                    const currentYear = new Date().getFullYear();
+                    const monthValues = months.map((_, mi) => {
+                      const m = measurements.find(mm => mm.kpi_id === kpi.id && mm.period_date.startsWith(`${currentYear}-${String(mi + 1).padStart(2, '0')}`));
+                      return m ? m.value : '';
+                    });
+                    rows.push([obj.title, obj.status, obj.priority, areaName, subareaName, ownerName, kpi.name, kpi.target, kpi.current_value, kpi.unit ?? '', kpi.baseline, kpi.threshold_green, kpi.threshold_yellow, kpi.threshold_red, light, ...monthValues]);
+                  });
+                }
+              });
+              const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+              ws['!cols'] = headers.map(() => ({ wch: 16 }));
+              const wb = XLSX.utils.book_new();
+              XLSX.utils.book_append_sheet(wb, ws, 'Objetivos');
+              XLSX.writeFile(wb, `Objetivos_${new Date().getFullYear()}.xlsx`);
+            }}>
+              <Download className="w-4 h-4 mr-2" />Descargar Todo
+            </Button>
             <Button variant="ghost" size="sm" onClick={() => {
               const headers = ['Objetivo', 'Indicador', 'Meta', 'Responsable', 'Área', 'Subárea', 'Unidad', 'Línea Base', 'Umbral Verde', 'Umbral Amarillo', 'Umbral Rojo', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
               const example = ['Incrementar ventas', 'Ventas mensuales', '100', 'Juan Pérez', 'Comercial', '', 'unidades', '50', '90', '70', '50', '55', '60', '65', '70', '75', '80', '85', '88', '90', '92', '95', '100'];
