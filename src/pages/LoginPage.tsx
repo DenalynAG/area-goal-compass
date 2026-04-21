@@ -4,16 +4,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Lock, Mail, User } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Lock, Mail } from 'lucide-react';
 
 export default function LoginPage() {
-  const { login, signup } = useAuth();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
   const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const [forgotMessage, setForgotMessage] = useState('');
@@ -46,19 +43,6 @@ export default function LoginPage() {
     setIsLoading(false);
   };
 
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setMessage('');
-    setIsLoading(true);
-    const { error: err } = await signup(email, password, name);
-    if (err) {
-      setError(err);
-    } else {
-      setMessage('Revisa tu correo electrónico para confirmar tu cuenta.');
-    }
-    setIsLoading(false);
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-sidebar p-4">
@@ -71,18 +55,11 @@ export default function LoginPage() {
           />
           <h1 className="text-2xl font-display font-extrabold text-sidebar-foreground">EasyConnect</h1>
           <p className="text-sidebar-foreground/70 mt-1 text-sm">Plataforma de Gestión Estratégica Hotelera</p>
-          <p className="text-sidebar-foreground/50 mt-1 text-xs">Inicia sesión o regístrate</p>
+          <p className="text-sidebar-foreground/50 mt-1 text-xs">Inicia sesión con tu cuenta</p>
         </div>
 
         <div className="bg-card rounded-2xl shadow-2xl p-8">
-          <Tabs defaultValue="login" className="space-y-5">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Iniciar Sesión</TabsTrigger>
-              <TabsTrigger value="signup">Registrarse</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="login">
-              <form onSubmit={handleLogin} className="space-y-5">
+          <form onSubmit={handleLogin} className="space-y-5">
                 <div className="space-y-2">
                   <Label htmlFor="login-email">Correo electrónico</Label>
                   <div className="relative">
@@ -112,40 +89,7 @@ export default function LoginPage() {
                     ¿Olvidaste tu contraseña?
                   </button>
                 </div>
-              </form>
-            </TabsContent>
-
-            <TabsContent value="signup">
-              <form onSubmit={handleSignup} className="space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-name">Nombre completo</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input id="signup-name" type="text" value={name} onChange={e => setName(e.target.value)} className="pl-10" placeholder="Juan Pérez" required />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Correo electrónico</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input id="signup-email" type="email" value={email} onChange={e => setEmail(e.target.value)} className="pl-10" placeholder="correo@empresa.com" required />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Contraseña</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input id="signup-password" type="password" value={password} onChange={e => setPassword(e.target.value)} className="pl-10" placeholder="Mínimo 6 caracteres" required minLength={6} />
-                  </div>
-                </div>
-                {error && <p className="text-sm text-destructive">{error}</p>}
-                {message && <p className="text-sm text-accent-foreground bg-accent/20 p-2 rounded">{message}</p>}
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? 'Registrando...' : 'Crear Cuenta'}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+          </form>
         </div>
       </div>
     </div>
