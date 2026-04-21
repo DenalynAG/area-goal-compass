@@ -808,9 +808,11 @@ function ObjectiveCard({
                 {objKpis.length} indicadores
               </button>
             )}
-            <button onClick={() => onNewKPI(selectedMonth)} className="flex items-center gap-1 text-xs text-primary font-medium hover:underline">
-              <Plus className="w-3 h-3" /> Indicador
-            </button>
+            {canEdit && (
+              <button onClick={() => onNewKPI(selectedMonth)} className="flex items-center gap-1 text-xs text-primary font-medium hover:underline">
+                <Plus className="w-3 h-3" /> Indicador
+              </button>
+            )}
             <button onClick={() => setEvidenceOpen(true)} className="flex items-center gap-1 text-xs text-muted-foreground font-medium hover:underline hover:text-foreground">
               <Paperclip className="w-3 h-3" /> Evidencias
             </button>
