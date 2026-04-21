@@ -397,7 +397,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                     return (
                       <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
                         onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={(month) => openNewKPI(obj.id, month)} onEditKPI={(k, month) => openEditKPI(k, month)}
-                        profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} />
+                          profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} />
                     );
                   })}
                 </div>
@@ -446,7 +446,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                       return (
                         <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
                           onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={(month) => openNewKPI(obj.id, month)} onEditKPI={(k, month) => openEditKPI(k, month)}
-                          profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} />
+                          profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} />
                       );
                     })}
                     {subObjs.length === 0 && (
