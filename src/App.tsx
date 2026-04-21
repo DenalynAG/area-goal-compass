@@ -35,6 +35,7 @@ function ProtectedRoutes() {
   const { user, loading } = useAuth();
   if (loading) return <div className="min-h-screen flex items-center justify-center"><p>Cargando...</p></div>;
   if (!user) return <Navigate to="/login" replace />;
+  if (user.user_metadata?.must_change_password) return <Navigate to="/reset-password?force=1" replace />;
 
   return (
     <AppLayout>
