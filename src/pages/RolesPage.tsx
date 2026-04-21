@@ -18,6 +18,10 @@ const permMatrix: Record<string, Record<string, string[]>> = {
     Dashboard: ['Ver'], Estructura: ['Ver'], Colaboradores: ['Ver'],
     Objetivos: ['Ver', 'Crear', 'Editar'], Indicadores: ['Ver', 'Crear', 'Editar'], Reportes: ['Ver'], Evaluaciones: ['Ver', 'Crear', 'Editar'], Administración: [],
   },
+  gestor_area: {
+    Dashboard: ['Ver'], Estructura: ['Ver'], Colaboradores: ['Ver'],
+    Objetivos: ['Ver', 'Editar'], Indicadores: ['Ver', 'Editar'], Reportes: ['Ver'], Evaluaciones: ['Ver'], Administración: [],
+  },
   colaborador: {
     Dashboard: ['Ver'], Estructura: ['Ver'], Colaboradores: ['Ver'],
     Objetivos: ['Ver'], Indicadores: ['Ver', 'Editar'], Reportes: ['Ver'], Evaluaciones: ['Ver'], Administración: [],
@@ -29,6 +33,7 @@ const roleDescriptions: Record<string, string> = {
   super_admin: 'Acceso total a todas las áreas y módulos',
   admin_area: 'Gestión completa de su área asignada',
   lider_subarea: 'Gestión de su subárea y visibilidad del área',
+  gestor_area: 'Gestión operativa del área con permisos limitados (debajo de Líder de Subárea)',
   colaborador: 'Acceso a objetivos y KPIs asignados',
   solo_lectura: 'Visualización sin edición',
 };

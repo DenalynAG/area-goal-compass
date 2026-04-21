@@ -1518,6 +1518,7 @@ export type Database = {
         | "super_admin"
         | "admin_area"
         | "lider_subarea"
+        | "gestor_area"
         | "colaborador"
         | "solo_lectura"
       audit_plan_status:
@@ -1670,6 +1671,7 @@ export const Constants = {
         "super_admin",
         "admin_area",
         "lider_subarea",
+        "gestor_area",
         "colaborador",
         "solo_lectura",
       ],

@@ -1,4 +1,4 @@
-export type AppRole = 'super_admin' | 'admin_area' | 'lider_subarea' | 'colaborador' | 'solo_lectura';
+export type AppRole = 'super_admin' | 'admin_area' | 'lider_subarea' | 'gestor_area' | 'colaborador' | 'solo_lectura';
 
 export type ObjectiveStatus = 'borrador' | 'activo' | 'en_riesgo' | 'cerrado' | 'cumplido' | 'no_cumplido';
 export type Priority = 'alta' | 'media' | 'baja';
@@ -127,6 +127,7 @@ export function getRoleLabel(r: AppRole): string {
     super_admin: 'Super Admin',
     admin_area: 'Admin de Área',
     lider_subarea: 'Líder de Subárea',
+    gestor_area: 'Gestor de Área',
     colaborador: 'Colaborador',
     solo_lectura: 'Solo Lectura',
   };
