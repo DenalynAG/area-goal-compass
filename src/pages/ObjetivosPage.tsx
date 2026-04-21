@@ -27,6 +27,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   const { data: areas = [] } = useAreas();
   const { data: subareas = [] } = useSubareas();
   const { data: profiles = [] } = useProfiles();
+  const { isSuperAdmin } = useAuth();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const qc = useQueryClient();
