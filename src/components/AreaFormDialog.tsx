@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -78,12 +79,13 @@ export default function AreaFormDialog({ open, onOpenChange, area, profiles }: P
           </div>
           <div className="space-y-2">
             <Label>Líder</Label>
-            <Select value={leaderUserId} onValueChange={setLeaderUserId}>
-              <SelectTrigger><SelectValue placeholder="Seleccionar líder" /></SelectTrigger>
-              <SelectContent>
-                {profiles.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <SearchableSelect
+              value={leaderUserId}
+              onValueChange={setLeaderUserId}
+              options={profiles.map(p => ({ value: p.id, label: p.name }))}
+              placeholder="Seleccionar líder"
+              searchPlaceholder="Buscar líder..."
+            />
           </div>
           <div className="space-y-2">
             <Label>Estado</Label>
