@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useObjectives, useKPIs, useKPIMeasurements, useAreas, useSubareas, useProfiles, getProfileName, getAreaNameFromList } from '@/hooks/useSupabaseData';
 import { getTrafficLight } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
 import { StatusBadge, ProgressBar, TrafficLightBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Plus, Target, ChevronRight, ChevronDown, Edit, TrendingUp, Settings, ArrowLeft, BarChart3, Paperclip, Calendar, Upload, Download, Layers, User } from 'lucide-react';
