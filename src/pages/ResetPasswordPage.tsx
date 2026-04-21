@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Lock, CheckCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState('');
@@ -14,6 +15,9 @@ export default function ResetPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isRecovery, setIsRecovery] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { user, logout } = useAuth();
+  const isForced = searchParams.get('force') === '1' && !!user?.user_metadata?.must_change_password;
 
   useEffect(() => {
     // Listen for the PASSWORD_RECOVERY event
@@ -46,17 +50,27 @@ export default function ResetPasswordPage() {
     }
 
     setIsLoading(true);
-    const { error: err } = await supabase.auth.updateUser({ password });
+    const { error: err } = await supabase.auth.updateUser({
+      password,
+      data: { must_change_password: false },
+    });
     if (err) {
       setError(err.message);
     } else {
       setSuccess(true);
-      setTimeout(() => navigate('/login'), 3000);
+      setTimeout(() => {
+        if (isForced) {
+          navigate('/', { replace: true });
+          window.location.reload();
+        } else {
+          navigate('/login');
+        }
+      }, 2000);
     }
     setIsLoading(false);
   };
 
-  if (!isRecovery) {
+  if (!isRecovery && !isForced) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-sidebar p-4">
         <div className="w-full max-w-md text-center">
@@ -76,8 +90,12 @@ export default function ResetPasswordPage() {
             alt="OSHOME logo"
             className="w-20 h-20 rounded-2xl object-contain mx-auto mb-4"
           />
-          <h1 className="text-2xl font-display font-extrabold text-sidebar-foreground">Nueva Contraseña</h1>
-          <p className="text-sidebar-foreground/70 mt-1 text-sm">Ingresa tu nueva contraseña</p>
+          <h1 className="text-2xl font-display font-extrabold text-sidebar-foreground">
+            {isForced ? 'Cambia tu contraseña' : 'Nueva Contraseña'}
+          </h1>
+          <p className="text-sidebar-foreground/70 mt-1 text-sm">
+            {isForced ? 'Por seguridad, define una nueva contraseña antes de continuar.' : 'Ingresa tu nueva contraseña'}
+          </p>
         </div>
 
         <div className="bg-card rounded-2xl shadow-2xl p-8">
@@ -107,6 +125,15 @@ export default function ResetPasswordPage() {
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? 'Actualizando...' : 'Actualizar Contraseña'}
               </Button>
+              {isForced && (
+                <button
+                  type="button"
+                  onClick={async () => { await logout(); navigate('/login'); }}
+                  className="w-full text-sm text-muted-foreground hover:underline"
+                >
+                  Cancelar y cerrar sesión
+                </button>
+              )}
             </form>
           )}
         </div>
