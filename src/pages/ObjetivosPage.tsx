@@ -522,6 +522,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                   measurements={measurements}
                   showAreaTags
                   otherAreas={otherAreas}
+                  canEdit={isSuperAdmin}
                 />
               );
             })}
