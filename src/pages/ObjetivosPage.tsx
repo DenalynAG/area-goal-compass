@@ -720,15 +720,25 @@ function ObjectiveCard({
     return `${monthLabels[month] ?? month} ${year}`;
   };
 
-  // Get KPI accumulated average up to current month in current year
+  // Financial KPIs (by unit) accumulate as SUM, others as AVERAGE
+  const isFinancialKpi = (k: { unit?: string | null }) => {
+    const u = (k.unit ?? '').toString().trim().toLowerCase();
+    if (!u) return false;
+    return /\$|cop|usd|eur|mxn|pesos?|d[oó]lares?|facturaci[oó]n|ingreso|venta|ventas|costo|gasto/.test(u);
+  };
+
+  // Get KPI accumulated value up to current month in current year (sum for financial, average otherwise)
   const getKpiAccumulatedAverage = (kpiId: string) => {
+    const kpi = objKpis.find(k => k.id === kpiId);
     const kpiMeasurements = relevantMeasurements.filter(m => {
       if (m.kpi_id !== kpiId) return false;
       const measurementDate = new Date(m.period_date);
       return measurementDate.getFullYear() === currentYear && (measurementDate.getMonth() + 1) <= elapsedMonths;
     });
     if (kpiMeasurements.length === 0) return null;
-    return Math.round((kpiMeasurements.reduce((sum, m) => sum + m.value, 0) / elapsedMonths) * 100) / 100;
+    const sumValue = kpiMeasurements.reduce((sum, m) => sum + Number(m.value), 0);
+    const accumulated = kpi && isFinancialKpi(kpi) ? sumValue : sumValue / elapsedMonths;
+    return Math.round(accumulated * 100) / 100;
   };
 
   // Get KPI value for a given month (or accumulated average up to date for 'total')
