@@ -837,9 +837,11 @@ function ObjectiveCard({
           <span className="text-lg font-bold -mt-11">{computedProgress}%</span>
         </div>
 
-        <Button variant="ghost" size="icon" className="shrink-0" onClick={onEdit}>
-          <Edit className="w-4 h-4" />
-        </Button>
+        {canEdit && (
+          <Button variant="ghost" size="icon" className="shrink-0" onClick={onEdit}>
+            <Edit className="w-4 h-4" />
+          </Button>
+        )}
       </div>
 
       {isOpen && objKpis.length > 0 && (
