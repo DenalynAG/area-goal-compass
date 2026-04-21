@@ -335,7 +335,9 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
               {areaObjs.length} objetivos · {areaKpisList.length} indicadores
             </p>
           </div>
-          <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" />Nuevo Objetivo</Button>
+          {isSuperAdmin && (
+            <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" />Nuevo Objetivo</Button>
+          )}
         </div>
 
         {/* Area header */}
