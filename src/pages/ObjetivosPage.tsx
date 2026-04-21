@@ -584,9 +584,11 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
               <Download className="w-4 h-4 mr-2" />Plantilla
             </Button>
             <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleImportExcel} />
-            <Button variant="outline" size="sm" disabled={importing} onClick={() => fileInputRef.current?.click()}>
-              <Upload className="w-4 h-4 mr-2" />{importing ? 'Importando...' : 'Importar Excel'}
-            </Button>
+            {isSuperAdmin && (
+              <Button variant="outline" size="sm" disabled={importing} onClick={() => fileInputRef.current?.click()}>
+                <Upload className="w-4 h-4 mr-2" />{importing ? 'Importando...' : 'Importar Excel'}
+              </Button>
+            )}
           </div>
         </div>
 
