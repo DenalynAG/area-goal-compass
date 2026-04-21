@@ -493,9 +493,11 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
             <span>{globalKpis.length} indicadores</span>
             <StatusBadge status="activo" />
           </div>
-          <Button size="sm" variant="outline" className="ml-2" onClick={(e) => { e.stopPropagation(); openNew(); }}>
-            <Plus className="w-4 h-4 mr-1" />Nuevo
-          </Button>
+          {isSuperAdmin && (
+            <Button size="sm" variant="outline" className="ml-2" onClick={(e) => { e.stopPropagation(); openNew(); }}>
+              <Plus className="w-4 h-4 mr-1" />Nuevo
+            </Button>
+          )}
         </button>
 
         {globalExpanded && (
