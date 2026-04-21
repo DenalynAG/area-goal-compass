@@ -672,7 +672,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
 
 // Reusable objective card with circular progress
 function ObjectiveCard({
-  obj, index, objKpis, isOpen, onToggle, onEdit, onNewKPI, onEditKPI, profiles, areas, subareas, measurements, showAreaTags, otherAreas,
+  obj, index, objKpis, isOpen, onToggle, onEdit, onNewKPI, onEditKPI, profiles, areas, subareas, measurements, showAreaTags, otherAreas, canEdit = false,
 }: {
   obj: Tables<'objectives'>;
   index: number;
@@ -688,6 +688,7 @@ function ObjectiveCard({
   measurements?: Tables<'kpi_measurements'>[];
   showAreaTags?: boolean;
   otherAreas?: Tables<'areas'>[];
+  canEdit?: boolean;
 }) {
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [kpiEvidenceId, setKpiEvidenceId] = useState<string | null>(null);
