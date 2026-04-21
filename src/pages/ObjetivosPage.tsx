@@ -632,27 +632,113 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
 
                 {isAreaExpanded && (
                   <div className="border-t px-5 py-4 space-y-3">
-                    {areaObjs.map((obj, idx) => {
-                      const objKpis = kpis.filter(k => k.objective_id === obj.id);
-                      const isOpen = expandedObj[obj.id];
+                    {/* Direct area objectives (not tied to a subarea) */}
+                    {(() => {
+                      const directObjs = objectives.filter(o => o.scope_type === 'area' && o.scope_id === area.id);
+                      if (directObjs.length === 0) return null;
                       return (
-                        <ObjectiveCard
-                          key={obj.id}
-                          obj={obj}
-                          index={idx + 1}
-                          objKpis={objKpis}
-                          isOpen={isOpen}
-                          onToggle={() => toggleObj(obj.id)}
-                          onEdit={() => openEdit(obj)}
-                          onNewKPI={(month) => openNewKPI(obj.id, month)}
-                          onEditKPI={(k, month) => openEditKPI(k, month)}
-                          profiles={profiles}
-                          areas={areas}
-                          subareas={subareas}
-                          measurements={measurements}
-                        />
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                            <Target className="w-3.5 h-3.5" />
+                            Objetivos del Área
+                          </div>
+                          {directObjs.map((obj, idx) => {
+                            const objKpis = kpis.filter(k => k.objective_id === obj.id);
+                            const isOpen = expandedObj[obj.id];
+                            return (
+                              <ObjectiveCard
+                                key={obj.id}
+                                obj={obj}
+                                index={idx + 1}
+                                objKpis={objKpis}
+                                isOpen={isOpen}
+                                onToggle={() => toggleObj(obj.id)}
+                                onEdit={() => openEdit(obj)}
+                                onNewKPI={(month) => openNewKPI(obj.id, month)}
+                                onEditKPI={(k, month) => openEditKPI(k, month)}
+                                profiles={profiles}
+                                areas={areas}
+                                subareas={subareas}
+                                measurements={measurements}
+                                canEdit={isSuperAdmin}
+                              />
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
+
+                    {/* Cascade: Subareas → Objectives → KPIs */}
+                    {areaSubareas.map(sub => {
+                      const subObjs = objectives.filter(o => o.scope_type === 'subarea' && o.scope_id === sub.id);
+                      const subProgress = subObjs.length > 0
+                        ? Math.round(subObjs.reduce((s, o) => s + getObjProgress(o), 0) / subObjs.length)
+                        : 0;
+                      const subKey = `inline-sub-${sub.id}`;
+                      const isSubExpanded = expandedAreas[subKey];
+                      const subKpiCount = subObjs.reduce((acc, o) => acc + kpis.filter(k => k.objective_id === o.id).length, 0);
+
+                      return (
+                        <div key={sub.id} className="bg-muted/20 rounded-lg border overflow-hidden">
+                          <button
+                            onClick={() => toggleArea(subKey)}
+                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/40 transition-colors text-left"
+                          >
+                            {isSubExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+                            <Layers className="w-4 h-4 text-muted-foreground" />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-semibold text-sm">{sub.name}</span>
+                                <StatusBadge status={sub.status} />
+                                <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
+                                  <Target className="w-3 h-3" />{subObjs.length}
+                                </span>
+                                <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
+                                  <BarChart3 className="w-3 h-3" />{subKpiCount}
+                                </span>
+                              </div>
+                              {sub.leader_user_id && (
+                                <p className="text-xs text-muted-foreground mt-0.5">— Líder: {getProfileName(profiles, sub.leader_user_id)}</p>
+                              )}
+                            </div>
+                            <div className="shrink-0 flex items-center gap-2">
+                              <ProgressBar value={subProgress} className="w-20" />
+                              <span className="text-xs font-semibold text-muted-foreground">{subProgress}%</span>
+                            </div>
+                          </button>
+                          {isSubExpanded && (
+                            <div className="border-t bg-card px-4 py-3 space-y-3">
+                              {subObjs.map((obj, idx) => {
+                                const objKpis = kpis.filter(k => k.objective_id === obj.id);
+                                const isOpen = expandedObj[obj.id];
+                                return (
+                                  <ObjectiveCard
+                                    key={obj.id}
+                                    obj={obj}
+                                    index={idx + 1}
+                                    objKpis={objKpis}
+                                    isOpen={isOpen}
+                                    onToggle={() => toggleObj(obj.id)}
+                                    onEdit={() => openEdit(obj)}
+                                    onNewKPI={(month) => openNewKPI(obj.id, month)}
+                                    onEditKPI={(k, month) => openEditKPI(k, month)}
+                                    profiles={profiles}
+                                    areas={areas}
+                                    subareas={subareas}
+                                    measurements={measurements}
+                                    canEdit={isSuperAdmin}
+                                  />
+                                );
+                              })}
+                              {subObjs.length === 0 && (
+                                <div className="text-center py-6 text-xs text-muted-foreground">Sin objetivos en esta subárea</div>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       );
                     })}
+
                     {areaObjs.length === 0 && (
                       <div className="text-center py-8 text-muted-foreground bg-muted/30 rounded-lg">No hay objetivos registrados para esta área</div>
                     )}
