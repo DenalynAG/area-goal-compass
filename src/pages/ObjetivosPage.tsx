@@ -322,13 +322,27 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
 
     return (
       <div className="animate-fade-in space-y-4">
+        {/* Breadcrumb + Back */}
+        {!isAreaLocked && (
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <button
+                onClick={() => setSelectedAreaId(null)}
+                className="hover:text-foreground transition-colors hover:underline"
+              >
+                Objetivos
+              </button>
+              <ChevronRight className="w-3.5 h-3.5" />
+              <span className="text-foreground font-medium">{selectedArea.name}</span>
+            </nav>
+            <Button variant="outline" size="sm" onClick={() => setSelectedAreaId(null)}>
+              <ArrowLeft className="w-4 h-4 mr-2" />Volver a la vista anterior
+            </Button>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-center gap-3">
-          {!isAreaLocked && (
-            <Button variant="ghost" size="icon" onClick={() => setSelectedAreaId(null)}>
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-          )}
           <div className="flex-1">
             <h1 className="page-title">Objetivos — {selectedArea.name}</h1>
             <p className="page-subtitle">

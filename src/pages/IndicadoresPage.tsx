@@ -1,8 +1,9 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useKPIs, useObjectives, useKPIMeasurements, useAreas, useSubareas } from '@/hooks/useSupabaseData';
 import { getTrafficLight } from '@/types';
 import { TrafficLightBadge, ProgressBar } from '@/components/StatusBadge';
-import { BarChart3, Plus, Edit } from 'lucide-react';
+import { BarChart3, Plus, Edit, ArrowLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import type { Tables } from '@/integrations/supabase/types';
@@ -16,6 +17,7 @@ export default function IndicadoresPage() {
   const { data: areas = [] } = useAreas();
   const { data: subareas = [] } = useSubareas();
   const { isSuperAdmin } = useAuth();
+  const navigate = useNavigate();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingKPI, setEditingKPI] = useState<Tables<'kpis'> | null>(null);
@@ -27,6 +29,22 @@ export default function IndicadoresPage() {
 
   return (
     <div className="animate-fade-in space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <button
+            onClick={() => navigate('/')}
+            className="hover:text-foreground transition-colors hover:underline"
+          >
+            Dashboard
+          </button>
+          <ChevronRight className="w-3.5 h-3.5" />
+          <span className="text-foreground font-medium">Indicadores</span>
+        </nav>
+        <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+          <ArrowLeft className="w-4 h-4 mr-2" />Volver a la vista anterior
+        </Button>
+      </div>
+
       <div className="flex items-center justify-between page-header flex-wrap gap-3">
         <div>
           <h1 className="page-title">Indicadores (KPIs)</h1>
