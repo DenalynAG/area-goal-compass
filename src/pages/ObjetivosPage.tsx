@@ -251,6 +251,13 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
 
   const elapsedMonths = new Date().getMonth() + 1;
 
+  // Financial KPIs (by unit) use SUM accumulated instead of average
+  const isFinancialKpi = (k: { unit?: string | null }) => {
+    const u = (k.unit ?? '').toString().trim().toLowerCase();
+    if (!u) return false;
+    return /\$|cop|usd|eur|mxn|pesos?|d[oó]lares?|facturaci[oó]n|ingreso|venta|ventas|costo|gasto/.test(u);
+  };
+
   const getObjProgress = (obj: Tables<'objectives'>) => {
     const objKpis = kpis.filter(k => k.objective_id === obj.id);
     if (objKpis.length === 0) return obj.progress_percent;
@@ -265,8 +272,9 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
 
       if (kpiMeasurements.length === 0) return null;
 
-      const accumulatedAverage = kpiMeasurements.reduce((sum, m) => sum + Number(m.value), 0) / elapsedMonths;
-      return k.target > 0 ? (accumulatedAverage / k.target) * 100 : 0;
+      const sumValue = kpiMeasurements.reduce((sum, m) => sum + Number(m.value), 0);
+      const accumulated = isFinancialKpi(k) ? sumValue : sumValue / elapsedMonths;
+      return k.target > 0 ? (accumulated / k.target) * 100 : 0;
     }).filter((v): v is number => v !== null);
 
     if (values.length === 0) return 0;
