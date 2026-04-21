@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useObjectives, useKPIs, useKPIMeasurements, useAreas, useSubareas, useProfiles, getProfileName, getAreaNameFromList } from '@/hooks/useSupabaseData';
 import { getTrafficLight } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
 import { StatusBadge, ProgressBar, TrafficLightBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Plus, Target, ChevronRight, ChevronDown, Edit, TrendingUp, Settings, ArrowLeft, BarChart3, Paperclip, Calendar, Upload, Download, Layers, User } from 'lucide-react';
@@ -26,6 +27,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   const { data: areas = [] } = useAreas();
   const { data: subareas = [] } = useSubareas();
   const { data: profiles = [] } = useProfiles();
+  const { isSuperAdmin } = useAuth();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const qc = useQueryClient();
@@ -249,6 +251,13 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
 
   const elapsedMonths = new Date().getMonth() + 1;
 
+  // Financial KPIs (by unit) use SUM accumulated instead of average
+  const isFinancialKpi = (k: { unit?: string | null }) => {
+    const u = (k.unit ?? '').toString().trim().toLowerCase();
+    if (!u) return false;
+    return /\$|cop|usd|eur|mxn|pesos?|d[oó]lares?|facturaci[oó]n|ingreso|venta|ventas|costo|gasto/.test(u);
+  };
+
   const getObjProgress = (obj: Tables<'objectives'>) => {
     const objKpis = kpis.filter(k => k.objective_id === obj.id);
     if (objKpis.length === 0) return obj.progress_percent;
@@ -263,8 +272,9 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
 
       if (kpiMeasurements.length === 0) return null;
 
-      const accumulatedAverage = kpiMeasurements.reduce((sum, m) => sum + Number(m.value), 0) / elapsedMonths;
-      return k.target > 0 ? (accumulatedAverage / k.target) * 100 : 0;
+      const sumValue = kpiMeasurements.reduce((sum, m) => sum + Number(m.value), 0);
+      const accumulated = isFinancialKpi(k) ? sumValue : sumValue / elapsedMonths;
+      return k.target > 0 ? (accumulated / k.target) * 100 : 0;
     }).filter((v): v is number => v !== null);
 
     if (values.length === 0) return 0;
@@ -325,7 +335,9 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
               {areaObjs.length} objetivos · {areaKpisList.length} indicadores
             </p>
           </div>
-          <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" />Nuevo Objetivo</Button>
+          {isSuperAdmin && (
+            <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" />Nuevo Objetivo</Button>
+          )}
         </div>
 
         {/* Area header */}
@@ -385,7 +397,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                     return (
                       <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
                         onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={(month) => openNewKPI(obj.id, month)} onEditKPI={(k, month) => openEditKPI(k, month)}
-                        profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} />
+                          profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} />
                     );
                   })}
                 </div>
@@ -434,7 +446,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                       return (
                         <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
                           onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={(month) => openNewKPI(obj.id, month)} onEditKPI={(k, month) => openEditKPI(k, month)}
-                          profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} />
+                          profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} />
                       );
                     })}
                     {subObjs.length === 0 && (
@@ -481,9 +493,11 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
             <span>{globalKpis.length} indicadores</span>
             <StatusBadge status="activo" />
           </div>
-          <Button size="sm" variant="outline" className="ml-2" onClick={(e) => { e.stopPropagation(); openNew(); }}>
-            <Plus className="w-4 h-4 mr-1" />Nuevo
-          </Button>
+          {isSuperAdmin && (
+            <Button size="sm" variant="outline" className="ml-2" onClick={(e) => { e.stopPropagation(); openNew(); }}>
+              <Plus className="w-4 h-4 mr-1" />Nuevo
+            </Button>
+          )}
         </button>
 
         {globalExpanded && (
@@ -508,6 +522,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                   measurements={measurements}
                   showAreaTags
                   otherAreas={otherAreas}
+                  canEdit={isSuperAdmin}
                 />
               );
             })}
@@ -570,9 +585,11 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
               <Download className="w-4 h-4 mr-2" />Plantilla
             </Button>
             <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleImportExcel} />
-            <Button variant="outline" size="sm" disabled={importing} onClick={() => fileInputRef.current?.click()}>
-              <Upload className="w-4 h-4 mr-2" />{importing ? 'Importando...' : 'Importar Excel'}
-            </Button>
+            {isSuperAdmin && (
+              <Button variant="outline" size="sm" disabled={importing} onClick={() => fileInputRef.current?.click()}>
+                <Upload className="w-4 h-4 mr-2" />{importing ? 'Importando...' : 'Importar Excel'}
+              </Button>
+            )}
           </div>
         </div>
 
@@ -655,7 +672,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
 
 // Reusable objective card with circular progress
 function ObjectiveCard({
-  obj, index, objKpis, isOpen, onToggle, onEdit, onNewKPI, onEditKPI, profiles, areas, subareas, measurements, showAreaTags, otherAreas,
+  obj, index, objKpis, isOpen, onToggle, onEdit, onNewKPI, onEditKPI, profiles, areas, subareas, measurements, showAreaTags, otherAreas, canEdit = false,
 }: {
   obj: Tables<'objectives'>;
   index: number;
@@ -671,6 +688,7 @@ function ObjectiveCard({
   measurements?: Tables<'kpi_measurements'>[];
   showAreaTags?: boolean;
   otherAreas?: Tables<'areas'>[];
+  canEdit?: boolean;
 }) {
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [kpiEvidenceId, setKpiEvidenceId] = useState<string | null>(null);
@@ -702,15 +720,25 @@ function ObjectiveCard({
     return `${monthLabels[month] ?? month} ${year}`;
   };
 
-  // Get KPI accumulated average up to current month in current year
+  // Financial KPIs (by unit) accumulate as SUM, others as AVERAGE
+  const isFinancialKpi = (k: { unit?: string | null }) => {
+    const u = (k.unit ?? '').toString().trim().toLowerCase();
+    if (!u) return false;
+    return /\$|cop|usd|eur|mxn|pesos?|d[oó]lares?|facturaci[oó]n|ingreso|venta|ventas|costo|gasto/.test(u);
+  };
+
+  // Get KPI accumulated value up to current month in current year (sum for financial, average otherwise)
   const getKpiAccumulatedAverage = (kpiId: string) => {
+    const kpi = objKpis.find(k => k.id === kpiId);
     const kpiMeasurements = relevantMeasurements.filter(m => {
       if (m.kpi_id !== kpiId) return false;
       const measurementDate = new Date(m.period_date);
       return measurementDate.getFullYear() === currentYear && (measurementDate.getMonth() + 1) <= elapsedMonths;
     });
     if (kpiMeasurements.length === 0) return null;
-    return Math.round((kpiMeasurements.reduce((sum, m) => sum + m.value, 0) / elapsedMonths) * 100) / 100;
+    const sumValue = kpiMeasurements.reduce((sum, m) => sum + Number(m.value), 0);
+    const accumulated = kpi && isFinancialKpi(kpi) ? sumValue : sumValue / elapsedMonths;
+    return Math.round(accumulated * 100) / 100;
   };
 
   // Get KPI value for a given month (or accumulated average up to date for 'total')
@@ -780,9 +808,11 @@ function ObjectiveCard({
                 {objKpis.length} indicadores
               </button>
             )}
-            <button onClick={() => onNewKPI(selectedMonth)} className="flex items-center gap-1 text-xs text-primary font-medium hover:underline">
-              <Plus className="w-3 h-3" /> Indicador
-            </button>
+            {canEdit && (
+              <button onClick={() => onNewKPI(selectedMonth)} className="flex items-center gap-1 text-xs text-primary font-medium hover:underline">
+                <Plus className="w-3 h-3" /> Indicador
+              </button>
+            )}
             <button onClick={() => setEvidenceOpen(true)} className="flex items-center gap-1 text-xs text-muted-foreground font-medium hover:underline hover:text-foreground">
               <Paperclip className="w-3 h-3" /> Evidencias
             </button>
@@ -807,9 +837,11 @@ function ObjectiveCard({
           <span className="text-lg font-bold -mt-11">{computedProgress}%</span>
         </div>
 
-        <Button variant="ghost" size="icon" className="shrink-0" onClick={onEdit}>
-          <Edit className="w-4 h-4" />
-        </Button>
+        {canEdit && (
+          <Button variant="ghost" size="icon" className="shrink-0" onClick={onEdit}>
+            <Edit className="w-4 h-4" />
+          </Button>
+        )}
       </div>
 
       {isOpen && objKpis.length > 0 && (
@@ -883,9 +915,11 @@ function ObjectiveCard({
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setKpiEvidenceId(k.id); setKpiEvidenceName(k.name); }}>
                           <Paperclip className="w-3 h-3" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEditKPI(k, selectedMonth)}>
-                          <Edit className="w-3 h-3" />
-                        </Button>
+                        {canEdit && (
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEditKPI(k, selectedMonth)}>
+                            <Edit className="w-3 h-3" />
+                          </Button>
+                        )}
                       </div>
                     </td>
                   </tr>
