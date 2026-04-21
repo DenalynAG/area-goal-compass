@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import type { Tables } from '@/integrations/supabase/types';
 import KPIFormDialog from '@/components/KPIFormDialog';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function IndicadoresPage() {
   const { data: kpis = [], isLoading } = useKPIs();
@@ -14,6 +15,7 @@ export default function IndicadoresPage() {
   const { data: measurements = [] } = useKPIMeasurements();
   const { data: areas = [] } = useAreas();
   const { data: subareas = [] } = useSubareas();
+  const { isSuperAdmin } = useAuth();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingKPI, setEditingKPI] = useState<Tables<'kpis'> | null>(null);
@@ -30,7 +32,9 @@ export default function IndicadoresPage() {
           <h1 className="page-title">Indicadores (KPIs)</h1>
           <p className="page-subtitle">{kpis.length} indicadores definidos</p>
         </div>
-        <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" />Nuevo Indicador</Button>
+        {isSuperAdmin && (
+          <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" />Nuevo Indicador</Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -54,9 +58,11 @@ export default function IndicadoresPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <TrafficLightBadge light={light} />
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(kpi)}>
-                      <Edit className="w-4 h-4" />
-                    </Button>
+                    {isSuperAdmin && (
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(kpi)}>
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>

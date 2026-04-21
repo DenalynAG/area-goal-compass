@@ -915,9 +915,11 @@ function ObjectiveCard({
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setKpiEvidenceId(k.id); setKpiEvidenceName(k.name); }}>
                           <Paperclip className="w-3 h-3" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEditKPI(k, selectedMonth)}>
-                          <Edit className="w-3 h-3" />
-                        </Button>
+                        {canEdit && (
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEditKPI(k, selectedMonth)}>
+                            <Edit className="w-3 h-3" />
+                          </Button>
+                        )}
                       </div>
                     </td>
                   </tr>
