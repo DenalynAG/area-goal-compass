@@ -276,6 +276,15 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
             }
           }
 
+          // Estado: Activo / Inactivo
+          const estadoVal = getRowValue(row, ['Estado']);
+          if (estadoVal != null) {
+            const s = estadoVal.toString().trim().toLowerCase();
+            if (s) {
+              profileUpdate.is_active = !(s.startsWith('inact') || s === 'no' || s === '0' || s === 'false');
+            }
+          }
+
           for (const tf of ['position', 'lugar_nacimiento', 'jefe_inmediato', 'municipio', 'direccion', 'entidad_salud', 'fondo_pensiones', 'fondo_cesantias', 'arl']) {
             if (profileUpdate[tf] && typeof profileUpdate[tf] === 'string') {
               profileUpdate[tf] = toTitleCase(profileUpdate[tf]);
