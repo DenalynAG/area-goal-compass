@@ -276,6 +276,15 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
             }
           }
 
+          // Estado: Activo / Inactivo
+          const estadoVal = getRowValue(row, ['Estado']);
+          if (estadoVal != null) {
+            const s = estadoVal.toString().trim().toLowerCase();
+            if (s) {
+              profileUpdate.is_active = !(s.startsWith('inact') || s === 'no' || s === '0' || s === 'false');
+            }
+          }
+
           for (const tf of ['position', 'lugar_nacimiento', 'jefe_inmediato', 'municipio', 'direccion', 'entidad_salud', 'fondo_pensiones', 'fondo_cesantias', 'arl']) {
             if (profileUpdate[tf] && typeof profileUpdate[tf] === 'string') {
               profileUpdate[tf] = toTitleCase(profileUpdate[tf]);
@@ -427,6 +436,28 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const handleDownloadTemplate = () => {
+    const headers = [
+      'Nombre Completo', 'Cedula', 'Correo', 'Correo Personal', 'Genero',
+      'Fecha De Nacimiento', 'Lugar Nacimiento', 'RH', 'Estado Civil',
+      'Nivel Educativo', 'Fecha Ingreso', 'T. Contrato', 'Cargo', 'Área',
+      'Subárea', 'Jefe Inmediato', 'Arl', 'Salud', 'Pensión', 'Cesantías',
+      'Teléfono', 'Dirección', 'Municipio', 'Rol', 'Estado',
+    ];
+    const example = [
+      'Juan Pérez García', '1234567890', 'juan@empresa.com', 'juan@gmail.com',
+      'Masculino', '1990-05-15', 'Cartagena', 'O+', 'Soltero', 'Profesional',
+      '2023-01-10', 'Indefinido', 'Analista', 'Tecnología', '', 'Maria Gomez',
+      'SURA', 'Sura EPS', 'Porvenir', 'Protección', '3001234567',
+      'Cra 1 # 2-3', 'Cartagena', 'Colaborador', 'Activo',
+    ];
+    const ws = XLSX.utils.aoa_to_sheet([headers, example]);
+    ws['!cols'] = headers.map(h => ({ wch: Math.max(14, h.length + 2) }));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Colaboradores');
+    XLSX.writeFile(wb, 'plantilla_colaboradores.xlsx');
+  };
+
   // Filter profiles by area if areaFilterName is provided
   const areaFilteredProfiles = useMemo(() => {
     if (!areaFilterName) return profiles;
@@ -461,6 +492,10 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
         </div>
         <div className="flex gap-2">
           <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleImportExcel} />
+          <Button variant="outline" onClick={handleDownloadTemplate}>
+            <Download className="w-4 h-4 mr-2" />
+            Descargar Plantilla
+          </Button>
           <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={importing}>
             <Upload className="w-4 h-4 mr-2" />
             {importing ? 'Importando...' : 'Importar Excel'}
@@ -489,6 +524,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
                 <th className="text-left px-5 py-3 font-medium text-muted-foreground">Área</th>
                 <th className="text-left px-5 py-3 font-medium text-muted-foreground">Subárea</th>
                 <th className="text-left px-5 py-3 font-medium text-muted-foreground">Rol</th>
+                <th className="text-left px-5 py-3 font-medium text-muted-foreground">Estado</th>
                 <th className="px-3 py-3"></th>
               </tr>
             </thead>
@@ -520,6 +556,13 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
                         </span>
                       ) : <span className="text-muted-foreground text-xs">Sin rol</span>}
                     </td>
+                    <td className="px-5 py-3">
+                      {(c as any).is_active === false ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-destructive/10 text-destructive">Inactivo</span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-500/10 text-emerald-600">Activo</span>
+                      )}
+                    </td>
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-1">
                         <Button variant="ghost" size="icon" onClick={() => setDetailProfile(c)} title="Ver detalle"><Eye className="w-4 h-4" /></Button>
@@ -535,7 +578,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
                 );
               })}
               {paginatedFiltered.length === 0 && (
-                <tr><td colSpan={6} className="px-5 py-8 text-center text-muted-foreground">No se encontraron colaboradores</td></tr>
+                <tr><td colSpan={7} className="px-5 py-8 text-center text-muted-foreground">No se encontraron colaboradores</td></tr>
               )}
             </tbody>
           </table>
@@ -568,7 +611,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
 
       <div className="bg-muted/30 rounded-lg px-4 py-3">
         <p className="text-xs text-muted-foreground">
-          📋 Para importar, usa un archivo Excel con columnas: <strong>Nombre Completo</strong> (obligatorio), y opcionalmente: <strong>Cedula</strong>, <strong>Correo</strong>, <strong>Correo Personal</strong>, <strong>Genero</strong>, <strong>Fecha De Nacimiento</strong>, <strong>Lugar Nacimiento</strong>, <strong>RH</strong>, <strong>Estado Civil</strong>, <strong>Nivel Educativo</strong>, <strong>Fecha Ingreso</strong>, <strong>T. Contrato</strong>, <strong>Cargo</strong>, <strong>Área</strong>, <strong>Subárea</strong>, <strong>Jefe Inmediato</strong>, <strong>Arl</strong>, <strong>Salud</strong>, <strong>Pensión</strong>, <strong>Cesantías</strong>, <strong>Teléfono</strong>, <strong>Dirección</strong>, <strong>Municipio</strong>, <strong>Rol</strong>.
+          📋 Para importar, usa un archivo Excel con columnas: <strong>Nombre Completo</strong> (obligatorio), y opcionalmente: <strong>Cedula</strong>, <strong>Correo</strong>, <strong>Correo Personal</strong>, <strong>Genero</strong>, <strong>Fecha De Nacimiento</strong>, <strong>Lugar Nacimiento</strong>, <strong>RH</strong>, <strong>Estado Civil</strong>, <strong>Nivel Educativo</strong>, <strong>Fecha Ingreso</strong>, <strong>T. Contrato</strong>, <strong>Cargo</strong>, <strong>Área</strong>, <strong>Subárea</strong>, <strong>Jefe Inmediato</strong>, <strong>Arl</strong>, <strong>Salud</strong>, <strong>Pensión</strong>, <strong>Cesantías</strong>, <strong>Teléfono</strong>, <strong>Dirección</strong>, <strong>Municipio</strong>, <strong>Rol</strong>, <strong>Estado</strong> (Activo/Inactivo). Puedes <strong>Descargar Plantilla</strong> para empezar.
         </p>
       </div>
 

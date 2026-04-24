@@ -1195,6 +1195,7 @@ export type Database = {
           fondo_pensiones: string | null
           id: string
           identificacion: string | null
+          is_active: boolean
           jefe_inmediato: string | null
           lugar_nacimiento: string | null
           municipio: string | null
@@ -1225,6 +1226,7 @@ export type Database = {
           fondo_pensiones?: string | null
           id: string
           identificacion?: string | null
+          is_active?: boolean
           jefe_inmediato?: string | null
           lugar_nacimiento?: string | null
           municipio?: string | null
@@ -1255,6 +1257,7 @@ export type Database = {
           fondo_pensiones?: string | null
           id?: string
           identificacion?: string | null
+          is_active?: boolean
           jefe_inmediato?: string | null
           lugar_nacimiento?: string | null
           municipio?: string | null
