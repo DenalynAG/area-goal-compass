@@ -515,6 +515,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
                 <th className="text-left px-5 py-3 font-medium text-muted-foreground">Área</th>
                 <th className="text-left px-5 py-3 font-medium text-muted-foreground">Subárea</th>
                 <th className="text-left px-5 py-3 font-medium text-muted-foreground">Rol</th>
+                <th className="text-left px-5 py-3 font-medium text-muted-foreground">Estado</th>
                 <th className="px-3 py-3"></th>
               </tr>
             </thead>
@@ -546,6 +547,13 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
                         </span>
                       ) : <span className="text-muted-foreground text-xs">Sin rol</span>}
                     </td>
+                    <td className="px-5 py-3">
+                      {(c as any).is_active === false ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-destructive/10 text-destructive">Inactivo</span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-500/10 text-emerald-600">Activo</span>
+                      )}
+                    </td>
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-1">
                         <Button variant="ghost" size="icon" onClick={() => setDetailProfile(c)} title="Ver detalle"><Eye className="w-4 h-4" /></Button>
@@ -561,7 +569,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
                 );
               })}
               {paginatedFiltered.length === 0 && (
-                <tr><td colSpan={6} className="px-5 py-8 text-center text-muted-foreground">No se encontraron colaboradores</td></tr>
+                <tr><td colSpan={7} className="px-5 py-8 text-center text-muted-foreground">No se encontraron colaboradores</td></tr>
               )}
             </tbody>
           </table>
