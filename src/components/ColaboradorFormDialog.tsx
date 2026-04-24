@@ -474,6 +474,16 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
                 <Label>Jefe Inmediato</Label>
                 <Input value={jefeInmediato} onChange={e => setJefeInmediato(e.target.value)} maxLength={100} placeholder="Nombre del jefe inmediato" />
               </div>
+              <div className="space-y-1.5">
+                <Label>Estado</Label>
+                <Select value={isActive} onValueChange={setIsActive}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="true">Activo</SelectItem>
+                    <SelectItem value="false">Inactivo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {/* Tallas de Uniformes */}
