@@ -461,6 +461,10 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
         </div>
         <div className="flex gap-2">
           <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleImportExcel} />
+          <Button variant="outline" onClick={handleDownloadTemplate}>
+            <Download className="w-4 h-4 mr-2" />
+            Descargar Plantilla
+          </Button>
           <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={importing}>
             <Upload className="w-4 h-4 mr-2" />
             {importing ? 'Importando...' : 'Importar Excel'}
