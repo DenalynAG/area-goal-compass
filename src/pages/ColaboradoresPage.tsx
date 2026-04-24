@@ -427,6 +427,28 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const handleDownloadTemplate = () => {
+    const headers = [
+      'Nombre Completo', 'Cedula', 'Correo', 'Correo Personal', 'Genero',
+      'Fecha De Nacimiento', 'Lugar Nacimiento', 'RH', 'Estado Civil',
+      'Nivel Educativo', 'Fecha Ingreso', 'T. Contrato', 'Cargo', 'Área',
+      'Subárea', 'Jefe Inmediato', 'Arl', 'Salud', 'Pensión', 'Cesantías',
+      'Teléfono', 'Dirección', 'Municipio', 'Rol', 'Estado',
+    ];
+    const example = [
+      'Juan Pérez García', '1234567890', 'juan@empresa.com', 'juan@gmail.com',
+      'Masculino', '1990-05-15', 'Cartagena', 'O+', 'Soltero', 'Profesional',
+      '2023-01-10', 'Indefinido', 'Analista', 'Tecnología', '', 'Maria Gomez',
+      'SURA', 'Sura EPS', 'Porvenir', 'Protección', '3001234567',
+      'Cra 1 # 2-3', 'Cartagena', 'Colaborador', 'Activo',
+    ];
+    const ws = XLSX.utils.aoa_to_sheet([headers, example]);
+    ws['!cols'] = headers.map(h => ({ wch: Math.max(14, h.length + 2) }));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Colaboradores');
+    XLSX.writeFile(wb, 'plantilla_colaboradores.xlsx');
+  };
+
   // Filter profiles by area if areaFilterName is provided
   const areaFilteredProfiles = useMemo(() => {
     if (!areaFilterName) return profiles;
