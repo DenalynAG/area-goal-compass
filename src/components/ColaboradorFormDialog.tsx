@@ -73,6 +73,7 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
   const [areaId, setAreaId] = useState('');
   const [subareaId, setSubareaId] = useState('');
   const [role, setRole] = useState('');
+  const [isActive, setIsActive] = useState<string>('true');
 
   const isEditing = !!profile;
   const filteredSubareas = subareas.filter(s => s.area_id === areaId);
@@ -111,6 +112,7 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
       setAreaId(membership?.area_id ?? '');
       setSubareaId(membership?.subarea_id ?? '');
       setRole(userRole ?? '');
+      setIsActive(((p as any).is_active ?? true) ? 'true' : 'false');
     } else {
       setName(''); setEmail(''); setIdentificacion(''); setPhone(''); setPosition('');
       setBirthday(''); setSexo(''); setMunicipio(''); setDireccion('');
@@ -121,6 +123,7 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
       setNivelEducativo(''); setArlField(''); setJefeInmediato('');
       setAvatarPreview(null); setAvatarFile(null);
       setAreaId(defaultAreaId || ''); setSubareaId(defaultSubareaId || ''); setRole('');
+      setIsActive('true');
     }
   }, [profile, membership, open]);
 
@@ -193,6 +196,7 @@ export default function ColaboradorFormDialog({ open, onOpenChange, profile, are
       nivel_educativo: nivelEducativo || null,
       arl: arlField.trim() || null,
       jefe_inmediato: jefeInmediato.trim() || null,
+      is_active: isActive === 'true',
     };
 
     if (isEditing) {
