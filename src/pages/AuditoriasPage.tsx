@@ -28,6 +28,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 // ─── Types ───
 interface AuditPlan {
@@ -107,6 +108,46 @@ const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secon
   no_cumple: { label: "No cumple", variant: "destructive", icon: AlertTriangle },
   pendiente_cierre: { label: "Pendiente cierre", variant: "outline", icon: Clock },
 };
+
+// Color schemes for status filter buttons (inactive / active)
+const STATUS_COLORS: Record<string, { inactive: string; active: string }> = {
+  pendiente: {
+    inactive: "border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100",
+    active: "bg-amber-500 text-white border-amber-500 hover:bg-amber-600",
+  },
+  en_proceso: {
+    inactive: "border-blue-300 bg-blue-50 text-blue-800 hover:bg-blue-100",
+    active: "bg-blue-600 text-white border-blue-600 hover:bg-blue-700",
+  },
+  cumple: {
+    inactive: "border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100",
+    active: "bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700",
+  },
+  no_cumple: {
+    inactive: "border-red-300 bg-red-50 text-red-800 hover:bg-red-100",
+    active: "bg-red-600 text-white border-red-600 hover:bg-red-700",
+  },
+  pendiente_cierre: {
+    inactive: "border-violet-300 bg-violet-50 text-violet-800 hover:bg-violet-100",
+    active: "bg-violet-600 text-white border-violet-600 hover:bg-violet-700",
+  },
+};
+
+// Cycling palette for area filter buttons
+const AREA_PALETTE: { inactive: string; active: string }[] = [
+  { inactive: "border-blue-300 bg-blue-50 text-blue-800 hover:bg-blue-100", active: "bg-blue-600 text-white border-blue-600 hover:bg-blue-700" },
+  { inactive: "border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100", active: "bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700" },
+  { inactive: "border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100", active: "bg-amber-500 text-white border-amber-500 hover:bg-amber-600" },
+  { inactive: "border-rose-300 bg-rose-50 text-rose-800 hover:bg-rose-100", active: "bg-rose-600 text-white border-rose-600 hover:bg-rose-700" },
+  { inactive: "border-violet-300 bg-violet-50 text-violet-800 hover:bg-violet-100", active: "bg-violet-600 text-white border-violet-600 hover:bg-violet-700" },
+  { inactive: "border-cyan-300 bg-cyan-50 text-cyan-800 hover:bg-cyan-100", active: "bg-cyan-600 text-white border-cyan-600 hover:bg-cyan-700" },
+  { inactive: "border-orange-300 bg-orange-50 text-orange-800 hover:bg-orange-100", active: "bg-orange-600 text-white border-orange-600 hover:bg-orange-700" },
+  { inactive: "border-teal-300 bg-teal-50 text-teal-800 hover:bg-teal-100", active: "bg-teal-600 text-white border-teal-600 hover:bg-teal-700" },
+  { inactive: "border-indigo-300 bg-indigo-50 text-indigo-800 hover:bg-indigo-100", active: "bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700" },
+  { inactive: "border-pink-300 bg-pink-50 text-pink-800 hover:bg-pink-100", active: "bg-pink-600 text-white border-pink-600 hover:bg-pink-700" },
+];
+const ALL_AREAS_COLOR = { inactive: "border-slate-300 bg-slate-50 text-slate-800 hover:bg-slate-100", active: "bg-slate-800 text-white border-slate-800 hover:bg-slate-900" };
+const ALL_STATUS_COLOR = { inactive: "border-slate-300 bg-slate-50 text-slate-800 hover:bg-slate-100", active: "bg-slate-800 text-white border-slate-800 hover:bg-slate-900" };
 
 const SEVERITY_CONFIG: Record<string, { label: string; className: string; icon: typeof Shield }> = {
   critico: { label: "Crítico", className: "bg-destructive/10 text-destructive border-destructive/20", icon: ShieldAlert },
@@ -411,45 +452,51 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Área:</span>
               <Button
-                variant={filterArea === "all" ? "default" : "outline"}
+                variant="outline"
                 size="sm"
-                className="h-7 text-xs"
+                className={cn("h-7 text-xs border", filterArea === "all" ? ALL_AREAS_COLOR.active : ALL_AREAS_COLOR.inactive)}
                 onClick={() => setFilterArea("all")}
                 disabled={!isRRHH && !!presetAreaId}
               >
                 Todas
               </Button>
-              {areas.map((a) => (
+              {areas.map((a, i) => {
+                const palette = AREA_PALETTE[i % AREA_PALETTE.length];
+                const isActive = filterArea === a.id;
+                return (
                 <Button
                   key={a.id}
-                  variant={filterArea === a.id ? "default" : "outline"}
+                  variant="outline"
                   size="sm"
-                  className="h-7 text-xs"
+                  className={cn("h-7 text-xs border", isActive ? palette.active : palette.inactive)}
                   onClick={() => setFilterArea(a.id)}
                   disabled={!isRRHH && !!presetAreaId && presetAreaId !== a.id}
                 >
                   {a.name}
                 </Button>
-              ))}
+                );
+              })}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Estado:</span>
               <Button
-                variant={filterStatus === "all" ? "default" : "outline"}
+                variant="outline"
                 size="sm"
-                className="h-7 text-xs"
+                className={cn("h-7 text-xs border", filterStatus === "all" ? ALL_STATUS_COLOR.active : ALL_STATUS_COLOR.inactive)}
                 onClick={() => setFilterStatus("all")}
               >
                 Todos
               </Button>
               {Object.entries(STATUS_CONFIG).map(([k, v]) => {
                 const Icon = v.icon;
+                const colors = STATUS_COLORS[k];
+                const isActive = filterStatus === k;
                 return (
                   <Button
                     key={k}
-                    variant={filterStatus === k ? "default" : "outline"}
+                    variant="outline"
                     size="sm"
-                    className="h-7 text-xs gap-1"
+                    className={cn("h-7 text-xs gap-1 border", isActive ? colors.active : colors.inactive)}
                     onClick={() => setFilterStatus(k)}
                   >
                     <Icon className="w-3 h-3" /> {v.label}
