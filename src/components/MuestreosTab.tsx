@@ -512,6 +512,32 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
                             </td>
                           );
                         })()}
+                        {canManage && (
+                          <td className="text-center px-1 py-1.5 border-l border-border whitespace-nowrap">
+                            <Button
+                              variant="ghost" size="icon"
+                              className="h-6 w-6"
+                              onClick={() => {
+                                const dbRow = dbRows.find(r => r.id === row.id);
+                                if (dbRow) openEditRow(dbRow);
+                              }}
+                              title="Editar"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost" size="icon"
+                              className="h-6 w-6 text-destructive"
+                              onClick={() => {
+                                const dbRow = dbRows.find(r => r.id === row.id);
+                                if (dbRow) setDeleteRow(dbRow);
+                              }}
+                              title="Eliminar"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </td>
+                        )}
                       </tr>
                     );
                   })
