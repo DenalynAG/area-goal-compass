@@ -378,10 +378,10 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
                           {row.indicator}
                         </td>
                         {MONTHS.map((_, monthIdx) => {
-                          const key = getCellKey(row.area, row.indicator, monthIdx);
+                          const key = getCellKey(row.area, row.storedIndicator, monthIdx);
                           const isEditing = editingCell === key;
-                          const cellValue = getCellValue(row.area, row.indicator, monthIdx);
-                          const cellStatus = getCellStatus(row.area, row.indicator, monthIdx);
+                          const cellValue = getCellValue(row.area, row.storedIndicator, monthIdx);
+                          const cellStatus = getCellStatus(row.area, row.storedIndicator, monthIdx);
 
                           return (
                             <td
@@ -389,7 +389,7 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
                               className={`text-center px-1 py-1.5 border-r border-border transition-colors ${
                                 canManage ? 'cursor-pointer hover:bg-accent/20' : ''
                               }`}
-                              onClick={() => handleCellClick(row.area, row.indicator, monthIdx)}
+                              onClick={() => handleCellClick(row.area, row.storedIndicator, monthIdx)}
                             >
                               {isEditing ? (
                                 <input
@@ -398,7 +398,7 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
                                   value={pendingEdits[key] ?? ''}
                                   onChange={e => handleCellChange(key, e.target.value)}
                                   onBlur={handleCellBlur}
-                                  onKeyDown={e => handleCellKeyDown(e, row.area, row.indicator, monthIdx)}
+                                  onKeyDown={e => handleCellKeyDown(e, row.area, row.storedIndicator, monthIdx)}
                                   className="w-full text-center text-xs border rounded px-1 py-0.5 bg-background focus:outline-none focus:ring-1 focus:ring-primary"
                                 />
                               ) : cellValue ? (
@@ -422,7 +422,7 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
                           let filled = 0;
                           let total = 0;
                           for (let m = 0; m < 12; m++) {
-                            const val = getCellValue(row.area, row.indicator, m);
+                            const val = getCellValue(row.area, row.storedIndicator, m);
                             if (val) {
                               total++;
                               const num = parseFloat(val);
