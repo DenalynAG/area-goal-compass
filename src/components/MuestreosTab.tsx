@@ -17,6 +17,10 @@ import * as XLSX from 'xlsx';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  ResponsiveContainer, LabelList,
+} from 'recharts';
 
 // ─── Grid Config matching Excel layout ───
 interface GridRow {
@@ -427,6 +431,88 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
               </tbody>
             </table>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Trazabilidad - Gráfica de avances por indicador */}
+      <Card>
+        <CardContent className="p-4 space-y-3">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <h4 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              Trazabilidad de avances · % Acumulado por indicador
+            </h4>
+            <span className="text-xs text-muted-foreground">{selectedYear} · {SAMPLING_TYPES.find(t => t.value === samplingType)?.label}</span>
+          </div>
+          {(() => {
+            const COLORS = ['#2563eb', '#dc2626', '#16a34a', '#d97706', '#7c3aed', '#0891b2', '#db2777'];
+            // One series per area; X axis = indicators of that area; Y = % acumulado
+            const series = groupedRows.map((group, gi) => {
+              const points = group.rows.map((row, idx) => {
+                let filled = 0; let total = 0;
+                for (let m = 0; m < 12; m++) {
+                  const val = getCellValue(row.area, row.indicator, m);
+                  if (val) {
+                    const num = parseFloat(val);
+                    if (!isNaN(num)) { filled += num; total++; }
+                  }
+                }
+                return {
+                  name: `${row.indicator}${idx > 0 && group.rows.slice(0, idx).some(r => r.indicator === row.indicator) ? ` (${idx + 1})` : ''}`,
+                  value: total > 0 ? Math.round(filled / total) : null,
+                };
+              });
+              return { area: group.area, color: COLORS[gi % COLORS.length], points };
+            });
+
+            // Render one chart per area for clarity
+            return (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {series.map(s => (
+                  <div key={s.area} className="border border-border rounded-md p-3 bg-muted/10">
+                    <div className="text-xs font-semibold mb-2 text-foreground">{s.area}</div>
+                    <ResponsiveContainer width="100%" height={240}>
+                      <LineChart data={s.points} margin={{ top: 20, right: 20, left: 0, bottom: 30 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis
+                          dataKey="name"
+                          tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }}
+                          interval={0}
+                          angle={-15}
+                          textAnchor="end"
+                          height={50}
+                        />
+                        <YAxis
+                          domain={[0, 100]}
+                          tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }}
+                          tickFormatter={(v) => `${v}%`}
+                        />
+                        <Tooltip
+                          formatter={(v: any) => v != null ? [`${v}%`, '% Acum.'] : ['Sin datos', '']}
+                          contentStyle={{ fontSize: 11 }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="value"
+                          stroke={s.color}
+                          strokeWidth={2.5}
+                          dot={{ r: 4, fill: s.color }}
+                          connectNulls
+                          name={s.area}
+                        >
+                          <LabelList
+                            dataKey="value"
+                            position="top"
+                            formatter={(v: any) => v != null ? `${v}%` : ''}
+                            style={{ fontSize: 11, fontWeight: 600, fill: 'hsl(var(--foreground))' }}
+                          />
+                        </Line>
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
         </CardContent>
       </Card>
 
