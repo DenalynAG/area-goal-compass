@@ -24,9 +24,33 @@ export function useMenuPermissions() {
   });
 }
 
+interface UserMenuOverride {
+  id: string;
+  user_id: string;
+  menu_key: string;
+  is_visible: boolean;
+}
+
+export function useUserMenuOverrides() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['user_menu_overrides', user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('user_menu_overrides' as any)
+        .select('*')
+        .eq('user_id', user!.id);
+      if (error) throw error;
+      return (data ?? []) as unknown as UserMenuOverride[];
+    },
+  });
+}
+
 export function useVisibleMenuKeys(): Set<string> {
   const { roles, isSuperAdmin } = useAuth();
   const { data: permissions = [] } = useMenuPermissions();
+  const { data: overrides = [] } = useUserMenuOverrides();
 
   return useMemo(() => {
     const visibleKeys = new Set<string>();
@@ -35,6 +59,10 @@ export function useVisibleMenuKeys(): Set<string> {
         visibleKeys.add(perm.menu_key);
       }
     }
+    for (const ov of overrides) {
+      if (ov.is_visible) visibleKeys.add(ov.menu_key);
+      else visibleKeys.delete(ov.menu_key);
+    }
     return visibleKeys;
-  }, [permissions, roles]);
+  }, [permissions, roles, overrides]);
 }
