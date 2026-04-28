@@ -145,6 +145,15 @@ export default function BpmInspectionTab() {
               {years.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}
             </SelectContent>
           </Select>
+          <Label className="text-sm ml-2">Semestre:</Label>
+          <Select value={semesterFilter} onValueChange={(v) => setSemesterFilter(v as "all" | "1" | "2")}>
+            <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Ambos semestres</SelectItem>
+              <SelectItem value="1">1er semestre</SelectItem>
+              <SelectItem value="2">2do semestre</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         {canManage && (
           <div className="flex gap-2">
