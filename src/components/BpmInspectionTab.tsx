@@ -80,6 +80,13 @@ export default function BpmInspectionTab() {
   const [newZoneDialogOpen, setNewZoneDialogOpen] = useState(false);
   const [newZoneName, setNewZoneName] = useState("");
 
+  const visibleMonths = useMemo(() => {
+    if (semesterFilter === "1") return MONTHS.slice(0, 6).map((m, i) => ({ name: m, idx: i }));
+    if (semesterFilter === "2") return MONTHS.slice(6, 12).map((m, i) => ({ name: m, idx: i + 6 }));
+    return MONTHS.map((m, i) => ({ name: m, idx: i }));
+  }, [semesterFilter]);
+  const semesterLabel = semesterFilter === "1" ? "1er semestre" : semesterFilter === "2" ? "2do semestre" : "";
+
   const openCreate = (zone?: string, month?: number) => {
     setEditing(null);
     setForm({ zone: zone ?? "", month: month ?? 1, percentage: "", notes: "" });
