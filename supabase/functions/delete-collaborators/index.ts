@@ -8,12 +8,15 @@ const corsHeaders = {
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-async function runStep(label: string, request: PromiseLike<{ error: any }>) {
+type ServiceClient = ReturnType<typeof createClient>;
+type RequestResult = { error: { message?: string } | null };
+
+async function runStep(label: string, request: PromiseLike<RequestResult>) {
   const { error } = await request;
   if (error) throw new Error(`${label}: ${error.message}`);
 }
 
-async function deleteCollaborator(serviceClient: any, id: string) {
+async function deleteCollaborator(serviceClient: ServiceClient, id: string) {
   const { data: profile, error: profileLookupError } = await serviceClient
     .from("profiles")
     .select("id,name,email")
