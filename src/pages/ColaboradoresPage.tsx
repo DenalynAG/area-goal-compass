@@ -771,7 +771,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={bulkDeleting}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleBulkDelete} disabled={bulkDeleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction onClick={(e) => { e.preventDefault(); handleBulkDelete(); }} disabled={bulkDeleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               {bulkDeleting ? 'Eliminando...' : 'Sí, eliminar seleccionados'}
             </AlertDialogAction>
           </AlertDialogFooter>
