@@ -808,6 +808,16 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
           </DialogHeader>
           <div className="space-y-4 pt-2">
             <div>
+              <Label>Tipo de Auditoría *</Label>
+              <Select value={planForm.audit_type} onValueChange={(v) => setPlanForm({ ...planForm, audit_type: v as "anual" | "diaria" })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="anual">Auditoría Anual</SelectItem>
+                  <SelectItem value="diaria">Auditoría Diaria</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
               <Label>Título *</Label>
               <Input value={planForm.title} onChange={(e) => setPlanForm({ ...planForm, title: e.target.value })} />
             </div>
