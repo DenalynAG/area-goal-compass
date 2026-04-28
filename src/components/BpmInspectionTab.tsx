@@ -179,14 +179,14 @@ export default function BpmInspectionTab() {
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr>
-                <th colSpan={13} className="bg-primary text-primary-foreground py-2 text-center font-semibold border border-border">
-                  INSPECCIÓN BPM MENSUAL — {year}
+                <th colSpan={visibleMonths.length + 1} className="bg-primary text-primary-foreground py-2 text-center font-semibold border border-border">
+                  INSPECCIÓN BPM MENSUAL — {year}{semesterLabel ? ` · ${semesterLabel}` : ""}
                 </th>
               </tr>
               <tr className="bg-muted">
                 <th className="border border-border px-3 py-2 text-left min-w-[140px]">Zona</th>
-                {MONTHS.map(m => (
-                  <th key={m} className="border border-border px-2 py-2 text-center min-w-[80px]">{m}</th>
+                {visibleMonths.map(m => (
+                  <th key={m.name} className="border border-border px-2 py-2 text-center min-w-[80px]">{m.name}</th>
                 ))}
               </tr>
             </thead>
@@ -194,7 +194,7 @@ export default function BpmInspectionTab() {
               {zones.map(zone => (
                 <tr key={zone}>
                   <td className="border border-border px-3 py-2 font-medium bg-muted/50">{zone}</td>
-                  {MONTHS.map((_, idx) => {
+                  {visibleMonths.map(({ idx }) => {
                     const month = idx + 1;
                     const insp = grid[zone]?.[month];
                     return (
@@ -218,7 +218,7 @@ export default function BpmInspectionTab() {
               ))}
               {zones.length === 0 && (
                 <tr>
-                  <td colSpan={13} className="text-center py-6 text-muted-foreground">
+                  <td colSpan={visibleMonths.length + 1} className="text-center py-6 text-muted-foreground">
                     Sin zonas registradas. Crea una nueva zona para comenzar.
                   </td>
                 </tr>
@@ -238,11 +238,11 @@ export default function BpmInspectionTab() {
       {zones.length > 0 && (
         <Card>
           <CardContent className="p-4">
-            <h3 className="text-sm font-semibold mb-3">Inspección BPM Mensual — {year}</h3>
+            <h3 className="text-sm font-semibold mb-3">Inspección BPM Mensual — {year}{semesterLabel ? ` · ${semesterLabel}` : ""}</h3>
             <ResponsiveContainer width="100%" height={360}>
               <BarChart
-                data={MONTHS.map((m, idx) => {
-                  const row: Record<string, any> = { month: m };
+                data={visibleMonths.map(({ name, idx }) => {
+                  const row: Record<string, any> = { month: name };
                   zones.forEach(z => {
                     const v = grid[z]?.[idx + 1]?.percentage;
                     row[z] = v != null ? Number(v) : 0;
@@ -328,9 +328,9 @@ export default function BpmInspectionTab() {
           <Card>
             <CardContent className="p-4 space-y-3">
               <h3 className="text-sm font-semibold">Auditoría Externa por Área y Semestre — {year}</h3>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {renderSemester(1, "Auditoría externa 1er semestre", "#2563eb")}
-                {renderSemester(2, "Auditoría externa 2do semestre", "#dc2626")}
+              <div className={cn("grid gap-4", semesterFilter === "all" ? "grid-cols-1 lg:grid-cols-2" : "grid-cols-1")}>
+                {(semesterFilter === "all" || semesterFilter === "1") && renderSemester(1, "Auditoría externa 1er semestre", "#2563eb")}
+                {(semesterFilter === "all" || semesterFilter === "2") && renderSemester(2, "Auditoría externa 2do semestre", "#dc2626")}
               </div>
             </CardContent>
           </Card>
