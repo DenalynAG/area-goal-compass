@@ -579,7 +579,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
           <p className="text-sm font-medium">{selectedIds.size} seleccionado(s)</p>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => setSelectedIds(new Set())}>Limpiar selección</Button>
-            <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)}>
+            <Button variant="destructive" size="sm" onClick={() => { setBulkDeleteResult(null); setBulkDeleteOpen(true); }}>
               <Trash2 className="w-4 h-4 mr-2" />Eliminar seleccionados
             </Button>
           </div>
@@ -752,19 +752,53 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+      <AlertDialog open={bulkDeleteOpen} onOpenChange={(open) => { if (!bulkDeleting) setBulkDeleteOpen(open); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar colaboradores seleccionados?</AlertDialogTitle>
+            <AlertDialogTitle>{bulkDeleteResult ? 'Resultado del borrado masivo' : '¿Eliminar colaboradores seleccionados?'}</AlertDialogTitle>
             <AlertDialogDescription>
-              Se eliminarán permanentemente <strong>{selectedIds.size}</strong> colaborador(es) y todos sus datos asociados (membresías, roles, evaluaciones, etc.). Tu propio perfil será omitido si está seleccionado. <strong>Esta acción no se puede deshacer.</strong>
+              {bulkDeleteResult
+                ? `Proceso finalizado: ${bulkDeleteResult.deleted} eliminado(s), ${bulkDeleteResult.failed} fallido(s)${bulkDeleteResult.skipped ? ` y ${bulkDeleteResult.skipped} omitido(s)` : ''}.`
+                : <>Se eliminarán permanentemente <strong>{selectedIds.size}</strong> colaborador(es) y todos sus datos asociados (membresías, roles, evaluaciones, etc.). Tu propio perfil será omitido si está seleccionado. <strong>Esta acción no se puede deshacer.</strong></>}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {bulkDeleteResult && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg border bg-primary/5 p-3">
+                  <p className="text-2xl font-bold text-primary">{bulkDeleteResult.deleted}</p>
+                  <p className="text-xs text-muted-foreground">Eliminados</p>
+                </div>
+                <div className="rounded-lg border bg-destructive/5 p-3">
+                  <p className="text-2xl font-bold text-destructive">{bulkDeleteResult.failed}</p>
+                  <p className="text-xs text-muted-foreground">Fallidos</p>
+                </div>
+              </div>
+              {(bulkDeleteResult.failed > 0 || bulkDeleteResult.skipped > 0) && (
+                <ScrollArea className="max-h-40 rounded-lg border">
+                  <div className="divide-y">
+                    {bulkDeleteResult.results.filter(result => result.status !== 'deleted').map(result => (
+                      <div key={result.id} className="p-3 text-xs">
+                        <p className="font-medium">{result.name || result.id.slice(0, 8)}</p>
+                        <p className={result.status === 'failed' ? 'text-destructive' : 'text-muted-foreground'}>{result.reason || 'Sin detalle'}</p>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
+            </div>
+          )}
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={bulkDeleting}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={(e) => { e.preventDefault(); handleBulkDelete(); }} disabled={bulkDeleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {bulkDeleting ? 'Eliminando...' : 'Sí, eliminar seleccionados'}
-            </AlertDialogAction>
+            {bulkDeleteResult ? (
+              <AlertDialogAction onClick={() => { setBulkDeleteOpen(false); setBulkDeleteResult(null); }}>Cerrar</AlertDialogAction>
+            ) : (
+              <>
+                <AlertDialogCancel disabled={bulkDeleting}>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={(e) => { e.preventDefault(); handleBulkDelete(); }} disabled={bulkDeleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  {bulkDeleting ? 'Eliminando...' : 'Sí, eliminar seleccionados'}
+                </AlertDialogAction>
+              </>
+            )}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
