@@ -572,11 +572,38 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
         <Input placeholder="Buscar por nombre, correo o cargo..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
       </div>
 
+      {isSuperAdmin && selectedIds.size > 0 && (
+        <div className="flex items-center justify-between px-4 py-2 rounded-lg border bg-primary/5">
+          <p className="text-sm font-medium">{selectedIds.size} seleccionado(s)</p>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => setSelectedIds(new Set())}>Limpiar selección</Button>
+            <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)}>
+              <Trash2 className="w-4 h-4 mr-2" />Eliminar seleccionados
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50">
+                {isSuperAdmin && (
+                  <th className="px-3 py-3 w-10">
+                    <Checkbox
+                      checked={paginatedFiltered.length > 0 && paginatedFiltered.every(p => selectedIds.has(p.id))}
+                      onCheckedChange={(checked) => {
+                        setSelectedIds(prev => {
+                          const next = new Set(prev);
+                          if (checked) paginatedFiltered.forEach(p => next.add(p.id));
+                          else paginatedFiltered.forEach(p => next.delete(p.id));
+                          return next;
+                        });
+                      }}
+                    />
+                  </th>
+                )}
                 <th className="text-left px-5 py-3 font-medium text-muted-foreground">Colaborador</th>
                 <th className="text-left px-5 py-3 font-medium text-muted-foreground">Cargo</th>
                 <th className="text-left px-5 py-3 font-medium text-muted-foreground">Área</th>
@@ -592,6 +619,14 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
                 const role = getRole(c.id);
                 return (
                   <tr key={c.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                    {isSuperAdmin && (
+                      <td className="px-3 py-3">
+                        <Checkbox
+                          checked={selectedIds.has(c.id)}
+                          onCheckedChange={() => toggleSelect(c.id)}
+                        />
+                      </td>
+                    )}
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-3">
                         {(c as any).avatar ? (
@@ -636,7 +671,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
                 );
               })}
               {paginatedFiltered.length === 0 && (
-                <tr><td colSpan={7} className="px-5 py-8 text-center text-muted-foreground">No se encontraron colaboradores</td></tr>
+                <tr><td colSpan={isSuperAdmin ? 8 : 7} className="px-5 py-8 text-center text-muted-foreground">No se encontraron colaboradores</td></tr>
               )}
             </tbody>
           </table>
