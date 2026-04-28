@@ -393,6 +393,42 @@ export type Database = {
           },
         ]
       }
+      bpm_inspections: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          month: number
+          notes: string | null
+          percentage: number | null
+          updated_at: string
+          year: number
+          zone: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          month: number
+          notes?: string | null
+          percentage?: number | null
+          updated_at?: string
+          year: number
+          zone: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          month?: number
+          notes?: string | null
+          percentage?: number | null
+          updated_at?: string
+          year?: number
+          zone?: string
+        }
+        Relationships: []
+      }
       comfort_assignments: {
         Row: {
           assigned_user_id: string | null
