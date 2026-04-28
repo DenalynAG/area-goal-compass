@@ -445,9 +445,11 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
           </div>
           {(() => {
             const COLORS = ['#2563eb', '#dc2626', '#16a34a', '#d97706', '#7c3aed', '#0891b2', '#db2777'];
-            // One series per area; X axis = indicators of that area; Y = % acumulado
-            const series = groupedRows.map((group, gi) => {
-              const points = group.rows.map((row, idx) => {
+            const areas = groupedRows.map(g => g.area);
+            // Build unified X axis with all indicators across areas; one dataKey per area
+            const data: Array<Record<string, any>> = [];
+            groupedRows.forEach(group => {
+              group.rows.forEach((row, idx) => {
                 let filled = 0; let total = 0;
                 for (let m = 0; m < 12; m++) {
                   const val = getCellValue(row.area, row.indicator, m);
@@ -456,61 +458,58 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
                     if (!isNaN(num)) { filled += num; total++; }
                   }
                 }
-                return {
-                  name: `${row.indicator}${idx > 0 && group.rows.slice(0, idx).some(r => r.indicator === row.indicator) ? ` (${idx + 1})` : ''}`,
-                  value: total > 0 ? Math.round(filled / total) : null,
-                };
+                const value = total > 0 ? Math.round(filled / total) : null;
+                const dup = group.rows.slice(0, idx).filter(r => r.indicator === row.indicator).length;
+                const name = `${row.area} · ${row.indicator}${dup > 0 ? ` (${dup + 1})` : ''}`;
+                const point: Record<string, any> = { name };
+                point[row.area] = value;
+                data.push(point);
               });
-              return { area: group.area, color: COLORS[gi % COLORS.length], points };
             });
 
-            // Render one chart per area for clarity
             return (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {series.map(s => (
-                  <div key={s.area} className="border border-border rounded-md p-3 bg-muted/10">
-                    <div className="text-xs font-semibold mb-2 text-foreground">{s.area}</div>
-                    <ResponsiveContainer width="100%" height={240}>
-                      <LineChart data={s.points} margin={{ top: 20, right: 20, left: 0, bottom: 30 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                        <XAxis
-                          dataKey="name"
-                          tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }}
-                          interval={0}
-                          angle={-15}
-                          textAnchor="end"
-                          height={50}
-                        />
-                        <YAxis
-                          domain={[0, 100]}
-                          tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }}
-                          tickFormatter={(v) => `${v}%`}
-                        />
-                        <Tooltip
-                          formatter={(v: any) => v != null ? [`${v}%`, '% Acum.'] : ['Sin datos', '']}
-                          contentStyle={{ fontSize: 11 }}
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey="value"
-                          stroke={s.color}
-                          strokeWidth={2.5}
-                          dot={{ r: 4, fill: s.color }}
-                          connectNulls
-                          name={s.area}
-                        >
-                          <LabelList
-                            dataKey="value"
-                            position="top"
-                            formatter={(v: any) => v != null ? `${v}%` : ''}
-                            style={{ fontSize: 11, fontWeight: 600, fill: 'hsl(var(--foreground))' }}
-                          />
-                        </Line>
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                ))}
-              </div>
+              <ResponsiveContainer width="100%" height={380}>
+                <LineChart data={data} margin={{ top: 24, right: 24, left: 0, bottom: 60 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }}
+                    interval={0}
+                    angle={-25}
+                    textAnchor="end"
+                    height={70}
+                  />
+                  <YAxis
+                    domain={[0, 100]}
+                    tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }}
+                    tickFormatter={(v) => `${v}%`}
+                  />
+                  <Tooltip
+                    formatter={(v: any, n: any) => v != null ? [`${v}%`, n] : ['Sin datos', n]}
+                    contentStyle={{ fontSize: 11 }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  {areas.map((area, gi) => (
+                    <Line
+                      key={area}
+                      type="monotone"
+                      dataKey={area}
+                      stroke={COLORS[gi % COLORS.length]}
+                      strokeWidth={2.5}
+                      dot={{ r: 4, fill: COLORS[gi % COLORS.length] }}
+                      connectNulls
+                      name={area}
+                    >
+                      <LabelList
+                        dataKey={area}
+                        position="top"
+                        formatter={(v: any) => v != null ? `${v}%` : ''}
+                        style={{ fontSize: 10, fontWeight: 600, fill: 'hsl(var(--foreground))' }}
+                      />
+                    </Line>
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
             );
           })()}
         </CardContent>
