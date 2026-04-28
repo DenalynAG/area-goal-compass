@@ -482,6 +482,38 @@ export default function BpmInspectionTab() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Rename zone dialog */}
+      <Dialog open={!!editingZone} onOpenChange={(o) => !o && setEditingZone(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Renombrar zona</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <Label>Nuevo nombre</Label>
+            <Input value={editZoneName} onChange={(e) => setEditZoneName(e.target.value)} />
+            <p className="text-xs text-muted-foreground">Se renombrarán todos los registros del año {year} para esta zona.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingZone(null)}>Cancelar</Button>
+            <Button onClick={renameZone}>Guardar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete zone confirm */}
+      <AlertDialog open={!!deleteZone} onOpenChange={(o) => !o && setDeleteZone(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar la zona "{deleteZone}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminarán todos los registros de inspección BPM de esta zona para el año {year}. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={removeZone} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Eliminar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
