@@ -18,6 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import EvidencePanel from "@/components/EvidencePanel";
 import MuestreosTab from "@/components/MuestreosTab";
 import BpmInspectionTab from "@/components/BpmInspectionTab";
+import BpmActionPlanTab from "@/components/BpmActionPlanTab";
 import {
   Plus, ClipboardCheck, AlertTriangle, CheckCircle2, Clock, Search,
   ChevronDown, ChevronUp, MessageSquare, Send, Trash2, Pencil,
@@ -386,6 +387,12 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
             Inspección BPM
           </TabsTrigger>
           <TabsTrigger
+            value="matriz_bpm"
+            className="border border-orange-300 bg-orange-50 text-orange-800 data-[state=active]:bg-orange-600 data-[state=active]:text-white data-[state=active]:border-orange-600"
+          >
+            Matriz Plan de Acción
+          </TabsTrigger>
+          <TabsTrigger
             value="resumen"
             className="border border-violet-300 bg-violet-50 text-violet-800 data-[state=active]:bg-violet-600 data-[state=active]:text-white data-[state=active]:border-violet-600"
           >
@@ -633,6 +640,11 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
         {/* ─── BPM Inspection Tab ─── */}
         <TabsContent value="bpm">
           <BpmInspectionTab />
+        </TabsContent>
+
+        {/* ─── BPM Matriz Plan de Acción ─── */}
+        <TabsContent value="matriz_bpm">
+          <BpmActionPlanTab />
         </TabsContent>
 
         {/* ─── Summary Tab ─── */}
