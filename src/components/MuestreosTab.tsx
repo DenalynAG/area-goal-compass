@@ -106,6 +106,7 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
   const { user, profile, isSuperAdmin, hasRole } = useAuth();
   const qc = useQueryClient();
   const { data: records = [], isLoading } = useSamplingRecords();
+  const { data: dbRows = [] } = useSamplingGridRows();
   const isRRHH = !areaFilterName || areaFilterName === 'Recursos Humanos';
   const canManage = (isSuperAdmin || hasRole('admin_area')) && isRRHH;
 
@@ -116,6 +117,12 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
   // Pending edits: key = `${area}|${indicator}|${monthIdx}` → value string
   const [pendingEdits, setPendingEdits] = useState<Record<string, string>>({});
   const [editingCell, setEditingCell] = useState<string | null>(null);
+
+  // CRUD dialogs for grid rows
+  const [rowDialog, setRowDialog] = useState<null | { mode: 'add' | 'edit'; row?: SamplingGridRowDB; presetArea?: string; presetZone?: string }>(null);
+  const [rowForm, setRowForm] = useState({ area_name: '', zone_name: '', indicator_name: '' });
+  const [rowSaving, setRowSaving] = useState(false);
+  const [deleteRow, setDeleteRow] = useState<SamplingGridRowDB | null>(null);
 
   // Evidence panel
   const [evidenceRecordId, setEvidenceRecordId] = useState<string | null>(null);
@@ -140,18 +147,19 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
     return map;
   }, [records, selectedYear, samplingType]);
 
-  // Filter grid rows by area if not RRHH
-  const visibleRows = useMemo(() => {
-    if (isRRHH) return GRID_ROWS_WITH_SEQ;
-    // Map areaFilterName to grid area names
-    if (areaFilterName === 'Alimentos y Bebidas') {
-      return GRID_ROWS_WITH_SEQ.filter(r => r.area === 'Cocina' || r.area === 'Bar');
-    }
-    if (areaFilterName === 'Operaciones') {
-      return GRID_ROWS_WITH_SEQ.filter(r => r.area === 'Mantenimiento');
-    }
-    return GRID_ROWS_WITH_SEQ;
-  }, [isRRHH, areaFilterName]);
+  // Convert DB rows to GridRow shape, filter by area if not RRHH
+  const visibleRows = useMemo<GridRow[]>(() => {
+    const all: GridRow[] = dbRows.map(r => ({
+      id: r.id,
+      area_name: r.area_name,
+      area: r.zone_name,
+      indicator: r.indicator_name,
+      storedIndicator: r.indicator_name,
+      sort_order: r.sort_order,
+    }));
+    if (isRRHH) return all;
+    return all.filter(r => r.area_name === areaFilterName);
+  }, [dbRows, isRRHH, areaFilterName]);
 
   // Group rows by area for display
   const groupedRows = useMemo(() => {
