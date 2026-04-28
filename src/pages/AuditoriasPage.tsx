@@ -39,6 +39,7 @@ interface AuditPlan {
   description: string;
   planned_date: string;
   status: string;
+  audit_type?: string;
   created_at: string;
   updated_at: string;
 }
@@ -205,7 +206,7 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
   const [expandedPlanId, setExpandedPlanId] = useState<string | null>(null);
 
   // ─── Plan CRUD ───
-  const [planForm, setPlanForm] = useState({ title: "", description: "", area_id: "", subarea_id: "", responsible_user_id: "", auditor_user_id: "", planned_date: "", status: "pendiente" as "pendiente" | "en_proceso" | "cumple" | "no_cumple" | "pendiente_cierre" });
+  const [planForm, setPlanForm] = useState({ audit_type: "anual" as "anual" | "diaria", title: "", description: "", area_id: "", subarea_id: "", responsible_user_id: "", auditor_user_id: "", planned_date: "", status: "pendiente" as "pendiente" | "en_proceso" | "cumple" | "no_cumple" | "pendiente_cierre" });
 
   const subareasForPlanArea = useMemo(() => subareas.filter(s => s.area_id === planForm.area_id && s.status === 'activo'), [subareas, planForm.area_id]);
 
@@ -213,6 +214,7 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
     if (plan) {
       setEditingPlan(plan);
       setPlanForm({
+        audit_type: ((plan as any).audit_type ?? "anual") as "anual" | "diaria",
         title: plan.title, description: plan.description ?? "", area_id: plan.area_id,
         subarea_id: (plan as any).subarea_id ?? "",
         responsible_user_id: plan.responsible_user_id, auditor_user_id: plan.auditor_user_id,
@@ -220,7 +222,7 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
       });
     } else {
       setEditingPlan(null);
-      setPlanForm({ title: "", description: "", area_id: "", subarea_id: "", responsible_user_id: "", auditor_user_id: "", planned_date: format(new Date(), "yyyy-MM-dd"), status: "pendiente" as const });
+      setPlanForm({ audit_type: "anual", title: "", description: "", area_id: "", subarea_id: "", responsible_user_id: "", auditor_user_id: "", planned_date: format(new Date(), "yyyy-MM-dd"), status: "pendiente" as const });
     }
     setPlanDialogOpen(true);
   };
@@ -710,88 +712,112 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
               return new Date(plan.planned_date).getFullYear() === resumenYear;
             });
 
-            const areaNames = areas.map(a => a.name);
+            const buildSection = (typeKey: "anual" | "diaria") => {
+              const typedPlans = yearPlans.filter(p => ((p as any).audit_type ?? "anual") === typeKey);
+              const typedPlanIds = new Set(typedPlans.map(p => p.id));
+              const typedFindings = yearFindings.filter(f => typedPlanIds.has(f.audit_plan_id));
 
-            const tableData = areas.map((area, idx) => {
-              const ap = yearPlans.filter(p => p.area_id === area.id);
-              const areaFindingIds = ap.map(p => p.id);
-              const af = yearFindings.filter(f => areaFindingIds.includes(f.audit_plan_id));
-              return {
-                name: area.name,
-                color: AREA_COLORS[idx % AREA_COLORS.length],
-                abierto: af.filter(f => f.finding_type === 'abierta').length,
-                cerrado: af.filter(f => f.finding_type === 'cerrada').length,
-              };
-            }).filter(d => d.abierto > 0 || d.cerrado > 0);
+              const tableData = areas.map((area, idx) => {
+                const ap = typedPlans.filter(p => p.area_id === area.id);
+                const ids = ap.map(p => p.id);
+                const af = typedFindings.filter(f => ids.includes(f.audit_plan_id));
+                return {
+                  name: area.name,
+                  color: AREA_COLORS[idx % AREA_COLORS.length],
+                  abierto: af.filter(f => f.finding_type === 'abierta').length,
+                  cerrado: af.filter(f => f.finding_type === 'cerrada').length,
+                };
+              }).filter(d => d.abierto > 0 || d.cerrado > 0);
 
-            const chartData = [
-              { name: 'Abierto', ...Object.fromEntries(tableData.map(d => [d.name, d.abierto])) },
-              { name: 'Cerrado', ...Object.fromEntries(tableData.map(d => [d.name, d.cerrado])) },
-            ];
+              const chartData = [
+                { name: 'Abierto', ...Object.fromEntries(tableData.map(d => [d.name, d.abierto])) },
+                { name: 'Cerrado', ...Object.fromEntries(tableData.map(d => [d.name, d.cerrado])) },
+              ];
 
-            const totalAbierto = tableData.reduce((s, d) => s + d.abierto, 0);
-            const totalCerrado = tableData.reduce((s, d) => s + d.cerrado, 0);
+              const totalAbierto = tableData.reduce((s, d) => s + d.abierto, 0);
+              const totalCerrado = tableData.reduce((s, d) => s + d.cerrado, 0);
+              const label = typeKey === "anual" ? "Auditoría Anual" : "Auditoría Diaria";
+              const accent = typeKey === "anual"
+                ? "border-blue-300 bg-blue-50 text-blue-800"
+                : "border-amber-300 bg-amber-50 text-amber-800";
+
+              return (
+                <div className="space-y-3">
+                  <div className={cn("inline-flex items-center gap-2 px-3 py-1 rounded-md border text-sm font-semibold", accent)}>
+                    {label} · {resumenYear}
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm">{label}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>{resumenYear}</TableHead>
+                              <TableHead className="text-center">Abierto</TableHead>
+                              <TableHead className="text-center">Cerrado</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {tableData.length === 0 ? (
+                              <TableRow>
+                                <TableCell colSpan={3} className="text-center text-muted-foreground py-6">Sin datos</TableCell>
+                              </TableRow>
+                            ) : (
+                              <>
+                                {tableData.map(d => (
+                                  <TableRow key={d.name}>
+                                    <TableCell className="font-medium" style={{ color: d.color }}>{d.name}</TableCell>
+                                    <TableCell className="text-center">{d.abierto}</TableCell>
+                                    <TableCell className="text-center">{d.cerrado}</TableCell>
+                                  </TableRow>
+                                ))}
+                                <TableRow className="font-bold border-t-2">
+                                  <TableCell className="text-destructive">Total</TableCell>
+                                  <TableCell className="text-center">{totalAbierto}</TableCell>
+                                  <TableCell className="text-center">{totalCerrado}</TableCell>
+                                </TableRow>
+                              </>
+                            )}
+                          </TableBody>
+                        </Table>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm">{label}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {tableData.length === 0 ? (
+                          <p className="text-center text-muted-foreground py-8">Sin datos para este año</p>
+                        ) : (
+                          <ResponsiveContainer width="100%" height={280}>
+                            <BarChart data={chartData}>
+                              <CartesianGrid strokeDasharray="3 3" />
+                              <XAxis dataKey="name" />
+                              <YAxis allowDecimals={false} />
+                              <Tooltip />
+                              <Legend />
+                              {tableData.map(d => (
+                                <Bar key={d.name} dataKey={d.name} fill={d.color} />
+                              ))}
+                            </BarChart>
+                          </ResponsiveContainer>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              );
+            };
 
             return (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {/* Table */}
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm">{resumenYear}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>{resumenYear}</TableHead>
-                            <TableHead className="text-center">Abierto</TableHead>
-                            <TableHead className="text-center">Cerrado</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {tableData.map(d => (
-                            <TableRow key={d.name}>
-                              <TableCell className="font-medium" style={{ color: d.color }}>{d.name}</TableCell>
-                              <TableCell className="text-center">{d.abierto}</TableCell>
-                              <TableCell className="text-center">{d.cerrado}</TableCell>
-                            </TableRow>
-                          ))}
-                          <TableRow className="font-bold border-t-2">
-                            <TableCell className="text-destructive">Total</TableCell>
-                            <TableCell className="text-center">{totalAbierto}</TableCell>
-                            <TableCell className="text-center">{totalCerrado}</TableCell>
-                          </TableRow>
-                        </TableBody>
-                      </Table>
-                    </CardContent>
-                  </Card>
-
-                  {/* Chart */}
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm">{resumenYear}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {tableData.length === 0 ? (
-                        <p className="text-center text-muted-foreground py-8">Sin datos para este año</p>
-                      ) : (
-                        <ResponsiveContainer width="100%" height={280}>
-                          <BarChart data={chartData}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="name" />
-                            <YAxis allowDecimals={false} />
-                            <Tooltip />
-                            <Legend />
-                            {tableData.map(d => (
-                              <Bar key={d.name} dataKey={d.name} fill={d.color} />
-                            ))}
-                          </BarChart>
-                        </ResponsiveContainer>
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
+              <div className="space-y-6">
+                {buildSection("anual")}
+                {buildSection("diaria")}
               </div>
             );
           })()}
@@ -805,6 +831,16 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
             <DialogTitle>{editingPlan ? "Editar Plan de Auditoría" : "Nuevo Plan de Auditoría"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
+            <div>
+              <Label>Tipo de Auditoría *</Label>
+              <Select value={planForm.audit_type} onValueChange={(v) => setPlanForm({ ...planForm, audit_type: v as "anual" | "diaria" })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="anual">Auditoría Anual</SelectItem>
+                  <SelectItem value="diaria">Auditoría Diaria</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div>
               <Label>Título *</Label>
               <Input value={planForm.title} onChange={(e) => setPlanForm({ ...planForm, title: e.target.value })} />

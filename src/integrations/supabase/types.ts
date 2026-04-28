@@ -339,6 +339,7 @@ export type Database = {
       audit_plans: {
         Row: {
           area_id: string
+          audit_type: string
           auditor_user_id: string
           created_at: string
           description: string | null
@@ -352,6 +353,7 @@ export type Database = {
         }
         Insert: {
           area_id: string
+          audit_type?: string
           auditor_user_id: string
           created_at?: string
           description?: string | null
@@ -365,6 +367,7 @@ export type Database = {
         }
         Update: {
           area_id?: string
+          audit_type?: string
           auditor_user_id?: string
           created_at?: string
           description?: string | null
