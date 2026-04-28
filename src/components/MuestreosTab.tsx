@@ -408,6 +408,11 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
               Guardar cambios
             </Button>
           )}
+          {canManage && (
+            <Button size="sm" variant="outline" className="h-8 text-xs gap-1" onClick={() => openAddRow()}>
+              <Plus className="w-3.5 h-3.5" /> Agregar fila
+            </Button>
+          )}
         </div>
       </div>
 
@@ -424,6 +429,9 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
                     <th key={m} className="text-center px-1 py-2.5 font-semibold border-b border-r border-border min-w-[70px]">{m}</th>
                   ))}
                   <th className="text-center px-2 py-2.5 font-semibold border-b border-border min-w-[70px] bg-primary/15">% Acum.</th>
+                  {canManage && (
+                    <th className="text-center px-2 py-2.5 font-semibold border-b border-border min-w-[80px]">Acciones</th>
+                  )}
                 </tr>
               </thead>
               <tbody>
