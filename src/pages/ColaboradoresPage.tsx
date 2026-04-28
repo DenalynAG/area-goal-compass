@@ -21,6 +21,14 @@ interface ColaboradoresPageProps {
   areaFilterName?: string;
 }
 
+type BulkDeleteResult = {
+  requested: number;
+  deleted: number;
+  failed: number;
+  skipped: number;
+  results: { id: string; name?: string; status: 'deleted' | 'failed' | 'skipped'; reason?: string }[];
+};
+
 export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageProps = {}) {
   const { data: profiles = [], isLoading } = useProfiles();
   const { data: memberships = [] } = useMemberships();
@@ -42,6 +50,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [bulkDeleteResult, setBulkDeleteResult] = useState<BulkDeleteResult | null>(null);
   const [detailProfile, setDetailProfile] = useState<Tables<'profiles'> | null>(null);
   const [importReport, setImportReport] = useState<{ success: { row: number; name: string; action: string }[]; errors: { row: number; name: string; reason: string }[] } | null>(null);
 
@@ -138,51 +147,32 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
     setDeleteAllOpen(false);
   };
 
-  const deleteProfileCascade = async (id: string) => {
-    await supabase.from('areas').update({ leader_user_id: null }).eq('leader_user_id', id);
-    await supabase.from('subareas').update({ leader_user_id: null }).eq('leader_user_id', id);
-    await supabase.from('objectives').update({ owner_user_id: null }).eq('owner_user_id', id);
-    await supabase.from('evaluation_scores').delete().in('evaluation_id',
-      (await supabase.from('evaluations').select('id').eq('collaborator_user_id', id)).data?.map(e => e.id) ?? []
-    );
-    await supabase.from('evaluations').delete().eq('collaborator_user_id', id);
-    await supabase.from('evaluations').delete().eq('evaluator_user_id', id);
-    await supabase.from('leader_pass_records').delete().eq('user_id', id);
-    await supabase.from('comfort_assignments').delete().eq('assigned_user_id', id);
-    await supabase.from('recognition_posts').delete().eq('nominee_user_id', id);
-    await supabase.from('recognition_posts').delete().eq('nominated_by', id);
-    await supabase.from('access_control').update({ companion_user_id: null }).eq('companion_user_id', id);
-    await supabase.from('access_control').update({ created_by: null }).eq('created_by', id);
-    await supabase.from('asset_movements').update({ collaborator_user_id: null }).eq('collaborator_user_id', id);
-    await supabase.from('asset_movements').update({ created_by: null }).eq('created_by', id);
-    await supabase.from('notifications').delete().eq('user_id', id);
-    await supabase.from('memberships').delete().eq('user_id', id);
-    await supabase.from('user_roles').delete().eq('user_id', id);
-    return await supabase.from('profiles').delete().eq('id', id);
-  };
-
   const handleBulkDelete = async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+
     setBulkDeleting(true);
+    setBulkDeleteResult(null);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const currentUserId = user?.id;
-      const ids = Array.from(selectedIds).filter(id => id !== currentUserId);
-      console.log('[BulkDelete] Eliminando IDs:', ids);
-      let deleted = 0;
-      const errors: string[] = [];
-      for (const id of ids) {
-        const { error } = await deleteProfileCascade(id);
-        if (!error) {
-          deleted++;
-        } else {
-          console.error('[BulkDelete] Error con id', id, error);
-          errors.push(`${id.slice(0, 8)}: ${error.message}`);
-        }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('Debes iniciar sesión para eliminar colaboradores');
+        return;
       }
-      if (deleted > 0) toast.success(`${deleted} colaborador(es) eliminado(s)`);
-      if (errors.length > 0) {
-        toast.error(`No se pudieron eliminar ${errors.length}: ${errors[0]}`);
+
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-collaborators`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ ids }),
+      });
+      const result = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(result.error || 'No se pudo completar el borrado masivo');
       }
+
+      setBulkDeleteResult(result as BulkDeleteResult);
+      toast.success(`Resultado: ${result.deleted ?? 0} eliminados, ${result.failed ?? 0} fallidos`);
       setSelectedIds(new Set());
       qc.invalidateQueries({ queryKey: ['profiles'] });
       qc.invalidateQueries({ queryKey: ['memberships'] });
@@ -190,9 +180,10 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
     } catch (err: any) {
       console.error('[BulkDelete] Excepción:', err);
       toast.error(`Error: ${err.message || 'Error desconocido'}`);
+      setBulkDeleteResult({ requested: ids.length, deleted: 0, failed: ids.length, skipped: 0, results: ids.map(id => ({ id, status: 'failed', reason: err.message || 'Error desconocido' })) });
+    } finally {
+      setBulkDeleting(false);
     }
-    setBulkDeleting(false);
-    setBulkDeleteOpen(false);
   };
 
   const toggleSelect = (id: string) => {
