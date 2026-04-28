@@ -354,7 +354,7 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
           <h1 className="page-title">Auditorías</h1>
           <p className="page-subtitle">Gestión de planes de trabajo, hallazgos y seguimiento de calidad</p>
         </div>
-        {canManage && (
+        {canManage && activeTab === "planes" && (
           <Button onClick={() => openPlanDialog()}>
             <Plus className="w-4 h-4 mr-1" /> Nuevo Plan
           </Button>
