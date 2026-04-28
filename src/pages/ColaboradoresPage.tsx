@@ -29,6 +29,8 @@ type BulkDeleteResult = {
   results: { id: string; name?: string; status: 'deleted' | 'failed' | 'skipped'; reason?: string }[];
 };
 
+const getErrorMessage = (error: unknown) => error instanceof Error ? error.message : 'Error desconocido';
+
 export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageProps = {}) {
   const { data: profiles = [], isLoading } = useProfiles();
   const { data: memberships = [] } = useMemberships();
@@ -165,7 +167,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
         body: JSON.stringify({ ids }),
       });
-      const result = await res.json().catch(() => ({}));
+      const result = await res.json().catch(() => ({})) as Partial<BulkDeleteResult> & { error?: string };
 
       if (!res.ok) {
         throw new Error(result.error || 'No se pudo completar el borrado masivo');
@@ -177,10 +179,11 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
       qc.invalidateQueries({ queryKey: ['profiles'] });
       qc.invalidateQueries({ queryKey: ['memberships'] });
       qc.invalidateQueries({ queryKey: ['user_roles'] });
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = getErrorMessage(err);
       console.error('[BulkDelete] Excepción:', err);
-      toast.error(`Error: ${err.message || 'Error desconocido'}`);
-      setBulkDeleteResult({ requested: ids.length, deleted: 0, failed: ids.length, skipped: 0, results: ids.map(id => ({ id, status: 'failed', reason: err.message || 'Error desconocido' })) });
+      toast.error(`Error: ${message}`);
+      setBulkDeleteResult({ requested: ids.length, deleted: 0, failed: ids.length, skipped: 0, results: ids.map(id => ({ id, status: 'failed', reason: message })) });
     } finally {
       setBulkDeleting(false);
     }
