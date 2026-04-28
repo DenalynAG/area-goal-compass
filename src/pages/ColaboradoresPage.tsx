@@ -14,6 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface ColaboradoresPageProps {
@@ -38,6 +39,9 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
   const [deleteTarget, setDeleteTarget] = useState<Tables<'profiles'> | null>(null);
   const [deleteAllOpen, setDeleteAllOpen] = useState(false);
   const [deletingAll, setDeletingAll] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
   const [detailProfile, setDetailProfile] = useState<Tables<'profiles'> | null>(null);
   const [importReport, setImportReport] = useState<{ success: { row: number; name: string; action: string }[]; errors: { row: number; name: string; reason: string }[] } | null>(null);
 
@@ -132,6 +136,60 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
     }
     setDeletingAll(false);
     setDeleteAllOpen(false);
+  };
+
+  const deleteProfileCascade = async (id: string) => {
+    await supabase.from('areas').update({ leader_user_id: null }).eq('leader_user_id', id);
+    await supabase.from('subareas').update({ leader_user_id: null }).eq('leader_user_id', id);
+    await supabase.from('objectives').update({ owner_user_id: null }).eq('owner_user_id', id);
+    await supabase.from('evaluation_scores').delete().in('evaluation_id',
+      (await supabase.from('evaluations').select('id').eq('collaborator_user_id', id)).data?.map(e => e.id) ?? []
+    );
+    await supabase.from('evaluations').delete().eq('collaborator_user_id', id);
+    await supabase.from('evaluations').delete().eq('evaluator_user_id', id);
+    await supabase.from('leader_pass_records').delete().eq('user_id', id);
+    await supabase.from('comfort_assignments').delete().eq('assigned_user_id', id);
+    await supabase.from('recognition_posts').delete().eq('nominee_user_id', id);
+    await supabase.from('recognition_posts').delete().eq('nominated_by', id);
+    await supabase.from('access_control').update({ companion_user_id: null }).eq('companion_user_id', id);
+    await supabase.from('access_control').update({ created_by: null }).eq('created_by', id);
+    await supabase.from('asset_movements').update({ collaborator_user_id: null }).eq('collaborator_user_id', id);
+    await supabase.from('asset_movements').update({ created_by: null }).eq('created_by', id);
+    await supabase.from('notifications').delete().eq('user_id', id);
+    await supabase.from('memberships').delete().eq('user_id', id);
+    await supabase.from('user_roles').delete().eq('user_id', id);
+    return await supabase.from('profiles').delete().eq('id', id);
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkDeleting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const currentUserId = user?.id;
+      const ids = Array.from(selectedIds).filter(id => id !== currentUserId);
+      let deleted = 0;
+      for (const id of ids) {
+        const { error } = await deleteProfileCascade(id);
+        if (!error) deleted++;
+      }
+      toast.success(`${deleted} colaborador(es) eliminado(s)`);
+      setSelectedIds(new Set());
+      qc.invalidateQueries({ queryKey: ['profiles'] });
+      qc.invalidateQueries({ queryKey: ['memberships'] });
+      qc.invalidateQueries({ queryKey: ['user_roles'] });
+    } catch (err: any) {
+      toast.error(`Error: ${err.message || 'Error desconocido'}`);
+    }
+    setBulkDeleting(false);
+    setBulkDeleteOpen(false);
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
   };
 
   const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -514,11 +572,38 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
         <Input placeholder="Buscar por nombre, correo o cargo..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
       </div>
 
+      {isSuperAdmin && selectedIds.size > 0 && (
+        <div className="flex items-center justify-between px-4 py-2 rounded-lg border bg-primary/5">
+          <p className="text-sm font-medium">{selectedIds.size} seleccionado(s)</p>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => setSelectedIds(new Set())}>Limpiar selección</Button>
+            <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)}>
+              <Trash2 className="w-4 h-4 mr-2" />Eliminar seleccionados
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50">
+                {isSuperAdmin && (
+                  <th className="px-3 py-3 w-10">
+                    <Checkbox
+                      checked={paginatedFiltered.length > 0 && paginatedFiltered.every(p => selectedIds.has(p.id))}
+                      onCheckedChange={(checked) => {
+                        setSelectedIds(prev => {
+                          const next = new Set(prev);
+                          if (checked) paginatedFiltered.forEach(p => next.add(p.id));
+                          else paginatedFiltered.forEach(p => next.delete(p.id));
+                          return next;
+                        });
+                      }}
+                    />
+                  </th>
+                )}
                 <th className="text-left px-5 py-3 font-medium text-muted-foreground">Colaborador</th>
                 <th className="text-left px-5 py-3 font-medium text-muted-foreground">Cargo</th>
                 <th className="text-left px-5 py-3 font-medium text-muted-foreground">Área</th>
@@ -534,6 +619,14 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
                 const role = getRole(c.id);
                 return (
                   <tr key={c.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                    {isSuperAdmin && (
+                      <td className="px-3 py-3">
+                        <Checkbox
+                          checked={selectedIds.has(c.id)}
+                          onCheckedChange={() => toggleSelect(c.id)}
+                        />
+                      </td>
+                    )}
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-3">
                         {(c as any).avatar ? (
@@ -578,7 +671,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
                 );
               })}
               {paginatedFiltered.length === 0 && (
-                <tr><td colSpan={7} className="px-5 py-8 text-center text-muted-foreground">No se encontraron colaboradores</td></tr>
+                <tr><td colSpan={isSuperAdmin ? 8 : 7} className="px-5 py-8 text-center text-muted-foreground">No se encontraron colaboradores</td></tr>
               )}
             </tbody>
           </table>
@@ -652,6 +745,23 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
             <AlertDialogCancel disabled={deletingAll}>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteAll} disabled={deletingAll} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               {deletingAll ? 'Eliminando...' : 'Sí, eliminar todo'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar colaboradores seleccionados?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminarán permanentemente <strong>{selectedIds.size}</strong> colaborador(es) y todos sus datos asociados (membresías, roles, evaluaciones, etc.). Tu propio perfil será omitido si está seleccionado. <strong>Esta acción no se puede deshacer.</strong>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBulkDelete} disabled={bulkDeleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {bulkDeleting ? 'Eliminando...' : 'Sí, eliminar seleccionados'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
