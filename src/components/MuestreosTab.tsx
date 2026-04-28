@@ -45,6 +45,19 @@ const GRID_ROWS: GridRow[] = [
   { area: 'Mantenimiento', indicator: 'Agua potable grifos' },
 ];
 
+// Compute occurrence index per (area, indicator) so duplicate rows have unique keys
+const GRID_ROWS_WITH_SEQ = (() => {
+  const counts: Record<string, number> = {};
+  return GRID_ROWS.map(r => {
+    const k = `${r.area}|${r.indicator}`;
+    const seq = counts[k] ?? 0;
+    counts[k] = seq + 1;
+    // Stored indicator name appends "#N" when seq > 0 to disambiguate in DB
+    const storedIndicator = seq === 0 ? r.indicator : `${r.indicator} #${seq + 1}`;
+    return { ...r, seq, storedIndicator };
+  });
+})();
+
 const MONTHS = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
