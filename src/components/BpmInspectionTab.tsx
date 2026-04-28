@@ -210,6 +210,44 @@ export default function BpmInspectionTab() {
         </p>
       )}
 
+      {/* Chart: stacked bars per month */}
+      {zones.length > 0 && (
+        <Card>
+          <CardContent className="p-4">
+            <h3 className="text-sm font-semibold mb-3">Inspección BPM Mensual — {year}</h3>
+            <ResponsiveContainer width="100%" height={360}>
+              <BarChart
+                data={MONTHS.map((m, idx) => {
+                  const row: Record<string, any> = { month: m };
+                  zones.forEach(z => {
+                    const v = grid[z]?.[idx + 1]?.percentage;
+                    row[z] = v != null ? Number(v) : 0;
+                  });
+                  return row;
+                })}
+                margin={{ top: 20, right: 20, left: 0, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                <YAxis tickFormatter={(v) => `${v}%`} tick={{ fontSize: 11 }} />
+                <Tooltip formatter={(v: number) => `${v}%`} />
+                <Legend />
+                {zones.map((z, i) => (
+                  <Bar key={z} dataKey={z} stackId="bpm" fill={ZONE_COLORS[i % ZONE_COLORS.length]}>
+                    <LabelList
+                      dataKey={z}
+                      position="center"
+                      formatter={(v: number) => (v > 0 ? `${v}%` : "")}
+                      style={{ fill: "#fff", fontSize: 11, fontWeight: 600 }}
+                    />
+                  </Bar>
+                ))}
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Edit/Create dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
