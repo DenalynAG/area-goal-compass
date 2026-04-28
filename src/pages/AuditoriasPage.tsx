@@ -108,6 +108,46 @@ const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secon
   pendiente_cierre: { label: "Pendiente cierre", variant: "outline", icon: Clock },
 };
 
+// Color schemes for status filter buttons (inactive / active)
+const STATUS_COLORS: Record<string, { inactive: string; active: string }> = {
+  pendiente: {
+    inactive: "border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100",
+    active: "bg-amber-500 text-white border-amber-500 hover:bg-amber-600",
+  },
+  en_proceso: {
+    inactive: "border-blue-300 bg-blue-50 text-blue-800 hover:bg-blue-100",
+    active: "bg-blue-600 text-white border-blue-600 hover:bg-blue-700",
+  },
+  cumple: {
+    inactive: "border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100",
+    active: "bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700",
+  },
+  no_cumple: {
+    inactive: "border-red-300 bg-red-50 text-red-800 hover:bg-red-100",
+    active: "bg-red-600 text-white border-red-600 hover:bg-red-700",
+  },
+  pendiente_cierre: {
+    inactive: "border-violet-300 bg-violet-50 text-violet-800 hover:bg-violet-100",
+    active: "bg-violet-600 text-white border-violet-600 hover:bg-violet-700",
+  },
+};
+
+// Cycling palette for area filter buttons
+const AREA_PALETTE: { inactive: string; active: string }[] = [
+  { inactive: "border-blue-300 bg-blue-50 text-blue-800 hover:bg-blue-100", active: "bg-blue-600 text-white border-blue-600 hover:bg-blue-700" },
+  { inactive: "border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100", active: "bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700" },
+  { inactive: "border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100", active: "bg-amber-500 text-white border-amber-500 hover:bg-amber-600" },
+  { inactive: "border-rose-300 bg-rose-50 text-rose-800 hover:bg-rose-100", active: "bg-rose-600 text-white border-rose-600 hover:bg-rose-700" },
+  { inactive: "border-violet-300 bg-violet-50 text-violet-800 hover:bg-violet-100", active: "bg-violet-600 text-white border-violet-600 hover:bg-violet-700" },
+  { inactive: "border-cyan-300 bg-cyan-50 text-cyan-800 hover:bg-cyan-100", active: "bg-cyan-600 text-white border-cyan-600 hover:bg-cyan-700" },
+  { inactive: "border-orange-300 bg-orange-50 text-orange-800 hover:bg-orange-100", active: "bg-orange-600 text-white border-orange-600 hover:bg-orange-700" },
+  { inactive: "border-teal-300 bg-teal-50 text-teal-800 hover:bg-teal-100", active: "bg-teal-600 text-white border-teal-600 hover:bg-teal-700" },
+  { inactive: "border-indigo-300 bg-indigo-50 text-indigo-800 hover:bg-indigo-100", active: "bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700" },
+  { inactive: "border-pink-300 bg-pink-50 text-pink-800 hover:bg-pink-100", active: "bg-pink-600 text-white border-pink-600 hover:bg-pink-700" },
+];
+const ALL_AREAS_COLOR = { inactive: "border-slate-300 bg-slate-50 text-slate-800 hover:bg-slate-100", active: "bg-slate-800 text-white border-slate-800 hover:bg-slate-900" };
+const ALL_STATUS_COLOR = { inactive: "border-slate-300 bg-slate-50 text-slate-800 hover:bg-slate-100", active: "bg-slate-800 text-white border-slate-800 hover:bg-slate-900" };
+
 const SEVERITY_CONFIG: Record<string, { label: string; className: string; icon: typeof Shield }> = {
   critico: { label: "Crítico", className: "bg-destructive/10 text-destructive border-destructive/20", icon: ShieldAlert },
   leve: { label: "Leve", className: "bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.2)]", icon: Shield },
