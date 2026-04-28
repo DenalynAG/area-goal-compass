@@ -10,53 +10,54 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import EvidencePanel from '@/components/EvidencePanel';
 import {
-  Trash2, Upload, Paperclip, Loader2, FileText, Download, Save
+  Trash2, Upload, Paperclip, Loader2, FileText, Download, Save, Plus, Pencil
 } from 'lucide-react';
 import { format } from 'date-fns';
 import * as XLSX from 'xlsx';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Input } from '@/components/ui/input';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, LabelList,
 } from 'recharts';
 
-// ─── Grid Config matching Excel layout ───
+// ─── Grid Row from DB ───
 interface GridRow {
-  area: string;
-  indicator: string;
+  id: string;
+  area_name: string;
+  area: string;          // zone (e.g., Cocina)
+  indicator: string;     // display indicator
+  storedIndicator: string; // same as indicator (kept for compatibility)
+  sort_order: number;
 }
 
-const GRID_ROWS: GridRow[] = [
-  { area: 'Cocina', indicator: 'Alimentos' },
-  { area: 'Cocina', indicator: 'Patógenos' },
-  { area: 'Cocina', indicator: 'Superficies' },
-  { area: 'Cocina', indicator: 'Ambiente' },
-  { area: 'Cocina', indicator: 'Manipuladores' },
-  { area: 'Cocina', indicator: 'Superficies' },
-  { area: 'Cocina', indicator: 'Ambiente' },
-  { area: 'Bar', indicator: 'Bebidas' },
-  { area: 'Bar', indicator: 'Alimentos' },
-  { area: 'Bar', indicator: 'Hielo' },
-  { area: 'Bar', indicator: 'Manipuladores' },
-  { area: 'Mantenimiento', indicator: 'Piscina 1' },
-  { area: 'Mantenimiento', indicator: 'Piscina 5' },
-  { area: 'Mantenimiento', indicator: 'Agua potable grifos' },
-];
+interface SamplingGridRowDB {
+  id: string;
+  area_name: string;
+  zone_name: string;
+  indicator_name: string;
+  sort_order: number;
+}
 
-// Compute occurrence index per (area, indicator) so duplicate rows have unique keys
-const GRID_ROWS_WITH_SEQ = (() => {
-  const counts: Record<string, number> = {};
-  return GRID_ROWS.map(r => {
-    const k = `${r.area}|${r.indicator}`;
-    const seq = counts[k] ?? 0;
-    counts[k] = seq + 1;
-    // Stored indicator name appends "#N" when seq > 0 to disambiguate in DB
-    const storedIndicator = seq === 0 ? r.indicator : `${r.indicator} #${seq + 1}`;
-    return { ...r, seq, storedIndicator };
+function useSamplingGridRows() {
+  return useQuery({
+    queryKey: ['sampling_grid_rows'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('sampling_grid_rows')
+        .select('*')
+        .order('sort_order', { ascending: true });
+      if (error) throw error;
+      return data as SamplingGridRowDB[];
+    },
   });
-})();
+}
 
 const MONTHS = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
