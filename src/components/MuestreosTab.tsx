@@ -10,53 +10,54 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import EvidencePanel from '@/components/EvidencePanel';
 import {
-  Trash2, Upload, Paperclip, Loader2, FileText, Download, Save
+  Trash2, Upload, Paperclip, Loader2, FileText, Download, Save, Plus, Pencil
 } from 'lucide-react';
 import { format } from 'date-fns';
 import * as XLSX from 'xlsx';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Input } from '@/components/ui/input';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, LabelList,
 } from 'recharts';
 
-// ─── Grid Config matching Excel layout ───
+// ─── Grid Row from DB ───
 interface GridRow {
-  area: string;
-  indicator: string;
+  id: string;
+  area_name: string;
+  area: string;          // zone (e.g., Cocina)
+  indicator: string;     // display indicator
+  storedIndicator: string; // same as indicator (kept for compatibility)
+  sort_order: number;
 }
 
-const GRID_ROWS: GridRow[] = [
-  { area: 'Cocina', indicator: 'Alimentos' },
-  { area: 'Cocina', indicator: 'Patógenos' },
-  { area: 'Cocina', indicator: 'Superficies' },
-  { area: 'Cocina', indicator: 'Ambiente' },
-  { area: 'Cocina', indicator: 'Manipuladores' },
-  { area: 'Cocina', indicator: 'Superficies' },
-  { area: 'Cocina', indicator: 'Ambiente' },
-  { area: 'Bar', indicator: 'Bebidas' },
-  { area: 'Bar', indicator: 'Alimentos' },
-  { area: 'Bar', indicator: 'Hielo' },
-  { area: 'Bar', indicator: 'Manipuladores' },
-  { area: 'Mantenimiento', indicator: 'Piscina 1' },
-  { area: 'Mantenimiento', indicator: 'Piscina 5' },
-  { area: 'Mantenimiento', indicator: 'Agua potable grifos' },
-];
+interface SamplingGridRowDB {
+  id: string;
+  area_name: string;
+  zone_name: string;
+  indicator_name: string;
+  sort_order: number;
+}
 
-// Compute occurrence index per (area, indicator) so duplicate rows have unique keys
-const GRID_ROWS_WITH_SEQ = (() => {
-  const counts: Record<string, number> = {};
-  return GRID_ROWS.map(r => {
-    const k = `${r.area}|${r.indicator}`;
-    const seq = counts[k] ?? 0;
-    counts[k] = seq + 1;
-    // Stored indicator name appends "#N" when seq > 0 to disambiguate in DB
-    const storedIndicator = seq === 0 ? r.indicator : `${r.indicator} #${seq + 1}`;
-    return { ...r, seq, storedIndicator };
+function useSamplingGridRows() {
+  return useQuery({
+    queryKey: ['sampling_grid_rows'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('sampling_grid_rows')
+        .select('*')
+        .order('sort_order', { ascending: true });
+      if (error) throw error;
+      return data as SamplingGridRowDB[];
+    },
   });
-})();
+}
 
 const MONTHS = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -105,6 +106,7 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
   const { user, profile, isSuperAdmin, hasRole } = useAuth();
   const qc = useQueryClient();
   const { data: records = [], isLoading } = useSamplingRecords();
+  const { data: dbRows = [] } = useSamplingGridRows();
   const isRRHH = !areaFilterName || areaFilterName === 'Recursos Humanos';
   const canManage = (isSuperAdmin || hasRole('admin_area')) && isRRHH;
 
@@ -115,6 +117,12 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
   // Pending edits: key = `${area}|${indicator}|${monthIdx}` → value string
   const [pendingEdits, setPendingEdits] = useState<Record<string, string>>({});
   const [editingCell, setEditingCell] = useState<string | null>(null);
+
+  // CRUD dialogs for grid rows
+  const [rowDialog, setRowDialog] = useState<null | { mode: 'add' | 'edit'; row?: SamplingGridRowDB; presetArea?: string; presetZone?: string }>(null);
+  const [rowForm, setRowForm] = useState({ area_name: '', zone_name: '', indicator_name: '' });
+  const [rowSaving, setRowSaving] = useState(false);
+  const [deleteRow, setDeleteRow] = useState<SamplingGridRowDB | null>(null);
 
   // Evidence panel
   const [evidenceRecordId, setEvidenceRecordId] = useState<string | null>(null);
@@ -139,18 +147,19 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
     return map;
   }, [records, selectedYear, samplingType]);
 
-  // Filter grid rows by area if not RRHH
-  const visibleRows = useMemo(() => {
-    if (isRRHH) return GRID_ROWS_WITH_SEQ;
-    // Map areaFilterName to grid area names
-    if (areaFilterName === 'Alimentos y Bebidas') {
-      return GRID_ROWS_WITH_SEQ.filter(r => r.area === 'Cocina' || r.area === 'Bar');
-    }
-    if (areaFilterName === 'Operaciones') {
-      return GRID_ROWS_WITH_SEQ.filter(r => r.area === 'Mantenimiento');
-    }
-    return GRID_ROWS_WITH_SEQ;
-  }, [isRRHH, areaFilterName]);
+  // Convert DB rows to GridRow shape, filter by area if not RRHH
+  const visibleRows = useMemo<GridRow[]>(() => {
+    const all: GridRow[] = dbRows.map(r => ({
+      id: r.id,
+      area_name: r.area_name,
+      area: r.zone_name,
+      indicator: r.indicator_name,
+      storedIndicator: r.indicator_name,
+      sort_order: r.sort_order,
+    }));
+    if (isRRHH) return all;
+    return all.filter(r => r.area_name === areaFilterName);
+  }, [dbRows, isRRHH, areaFilterName]);
 
   // Group rows by area for display
   const groupedRows = useMemo(() => {
@@ -261,9 +270,12 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
           }).eq('id', existing.id);
           if (error) { toast.error(`Error: ${error.message}`); continue; }
         } else if (value !== '') {
+          // Lookup area_name from DB rows
+          const dbRow = dbRows.find(r => r.zone_name === area && r.indicator_name === indicator);
+          const areaName = dbRow?.area_name ?? (area === 'Cocina' || area === 'Bar' ? 'Alimentos y Bebidas' : 'Operaciones');
           // Insert
           const { error } = await supabase.from('sampling_records').insert({
-            area_name: area === 'Cocina' || area === 'Bar' ? 'Alimentos y Bebidas' : 'Mantenimiento',
+            area_name: areaName,
             zone_name: area,
             indicator_name: indicator,
             sampling_type: samplingType,
@@ -280,6 +292,61 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
       qc.invalidateQueries({ queryKey: ['sampling_records'] });
       toast.success('Muestreos guardados correctamente');
     } finally { setSaving(false); }
+  };
+
+  // ─── CRUD for grid rows ───
+  const openAddRow = (presetArea?: string, presetZone?: string) => {
+    setRowForm({
+      area_name: presetArea ?? (areaFilterName && !isRRHH ? areaFilterName : ''),
+      zone_name: presetZone ?? '',
+      indicator_name: '',
+    });
+    setRowDialog({ mode: 'add', presetArea, presetZone });
+  };
+  const openEditRow = (row: SamplingGridRowDB) => {
+    setRowForm({ area_name: row.area_name, zone_name: row.zone_name, indicator_name: row.indicator_name });
+    setRowDialog({ mode: 'edit', row });
+  };
+  const saveRow = async () => {
+    if (!rowForm.area_name.trim() || !rowForm.zone_name.trim() || !rowForm.indicator_name.trim()) {
+      toast.error('Área, Zona e Indicador son obligatorios');
+      return;
+    }
+    setRowSaving(true);
+    try {
+      if (rowDialog?.mode === 'edit' && rowDialog.row) {
+        const { error } = await supabase.from('sampling_grid_rows').update({
+          area_name: rowForm.area_name.trim(),
+          zone_name: rowForm.zone_name.trim(),
+          indicator_name: rowForm.indicator_name.trim(),
+        }).eq('id', rowDialog.row.id);
+        if (error) { toast.error(error.message); return; }
+        toast.success('Fila actualizada');
+      } else {
+        // New: place at end of zone group (max sort_order in zone +1)
+        const sameZone = dbRows.filter(r => r.zone_name === rowForm.zone_name.trim());
+        const maxOrder = sameZone.length ? Math.max(...sameZone.map(r => r.sort_order)) : Math.max(0, ...dbRows.map(r => r.sort_order));
+        const { error } = await supabase.from('sampling_grid_rows').insert({
+          area_name: rowForm.area_name.trim(),
+          zone_name: rowForm.zone_name.trim(),
+          indicator_name: rowForm.indicator_name.trim(),
+          sort_order: maxOrder + 10,
+          created_by: user?.id ?? null,
+        });
+        if (error) { toast.error(error.message); return; }
+        toast.success('Fila agregada');
+      }
+      setRowDialog(null);
+      qc.invalidateQueries({ queryKey: ['sampling_grid_rows'] });
+    } finally { setRowSaving(false); }
+  };
+  const confirmDeleteRow = async () => {
+    if (!deleteRow) return;
+    const { error } = await supabase.from('sampling_grid_rows').delete().eq('id', deleteRow.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Fila eliminada');
+    setDeleteRow(null);
+    qc.invalidateQueries({ queryKey: ['sampling_grid_rows'] });
   };
 
   // Export Excel
@@ -341,6 +408,11 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
               Guardar cambios
             </Button>
           )}
+          {canManage && (
+            <Button size="sm" variant="outline" className="h-8 text-xs gap-1" onClick={() => openAddRow()}>
+              <Plus className="w-3.5 h-3.5" /> Agregar fila
+            </Button>
+          )}
         </div>
       </div>
 
@@ -357,6 +429,9 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
                     <th key={m} className="text-center px-1 py-2.5 font-semibold border-b border-r border-border min-w-[70px]">{m}</th>
                   ))}
                   <th className="text-center px-2 py-2.5 font-semibold border-b border-border min-w-[70px] bg-primary/15">% Acum.</th>
+                  {canManage && (
+                    <th className="text-center px-2 py-2.5 font-semibold border-b border-border min-w-[80px]">Acciones</th>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -437,6 +512,32 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
                             </td>
                           );
                         })()}
+                        {canManage && (
+                          <td className="text-center px-1 py-1.5 border-l border-border whitespace-nowrap">
+                            <Button
+                              variant="ghost" size="icon"
+                              className="h-6 w-6"
+                              onClick={() => {
+                                const dbRow = dbRows.find(r => r.id === row.id);
+                                if (dbRow) openEditRow(dbRow);
+                              }}
+                              title="Editar"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost" size="icon"
+                              className="h-6 w-6 text-destructive"
+                              onClick={() => {
+                                const dbRow = dbRows.find(r => r.id === row.id);
+                                if (dbRow) setDeleteRow(dbRow);
+                              }}
+                              title="Eliminar"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </td>
+                        )}
                       </tr>
                     );
                   })
@@ -536,6 +637,79 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
         open={!!evidenceRecordId}
         onOpenChange={open => { if (!open) setEvidenceRecordId(null); }}
       />
+
+      {/* Add/Edit row dialog */}
+      <Dialog open={!!rowDialog} onOpenChange={open => { if (!open) setRowDialog(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{rowDialog?.mode === 'edit' ? 'Editar fila' : 'Agregar zona / indicador'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label className="text-xs">Área</Label>
+              <Input
+                value={rowForm.area_name}
+                onChange={e => setRowForm(f => ({ ...f, area_name: e.target.value }))}
+                placeholder="Ej: Alimentos y Bebidas"
+                list="muestreos-area-options"
+              />
+              <datalist id="muestreos-area-options">
+                {Array.from(new Set(dbRows.map(r => r.area_name))).map(a => (
+                  <option key={a} value={a} />
+                ))}
+              </datalist>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Zona</Label>
+              <Input
+                value={rowForm.zone_name}
+                onChange={e => setRowForm(f => ({ ...f, zone_name: e.target.value }))}
+                placeholder="Ej: Cocina, Bar, Panadería"
+                list="muestreos-zone-options"
+              />
+              <datalist id="muestreos-zone-options">
+                {Array.from(new Set(dbRows.map(r => r.zone_name))).map(z => (
+                  <option key={z} value={z} />
+                ))}
+              </datalist>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Indicador</Label>
+              <Input
+                value={rowForm.indicator_name}
+                onChange={e => setRowForm(f => ({ ...f, indicator_name: e.target.value }))}
+                placeholder="Ej: Alimentos, Superficies, Hielo"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" size="sm" onClick={() => setRowDialog(null)}>Cancelar</Button>
+            <Button size="sm" onClick={saveRow} disabled={rowSaving} className="gap-1">
+              {rowSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              {rowDialog?.mode === 'edit' ? 'Guardar' : 'Agregar'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete row confirmation */}
+      <AlertDialog open={!!deleteRow} onOpenChange={open => { if (!open) setDeleteRow(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar esta fila?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminará <b>{deleteRow?.zone_name} · {deleteRow?.indicator_name}</b> del grid.
+              Los datos históricos de muestreos no se borrarán.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteRow} className="bg-destructive hover:bg-destructive/90">
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
