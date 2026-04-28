@@ -50,7 +50,10 @@ export default function BpmInspectionTab() {
         .select("*")
         .eq("year", year);
       if (error) throw error;
-      return (data ?? []) as unknown as BpmInspection[];
+      return ((data ?? []) as any[]).map((r) => ({
+        ...r,
+        percentage: r.percentage != null ? Number(r.percentage) : null,
+      })) as BpmInspection[];
     },
   });
 
@@ -95,8 +98,11 @@ export default function BpmInspectionTab() {
 
   const save = async () => {
     if (!form.zone.trim()) { toast.error("La zona es obligatoria"); return; }
-    const pct = form.percentage === "" ? null : parseFloat(form.percentage);
-    if (pct != null && (isNaN(pct) || pct < 0 || pct > 100)) {
+    if (form.percentage === "" || form.percentage == null) {
+      toast.error("El porcentaje es obligatorio"); return;
+    }
+    const pct = parseFloat(form.percentage);
+    if (isNaN(pct) || pct < 0 || pct > 100) {
       toast.error("Porcentaje debe estar entre 0 y 100"); return;
     }
     const payload = {
@@ -111,7 +117,8 @@ export default function BpmInspectionTab() {
       : await supabase.from("bpm_inspections" as any).upsert(payload, { onConflict: "year,month,zone" });
     if (error) { toast.error(error.message); return; }
     toast.success(editing ? "Registro actualizado" : "Registro guardado");
-    qc.invalidateQueries({ queryKey: ["bpm_inspections"] });
+    await qc.invalidateQueries({ queryKey: ["bpm_inspections"] });
+    await qc.refetchQueries({ queryKey: ["bpm_inspections", year] });
     setDialogOpen(false);
   };
 
