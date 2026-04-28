@@ -270,9 +270,12 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
           }).eq('id', existing.id);
           if (error) { toast.error(`Error: ${error.message}`); continue; }
         } else if (value !== '') {
+          // Lookup area_name from DB rows
+          const dbRow = dbRows.find(r => r.zone_name === area && r.indicator_name === indicator);
+          const areaName = dbRow?.area_name ?? (area === 'Cocina' || area === 'Bar' ? 'Alimentos y Bebidas' : 'Operaciones');
           // Insert
           const { error } = await supabase.from('sampling_records').insert({
-            area_name: area === 'Cocina' || area === 'Bar' ? 'Alimentos y Bebidas' : 'Mantenimiento',
+            area_name: areaName,
             zone_name: area,
             indicator_name: indicator,
             sampling_type: samplingType,
@@ -289,6 +292,61 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
       qc.invalidateQueries({ queryKey: ['sampling_records'] });
       toast.success('Muestreos guardados correctamente');
     } finally { setSaving(false); }
+  };
+
+  // ─── CRUD for grid rows ───
+  const openAddRow = (presetArea?: string, presetZone?: string) => {
+    setRowForm({
+      area_name: presetArea ?? (areaFilterName && !isRRHH ? areaFilterName : ''),
+      zone_name: presetZone ?? '',
+      indicator_name: '',
+    });
+    setRowDialog({ mode: 'add', presetArea, presetZone });
+  };
+  const openEditRow = (row: SamplingGridRowDB) => {
+    setRowForm({ area_name: row.area_name, zone_name: row.zone_name, indicator_name: row.indicator_name });
+    setRowDialog({ mode: 'edit', row });
+  };
+  const saveRow = async () => {
+    if (!rowForm.area_name.trim() || !rowForm.zone_name.trim() || !rowForm.indicator_name.trim()) {
+      toast.error('Área, Zona e Indicador son obligatorios');
+      return;
+    }
+    setRowSaving(true);
+    try {
+      if (rowDialog?.mode === 'edit' && rowDialog.row) {
+        const { error } = await supabase.from('sampling_grid_rows').update({
+          area_name: rowForm.area_name.trim(),
+          zone_name: rowForm.zone_name.trim(),
+          indicator_name: rowForm.indicator_name.trim(),
+        }).eq('id', rowDialog.row.id);
+        if (error) { toast.error(error.message); return; }
+        toast.success('Fila actualizada');
+      } else {
+        // New: place at end of zone group (max sort_order in zone +1)
+        const sameZone = dbRows.filter(r => r.zone_name === rowForm.zone_name.trim());
+        const maxOrder = sameZone.length ? Math.max(...sameZone.map(r => r.sort_order)) : Math.max(0, ...dbRows.map(r => r.sort_order));
+        const { error } = await supabase.from('sampling_grid_rows').insert({
+          area_name: rowForm.area_name.trim(),
+          zone_name: rowForm.zone_name.trim(),
+          indicator_name: rowForm.indicator_name.trim(),
+          sort_order: maxOrder + 10,
+          created_by: user?.id ?? null,
+        });
+        if (error) { toast.error(error.message); return; }
+        toast.success('Fila agregada');
+      }
+      setRowDialog(null);
+      qc.invalidateQueries({ queryKey: ['sampling_grid_rows'] });
+    } finally { setRowSaving(false); }
+  };
+  const confirmDeleteRow = async () => {
+    if (!deleteRow) return;
+    const { error } = await supabase.from('sampling_grid_rows').delete().eq('id', deleteRow.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Fila eliminada');
+    setDeleteRow(null);
+    qc.invalidateQueries({ queryKey: ['sampling_grid_rows'] });
   };
 
   // Export Excel
