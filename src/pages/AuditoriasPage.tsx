@@ -452,45 +452,51 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Área:</span>
               <Button
-                variant={filterArea === "all" ? "default" : "outline"}
+                variant="outline"
                 size="sm"
-                className="h-7 text-xs"
+                className={cn("h-7 text-xs border", filterArea === "all" ? ALL_AREAS_COLOR.active : ALL_AREAS_COLOR.inactive)}
                 onClick={() => setFilterArea("all")}
                 disabled={!isRRHH && !!presetAreaId}
               >
                 Todas
               </Button>
-              {areas.map((a) => (
+              {areas.map((a, i) => {
+                const palette = AREA_PALETTE[i % AREA_PALETTE.length];
+                const isActive = filterArea === a.id;
+                return (
                 <Button
                   key={a.id}
-                  variant={filterArea === a.id ? "default" : "outline"}
+                  variant="outline"
                   size="sm"
-                  className="h-7 text-xs"
+                  className={cn("h-7 text-xs border", isActive ? palette.active : palette.inactive)}
                   onClick={() => setFilterArea(a.id)}
                   disabled={!isRRHH && !!presetAreaId && presetAreaId !== a.id}
                 >
                   {a.name}
                 </Button>
-              ))}
+                );
+              })}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Estado:</span>
               <Button
-                variant={filterStatus === "all" ? "default" : "outline"}
+                variant="outline"
                 size="sm"
-                className="h-7 text-xs"
+                className={cn("h-7 text-xs border", filterStatus === "all" ? ALL_STATUS_COLOR.active : ALL_STATUS_COLOR.inactive)}
                 onClick={() => setFilterStatus("all")}
               >
                 Todos
               </Button>
               {Object.entries(STATUS_CONFIG).map(([k, v]) => {
                 const Icon = v.icon;
+                const colors = STATUS_COLORS[k];
+                const isActive = filterStatus === k;
                 return (
                   <Button
                     key={k}
-                    variant={filterStatus === k ? "default" : "outline"}
+                    variant="outline"
                     size="sm"
-                    className="h-7 text-xs gap-1"
+                    className={cn("h-7 text-xs gap-1 border", isActive ? colors.active : colors.inactive)}
                     onClick={() => setFilterStatus(k)}
                   >
                     <Icon className="w-3 h-3" /> {v.label}
