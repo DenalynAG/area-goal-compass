@@ -393,6 +393,66 @@ export type Database = {
           },
         ]
       }
+      bpm_action_plan: {
+        Row: {
+          action_evidence_url: string | null
+          action_plan: string | null
+          assigned_to: string | null
+          audited_personnel: string | null
+          closure_status: string | null
+          company: string | null
+          condition_type: string | null
+          created_at: string
+          created_by: string | null
+          estimated_close_date: string | null
+          finding_date: string | null
+          finding_description: string | null
+          finding_evidence_url: string | null
+          id: string
+          real_close_date: string | null
+          reported_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          action_evidence_url?: string | null
+          action_plan?: string | null
+          assigned_to?: string | null
+          audited_personnel?: string | null
+          closure_status?: string | null
+          company?: string | null
+          condition_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          estimated_close_date?: string | null
+          finding_date?: string | null
+          finding_description?: string | null
+          finding_evidence_url?: string | null
+          id?: string
+          real_close_date?: string | null
+          reported_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          action_evidence_url?: string | null
+          action_plan?: string | null
+          assigned_to?: string | null
+          audited_personnel?: string | null
+          closure_status?: string | null
+          company?: string | null
+          condition_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          estimated_close_date?: string | null
+          finding_date?: string | null
+          finding_description?: string | null
+          finding_evidence_url?: string | null
+          id?: string
+          real_close_date?: string | null
+          reported_by?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bpm_inspections: {
         Row: {
           created_at: string
