@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import EvidencePanel from "@/components/EvidencePanel";
 import MuestreosTab from "@/components/MuestreosTab";
+import BpmInspectionTab from "@/components/BpmInspectionTab";
 import {
   Plus, ClipboardCheck, AlertTriangle, CheckCircle2, Clock, Search,
   ChevronDown, ChevronUp, MessageSquare, Send, Trash2, Pencil,
@@ -368,6 +369,7 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
         <TabsList>
           <TabsTrigger value="planes">Planes de Auditoría</TabsTrigger>
           <TabsTrigger value="muestreos">Muestreos</TabsTrigger>
+          <TabsTrigger value="bpm">Inspección BPM</TabsTrigger>
           <TabsTrigger value="resumen">Resumen por Área</TabsTrigger>
         </TabsList>
 
