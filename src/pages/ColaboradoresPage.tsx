@@ -167,17 +167,28 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
       const { data: { user } } = await supabase.auth.getUser();
       const currentUserId = user?.id;
       const ids = Array.from(selectedIds).filter(id => id !== currentUserId);
+      console.log('[BulkDelete] Eliminando IDs:', ids);
       let deleted = 0;
+      const errors: string[] = [];
       for (const id of ids) {
         const { error } = await deleteProfileCascade(id);
-        if (!error) deleted++;
+        if (!error) {
+          deleted++;
+        } else {
+          console.error('[BulkDelete] Error con id', id, error);
+          errors.push(`${id.slice(0, 8)}: ${error.message}`);
+        }
       }
-      toast.success(`${deleted} colaborador(es) eliminado(s)`);
+      if (deleted > 0) toast.success(`${deleted} colaborador(es) eliminado(s)`);
+      if (errors.length > 0) {
+        toast.error(`No se pudieron eliminar ${errors.length}: ${errors[0]}`);
+      }
       setSelectedIds(new Set());
       qc.invalidateQueries({ queryKey: ['profiles'] });
       qc.invalidateQueries({ queryKey: ['memberships'] });
       qc.invalidateQueries({ queryKey: ['user_roles'] });
     } catch (err: any) {
+      console.error('[BulkDelete] Excepción:', err);
       toast.error(`Error: ${err.message || 'Error desconocido'}`);
     }
     setBulkDeleting(false);
@@ -760,7 +771,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={bulkDeleting}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleBulkDelete} disabled={bulkDeleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction onClick={(e) => { e.preventDefault(); handleBulkDelete(); }} disabled={bulkDeleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               {bulkDeleting ? 'Eliminando...' : 'Sí, eliminar seleccionados'}
             </AlertDialogAction>
           </AlertDialogFooter>
