@@ -141,20 +141,20 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
 
   // Filter grid rows by area if not RRHH
   const visibleRows = useMemo(() => {
-    if (isRRHH) return GRID_ROWS;
+    if (isRRHH) return GRID_ROWS_WITH_SEQ;
     // Map areaFilterName to grid area names
     if (areaFilterName === 'Alimentos y Bebidas') {
-      return GRID_ROWS.filter(r => r.area === 'Cocina' || r.area === 'Bar');
+      return GRID_ROWS_WITH_SEQ.filter(r => r.area === 'Cocina' || r.area === 'Bar');
     }
     if (areaFilterName === 'Operaciones') {
-      return GRID_ROWS.filter(r => r.area === 'Mantenimiento');
+      return GRID_ROWS_WITH_SEQ.filter(r => r.area === 'Mantenimiento');
     }
-    return GRID_ROWS;
+    return GRID_ROWS_WITH_SEQ;
   }, [isRRHH, areaFilterName]);
 
   // Group rows by area for display
   const groupedRows = useMemo(() => {
-    const groups: { area: string; rows: GridRow[] }[] = [];
+    const groups: { area: string; rows: typeof visibleRows }[] = [];
     let currentArea = '';
     visibleRows.forEach(row => {
       if (row.area !== currentArea) {
