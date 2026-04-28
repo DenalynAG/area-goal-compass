@@ -206,7 +206,7 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
   const [expandedPlanId, setExpandedPlanId] = useState<string | null>(null);
 
   // ─── Plan CRUD ───
-  const [planForm, setPlanForm] = useState({ title: "", description: "", area_id: "", subarea_id: "", responsible_user_id: "", auditor_user_id: "", planned_date: "", status: "pendiente" as "pendiente" | "en_proceso" | "cumple" | "no_cumple" | "pendiente_cierre" });
+  const [planForm, setPlanForm] = useState({ audit_type: "anual" as "anual" | "diaria", title: "", description: "", area_id: "", subarea_id: "", responsible_user_id: "", auditor_user_id: "", planned_date: "", status: "pendiente" as "pendiente" | "en_proceso" | "cumple" | "no_cumple" | "pendiente_cierre" });
 
   const subareasForPlanArea = useMemo(() => subareas.filter(s => s.area_id === planForm.area_id && s.status === 'activo'), [subareas, planForm.area_id]);
 
@@ -214,6 +214,7 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
     if (plan) {
       setEditingPlan(plan);
       setPlanForm({
+        audit_type: ((plan as any).audit_type ?? "anual") as "anual" | "diaria",
         title: plan.title, description: plan.description ?? "", area_id: plan.area_id,
         subarea_id: (plan as any).subarea_id ?? "",
         responsible_user_id: plan.responsible_user_id, auditor_user_id: plan.auditor_user_id,
@@ -221,7 +222,7 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
       });
     } else {
       setEditingPlan(null);
-      setPlanForm({ title: "", description: "", area_id: "", subarea_id: "", responsible_user_id: "", auditor_user_id: "", planned_date: format(new Date(), "yyyy-MM-dd"), status: "pendiente" as const });
+      setPlanForm({ audit_type: "anual", title: "", description: "", area_id: "", subarea_id: "", responsible_user_id: "", auditor_user_id: "", planned_date: format(new Date(), "yyyy-MM-dd"), status: "pendiente" as const });
     }
     setPlanDialogOpen(true);
   };
