@@ -45,6 +45,19 @@ const GRID_ROWS: GridRow[] = [
   { area: 'Mantenimiento', indicator: 'Agua potable grifos' },
 ];
 
+// Compute occurrence index per (area, indicator) so duplicate rows have unique keys
+const GRID_ROWS_WITH_SEQ = (() => {
+  const counts: Record<string, number> = {};
+  return GRID_ROWS.map(r => {
+    const k = `${r.area}|${r.indicator}`;
+    const seq = counts[k] ?? 0;
+    counts[k] = seq + 1;
+    // Stored indicator name appends "#N" when seq > 0 to disambiguate in DB
+    const storedIndicator = seq === 0 ? r.indicator : `${r.indicator} #${seq + 1}`;
+    return { ...r, seq, storedIndicator };
+  });
+})();
+
 const MONTHS = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
@@ -128,20 +141,20 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
 
   // Filter grid rows by area if not RRHH
   const visibleRows = useMemo(() => {
-    if (isRRHH) return GRID_ROWS;
+    if (isRRHH) return GRID_ROWS_WITH_SEQ;
     // Map areaFilterName to grid area names
     if (areaFilterName === 'Alimentos y Bebidas') {
-      return GRID_ROWS.filter(r => r.area === 'Cocina' || r.area === 'Bar');
+      return GRID_ROWS_WITH_SEQ.filter(r => r.area === 'Cocina' || r.area === 'Bar');
     }
     if (areaFilterName === 'Operaciones') {
-      return GRID_ROWS.filter(r => r.area === 'Mantenimiento');
+      return GRID_ROWS_WITH_SEQ.filter(r => r.area === 'Mantenimiento');
     }
-    return GRID_ROWS;
+    return GRID_ROWS_WITH_SEQ;
   }, [isRRHH, areaFilterName]);
 
   // Group rows by area for display
   const groupedRows = useMemo(() => {
-    const groups: { area: string; rows: GridRow[] }[] = [];
+    const groups: { area: string; rows: typeof visibleRows }[] = [];
     let currentArea = '';
     visibleRows.forEach(row => {
       if (row.area !== currentArea) {
@@ -275,7 +288,7 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
     visibleRows.forEach(row => {
       const rowData: any = { 'Área': row.area, 'Indicador clave': row.indicator };
       MONTHS.forEach((m, i) => {
-        const val = getCellValue(row.area, row.indicator, i);
+        const val = getCellValue(row.area, row.storedIndicator, i);
         rowData[m] = val ?? '';
       });
       data.push(rowData);
@@ -365,10 +378,10 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
                           {row.indicator}
                         </td>
                         {MONTHS.map((_, monthIdx) => {
-                          const key = getCellKey(row.area, row.indicator, monthIdx);
+                          const key = getCellKey(row.area, row.storedIndicator, monthIdx);
                           const isEditing = editingCell === key;
-                          const cellValue = getCellValue(row.area, row.indicator, monthIdx);
-                          const cellStatus = getCellStatus(row.area, row.indicator, monthIdx);
+                          const cellValue = getCellValue(row.area, row.storedIndicator, monthIdx);
+                          const cellStatus = getCellStatus(row.area, row.storedIndicator, monthIdx);
 
                           return (
                             <td
@@ -376,7 +389,7 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
                               className={`text-center px-1 py-1.5 border-r border-border transition-colors ${
                                 canManage ? 'cursor-pointer hover:bg-accent/20' : ''
                               }`}
-                              onClick={() => handleCellClick(row.area, row.indicator, monthIdx)}
+                              onClick={() => handleCellClick(row.area, row.storedIndicator, monthIdx)}
                             >
                               {isEditing ? (
                                 <input
@@ -385,7 +398,7 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
                                   value={pendingEdits[key] ?? ''}
                                   onChange={e => handleCellChange(key, e.target.value)}
                                   onBlur={handleCellBlur}
-                                  onKeyDown={e => handleCellKeyDown(e, row.area, row.indicator, monthIdx)}
+                                  onKeyDown={e => handleCellKeyDown(e, row.area, row.storedIndicator, monthIdx)}
                                   className="w-full text-center text-xs border rounded px-1 py-0.5 bg-background focus:outline-none focus:ring-1 focus:ring-primary"
                                 />
                               ) : cellValue ? (
@@ -409,7 +422,7 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
                           let filled = 0;
                           let total = 0;
                           for (let m = 0; m < 12; m++) {
-                            const val = getCellValue(row.area, row.indicator, m);
+                            const val = getCellValue(row.area, row.storedIndicator, m);
                             if (val) {
                               total++;
                               const num = parseFloat(val);
@@ -452,7 +465,7 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
               group.rows.forEach((row, idx) => {
                 let filled = 0; let total = 0;
                 for (let m = 0; m < 12; m++) {
-                  const val = getCellValue(row.area, row.indicator, m);
+                  const val = getCellValue(row.area, row.storedIndicator, m);
                   if (val) {
                     const num = parseFloat(val);
                     if (!isNaN(num)) { filled += num; total++; }
