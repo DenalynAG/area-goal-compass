@@ -14,6 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface ColaboradoresPageProps {
@@ -38,6 +39,9 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
   const [deleteTarget, setDeleteTarget] = useState<Tables<'profiles'> | null>(null);
   const [deleteAllOpen, setDeleteAllOpen] = useState(false);
   const [deletingAll, setDeletingAll] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
   const [detailProfile, setDetailProfile] = useState<Tables<'profiles'> | null>(null);
   const [importReport, setImportReport] = useState<{ success: { row: number; name: string; action: string }[]; errors: { row: number; name: string; reason: string }[] } | null>(null);
 
@@ -132,6 +136,60 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
     }
     setDeletingAll(false);
     setDeleteAllOpen(false);
+  };
+
+  const deleteProfileCascade = async (id: string) => {
+    await supabase.from('areas').update({ leader_user_id: null }).eq('leader_user_id', id);
+    await supabase.from('subareas').update({ leader_user_id: null }).eq('leader_user_id', id);
+    await supabase.from('objectives').update({ owner_user_id: null }).eq('owner_user_id', id);
+    await supabase.from('evaluation_scores').delete().in('evaluation_id',
+      (await supabase.from('evaluations').select('id').eq('collaborator_user_id', id)).data?.map(e => e.id) ?? []
+    );
+    await supabase.from('evaluations').delete().eq('collaborator_user_id', id);
+    await supabase.from('evaluations').delete().eq('evaluator_user_id', id);
+    await supabase.from('leader_pass_records').delete().eq('user_id', id);
+    await supabase.from('comfort_assignments').delete().eq('assigned_user_id', id);
+    await supabase.from('recognition_posts').delete().eq('nominee_user_id', id);
+    await supabase.from('recognition_posts').delete().eq('nominated_by', id);
+    await supabase.from('access_control').update({ companion_user_id: null }).eq('companion_user_id', id);
+    await supabase.from('access_control').update({ created_by: null }).eq('created_by', id);
+    await supabase.from('asset_movements').update({ collaborator_user_id: null }).eq('collaborator_user_id', id);
+    await supabase.from('asset_movements').update({ created_by: null }).eq('created_by', id);
+    await supabase.from('notifications').delete().eq('user_id', id);
+    await supabase.from('memberships').delete().eq('user_id', id);
+    await supabase.from('user_roles').delete().eq('user_id', id);
+    return await supabase.from('profiles').delete().eq('id', id);
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkDeleting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const currentUserId = user?.id;
+      const ids = Array.from(selectedIds).filter(id => id !== currentUserId);
+      let deleted = 0;
+      for (const id of ids) {
+        const { error } = await deleteProfileCascade(id);
+        if (!error) deleted++;
+      }
+      toast.success(`${deleted} colaborador(es) eliminado(s)`);
+      setSelectedIds(new Set());
+      qc.invalidateQueries({ queryKey: ['profiles'] });
+      qc.invalidateQueries({ queryKey: ['memberships'] });
+      qc.invalidateQueries({ queryKey: ['user_roles'] });
+    } catch (err: any) {
+      toast.error(`Error: ${err.message || 'Error desconocido'}`);
+    }
+    setBulkDeleting(false);
+    setBulkDeleteOpen(false);
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
   };
 
   const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
