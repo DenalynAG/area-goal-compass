@@ -79,6 +79,9 @@ export default function BpmInspectionTab() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [newZoneDialogOpen, setNewZoneDialogOpen] = useState(false);
   const [newZoneName, setNewZoneName] = useState("");
+  const [editingZone, setEditingZone] = useState<string | null>(null);
+  const [editZoneName, setEditZoneName] = useState("");
+  const [deleteZone, setDeleteZone] = useState<string | null>(null);
 
   const visibleMonths = useMemo(() => {
     if (semesterFilter === "1") return MONTHS.slice(0, 6).map((m, i) => ({ name: m, idx: i }));
@@ -139,6 +142,35 @@ export default function BpmInspectionTab() {
     setDeleteId(null);
   };
 
+  const renameZone = async () => {
+    if (!editingZone) return;
+    const newName = editZoneName.trim();
+    if (!newName) { toast.error("El nombre es obligatorio"); return; }
+    if (newName === editingZone) { setEditingZone(null); return; }
+    const { error } = await supabase
+      .from("bpm_inspections" as any)
+      .update({ zone: newName })
+      .eq("year", year)
+      .eq("zone", editingZone);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Zona renombrada");
+    await qc.invalidateQueries({ queryKey: ["bpm_inspections"] });
+    setEditingZone(null);
+  };
+
+  const removeZone = async () => {
+    if (!deleteZone) return;
+    const { error } = await supabase
+      .from("bpm_inspections" as any)
+      .delete()
+      .eq("year", year)
+      .eq("zone", deleteZone);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`Zona "${deleteZone}" eliminada del ${year}`);
+    await qc.invalidateQueries({ queryKey: ["bpm_inspections"] });
+    setDeleteZone(null);
+  };
+
   if (isLoading) return <div className="py-12 text-center text-muted-foreground">Cargando…</div>;
 
   return (
@@ -188,6 +220,7 @@ export default function BpmInspectionTab() {
                 {visibleMonths.map(m => (
                   <th key={m.name} className="border border-border px-2 py-2 text-center min-w-[80px]">{m.name}</th>
                 ))}
+                {canManage && <th className="border border-border px-2 py-2 text-center min-w-[100px]">Acciones</th>}
               </tr>
             </thead>
             <tbody>
@@ -214,11 +247,44 @@ export default function BpmInspectionTab() {
                       </td>
                     );
                   })}
+                  {canManage && (
+                    <td className="border border-border px-2 py-2 text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="w-7 h-7"
+                          title="Agregar registro"
+                          onClick={() => openCreate(zone)}
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="w-7 h-7"
+                          title="Renombrar zona"
+                          onClick={() => { setEditingZone(zone); setEditZoneName(zone); }}
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="w-7 h-7 text-destructive"
+                          title="Eliminar zona del año"
+                          onClick={() => setDeleteZone(zone)}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
               {zones.length === 0 && (
                 <tr>
-                  <td colSpan={visibleMonths.length + 1} className="text-center py-6 text-muted-foreground">
+                  <td colSpan={visibleMonths.length + 1 + (canManage ? 1 : 0)} className="text-center py-6 text-muted-foreground">
                     Sin zonas registradas. Crea una nueva zona para comenzar.
                   </td>
                 </tr>
