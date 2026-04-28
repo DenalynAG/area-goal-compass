@@ -1416,6 +1416,39 @@ export type Database = {
           },
         ]
       }
+      sampling_grid_rows: {
+        Row: {
+          area_name: string
+          created_at: string
+          created_by: string | null
+          id: string
+          indicator_name: string
+          sort_order: number
+          updated_at: string
+          zone_name: string
+        }
+        Insert: {
+          area_name: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          indicator_name: string
+          sort_order?: number
+          updated_at?: string
+          zone_name: string
+        }
+        Update: {
+          area_name?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          indicator_name?: string
+          sort_order?: number
+          updated_at?: string
+          zone_name?: string
+        }
+        Relationships: []
+      }
       sampling_records: {
         Row: {
           area_name: string
