@@ -211,7 +211,7 @@ export default function BpmInspectionTab() {
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr>
-                <th colSpan={visibleMonths.length + 1} className="bg-primary text-primary-foreground py-2 text-center font-semibold border border-border">
+                <th colSpan={visibleMonths.length + 1 + (canManage ? 1 : 0)} className="bg-primary text-primary-foreground py-2 text-center font-semibold border border-border">
                   INSPECCIÓN BPM MENSUAL — {year}{semesterLabel ? ` · ${semesterLabel}` : ""}
                 </th>
               </tr>
