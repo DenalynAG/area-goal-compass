@@ -41,6 +41,7 @@ export default function BpmInspectionTab() {
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState(currentYear);
   const years = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
+  const [semesterFilter, setSemesterFilter] = useState<"all" | "1" | "2">("all");
 
   const { data: inspections = [], isLoading } = useQuery({
     queryKey: ["bpm_inspections", year],
