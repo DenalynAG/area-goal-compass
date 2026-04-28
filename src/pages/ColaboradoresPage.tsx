@@ -21,6 +21,16 @@ interface ColaboradoresPageProps {
   areaFilterName?: string;
 }
 
+type BulkDeleteResult = {
+  requested: number;
+  deleted: number;
+  failed: number;
+  skipped: number;
+  results: { id: string; name?: string; status: 'deleted' | 'failed' | 'skipped'; reason?: string }[];
+};
+
+const getErrorMessage = (error: unknown) => error instanceof Error ? error.message : 'Error desconocido';
+
 export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageProps = {}) {
   const { data: profiles = [], isLoading } = useProfiles();
   const { data: memberships = [] } = useMemberships();
@@ -42,6 +52,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [bulkDeleteResult, setBulkDeleteResult] = useState<BulkDeleteResult | null>(null);
   const [detailProfile, setDetailProfile] = useState<Tables<'profiles'> | null>(null);
   const [importReport, setImportReport] = useState<{ success: { row: number; name: string; action: string }[]; errors: { row: number; name: string; reason: string }[] } | null>(null);
 
@@ -138,61 +149,44 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
     setDeleteAllOpen(false);
   };
 
-  const deleteProfileCascade = async (id: string) => {
-    await supabase.from('areas').update({ leader_user_id: null }).eq('leader_user_id', id);
-    await supabase.from('subareas').update({ leader_user_id: null }).eq('leader_user_id', id);
-    await supabase.from('objectives').update({ owner_user_id: null }).eq('owner_user_id', id);
-    await supabase.from('evaluation_scores').delete().in('evaluation_id',
-      (await supabase.from('evaluations').select('id').eq('collaborator_user_id', id)).data?.map(e => e.id) ?? []
-    );
-    await supabase.from('evaluations').delete().eq('collaborator_user_id', id);
-    await supabase.from('evaluations').delete().eq('evaluator_user_id', id);
-    await supabase.from('leader_pass_records').delete().eq('user_id', id);
-    await supabase.from('comfort_assignments').delete().eq('assigned_user_id', id);
-    await supabase.from('recognition_posts').delete().eq('nominee_user_id', id);
-    await supabase.from('recognition_posts').delete().eq('nominated_by', id);
-    await supabase.from('access_control').update({ companion_user_id: null }).eq('companion_user_id', id);
-    await supabase.from('access_control').update({ created_by: null }).eq('created_by', id);
-    await supabase.from('asset_movements').update({ collaborator_user_id: null }).eq('collaborator_user_id', id);
-    await supabase.from('asset_movements').update({ created_by: null }).eq('created_by', id);
-    await supabase.from('notifications').delete().eq('user_id', id);
-    await supabase.from('memberships').delete().eq('user_id', id);
-    await supabase.from('user_roles').delete().eq('user_id', id);
-    return await supabase.from('profiles').delete().eq('id', id);
-  };
-
   const handleBulkDelete = async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+
     setBulkDeleting(true);
+    setBulkDeleteResult(null);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const currentUserId = user?.id;
-      const ids = Array.from(selectedIds).filter(id => id !== currentUserId);
-      console.log('[BulkDelete] Eliminando IDs:', ids);
-      let deleted = 0;
-      const errors: string[] = [];
-      for (const id of ids) {
-        const { error } = await deleteProfileCascade(id);
-        if (!error) {
-          deleted++;
-        } else {
-          console.error('[BulkDelete] Error con id', id, error);
-          errors.push(`${id.slice(0, 8)}: ${error.message}`);
-        }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('Debes iniciar sesión para eliminar colaboradores');
+        return;
       }
-      if (deleted > 0) toast.success(`${deleted} colaborador(es) eliminado(s)`);
-      if (errors.length > 0) {
-        toast.error(`No se pudieron eliminar ${errors.length}: ${errors[0]}`);
+
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-collaborators`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ ids }),
+      });
+      const result = await res.json().catch(() => ({})) as Partial<BulkDeleteResult> & { error?: string };
+
+      if (!res.ok) {
+        throw new Error(result.error || 'No se pudo completar el borrado masivo');
       }
+
+      setBulkDeleteResult(result as BulkDeleteResult);
+      toast.success(`Resultado: ${result.deleted ?? 0} eliminados, ${result.failed ?? 0} fallidos`);
       setSelectedIds(new Set());
       qc.invalidateQueries({ queryKey: ['profiles'] });
       qc.invalidateQueries({ queryKey: ['memberships'] });
       qc.invalidateQueries({ queryKey: ['user_roles'] });
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = getErrorMessage(err);
       console.error('[BulkDelete] Excepción:', err);
-      toast.error(`Error: ${err.message || 'Error desconocido'}`);
+      toast.error(`Error: ${message}`);
+      setBulkDeleteResult({ requested: ids.length, deleted: 0, failed: ids.length, skipped: 0, results: ids.map(id => ({ id, status: 'failed', reason: message })) });
+    } finally {
+      setBulkDeleting(false);
     }
-    setBulkDeleting(false);
-    setBulkDeleteOpen(false);
   };
 
   const toggleSelect = (id: string) => {
@@ -588,7 +582,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
           <p className="text-sm font-medium">{selectedIds.size} seleccionado(s)</p>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => setSelectedIds(new Set())}>Limpiar selección</Button>
-            <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)}>
+            <Button variant="destructive" size="sm" onClick={() => { setBulkDeleteResult(null); setBulkDeleteOpen(true); }}>
               <Trash2 className="w-4 h-4 mr-2" />Eliminar seleccionados
             </Button>
           </div>
@@ -761,19 +755,53 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+      <AlertDialog open={bulkDeleteOpen} onOpenChange={(open) => { if (!bulkDeleting) setBulkDeleteOpen(open); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar colaboradores seleccionados?</AlertDialogTitle>
+            <AlertDialogTitle>{bulkDeleteResult ? 'Resultado del borrado masivo' : '¿Eliminar colaboradores seleccionados?'}</AlertDialogTitle>
             <AlertDialogDescription>
-              Se eliminarán permanentemente <strong>{selectedIds.size}</strong> colaborador(es) y todos sus datos asociados (membresías, roles, evaluaciones, etc.). Tu propio perfil será omitido si está seleccionado. <strong>Esta acción no se puede deshacer.</strong>
+              {bulkDeleteResult
+                ? `Proceso finalizado: ${bulkDeleteResult.deleted} eliminado(s), ${bulkDeleteResult.failed} fallido(s)${bulkDeleteResult.skipped ? ` y ${bulkDeleteResult.skipped} omitido(s)` : ''}.`
+                : <>Se eliminarán permanentemente <strong>{selectedIds.size}</strong> colaborador(es) y todos sus datos asociados (membresías, roles, evaluaciones, etc.). Tu propio perfil será omitido si está seleccionado. <strong>Esta acción no se puede deshacer.</strong></>}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {bulkDeleteResult && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg border bg-primary/5 p-3">
+                  <p className="text-2xl font-bold text-primary">{bulkDeleteResult.deleted}</p>
+                  <p className="text-xs text-muted-foreground">Eliminados</p>
+                </div>
+                <div className="rounded-lg border bg-destructive/5 p-3">
+                  <p className="text-2xl font-bold text-destructive">{bulkDeleteResult.failed}</p>
+                  <p className="text-xs text-muted-foreground">Fallidos</p>
+                </div>
+              </div>
+              {(bulkDeleteResult.failed > 0 || bulkDeleteResult.skipped > 0) && (
+                <ScrollArea className="max-h-40 rounded-lg border">
+                  <div className="divide-y">
+                    {bulkDeleteResult.results.filter(result => result.status !== 'deleted').map(result => (
+                      <div key={result.id} className="p-3 text-xs">
+                        <p className="font-medium">{result.name || result.id.slice(0, 8)}</p>
+                        <p className={result.status === 'failed' ? 'text-destructive' : 'text-muted-foreground'}>{result.reason || 'Sin detalle'}</p>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
+            </div>
+          )}
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={bulkDeleting}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={(e) => { e.preventDefault(); handleBulkDelete(); }} disabled={bulkDeleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {bulkDeleting ? 'Eliminando...' : 'Sí, eliminar seleccionados'}
-            </AlertDialogAction>
+            {bulkDeleteResult ? (
+              <AlertDialogAction onClick={() => { setBulkDeleteOpen(false); setBulkDeleteResult(null); }}>Cerrar</AlertDialogAction>
+            ) : (
+              <>
+                <AlertDialogCancel disabled={bulkDeleting}>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={(e) => { e.preventDefault(); handleBulkDelete(); }} disabled={bulkDeleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  {bulkDeleting ? 'Eliminando...' : 'Sí, eliminar seleccionados'}
+                </AlertDialogAction>
+              </>
+            )}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
