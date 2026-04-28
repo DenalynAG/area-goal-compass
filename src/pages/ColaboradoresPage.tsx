@@ -750,6 +750,23 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
         </AlertDialogContent>
       </AlertDialog>
 
+      <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar colaboradores seleccionados?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminarán permanentemente <strong>{selectedIds.size}</strong> colaborador(es) y todos sus datos asociados (membresías, roles, evaluaciones, etc.). Tu propio perfil será omitido si está seleccionado. <strong>Esta acción no se puede deshacer.</strong>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBulkDelete} disabled={bulkDeleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {bulkDeleting ? 'Eliminando...' : 'Sí, eliminar seleccionados'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <Dialog open={!!detailProfile} onOpenChange={open => !open && setDetailProfile(null)}>
         <DialogContent className="sm:max-w-md p-0 overflow-hidden">
           {detailProfile && (() => {
