@@ -39,6 +39,7 @@ interface AuditPlan {
   description: string;
   planned_date: string;
   status: string;
+  audit_type?: string;
   created_at: string;
   updated_at: string;
 }
