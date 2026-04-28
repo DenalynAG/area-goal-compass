@@ -50,7 +50,10 @@ export default function BpmInspectionTab() {
         .select("*")
         .eq("year", year);
       if (error) throw error;
-      return (data ?? []) as unknown as BpmInspection[];
+      return ((data ?? []) as any[]).map((r) => ({
+        ...r,
+        percentage: r.percentage != null ? Number(r.percentage) : null,
+      })) as BpmInspection[];
     },
   });
 
@@ -114,7 +117,8 @@ export default function BpmInspectionTab() {
       : await supabase.from("bpm_inspections" as any).upsert(payload, { onConflict: "year,month,zone" });
     if (error) { toast.error(error.message); return; }
     toast.success(editing ? "Registro actualizado" : "Registro guardado");
-    qc.invalidateQueries({ queryKey: ["bpm_inspections"] });
+    await qc.invalidateQueries({ queryKey: ["bpm_inspections"] });
+    await qc.refetchQueries({ queryKey: ["bpm_inspections", year] });
     setDialogOpen(false);
   };
 
