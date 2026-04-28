@@ -553,6 +553,11 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
           <MuestreosTab areaFilterName={areaFilterName} />
         </TabsContent>
 
+        {/* ─── BPM Inspection Tab ─── */}
+        <TabsContent value="bpm">
+          <BpmInspectionTab />
+        </TabsContent>
+
         {/* ─── Summary Tab ─── */}
         <TabsContent value="resumen" className="space-y-4">
           <div className="flex items-center gap-3">
