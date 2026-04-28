@@ -637,6 +637,79 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
         open={!!evidenceRecordId}
         onOpenChange={open => { if (!open) setEvidenceRecordId(null); }}
       />
+
+      {/* Add/Edit row dialog */}
+      <Dialog open={!!rowDialog} onOpenChange={open => { if (!open) setRowDialog(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{rowDialog?.mode === 'edit' ? 'Editar fila' : 'Agregar zona / indicador'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label className="text-xs">Área</Label>
+              <Input
+                value={rowForm.area_name}
+                onChange={e => setRowForm(f => ({ ...f, area_name: e.target.value }))}
+                placeholder="Ej: Alimentos y Bebidas"
+                list="muestreos-area-options"
+              />
+              <datalist id="muestreos-area-options">
+                {Array.from(new Set(dbRows.map(r => r.area_name))).map(a => (
+                  <option key={a} value={a} />
+                ))}
+              </datalist>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Zona</Label>
+              <Input
+                value={rowForm.zone_name}
+                onChange={e => setRowForm(f => ({ ...f, zone_name: e.target.value }))}
+                placeholder="Ej: Cocina, Bar, Panadería"
+                list="muestreos-zone-options"
+              />
+              <datalist id="muestreos-zone-options">
+                {Array.from(new Set(dbRows.map(r => r.zone_name))).map(z => (
+                  <option key={z} value={z} />
+                ))}
+              </datalist>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Indicador</Label>
+              <Input
+                value={rowForm.indicator_name}
+                onChange={e => setRowForm(f => ({ ...f, indicator_name: e.target.value }))}
+                placeholder="Ej: Alimentos, Superficies, Hielo"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" size="sm" onClick={() => setRowDialog(null)}>Cancelar</Button>
+            <Button size="sm" onClick={saveRow} disabled={rowSaving} className="gap-1">
+              {rowSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              {rowDialog?.mode === 'edit' ? 'Guardar' : 'Agregar'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete row confirmation */}
+      <AlertDialog open={!!deleteRow} onOpenChange={open => { if (!open) setDeleteRow(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar esta fila?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminará <b>{deleteRow?.zone_name} · {deleteRow?.indicator_name}</b> del grid.
+              Los datos históricos de muestreos no se borrarán.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteRow} className="bg-destructive hover:bg-destructive/90">
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
