@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList, LineChart, Line } from "recharts";
 
 interface BpmInspection {
   id: string;
@@ -254,6 +254,71 @@ export default function BpmInspectionTab() {
           </CardContent>
         </Card>
       )}
+
+      {/* Auditoría externa por semestre */}
+      {zones.length > 0 && (() => {
+        const semesterAvg = (zone: string, sem: 1 | 2) => {
+          const start = sem === 1 ? 1 : 7;
+          const end = sem === 1 ? 6 : 12;
+          let sum = 0, count = 0;
+          for (let m = start; m <= end; m++) {
+            const v = grid[zone]?.[m]?.percentage;
+            if (v != null) { sum += Number(v); count++; }
+          }
+          return count > 0 ? Math.round(sum / count) : null;
+        };
+        const renderSemester = (sem: 1 | 2, title: string, color: string) => {
+          const data = zones.map(z => ({ zone: z, value: semesterAvg(z, sem) }));
+          const hasAny = data.some(d => d.value != null);
+          return (
+            <div className="border border-border rounded-md overflow-hidden">
+              <div className="bg-primary text-primary-foreground py-2 text-center text-sm font-semibold">{title}</div>
+              <div className="grid grid-cols-[1fr_120px]">
+                <table className="w-full text-sm border-r border-border">
+                  <tbody>
+                    {data.map(d => (
+                      <tr key={d.zone} className="border-b border-border">
+                        <td className="px-3 py-2 font-medium">{d.zone}</td>
+                        <td className="px-3 py-2 text-right tabular-nums">
+                          {d.value != null ? `${d.value}%` : ""}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="p-3">
+                {hasAny ? (
+                  <ResponsiveContainer width="100%" height={220}>
+                    <LineChart data={data} margin={{ top: 24, right: 20, left: 0, bottom: 30 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="zone" tick={{ fontSize: 10, fill: "hsl(var(--foreground))" }} interval={0} angle={-15} textAnchor="end" height={50} />
+                      <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}%`} tick={{ fontSize: 10 }} />
+                      <Tooltip formatter={(v: any) => v != null ? [`${v}%`, "Promedio"] : ["Sin datos", ""]} />
+                      <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2.5} dot={{ r: 4, fill: color }} connectNulls>
+                        <LabelList dataKey="value" position="top" formatter={(v: any) => v != null ? `${v}%` : ""} style={{ fontSize: 11, fontWeight: 600, fill: "hsl(var(--foreground))" }} />
+                      </Line>
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="text-center text-xs text-muted-foreground py-10">Sin datos en el semestre</div>
+                )}
+              </div>
+            </div>
+          );
+        };
+        return (
+          <Card>
+            <CardContent className="p-4 space-y-3">
+              <h3 className="text-sm font-semibold">Auditoría Externa por Área y Semestre — {year}</h3>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {renderSemester(1, "Auditoría externa 1er semestre", "#2563eb")}
+                {renderSemester(2, "Auditoría externa 2do semestre", "#dc2626")}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       {/* Edit/Create dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
