@@ -288,7 +288,7 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
     visibleRows.forEach(row => {
       const rowData: any = { 'Área': row.area, 'Indicador clave': row.indicator };
       MONTHS.forEach((m, i) => {
-        const val = getCellValue(row.area, row.indicator, i);
+        const val = getCellValue(row.area, row.storedIndicator, i);
         rowData[m] = val ?? '';
       });
       data.push(rowData);
@@ -465,7 +465,7 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
               group.rows.forEach((row, idx) => {
                 let filled = 0; let total = 0;
                 for (let m = 0; m < 12; m++) {
-                  const val = getCellValue(row.area, row.indicator, m);
+                  const val = getCellValue(row.area, row.storedIndicator, m);
                   if (val) {
                     const num = parseFloat(val);
                     if (!isNaN(num)) { filled += num; total++; }
