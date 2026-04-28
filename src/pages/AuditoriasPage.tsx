@@ -395,75 +395,128 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
 
         {/* ─── Plans Tab ─── */}
         <TabsContent value="planes" className="space-y-4">
-          {/* Filters */}
-          <div className="flex flex-wrap gap-3">
-            <div className="relative flex-1 min-w-[200px]">
+          {/* Filtros: búsqueda + botones de área y estado */}
+          <div className="space-y-3">
+            <div className="relative max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input placeholder="Buscar por título o responsable…" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-9" />
             </div>
-            <Select value={filterArea} onValueChange={setFilterArea} disabled={!isRRHH && !!presetAreaId}>
-              <SelectTrigger className="w-[180px]"><SelectValue placeholder="Área" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas las áreas</SelectItem>
-                {areas.map((a) => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-[180px]"><SelectValue placeholder="Estado" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                {Object.entries(STATUS_CONFIG).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Área:</span>
+              <Button
+                variant={filterArea === "all" ? "default" : "outline"}
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => setFilterArea("all")}
+                disabled={!isRRHH && !!presetAreaId}
+              >
+                Todas
+              </Button>
+              {areas.map((a) => (
+                <Button
+                  key={a.id}
+                  variant={filterArea === a.id ? "default" : "outline"}
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => setFilterArea(a.id)}
+                  disabled={!isRRHH && !!presetAreaId && presetAreaId !== a.id}
+                >
+                  {a.name}
+                </Button>
+              ))}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Estado:</span>
+              <Button
+                variant={filterStatus === "all" ? "default" : "outline"}
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => setFilterStatus("all")}
+              >
+                Todos
+              </Button>
+              {Object.entries(STATUS_CONFIG).map(([k, v]) => {
+                const Icon = v.icon;
+                return (
+                  <Button
+                    key={k}
+                    variant={filterStatus === k ? "default" : "outline"}
+                    size="sm"
+                    className="h-7 text-xs gap-1"
+                    onClick={() => setFilterStatus(k)}
+                  >
+                    <Icon className="w-3 h-3" /> {v.label}
+                  </Button>
+                );
+              })}
+            </div>
           </div>
 
           {filteredPlans.length === 0 ? (
             <Card><CardContent className="py-12 text-center text-muted-foreground">No hay planes de auditoría registrados</CardContent></Card>
           ) : (
-            <div className="space-y-3">
-              {filteredPlans.map((plan) => {
-                const planFindings = findings.filter((f) => f.audit_plan_id === plan.id);
-                const st = STATUS_CONFIG[plan.status] ?? STATUS_CONFIG.pendiente;
-                const isExpanded = expandedPlanId === plan.id;
-                const StIcon = st.icon;
+            <Card>
+              <CardContent className="p-0 overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-8"></TableHead>
+                      <TableHead>Título</TableHead>
+                      <TableHead>Área</TableHead>
+                      <TableHead>Responsable</TableHead>
+                      <TableHead>Auditor</TableHead>
+                      <TableHead>Fecha</TableHead>
+                      <TableHead className="text-center">Estado</TableHead>
+                      <TableHead className="text-center">Hallazgos</TableHead>
+                      <TableHead className="text-right">Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredPlans.map((plan) => {
+                      const planFindings = findings.filter((f) => f.audit_plan_id === plan.id);
+                      const st = STATUS_CONFIG[plan.status] ?? STATUS_CONFIG.pendiente;
+                      const isExpanded = expandedPlanId === plan.id;
+                      const StIcon = st.icon;
 
-                return (
-                  <Card key={plan.id} className="overflow-hidden">
-                    <CardHeader className="pb-2 cursor-pointer" onClick={() => setExpandedPlanId(isExpanded ? null : plan.id)}>
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <CardTitle className="text-base">{plan.title}</CardTitle>
-                            <Badge variant={st.variant} className="gap-1 text-[10px]">
-                              <StIcon className="w-3 h-3" /> {st.label}
-                            </Badge>
-                          </div>
-                          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5 text-xs text-muted-foreground">
-                            <span>Área: <strong className="text-foreground">{getAreaNameFromList(areas, plan.area_id)}</strong></span>
-                            <span>Responsable: <strong className="text-foreground">{getProfileName(profiles, plan.responsible_user_id)}</strong></span>
-                            <span>Auditor: <strong className="text-foreground">{getProfileName(profiles, plan.auditor_user_id)}</strong></span>
-                            <span>Fecha: {format(new Date(plan.planned_date), "d MMM yyyy", { locale: es })}</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1 shrink-0">
-                          <Badge variant="outline" className="text-[10px]">{planFindings.length} hallazgos</Badge>
-                          {canManage && (
-                            <>
-                              <Button variant="ghost" size="icon" className="w-8 h-8" onClick={(e) => { e.stopPropagation(); openPlanDialog(plan); }}>
-                                <Pencil className="w-3.5 h-3.5" />
-                              </Button>
-                              <Button variant="ghost" size="icon" className="w-8 h-8 text-destructive" onClick={(e) => { e.stopPropagation(); setDeletePlanId(plan.id); }}>
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </Button>
-                            </>
-                          )}
-                          {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
-                        </div>
-                      </div>
-                    </CardHeader>
-
-                    {isExpanded && (
-                      <CardContent className="border-t pt-4 space-y-4">
+                      return (
+                        <>
+                          <TableRow
+                            key={plan.id}
+                            className="cursor-pointer hover:bg-muted/40"
+                            onClick={() => setExpandedPlanId(isExpanded ? null : plan.id)}
+                          >
+                            <TableCell className="text-muted-foreground">
+                              {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                            </TableCell>
+                            <TableCell className="font-semibold">{plan.title}</TableCell>
+                            <TableCell className="text-xs">{getAreaNameFromList(areas, plan.area_id)}</TableCell>
+                            <TableCell className="text-xs">{getProfileName(profiles, plan.responsible_user_id)}</TableCell>
+                            <TableCell className="text-xs">{getProfileName(profiles, plan.auditor_user_id)}</TableCell>
+                            <TableCell className="text-xs whitespace-nowrap">{format(new Date(plan.planned_date), "d MMM yyyy", { locale: es })}</TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant={st.variant} className="gap-1 text-[10px]">
+                                <StIcon className="w-3 h-3" /> {st.label}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant="outline" className="text-[10px]">{planFindings.length}</Badge>
+                            </TableCell>
+                            <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                              {canManage && (
+                                <div className="flex items-center justify-end gap-1">
+                                  <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => openPlanDialog(plan)}>
+                                    <Pencil className="w-3.5 h-3.5" />
+                                  </Button>
+                                  <Button variant="ghost" size="icon" className="w-7 h-7 text-destructive" onClick={() => setDeletePlanId(plan.id)}>
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </Button>
+                                </div>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                          {isExpanded && (
+                            <TableRow key={`${plan.id}-exp`} className="bg-muted/20 hover:bg-muted/20">
+                              <TableCell colSpan={9} className="p-4 space-y-4">
                         {plan.description && <p className="text-sm text-muted-foreground">{plan.description}</p>}
 
                         <div className="flex items-center justify-between">
@@ -559,12 +612,16 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
                             })}
                           </div>
                         )}
-                      </CardContent>
-                    )}
-                  </Card>
-                );
-              })}
-            </div>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
           )}
         </TabsContent>
 
