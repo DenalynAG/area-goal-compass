@@ -16,6 +16,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/contexts/AuthContext';
+import { Progress } from '@/components/ui/progress';
 
 interface ColaboradoresPageProps {
   areaFilterName?: string;
@@ -41,6 +42,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
   const [importing, setImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState({ current: 0, total: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -216,6 +218,8 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
       });
 
       if (rows.length === 0) { toast.error('El archivo está vacío'); setImporting(false); return; }
+
+      setImportProgress({ current: 0, total: rows.length });
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { toast.error('Debes iniciar sesión'); setImporting(false); return; }
@@ -491,6 +495,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
           errors++;
           reportErrors.push({ row: rowNum, name: `Fila ${rowNum}`, reason: 'Error inesperado' });
         }
+        setImportProgress({ current: rowIdx + 1, total: rows.length });
       }
 
       setImportReport({ success: reportSuccess, errors: reportErrors });
@@ -501,6 +506,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
       toast.error('Error al leer el archivo Excel');
     }
     setImporting(false);
+    setImportProgress({ current: 0, total: 0 });
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -581,6 +587,18 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input placeholder="Buscar por nombre, correo o cargo..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
       </div>
+
+      {importing && (
+        <div className="rounded-lg border bg-card p-4 space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="font-medium">Importando colaboradores...</span>
+            <span className="text-muted-foreground tabular-nums">
+              {importProgress.current} / {importProgress.total} ({importProgress.total > 0 ? Math.round((importProgress.current / importProgress.total) * 100) : 0}%)
+            </span>
+          </div>
+          <Progress value={importProgress.total > 0 ? (importProgress.current / importProgress.total) * 100 : 0} />
+        </div>
+      )}
 
       {isSuperAdmin && selectedIds.size > 0 && (
         <div className="flex items-center justify-between px-4 py-2 rounded-lg border bg-primary/5">
