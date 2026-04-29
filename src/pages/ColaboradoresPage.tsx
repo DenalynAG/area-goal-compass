@@ -588,6 +588,18 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
         <Input placeholder="Buscar por nombre, correo o cargo..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
       </div>
 
+      {importing && (
+        <div className="rounded-lg border bg-card p-4 space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="font-medium">Importando colaboradores...</span>
+            <span className="text-muted-foreground tabular-nums">
+              {importProgress.current} / {importProgress.total} ({importProgress.total > 0 ? Math.round((importProgress.current / importProgress.total) * 100) : 0}%)
+            </span>
+          </div>
+          <Progress value={importProgress.total > 0 ? (importProgress.current / importProgress.total) * 100 : 0} />
+        </div>
+      )}
+
       {isSuperAdmin && selectedIds.size > 0 && (
         <div className="flex items-center justify-between px-4 py-2 rounded-lg border bg-primary/5">
           <p className="text-sm font-medium">{selectedIds.size} seleccionado(s)</p>
