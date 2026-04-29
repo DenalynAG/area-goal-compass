@@ -450,6 +450,11 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
             'admin area': 'admin_area',
             'líder de subárea': 'lider_subarea',
             'lider subarea': 'lider_subarea',
+            'líder subárea': 'lider_subarea',
+            'lider de subarea': 'lider_subarea',
+            'gestor de área': 'gestor_area',
+            'gestor area': 'gestor_area',
+            'gestor': 'gestor_area',
             'colaborador': 'colaborador',
             'solo lectura': 'solo_lectura',
           };
