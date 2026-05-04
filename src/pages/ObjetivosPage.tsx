@@ -25,6 +25,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import { cn } from '@/lib/utils';
+import { Progress } from '@/components/ui/progress';
 
 interface ObjetivosPageProps {
   areaFilterName?: string;
@@ -43,6 +44,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   const qc = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState({ current: 0, total: 0 });
   const [deleteAllOpen, setDeleteAllOpen] = useState(false);
   const [deletingAll, setDeletingAll] = useState(false);
 
@@ -125,6 +127,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
       const rows: any[] = XLSX.utils.sheet_to_json(ws, { defval: '' });
 
       if (rows.length === 0) { toast.error('El archivo está vacío'); return; }
+      setImportProgress({ current: 0, total: rows.length });
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { toast.error('Debes iniciar sesión'); return; }
@@ -148,7 +151,8 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
       const currentYear = new Date().getFullYear();
       let created = 0, skipped = 0;
 
-      for (const row of rows) {
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
         // Expected columns: Objetivo, Indicador, Meta, Responsable, Area, Subarea, Unidad, Linea Base, Umbral Verde, Umbral Amarillo, Umbral Rojo, Ene..Dic
         const objTitle = (row['Objetivo'] || '').toString().trim();
         const kpiName = (row['Indicador'] || row['KPI'] || '').toString().trim();
@@ -241,6 +245,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
         }
 
         created++;
+        setImportProgress({ current: i + 1, total: rows.length });
       }
 
       qc.invalidateQueries({ queryKey: ['objectives'] });
@@ -251,6 +256,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
       toast.error('Error al importar: ' + (err.message || err));
     } finally {
       setImporting(false);
+      setImportProgress({ current: 0, total: 0 });
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
