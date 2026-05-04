@@ -638,6 +638,11 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                 <Upload className="w-4 h-4 mr-2" />{importing ? 'Importando...' : 'Importar Excel'}
               </Button>
             )}
+            {isSuperAdmin && (
+              <Button variant="destructive" size="sm" onClick={() => setDeleteAllOpen(true)}>
+                <Trash2 className="w-4 h-4 mr-2" />Eliminar Todo
+              </Button>
+            )}
           </div>
         </div>
 
