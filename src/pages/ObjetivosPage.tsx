@@ -153,6 +153,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
 
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
+        setImportProgress({ current: i + 1, total: rows.length });
         // Expected columns: Objetivo, Indicador, Meta, Responsable, Area, Subarea, Unidad, Linea Base, Umbral Verde, Umbral Amarillo, Umbral Rojo, Ene..Dic
         const objTitle = (row['Objetivo'] || '').toString().trim();
         const kpiName = (row['Indicador'] || row['KPI'] || '').toString().trim();
@@ -245,7 +246,6 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
         }
 
         created++;
-        setImportProgress({ current: i + 1, total: rows.length });
       }
 
       qc.invalidateQueries({ queryKey: ['objectives'] });
