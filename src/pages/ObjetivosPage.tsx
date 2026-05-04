@@ -5,7 +5,17 @@ import { getTrafficLight } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { StatusBadge, ProgressBar, TrafficLightBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
-import { Plus, Target, ChevronRight, ChevronDown, Edit, TrendingUp, Settings, ArrowLeft, BarChart3, Paperclip, Calendar, Upload, Download, Layers, User } from 'lucide-react';
+import { Plus, Target, ChevronRight, ChevronDown, Edit, TrendingUp, Settings, ArrowLeft, BarChart3, Paperclip, Calendar, Upload, Download, Layers, User, Trash2 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import type { Tables } from '@/integrations/supabase/types';
 import ObjetivoFormDialog from '@/components/ObjetivoFormDialog';
 import KPIFormDialog from '@/components/KPIFormDialog';
@@ -33,6 +43,8 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   const qc = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false);
+  const [deletingAll, setDeletingAll] = useState(false);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingObj, setEditingObj] = useState<Tables<'objectives'> | null>(null);
@@ -74,6 +86,28 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   }, [areaFilterName, areas]);
 
   const isAreaLocked = !!areaFilterName;
+
+  // ───── Delete All Objectives & KPIs ─────
+  const handleDeleteAll = async () => {
+    setDeletingAll(true);
+    try {
+      const { error: mErr } = await supabase.from('kpi_measurements').delete().not('id', 'is', null);
+      if (mErr) throw mErr;
+      const { error: kErr } = await supabase.from('kpis').delete().not('id', 'is', null);
+      if (kErr) throw kErr;
+      const { error: oErr } = await supabase.from('objectives').delete().not('id', 'is', null);
+      if (oErr) throw oErr;
+      qc.invalidateQueries({ queryKey: ['objectives'] });
+      qc.invalidateQueries({ queryKey: ['kpis'] });
+      qc.invalidateQueries({ queryKey: ['kpi_measurements'] });
+      toast.success('Todos los objetivos e indicadores fueron eliminados');
+      setDeleteAllOpen(false);
+    } catch (err: any) {
+      toast.error('Error al eliminar: ' + (err.message || err));
+    } finally {
+      setDeletingAll(false);
+    }
+  };
 
   const direccionGeneral = areas.find(a => a.name === 'Dirección General');
   const otherAreas = areas.filter(a => a.name !== 'Dirección General');
