@@ -149,7 +149,10 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
       };
 
       const currentYear = new Date().getFullYear();
-      let created = 0, skipped = 0;
+      let skipped = 0;
+      let objCreated = 0, objUpdated = 0;
+      let kpiCreated = 0, kpiUpdated = 0;
+      let measCreated = 0, measUpdated = 0;
 
       // Local caches to avoid duplicates within the same import run
       // (React Query state doesn't refresh mid-loop)
@@ -192,6 +195,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
         const cachedObjId = objCache.get(objKey);
         if (cachedObjId) {
           objectiveId = cachedObjId;
+          objUpdated++;
         } else {
           const { data: newObj, error: objErr } = await supabase.from('objectives').insert({
             title: objTitle,
@@ -204,6 +208,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
           if (objErr || !newObj) { skipped++; continue; }
           objectiveId = newObj.id;
           objCache.set(objKey, objectiveId);
+          objCreated++;
         }
 
         // Get month values from row
@@ -228,6 +233,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
             target, baseline, unit, current_value: latestMonthValue,
             threshold_green: thresholdGreen, threshold_yellow: thresholdYellow, threshold_red: thresholdRed,
           }).eq('id', kpiId);
+          kpiUpdated++;
         } else {
           const { data: newKpi, error: kpiErr } = await supabase.from('kpis').insert({
             name: kpiName,
@@ -239,6 +245,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
           if (kpiErr || !newKpi) { skipped++; continue; }
           kpiId = newKpi.id;
           kpiCache.set(kpiKey, kpiId);
+          kpiCreated++;
         }
 
         // Insert monthly measurements
@@ -249,20 +256,23 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
             .select('id').eq('kpi_id', kpiId).eq('period_date', periodDate).maybeSingle();
           if (existing) {
             await supabase.from('kpi_measurements').update({ value: mv.value }).eq('id', existing.id);
+            measUpdated++;
           } else {
             await supabase.from('kpi_measurements').insert({
               kpi_id: kpiId, period_date: periodDate, value: mv.value, created_by: session.user.id,
             });
+            measCreated++;
           }
         }
-
-        created++;
       }
 
       qc.invalidateQueries({ queryKey: ['objectives'] });
       qc.invalidateQueries({ queryKey: ['kpis'] });
       qc.invalidateQueries({ queryKey: ['kpi_measurements'] });
-      toast.success(`Importación completada: ${created} filas procesadas, ${skipped} omitidas`);
+      toast.success('Importación completada', {
+        description: `Objetivos: ${objCreated} creados, ${objUpdated} actualizados · KPIs: ${kpiCreated} creados, ${kpiUpdated} actualizados · Mediciones: ${measCreated} creadas, ${measUpdated} actualizadas · Filas omitidas: ${skipped}`,
+        duration: 10000,
+      });
     } catch (err: any) {
       toast.error('Error al importar: ' + (err.message || err));
     } finally {
