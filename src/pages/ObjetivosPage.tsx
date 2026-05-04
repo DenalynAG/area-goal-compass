@@ -151,6 +151,13 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
       const currentYear = new Date().getFullYear();
       let created = 0, skipped = 0;
 
+      // Local caches to avoid duplicates within the same import run
+      // (React Query state doesn't refresh mid-loop)
+      const objCache = new Map<string, string>(); // key: `${normalize(title)}|${scopeId}` -> id
+      const kpiCache = new Map<string, string>(); // key: `${normalize(name)}|${objectiveId}` -> id
+      objectives.forEach(o => objCache.set(`${normalize(o.title)}|${o.scope_id}`, o.id));
+      kpis.forEach(k => kpiCache.set(`${normalize(k.name)}|${k.objective_id}`, k.id));
+
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
         setImportProgress({ current: i + 1, total: rows.length });
@@ -181,9 +188,10 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
 
         // Upsert objective (find existing by title + scope)
         let objectiveId: string;
-        const existingObj = objectives.find(o => normalize(o.title) === normalize(objTitle) && o.scope_id === scopeId);
-        if (existingObj) {
-          objectiveId = existingObj.id;
+        const objKey = `${normalize(objTitle)}|${scopeId}`;
+        const cachedObjId = objCache.get(objKey);
+        if (cachedObjId) {
+          objectiveId = cachedObjId;
         } else {
           const { data: newObj, error: objErr } = await supabase.from('objectives').insert({
             title: objTitle,
@@ -195,6 +203,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
           }).select('id').single();
           if (objErr || !newObj) { skipped++; continue; }
           objectiveId = newObj.id;
+          objCache.set(objKey, objectiveId);
         }
 
         // Get month values from row
@@ -210,10 +219,11 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
         const latestMonthValue = monthValues.length > 0 ? monthValues[monthValues.length - 1].value : 0;
 
         // Upsert KPI
-        const existingKpi = kpis.find(k => normalize(k.name) === normalize(kpiName) && k.objective_id === objectiveId);
+        const kpiKey = `${normalize(kpiName)}|${objectiveId}`;
+        const cachedKpiId = kpiCache.get(kpiKey);
         let kpiId: string;
-        if (existingKpi) {
-          kpiId = existingKpi.id;
+        if (cachedKpiId) {
+          kpiId = cachedKpiId;
           await supabase.from('kpis').update({
             target, baseline, unit, current_value: latestMonthValue,
             threshold_green: thresholdGreen, threshold_yellow: thresholdYellow, threshold_red: thresholdRed,
@@ -228,6 +238,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
           }).select('id').single();
           if (kpiErr || !newKpi) { skipped++; continue; }
           kpiId = newKpi.id;
+          kpiCache.set(kpiKey, kpiId);
         }
 
         // Insert monthly measurements
