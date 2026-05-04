@@ -652,6 +652,18 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
           </div>
         </div>
 
+        {importing && importProgress.total > 0 && (
+          <div className="rounded-lg border bg-card p-4 space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-medium">Importando objetivos e indicadores...</span>
+              <span className="text-muted-foreground tabular-nums">
+                {importProgress.current} / {importProgress.total} ({Math.round((importProgress.current / importProgress.total) * 100)}%)
+              </span>
+            </div>
+            <Progress value={(importProgress.current / importProgress.total) * 100} />
+          </div>
+        )}
+
         <div className="space-y-3">
           {otherAreas.map(area => {
             const areaObjs = getAreaObjectives(area.id);
