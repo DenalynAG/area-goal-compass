@@ -874,7 +874,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
 
 // Reusable objective card with circular progress
 function ObjectiveCard({
-  obj, index, objKpis, isOpen, onToggle, onEdit, onNewKPI, onEditKPI, profiles, areas, subareas, measurements, showAreaTags, otherAreas, canEdit = false, hideOwner = false,
+  obj, index, objKpis, isOpen, onToggle, onEdit, onNewKPI, onEditKPI, profiles, areas, subareas, measurements, showAreaTags, otherAreas, canEdit = false, canEditKpi = false, hideOwner = false,
 }: {
   obj: Tables<'objectives'>;
   index: number;
@@ -891,6 +891,7 @@ function ObjectiveCard({
   showAreaTags?: boolean;
   otherAreas?: Tables<'areas'>[];
   canEdit?: boolean;
+  canEditKpi?: boolean;
   hideOwner?: boolean;
 }) {
   const [evidenceOpen, setEvidenceOpen] = useState(false);
@@ -1147,7 +1148,7 @@ function ObjectiveCard({
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setKpiEvidenceId(k.id); setKpiEvidenceName(k.name); }}>
                           <Paperclip className="w-3 h-3" />
                         </Button>
-                        {canEdit && (
+                        {(canEdit || canEditKpi) && (
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEditKPI(k, selectedMonth)}>
                             <Edit className="w-3 h-3" />
                           </Button>
