@@ -12,11 +12,13 @@ import CargoFormDialog from '@/components/CargoFormDialog';
 import EvaluacionCriteriaSection from '@/components/EvaluacionCriteriaSection';
 import MenuPermissionsSection from '@/components/MenuPermissionsSection';
 import LeaderPassAdminSection from '@/components/LeaderPassAdminSection';
+import KpiMonthLocksSection from '@/components/KpiMonthLocksSection';
 import * as XLSX from 'xlsx';
 import { cn } from '@/lib/utils';
 
 const TABS = [
   { key: 'parametros', label: 'Parámetros del Sistema' },
+  { key: 'kpilocks', label: 'Cierre de KPI por Mes' },
   { key: 'cargos', label: 'Cargos por Área y Subárea' },
   { key: 'leaderpass', label: 'Leader Pass' },
   { key: 'evaluacion', label: 'Indicadores de Evaluación' },
@@ -313,6 +315,9 @@ export default function AdministracionPage() {
 
           {/* Leader Pass */}
           {activeTab === 'leaderpass' && <LeaderPassAdminSection canManage={canManage} />}
+
+          {/* Cierre de KPI por Mes */}
+          {activeTab === 'kpilocks' && <KpiMonthLocksSection canManage={isSuperAdmin} />}
 
           {/* Indicadores de Evaluación */}
           {activeTab === 'evaluacion' && <EvaluacionCriteriaSection canManage={canManage} />}

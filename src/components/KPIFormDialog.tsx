@@ -7,10 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 import { useAuth } from "@/contexts/AuthContext";
+import { Lock } from "lucide-react";
 
 interface Props {
   open: boolean;
@@ -39,6 +40,18 @@ export default function KPIFormDialog({
   const restrictedToValue =
     !isSuperAdmin &&
     (hasRole("admin_area") || hasRole("lider_subarea") || hasRole("gestor_area") || hasRole("colaborador"));
+
+  // Load month locks
+  const { data: monthLocks = [] } = useQuery({
+    queryKey: ["kpi_month_locks"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("kpi_month_locks" as any).select("*");
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+    enabled: open,
+  });
+
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState("");
   const [definition, setDefinition] = useState("");
@@ -57,6 +70,17 @@ export default function KPIFormDialog({
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   };
   const [measurementMonth, setMeasurementMonth] = useState(defaultMonth());
+
+  const isMonthLocked = useMemo(() => {
+    if (!measurementMonth) return false;
+    const [y, m] = measurementMonth.split("-").map(Number);
+    const lock = monthLocks.find((l) => l.year === y && l.month === m);
+    return !!lock?.is_locked;
+  }, [measurementMonth, monthLocks]);
+
+  // Super Admin can override locks
+  const valueLocked = isMonthLocked && !isSuperAdmin;
+
   const [filterAreaId, setFilterAreaId] = useState("all");
   const [filterSubareaId, setFilterSubareaId] = useState("all");
 
@@ -175,6 +199,11 @@ export default function KPIFormDialog({
     }
 
     setSaving(true);
+    if (valueLocked) {
+      toast.error("El mes seleccionado está cerrado. No se puede modificar el Valor Real.");
+      setSaving(false);
+      return;
+    }
     const payload = {
       name: trimmed,
       definition: definition.trim().slice(0, 500),
@@ -388,7 +417,18 @@ export default function KPIFormDialog({
             </div>
             <div className="space-y-2">
               <Label>Valor Real</Label>
-              <Input type="number" value={currentValue} onChange={(e) => setCurrentValue(Number(e.target.value))} />
+              <Input
+                type="number"
+                value={currentValue}
+                onChange={(e) => setCurrentValue(Number(e.target.value))}
+                disabled={valueLocked}
+              />
+              {isMonthLocked && (
+                <p className="text-xs text-destructive flex items-center gap-1">
+                  <Lock className="w-3 h-3" />
+                  Mes cerrado{isSuperAdmin ? " (Super Admin puede modificar)" : ""}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label>Peso (%)</Label>
