@@ -473,7 +473,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                     return (
                       <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
                         onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={(month) => openNewKPI(obj.id, month)} onEditKPI={(k, month) => openEditKPI(k, month)}
-                          profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} />
+                          profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} canEditKpi={canEditKpi} />
                     );
                   })}
                 </div>
@@ -522,7 +522,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                       return (
                         <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
                           onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={(month) => openNewKPI(obj.id, month)} onEditKPI={(k, month) => openEditKPI(k, month)}
-                          profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} />
+                          profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} canEditKpi={canEditKpi} />
                       );
                     })}
                     {subObjs.length === 0 && (
@@ -586,7 +586,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                   key={obj.id}
                   obj={obj}
                   index={idx + 1}
-                  objKpis={isSuperAdmin ? objKpis : []}
+                  objKpis={(isSuperAdmin || canEditKpi) ? objKpis : []}
                   isOpen={isOpen}
                   onToggle={() => toggleObj(obj.id)}
                   onEdit={() => openEdit(obj)}
@@ -598,7 +598,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                   measurements={measurements}
                   showAreaTags
                   otherAreas={otherAreas}
-                  canEdit={isSuperAdmin}
+                  canEdit={isSuperAdmin} canEditKpi={canEditKpi}
                   hideOwner={!isSuperAdmin}
                 />
               );
@@ -754,7 +754,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                                 areas={areas}
                                 subareas={subareas}
                                 measurements={measurements}
-                                canEdit={isSuperAdmin}
+                                canEdit={isSuperAdmin} canEditKpi={canEditKpi}
                               />
                             );
                           })}
@@ -820,7 +820,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                                     areas={areas}
                                     subareas={subareas}
                                     measurements={measurements}
-                                    canEdit={isSuperAdmin}
+                                    canEdit={isSuperAdmin} canEditKpi={canEditKpi}
                                   />
                                 );
                               })}
