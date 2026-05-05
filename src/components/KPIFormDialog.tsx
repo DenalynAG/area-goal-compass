@@ -36,10 +36,8 @@ export default function KPIFormDialog({
 }: Props) {
   const qc = useQueryClient();
   const { hasRole, isSuperAdmin } = useAuth();
-  // Admin de Área, Líder de Subárea, Gestor de Área y Colaborador solo pueden editar "Valor Real"
-  const restrictedToValue =
-    !isSuperAdmin &&
-    (hasRole("admin_area") || hasRole("lider_subarea") || hasRole("gestor_area") || hasRole("colaborador"));
+  // Solo Colaborador queda restringido a editar únicamente "Valor Real"
+  const restrictedToValue = !isSuperAdmin && hasRole("colaborador");
 
   // Load month locks
   const { data: monthLocks = [] } = useQuery({
