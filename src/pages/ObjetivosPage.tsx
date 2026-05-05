@@ -38,7 +38,8 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   const { data: areas = [] } = useAreas();
   const { data: subareas = [] } = useSubareas();
   const { data: profiles = [] } = useProfiles();
-  const { isSuperAdmin } = useAuth();
+  const { isSuperAdmin, hasRole } = useAuth();
+  const canEditKpi = isSuperAdmin || hasRole('admin_area') || hasRole('gestor_area') || hasRole('lider_subarea');
 
   const [searchParams, setSearchParams] = useSearchParams();
   const qc = useQueryClient();
