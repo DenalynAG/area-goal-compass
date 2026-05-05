@@ -601,6 +601,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                   otherAreas={otherAreas}
                   canEdit={isSuperAdmin} canEditKpi={canEditKpi}
                   hideOwner={!isSuperAdmin}
+                  hideExtras={!isSuperAdmin}
                 />
               );
             })}
