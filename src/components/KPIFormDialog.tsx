@@ -1,35 +1,44 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { SearchableSelect } from '@/components/ui/searchable-select';
-import { Textarea } from '@/components/ui/textarea';
-import { supabase } from '@/integrations/supabase/client';
-import { useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import type { Tables } from '@/integrations/supabase/types';
+import { useState, useEffect, useMemo } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
+import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import type { Tables } from "@/integrations/supabase/types";
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  kpi?: Tables<'kpis'> | null;
-  objectives: Tables<'objectives'>[];
-  areas?: Tables<'areas'>[];
-  subareas?: Tables<'subareas'>[];
+  kpi?: Tables<"kpis"> | null;
+  objectives: Tables<"objectives">[];
+  areas?: Tables<"areas">[];
+  subareas?: Tables<"subareas">[];
   preselectedObjectiveId?: string | null;
   selectedMonth?: string | null;
 }
 
-export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, areas = [], subareas = [], preselectedObjectiveId, selectedMonth: initialMonth }: Props) {
+export default function KPIFormDialog({
+  open,
+  onOpenChange,
+  kpi,
+  objectives,
+  areas = [],
+  subareas = [],
+  preselectedObjectiveId,
+  selectedMonth: initialMonth,
+}: Props) {
   const qc = useQueryClient();
   const [saving, setSaving] = useState(false);
-  const [name, setName] = useState('');
-  const [definition, setDefinition] = useState('');
-  const [objectiveId, setObjectiveId] = useState('');
-  const [unit, setUnit] = useState('');
-  const [frequency, setFrequency] = useState<'semanal' | 'mensual' | 'trimestral'>('mensual');
+  const [name, setName] = useState("");
+  const [definition, setDefinition] = useState("");
+  const [objectiveId, setObjectiveId] = useState("");
+  const [unit, setUnit] = useState("");
+  const [frequency, setFrequency] = useState<"semanal" | "mensual" | "trimestral">("mensual");
   const [baseline, setBaseline] = useState(0);
   const [target, setTarget] = useState(0);
   const [currentValue, setCurrentValue] = useState(0);
@@ -39,29 +48,28 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, are
   const [weightPercent, setWeightPercent] = useState(0);
   const defaultMonth = () => {
     const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   };
   const [measurementMonth, setMeasurementMonth] = useState(defaultMonth());
-  const [filterAreaId, setFilterAreaId] = useState('all');
-  const [filterSubareaId, setFilterSubareaId] = useState('all');
+  const [filterAreaId, setFilterAreaId] = useState("all");
+  const [filterSubareaId, setFilterSubareaId] = useState("all");
 
-  const filteredSubareas = useMemo(() =>
-    filterAreaId && filterAreaId !== 'all'
-      ? subareas.filter(s => s.area_id === filterAreaId)
-      : subareas,
-    [subareas, filterAreaId]
+  const filteredSubareas = useMemo(
+    () => (filterAreaId && filterAreaId !== "all" ? subareas.filter((s) => s.area_id === filterAreaId) : subareas),
+    [subareas, filterAreaId],
   );
 
   const filteredObjectives = useMemo(() => {
     let result = objectives;
-    if (filterAreaId && filterAreaId !== 'all') {
-      result = result.filter(o =>
-        (o.scope_type === 'area' && o.scope_id === filterAreaId) ||
-        (o.scope_type === 'subarea' && subareas.some(s => s.id === o.scope_id && s.area_id === filterAreaId))
+    if (filterAreaId && filterAreaId !== "all") {
+      result = result.filter(
+        (o) =>
+          (o.scope_type === "area" && o.scope_id === filterAreaId) ||
+          (o.scope_type === "subarea" && subareas.some((s) => s.id === o.scope_id && s.area_id === filterAreaId)),
       );
     }
-    if (filterSubareaId && filterSubareaId !== 'all') {
-      result = result.filter(o => o.scope_type === 'subarea' && o.scope_id === filterSubareaId);
+    if (filterSubareaId && filterSubareaId !== "all") {
+      result = result.filter((o) => o.scope_type === "subarea" && o.scope_id === filterSubareaId);
     }
     return result;
   }, [objectives, filterAreaId, filterSubareaId, subareas]);
@@ -69,9 +77,9 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, are
   useEffect(() => {
     if (kpi) {
       setName(kpi.name);
-      setDefinition(kpi.definition ?? '');
+      setDefinition(kpi.definition ?? "");
       setObjectiveId(kpi.objective_id);
-      setUnit(kpi.unit ?? '');
+      setUnit(kpi.unit ?? "");
       setFrequency(kpi.frequency);
       setBaseline(kpi.baseline);
       setTarget(kpi.target);
@@ -81,42 +89,51 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, are
       setThresholdRed(kpi.threshold_red);
       setWeightPercent((kpi as any).weight_percent ?? 0);
       // Set filters based on existing objective
-      const obj = objectives.find(o => o.id === kpi.objective_id);
+      const obj = objectives.find((o) => o.id === kpi.objective_id);
       if (obj) {
-        if (obj.scope_type === 'area') {
+        if (obj.scope_type === "area") {
           setFilterAreaId(obj.scope_id);
-          setFilterSubareaId('all');
-        } else if (obj.scope_type === 'subarea') {
-          const sub = subareas.find(s => s.id === obj.scope_id);
-          setFilterAreaId(sub?.area_id ?? 'all');
+          setFilterSubareaId("all");
+        } else if (obj.scope_type === "subarea") {
+          const sub = subareas.find((s) => s.id === obj.scope_id);
+          setFilterAreaId(sub?.area_id ?? "all");
           setFilterSubareaId(obj.scope_id);
         }
       }
     } else {
-      setName(''); setDefinition(''); setUnit('');
-      setFrequency('mensual'); setBaseline(0); setTarget(0); setCurrentValue(0);
-      setThresholdGreen(0); setThresholdYellow(0); setThresholdRed(0); setWeightPercent(0);
+      setName("");
+      setDefinition("");
+      setUnit("");
+      setFrequency("mensual");
+      setBaseline(0);
+      setTarget(0);
+      setCurrentValue(0);
+      setThresholdGreen(0);
+      setThresholdYellow(0);
+      setThresholdRed(0);
+      setWeightPercent(0);
       // Pre-select objective if provided
       if (preselectedObjectiveId) {
         setObjectiveId(preselectedObjectiveId);
-        const obj = objectives.find(o => o.id === preselectedObjectiveId);
+        const obj = objectives.find((o) => o.id === preselectedObjectiveId);
         if (obj) {
-          if (obj.scope_type === 'area') {
+          if (obj.scope_type === "area") {
             setFilterAreaId(obj.scope_id);
-            setFilterSubareaId('all');
-          } else if (obj.scope_type === 'subarea') {
-            const sub = subareas.find(s => s.id === obj.scope_id);
-            setFilterAreaId(sub?.area_id ?? 'all');
+            setFilterSubareaId("all");
+          } else if (obj.scope_type === "subarea") {
+            const sub = subareas.find((s) => s.id === obj.scope_id);
+            setFilterAreaId(sub?.area_id ?? "all");
             setFilterSubareaId(obj.scope_id);
           }
         }
       } else {
-        setObjectiveId('');
-        setFilterAreaId('all'); setFilterSubareaId('all');
+        setObjectiveId("");
+        setFilterAreaId("all");
+        setFilterSubareaId("all");
       }
     }
     // Set measurement month from prop or default
-    setMeasurementMonth(initialMonth && initialMonth !== 'total' ? initialMonth : defaultMonth());
+    setMeasurementMonth(initialMonth && initialMonth !== "total" ? initialMonth : defaultMonth());
   }, [kpi, open]);
 
   // Load existing measurement value when month changes (for editing)
@@ -124,14 +141,15 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, are
     if (!open || !kpi?.id || !measurementMonth) return;
     const loadMeasurement = async () => {
       const periodDate = `${measurementMonth}-01`;
-      const [yyyy, mm] = measurementMonth.split('-');
-      const nextMonth = parseInt(mm) === 12 ? `${parseInt(yyyy) + 1}-01` : `${yyyy}-${String(parseInt(mm) + 1).padStart(2, '0')}`;
+      const [yyyy, mm] = measurementMonth.split("-");
+      const nextMonth =
+        parseInt(mm) === 12 ? `${parseInt(yyyy) + 1}-01` : `${yyyy}-${String(parseInt(mm) + 1).padStart(2, "0")}`;
       const { data } = await supabase
-        .from('kpi_measurements')
-        .select('value')
-        .eq('kpi_id', kpi.id)
-        .gte('period_date', periodDate)
-        .lt('period_date', `${nextMonth}-01`)
+        .from("kpi_measurements")
+        .select("value")
+        .eq("kpi_id", kpi.id)
+        .gte("period_date", periodDate)
+        .lt("period_date", `${nextMonth}-01`)
         .maybeSingle();
       setCurrentValue(data?.value ?? 0);
     };
@@ -141,8 +159,14 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, are
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = name.trim();
-    if (!trimmed) { toast.error('El nombre es obligatorio'); return; }
-    if (!objectiveId) { toast.error('Selecciona un objetivo'); return; }
+    if (!trimmed) {
+      toast.error("El nombre es obligatorio");
+      return;
+    }
+    if (!objectiveId) {
+      toast.error("Selecciona un objetivo");
+      return;
+    }
 
     setSaving(true);
     const payload = {
@@ -163,44 +187,53 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, are
     let kpiId = kpi?.id;
 
     if (kpi) {
-      const { error } = await supabase.from('kpis').update(payload).eq('id', kpi.id);
-      if (error) { setSaving(false); toast.error(error.message); return; }
+      const { error } = await supabase.from("kpis").update(payload).eq("id", kpi.id);
+      if (error) {
+        setSaving(false);
+        toast.error(error.message);
+        return;
+      }
     } else {
-      const { data, error } = await supabase.from('kpis').insert(payload).select('id').single();
-      if (error) { setSaving(false); toast.error(error.message); return; }
+      const { data, error } = await supabase.from("kpis").insert(payload).select("id").single();
+      if (error) {
+        setSaving(false);
+        toast.error(error.message);
+        return;
+      }
       kpiId = data.id;
     }
 
     // Upsert a kpi_measurement for the selected month so the grid reflects the value
     if (kpiId && currentValue > 0) {
       const periodDate = `${measurementMonth}-01`;
-      const [yyyy, mm] = measurementMonth.split('-');
-      const nextMonth = parseInt(mm) === 12 ? `${parseInt(yyyy) + 1}-01` : `${yyyy}-${String(parseInt(mm) + 1).padStart(2, '0')}`;
+      const [yyyy, mm] = measurementMonth.split("-");
+      const nextMonth =
+        parseInt(mm) === 12 ? `${parseInt(yyyy) + 1}-01` : `${yyyy}-${String(parseInt(mm) + 1).padStart(2, "0")}`;
       // Check if measurement already exists for this month
       const { data: existing } = await supabase
-        .from('kpi_measurements')
-        .select('id')
-        .eq('kpi_id', kpiId)
-        .gte('period_date', periodDate)
-        .lt('period_date', `${nextMonth}-01`)
+        .from("kpi_measurements")
+        .select("id")
+        .eq("kpi_id", kpiId)
+        .gte("period_date", periodDate)
+        .lt("period_date", `${nextMonth}-01`)
         .maybeSingle();
 
       if (existing) {
-        await supabase.from('kpi_measurements').update({ value: currentValue }).eq('id', existing.id);
+        await supabase.from("kpi_measurements").update({ value: currentValue }).eq("id", existing.id);
       } else {
-        await supabase.from('kpi_measurements').insert({
+        await supabase.from("kpi_measurements").insert({
           kpi_id: kpiId,
           period_date: periodDate,
           value: currentValue,
-          created_by: (await supabase.auth.getUser()).data.user?.id ?? '',
+          created_by: (await supabase.auth.getUser()).data.user?.id ?? "",
         });
       }
     }
 
     setSaving(false);
-    toast.success(kpi ? 'Indicador actualizado' : 'Indicador creado');
-    qc.invalidateQueries({ queryKey: ['kpis'] });
-    qc.invalidateQueries({ queryKey: ['kpi_measurements'] });
+    toast.success(kpi ? "Indicador actualizado" : "Indicador creado");
+    qc.invalidateQueries({ queryKey: ["kpis"] });
+    qc.invalidateQueries({ queryKey: ["kpi_measurements"] });
     onOpenChange(false);
   };
 
@@ -208,35 +241,60 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, are
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{kpi ? 'Editar Indicador' : 'Nuevo Indicador'}</DialogTitle>
+          <DialogTitle>{kpi ? "Editar Indicador" : "Nuevo Indicador"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label>Nombre *</Label>
-            <Input value={name} onChange={e => setName(e.target.value)} maxLength={100} required />
+            <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={100} required />
           </div>
           <div className="space-y-2">
             <Label>Definición</Label>
-            <Textarea value={definition} onChange={e => setDefinition(e.target.value)} maxLength={500} rows={2} />
+            <Textarea value={definition} onChange={(e) => setDefinition(e.target.value)} maxLength={500} rows={2} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Área</Label>
-              <Select value={filterAreaId} onValueChange={v => { setFilterAreaId(v); setFilterSubareaId('all'); setObjectiveId(''); }}>
-                <SelectTrigger><SelectValue placeholder="Todas" /></SelectTrigger>
+              <Select
+                value={filterAreaId}
+                onValueChange={(v) => {
+                  setFilterAreaId(v);
+                  setFilterSubareaId("all");
+                  setObjectiveId("");
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todas" />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas las áreas</SelectItem>
-                  {areas.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
+                  {areas.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {a.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
               <Label>Subárea</Label>
-              <Select value={filterSubareaId} onValueChange={v => { setFilterSubareaId(v); setObjectiveId(''); }}>
-                <SelectTrigger><SelectValue placeholder="Todas" /></SelectTrigger>
+              <Select
+                value={filterSubareaId}
+                onValueChange={(v) => {
+                  setFilterSubareaId(v);
+                  setObjectiveId("");
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todas" />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas las subáreas</SelectItem>
-                  {filteredSubareas.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                  {filteredSubareas.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -247,7 +305,7 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, are
               <SearchableSelect
                 value={objectiveId}
                 onValueChange={setObjectiveId}
-                options={filteredObjectives.map(o => ({ value: o.id, label: o.title }))}
+                options={filteredObjectives.map((o) => ({ value: o.id, label: o.title }))}
                 placeholder="Seleccionar..."
                 searchPlaceholder="Buscar objetivo..."
                 className="w-full"
@@ -258,8 +316,10 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, are
             </div>
             <div className="space-y-2">
               <Label>Frecuencia</Label>
-              <Select value={frequency} onValueChange={v => setFrequency(v as any)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select value={frequency} onValueChange={(v) => setFrequency(v as any)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="semanal">Semanal</SelectItem>
                   <SelectItem value="mensual">Mensual</SelectItem>
@@ -271,58 +331,92 @@ export default function KPIFormDialog({ open, onOpenChange, kpi, objectives, are
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Unidad</Label>
-              <Input value={unit} onChange={e => setUnit(e.target.value)} placeholder="Ej: %" maxLength={20} />
+              <Input value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="Ej: %" maxLength={20} />
             </div>
             <div className="space-y-2">
               <Label>Línea Base</Label>
-              <Input type="number" value={baseline} onChange={e => setBaseline(Number(e.target.value))} />
+              <Input type="number" value={baseline} onChange={(e) => setBaseline(Number(e.target.value))} />
             </div>
             <div className="space-y-2">
               <Label>Meta</Label>
-              <Input type="number" value={target} onChange={e => setTarget(Number(e.target.value))} />
+              <Input type="number" value={target} onChange={(e) => setTarget(Number(e.target.value))} />
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Mes de Medición</Label>
               <Select value={measurementMonth} onValueChange={setMeasurementMonth}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {Array.from({ length: 12 }, (_, i) => {
-                    const mm = String(i + 1).padStart(2, '0');
+                    const mm = String(i + 1).padStart(2, "0");
                     const year = new Date().getFullYear();
-                    const labels: Record<string, string> = { '01': 'Ene', '02': 'Feb', '03': 'Mar', '04': 'Abr', '05': 'May', '06': 'Jun', '07': 'Jul', '08': 'Ago', '09': 'Sep', '10': 'Oct', '11': 'Nov', '12': 'Dic' };
-                    return <SelectItem key={mm} value={`${year}-${mm}`}>{labels[mm]} {year}</SelectItem>;
+                    const labels: Record<string, string> = {
+                      "01": "Ene",
+                      "02": "Feb",
+                      "03": "Mar",
+                      "04": "Abr",
+                      "05": "May",
+                      "06": "Jun",
+                      "07": "Jul",
+                      "08": "Ago",
+                      "09": "Sep",
+                      "10": "Oct",
+                      "11": "Nov",
+                      "12": "Dic",
+                    };
+                    return (
+                      <SelectItem key={mm} value={`${year}-${mm}`}>
+                        {labels[mm]} {year}
+                      </SelectItem>
+                    );
                   })}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Valor Actual</Label>
-              <Input type="number" value={currentValue} onChange={e => setCurrentValue(Number(e.target.value))} />
+              <Label>Valor Real</Label>
+              <Input type="number" value={currentValue} onChange={(e) => setCurrentValue(Number(e.target.value))} />
             </div>
             <div className="space-y-2">
               <Label>Peso (%)</Label>
-              <Input type="number" step="0.01" value={weightPercent} onChange={e => setWeightPercent(Number(e.target.value))} min={0} max={100} />
+              <Input
+                type="number"
+                step="0.01"
+                value={weightPercent}
+                onChange={(e) => setWeightPercent(Number(e.target.value))}
+                min={0}
+                max={100}
+              />
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Umbral Verde ≥</Label>
-              <Input type="number" value={thresholdGreen} onChange={e => setThresholdGreen(Number(e.target.value))} />
+              <Input type="number" value={thresholdGreen} onChange={(e) => setThresholdGreen(Number(e.target.value))} />
             </div>
             <div className="space-y-2">
               <Label>Umbral Amarillo ≥</Label>
-              <Input type="number" value={thresholdYellow} onChange={e => setThresholdYellow(Number(e.target.value))} />
+              <Input
+                type="number"
+                value={thresholdYellow}
+                onChange={(e) => setThresholdYellow(Number(e.target.value))}
+              />
             </div>
             <div className="space-y-2">
               <Label>Umbral Rojo &lt;</Label>
-              <Input type="number" value={thresholdRed} onChange={e => setThresholdRed(Number(e.target.value))} />
+              <Input type="number" value={thresholdRed} onChange={(e) => setThresholdRed(Number(e.target.value))} />
             </div>
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-            <Button type="submit" disabled={saving}>{saving ? 'Guardando...' : 'Guardar'}</Button>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? "Guardando..." : "Guardar"}
+            </Button>
           </div>
         </form>
       </DialogContent>
