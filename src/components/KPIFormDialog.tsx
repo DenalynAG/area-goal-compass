@@ -35,10 +35,10 @@ export default function KPIFormDialog({
 }: Props) {
   const qc = useQueryClient();
   const { hasRole, isSuperAdmin } = useAuth();
-  // Admin de Área, Líder de Subárea y Gestor de Área solo pueden editar "Valor Real"
+  // Admin de Área, Líder de Subárea, Gestor de Área y Colaborador solo pueden editar "Valor Real"
   const restrictedToValue =
     !isSuperAdmin &&
-    (hasRole("admin_area") || hasRole("lider_subarea") || hasRole("gestor_area"));
+    (hasRole("admin_area") || hasRole("lider_subarea") || hasRole("gestor_area") || hasRole("colaborador"));
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState("");
   const [definition, setDefinition] = useState("");
