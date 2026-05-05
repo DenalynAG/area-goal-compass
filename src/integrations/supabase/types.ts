@@ -880,6 +880,7 @@ export type Database = {
       kpis: {
         Row: {
           baseline: number
+          calc_method: string
           created_at: string
           current_value: number
           definition: string | null
@@ -896,6 +897,7 @@ export type Database = {
         }
         Insert: {
           baseline?: number
+          calc_method?: string
           created_at?: string
           current_value?: number
           definition?: string | null
@@ -912,6 +914,7 @@ export type Database = {
         }
         Update: {
           baseline?: number
+          calc_method?: string
           created_at?: string
           current_value?: number
           definition?: string | null
