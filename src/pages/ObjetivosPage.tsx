@@ -585,7 +585,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                   key={obj.id}
                   obj={obj}
                   index={idx + 1}
-                  objKpis={objKpis}
+                  objKpis={isSuperAdmin ? objKpis : []}
                   isOpen={isOpen}
                   onToggle={() => toggleObj(obj.id)}
                   onEdit={() => openEdit(obj)}
@@ -598,6 +598,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                   showAreaTags
                   otherAreas={otherAreas}
                   canEdit={isSuperAdmin}
+                  hideOwner={!isSuperAdmin}
                 />
               );
             })}
