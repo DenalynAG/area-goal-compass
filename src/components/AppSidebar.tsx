@@ -50,6 +50,7 @@ const AREA_ROUTE_TO_NAME: Record<string, string> = {
   "/mercadeo": "Mercadeo",
   "/operaciones": "Operaciones",
   "/tecnologia": "Tecnología",
+  "/rrhh": "Recursos Humanos",
 };
 
 interface NavChild {
