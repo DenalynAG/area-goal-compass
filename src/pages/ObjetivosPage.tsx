@@ -38,7 +38,8 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   const { data: areas = [] } = useAreas();
   const { data: subareas = [] } = useSubareas();
   const { data: profiles = [] } = useProfiles();
-  const { isSuperAdmin } = useAuth();
+  const { isSuperAdmin, hasRole } = useAuth();
+  const canEditKpi = isSuperAdmin || hasRole('admin_area') || hasRole('gestor_area') || hasRole('lider_subarea');
 
   const [searchParams, setSearchParams] = useSearchParams();
   const qc = useQueryClient();
@@ -472,7 +473,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                     return (
                       <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
                         onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={(month) => openNewKPI(obj.id, month)} onEditKPI={(k, month) => openEditKPI(k, month)}
-                          profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} />
+                          profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} canEditKpi={canEditKpi} />
                     );
                   })}
                 </div>
@@ -521,7 +522,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                       return (
                         <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
                           onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={(month) => openNewKPI(obj.id, month)} onEditKPI={(k, month) => openEditKPI(k, month)}
-                          profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} />
+                          profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} canEditKpi={canEditKpi} />
                       );
                     })}
                     {subObjs.length === 0 && (
@@ -585,7 +586,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                   key={obj.id}
                   obj={obj}
                   index={idx + 1}
-                  objKpis={isSuperAdmin ? objKpis : []}
+                  objKpis={(isSuperAdmin || canEditKpi) ? objKpis : []}
                   isOpen={isOpen}
                   onToggle={() => toggleObj(obj.id)}
                   onEdit={() => openEdit(obj)}
@@ -597,7 +598,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                   measurements={measurements}
                   showAreaTags
                   otherAreas={otherAreas}
-                  canEdit={isSuperAdmin}
+                  canEdit={isSuperAdmin} canEditKpi={canEditKpi}
                   hideOwner={!isSuperAdmin}
                 />
               );
@@ -753,7 +754,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                                 areas={areas}
                                 subareas={subareas}
                                 measurements={measurements}
-                                canEdit={isSuperAdmin}
+                                canEdit={isSuperAdmin} canEditKpi={canEditKpi}
                               />
                             );
                           })}
@@ -819,7 +820,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                                     areas={areas}
                                     subareas={subareas}
                                     measurements={measurements}
-                                    canEdit={isSuperAdmin}
+                                    canEdit={isSuperAdmin} canEditKpi={canEditKpi}
                                   />
                                 );
                               })}
@@ -873,7 +874,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
 
 // Reusable objective card with circular progress
 function ObjectiveCard({
-  obj, index, objKpis, isOpen, onToggle, onEdit, onNewKPI, onEditKPI, profiles, areas, subareas, measurements, showAreaTags, otherAreas, canEdit = false, hideOwner = false,
+  obj, index, objKpis, isOpen, onToggle, onEdit, onNewKPI, onEditKPI, profiles, areas, subareas, measurements, showAreaTags, otherAreas, canEdit = false, canEditKpi = false, hideOwner = false,
 }: {
   obj: Tables<'objectives'>;
   index: number;
@@ -890,6 +891,7 @@ function ObjectiveCard({
   showAreaTags?: boolean;
   otherAreas?: Tables<'areas'>[];
   canEdit?: boolean;
+  canEditKpi?: boolean;
   hideOwner?: boolean;
 }) {
   const [evidenceOpen, setEvidenceOpen] = useState(false);
@@ -1146,7 +1148,7 @@ function ObjectiveCard({
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setKpiEvidenceId(k.id); setKpiEvidenceName(k.name); }}>
                           <Paperclip className="w-3 h-3" />
                         </Button>
-                        {canEdit && (
+                        {(canEdit || canEditKpi) && (
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEditKPI(k, selectedMonth)}>
                             <Edit className="w-3 h-3" />
                           </Button>
