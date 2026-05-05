@@ -1660,6 +1660,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_direccion_general_objective: {
+        Args: { _scope_id: string; _scope_type: string }
+        Returns: boolean
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
