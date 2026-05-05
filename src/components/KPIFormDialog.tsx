@@ -210,7 +210,8 @@ export default function KPIFormDialog({
     }
 
     // Upsert a kpi_measurement for the selected month so the grid reflects the value
-    if (kpiId && currentValue > 0) {
+    // (allow 0 and negative values too — the user may need to correct or reset a month)
+    if (kpiId) {
       const periodDate = `${measurementMonth}-01`;
       const [yyyy, mm] = measurementMonth.split("-");
       const nextMonth =
