@@ -585,7 +585,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                   key={obj.id}
                   obj={obj}
                   index={idx + 1}
-                  objKpis={objKpis}
+                  objKpis={isSuperAdmin ? objKpis : []}
                   isOpen={isOpen}
                   onToggle={() => toggleObj(obj.id)}
                   onEdit={() => openEdit(obj)}
@@ -598,6 +598,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                   showAreaTags
                   otherAreas={otherAreas}
                   canEdit={isSuperAdmin}
+                  hideOwner={!isSuperAdmin}
                 />
               );
             })}
@@ -872,7 +873,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
 
 // Reusable objective card with circular progress
 function ObjectiveCard({
-  obj, index, objKpis, isOpen, onToggle, onEdit, onNewKPI, onEditKPI, profiles, areas, subareas, measurements, showAreaTags, otherAreas, canEdit = false,
+  obj, index, objKpis, isOpen, onToggle, onEdit, onNewKPI, onEditKPI, profiles, areas, subareas, measurements, showAreaTags, otherAreas, canEdit = false, hideOwner = false,
 }: {
   obj: Tables<'objectives'>;
   index: number;
@@ -889,6 +890,7 @@ function ObjectiveCard({
   showAreaTags?: boolean;
   otherAreas?: Tables<'areas'>[];
   canEdit?: boolean;
+  hideOwner?: boolean;
 }) {
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [kpiEvidenceId, setKpiEvidenceId] = useState<string | null>(null);
@@ -999,10 +1001,10 @@ function ObjectiveCard({
 
         <div className="flex-1 min-w-0 space-y-2">
           <h3 className="font-semibold">{index}. {obj.title}</h3>
-          {obj.owner_user_id && (
+          {!hideOwner && obj.owner_user_id && (
             <p className="text-xs text-muted-foreground">Responsable: {getProfileName(profiles, obj.owner_user_id)}</p>
           )}
-          {!obj.owner_user_id && obj.scope_type === 'area' && (
+          {!hideOwner && !obj.owner_user_id && obj.scope_type === 'area' && (
             <p className="text-xs text-muted-foreground">Responsable: {getProfileName(profiles, areas.find(a => a.id === obj.scope_id)?.leader_user_id ?? null)}</p>
           )}
           {obj.description && <p className="text-sm text-muted-foreground leading-relaxed">{obj.description}</p>}
