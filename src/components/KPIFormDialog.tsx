@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Props {
   open: boolean;
@@ -33,6 +34,11 @@ export default function KPIFormDialog({
   selectedMonth: initialMonth,
 }: Props) {
   const qc = useQueryClient();
+  const { hasRole, isSuperAdmin } = useAuth();
+  // Admin de Área, Líder de Subárea y Gestor de Área solo pueden editar "Valor Real"
+  const restrictedToValue =
+    !isSuperAdmin &&
+    (hasRole("admin_area") || hasRole("lider_subarea") || hasRole("gestor_area"));
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState("");
   const [definition, setDefinition] = useState("");
@@ -246,11 +252,11 @@ export default function KPIFormDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label>Nombre *</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={100} required />
+              <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={100} required disabled={restrictedToValue} />
           </div>
           <div className="space-y-2">
             <Label>Definición</Label>
-            <Textarea value={definition} onChange={(e) => setDefinition(e.target.value)} maxLength={500} rows={2} />
+              <Textarea value={definition} onChange={(e) => setDefinition(e.target.value)} maxLength={500} rows={2} disabled={restrictedToValue} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -262,6 +268,7 @@ export default function KPIFormDialog({
                   setFilterSubareaId("all");
                   setObjectiveId("");
                 }}
+                disabled={restrictedToValue}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Todas" />
@@ -284,6 +291,7 @@ export default function KPIFormDialog({
                   setFilterSubareaId(v);
                   setObjectiveId("");
                 }}
+                disabled={restrictedToValue}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Todas" />
@@ -309,6 +317,7 @@ export default function KPIFormDialog({
                 placeholder="Seleccionar..."
                 searchPlaceholder="Buscar objetivo..."
                 className="w-full"
+                disabled={restrictedToValue}
               />
               {filteredObjectives.length === 0 && (
                 <p className="text-xs text-muted-foreground">No hay objetivos para el filtro seleccionado</p>
@@ -316,7 +325,7 @@ export default function KPIFormDialog({
             </div>
             <div className="space-y-2">
               <Label>Frecuencia</Label>
-              <Select value={frequency} onValueChange={(v) => setFrequency(v as any)}>
+              <Select value={frequency} onValueChange={(v) => setFrequency(v as any)} disabled={restrictedToValue}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -331,15 +340,15 @@ export default function KPIFormDialog({
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Unidad</Label>
-              <Input value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="Ej: %" maxLength={20} />
+              <Input value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="Ej: %" maxLength={20} disabled={restrictedToValue} />
             </div>
             <div className="space-y-2">
               <Label>Línea Base</Label>
-              <Input type="number" value={baseline} onChange={(e) => setBaseline(Number(e.target.value))} />
+              <Input type="number" value={baseline} onChange={(e) => setBaseline(Number(e.target.value))} disabled={restrictedToValue} />
             </div>
             <div className="space-y-2">
               <Label>Meta</Label>
-              <Input type="number" value={target} onChange={(e) => setTarget(Number(e.target.value))} />
+              <Input type="number" value={target} onChange={(e) => setTarget(Number(e.target.value))} disabled={restrictedToValue} />
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
@@ -389,13 +398,14 @@ export default function KPIFormDialog({
                 onChange={(e) => setWeightPercent(Number(e.target.value))}
                 min={0}
                 max={100}
+                disabled={restrictedToValue}
               />
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Umbral Verde ≥</Label>
-              <Input type="number" value={thresholdGreen} onChange={(e) => setThresholdGreen(Number(e.target.value))} />
+              <Input type="number" value={thresholdGreen} onChange={(e) => setThresholdGreen(Number(e.target.value))} disabled={restrictedToValue} />
             </div>
             <div className="space-y-2">
               <Label>Umbral Amarillo ≥</Label>
@@ -403,11 +413,12 @@ export default function KPIFormDialog({
                 type="number"
                 value={thresholdYellow}
                 onChange={(e) => setThresholdYellow(Number(e.target.value))}
+                disabled={restrictedToValue}
               />
             </div>
             <div className="space-y-2">
               <Label>Umbral Rojo &lt;</Label>
-              <Input type="number" value={thresholdRed} onChange={(e) => setThresholdRed(Number(e.target.value))} />
+              <Input type="number" value={thresholdRed} onChange={(e) => setThresholdRed(Number(e.target.value))} disabled={restrictedToValue} />
             </div>
           </div>
           <div className="flex justify-end gap-2 pt-2">
