@@ -1001,10 +1001,10 @@ function ObjectiveCard({
 
         <div className="flex-1 min-w-0 space-y-2">
           <h3 className="font-semibold">{index}. {obj.title}</h3>
-          {obj.owner_user_id && (
+          {!hideOwner && obj.owner_user_id && (
             <p className="text-xs text-muted-foreground">Responsable: {getProfileName(profiles, obj.owner_user_id)}</p>
           )}
-          {!obj.owner_user_id && obj.scope_type === 'area' && (
+          {!hideOwner && !obj.owner_user_id && obj.scope_type === 'area' && (
             <p className="text-xs text-muted-foreground">Responsable: {getProfileName(profiles, areas.find(a => a.id === obj.scope_id)?.leader_user_id ?? null)}</p>
           )}
           {obj.description && <p className="text-sm text-muted-foreground leading-relaxed">{obj.description}</p>}
