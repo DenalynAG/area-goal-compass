@@ -1,14 +1,14 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useKPIs, useObjectives, useKPIMeasurements, useAreas, useSubareas } from '@/hooks/useSupabaseData';
-import { getTrafficLight } from '@/types';
-import { TrafficLightBadge, ProgressBar } from '@/components/StatusBadge';
-import { BarChart3, Plus, Edit, ArrowLeft, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import type { Tables } from '@/integrations/supabase/types';
-import KPIFormDialog from '@/components/KPIFormDialog';
-import { useAuth } from '@/contexts/AuthContext';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useKPIs, useObjectives, useKPIMeasurements, useAreas, useSubareas } from "@/hooks/useSupabaseData";
+import { getTrafficLight } from "@/types";
+import { TrafficLightBadge, ProgressBar } from "@/components/StatusBadge";
+import { BarChart3, Plus, Edit, ArrowLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import type { Tables } from "@/integrations/supabase/types";
+import KPIFormDialog from "@/components/KPIFormDialog";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function IndicadoresPage() {
   const { data: kpis = [], isLoading } = useKPIs();
@@ -20,28 +20,33 @@ export default function IndicadoresPage() {
   const navigate = useNavigate();
 
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingKPI, setEditingKPI] = useState<Tables<'kpis'> | null>(null);
+  const [editingKPI, setEditingKPI] = useState<Tables<"kpis"> | null>(null);
 
-  const openNew = () => { setEditingKPI(null); setDialogOpen(true); };
-  const openEdit = (k: Tables<'kpis'>) => { setEditingKPI(k); setDialogOpen(true); };
+  const openNew = () => {
+    setEditingKPI(null);
+    setDialogOpen(true);
+  };
+  const openEdit = (k: Tables<"kpis">) => {
+    setEditingKPI(k);
+    setDialogOpen(true);
+  };
 
-  if (isLoading) return <div className="flex items-center justify-center py-20 text-muted-foreground">Cargando indicadores...</div>;
+  if (isLoading)
+    return <div className="flex items-center justify-center py-20 text-muted-foreground">Cargando indicadores...</div>;
 
   return (
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-muted-foreground">
-          <button
-            onClick={() => navigate('/')}
-            className="hover:text-foreground transition-colors hover:underline"
-          >
+          <button onClick={() => navigate("/")} className="hover:text-foreground transition-colors hover:underline">
             Dashboard
           </button>
           <ChevronRight className="w-3.5 h-3.5" />
           <span className="text-foreground font-medium">Indicadores</span>
         </nav>
         <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
-          <ArrowLeft className="w-4 h-4 mr-2" />Volver a la vista anterior
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Volver a la vista anterior
         </Button>
       </div>
 
@@ -51,15 +56,18 @@ export default function IndicadoresPage() {
           <p className="page-subtitle">{kpis.length} indicadores definidos</p>
         </div>
         {isSuperAdmin && (
-          <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" />Nuevo Indicador</Button>
+          <Button onClick={openNew}>
+            <Plus className="w-4 h-4 mr-2" />
+            Nuevo Indicador
+          </Button>
         )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {kpis.map(kpi => {
-          const obj = objectives.find(o => o.id === kpi.objective_id);
-          const kpiMeasurements = measurements.filter(m => m.kpi_id === kpi.id);
-          const chartData = kpiMeasurements.map(m => ({ period: m.period_date, valor: m.value }));
+        {kpis.map((kpi) => {
+          const obj = objectives.find((o) => o.id === kpi.objective_id);
+          const kpiMeasurements = measurements.filter((m) => m.kpi_id === kpi.id);
+          const chartData = kpiMeasurements.map((m) => ({ period: m.period_date, valor: m.value }));
           const light = getTrafficLight(kpi as any);
           const progress = kpi.target > 0 ? Math.round((kpi.current_value / kpi.target) * 100) : 0;
 
@@ -71,14 +79,16 @@ export default function IndicadoresPage() {
                     <BarChart3 className="w-5 h-5 text-accent" />
                     <div>
                       <h3 className="font-semibold">{kpi.name}</h3>
-                      <p className="text-xs text-muted-foreground">{obj?.title ?? '—'}</p>
+                      <p className="text-xs text-muted-foreground">{obj?.title ?? "—"}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <TrafficLightBadge light={light} />
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(kpi)} title="Editar">
-                      <Edit className="w-4 h-4" />
-                    </Button>
+                    {isSuperAdmin && (
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(kpi)}>
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -87,7 +97,7 @@ export default function IndicadoresPage() {
                 <div className="grid grid-cols-3 gap-3 text-center">
                   <div>
                     <p className="text-lg font-bold">{kpi.current_value}</p>
-                    <p className="text-[10px] text-muted-foreground">Actual</p>
+                    <p className="text-[10px] text-muted-foreground">Valor Real</p>
                   </div>
                   <div>
                     <p className="text-lg font-bold">{kpi.target}</p>
@@ -114,8 +124,16 @@ export default function IndicadoresPage() {
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                         <XAxis dataKey="period" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
                         <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
-                        <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid hsl(var(--border))' }} />
-                        <Line type="monotone" dataKey="valor" stroke="hsl(var(--accent))" strokeWidth={2} dot={{ r: 3 }} />
+                        <Tooltip
+                          contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid hsl(var(--border))" }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="valor"
+                          stroke="hsl(var(--accent))"
+                          strokeWidth={2}
+                          dot={{ r: 3 }}
+                        />
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
@@ -125,7 +143,9 @@ export default function IndicadoresPage() {
                   <span>🟢 ≥{kpi.threshold_green}</span>
                   <span>🟡 ≥{kpi.threshold_yellow}</span>
                   <span>🔴 &lt;{kpi.threshold_yellow}</span>
-                  <span className="ml-auto">{kpi.frequency} · {kpi.unit}</span>
+                  <span className="ml-auto">
+                    {kpi.frequency} · {kpi.unit}
+                  </span>
                 </div>
               </div>
             </div>
