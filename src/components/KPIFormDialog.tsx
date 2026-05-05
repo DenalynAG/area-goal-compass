@@ -417,7 +417,18 @@ export default function KPIFormDialog({
             </div>
             <div className="space-y-2">
               <Label>Valor Real</Label>
-              <Input type="number" value={currentValue} onChange={(e) => setCurrentValue(Number(e.target.value))} />
+              <Input
+                type="number"
+                value={currentValue}
+                onChange={(e) => setCurrentValue(Number(e.target.value))}
+                disabled={valueLocked}
+              />
+              {isMonthLocked && (
+                <p className="text-xs text-destructive flex items-center gap-1">
+                  <Lock className="w-3 h-3" />
+                  Mes cerrado{isSuperAdmin ? " (Super Admin puede modificar)" : ""}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label>Peso (%)</Label>
