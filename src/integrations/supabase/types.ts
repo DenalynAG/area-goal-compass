@@ -877,6 +877,33 @@ export type Database = {
           },
         ]
       }
+      kpi_month_locks: {
+        Row: {
+          id: string
+          is_locked: boolean
+          month: number
+          updated_at: string
+          updated_by: string | null
+          year: number
+        }
+        Insert: {
+          id?: string
+          is_locked?: boolean
+          month: number
+          updated_at?: string
+          updated_by?: string | null
+          year: number
+        }
+        Update: {
+          id?: string
+          is_locked?: boolean
+          month?: number
+          updated_at?: string
+          updated_by?: string | null
+          year?: number
+        }
+        Relationships: []
+      }
       kpis: {
         Row: {
           baseline: number
