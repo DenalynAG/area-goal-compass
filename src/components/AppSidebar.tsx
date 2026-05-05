@@ -39,6 +39,18 @@ import { useState, useEffect, useMemo } from "react";
 import { getRoleLabel } from "@/types";
 import { Button } from "@/components/ui/button";
 import { useVisibleMenuKeys } from "@/hooks/useMenuPermissions";
+import { useAreas, useMemberships } from "@/hooks/useSupabaseData";
+
+// Map top-level area route -> area name in DB
+const AREA_ROUTE_TO_NAME: Record<string, string> = {
+  "/ayb": "Alimentos y Bebidas",
+  "/comercial": "Comercial",
+  "/compras": "Compras",
+  "/contraloria": "Contraloría",
+  "/mercadeo": "Mercadeo",
+  "/operaciones": "Operaciones",
+  "/tecnologia": "Tecnología",
+};
 
 interface NavChild {
   to: string;
@@ -174,11 +186,42 @@ export default function AppSidebar() {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(["/rrhh"]));
   const location = useLocation();
   const visibleMenuKeys = useVisibleMenuKeys();
+  const { data: areas = [] } = useAreas();
+  const { data: memberships = [] } = useMemberships();
+
+  // Determine which area routes the user is allowed to see
+  const allowedAreaRoutes = useMemo(() => {
+    // Super admins and HR roles see all area menus
+    if (
+      roles.includes("super_admin" as any) ||
+      roles.includes("admin_rh" as any) ||
+      roles.includes("rrhh" as any)
+    ) {
+      return null; // null = no restriction
+    }
+    const userAreaIds = memberships
+      .filter((m) => m.user_id === user?.id)
+      .map((m) => m.area_id);
+    const userAreaNames = areas
+      .filter((a) => userAreaIds.includes(a.id))
+      .map((a) => a.name);
+    const allowed = new Set<string>();
+    for (const [route, name] of Object.entries(AREA_ROUTE_TO_NAME)) {
+      if (userAreaNames.includes(name)) allowed.add(route);
+    }
+    return allowed;
+  }, [roles, memberships, areas, user?.id]);
 
   // Filter nav items based on permissions
   const filteredNavItems = useMemo(() => {
     return navItems
       .filter((item) => visibleMenuKeys.has(item.to))
+      .filter((item) => {
+        // Restrict area menus to user's area
+        if (!(item.to in AREA_ROUTE_TO_NAME)) return true;
+        if (allowedAreaRoutes === null) return true;
+        return allowedAreaRoutes.has(item.to);
+      })
       .map((item) => {
         if (!item.children) return item;
         const filteredChildren = item.children
@@ -195,7 +238,7 @@ export default function AppSidebar() {
         return { ...item, children: filteredChildren };
       })
       .filter(Boolean) as NavItem[];
-  }, [visibleMenuKeys]);
+  }, [visibleMenuKeys, allowedAreaRoutes]);
 
   // Close mobile sidebar on route change
   useEffect(() => {
