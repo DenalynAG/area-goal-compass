@@ -76,11 +76,9 @@ export default function IndicadoresPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <TrafficLightBadge light={light} />
-                    {isSuperAdmin && (
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(kpi)}>
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                    )}
+                    <Button variant="ghost" size="icon" onClick={() => openEdit(kpi)} title="Editar">
+                      <Edit className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
               </div>
