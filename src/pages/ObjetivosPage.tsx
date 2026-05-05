@@ -40,6 +40,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   const { data: profiles = [] } = useProfiles();
   const { isSuperAdmin, hasRole } = useAuth();
   const canEditKpi = isSuperAdmin || hasRole('admin_area') || hasRole('gestor_area') || hasRole('lider_subarea');
+  const canDownload = !(hasRole('gestor_area') || hasRole('lider_subarea') || hasRole('colaborador')) || isSuperAdmin;
 
   const [searchParams, setSearchParams] = useSearchParams();
   const qc = useQueryClient();
@@ -618,6 +619,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
             <p className="text-sm text-muted-foreground">{otherAreas.length} departamentos · Haz clic para expandir o ver detalles</p>
           </div>
           <div className="flex items-center gap-2">
+            {canDownload && (
             <Button variant="outline" size="sm" onClick={() => {
               const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
               const headers = ['Objetivo', 'Estado', 'Prioridad', 'Área', 'Subárea', 'Responsable', 'Indicador', 'Meta', 'Valor Actual', 'Unidad', 'Línea Base', 'Umbral Verde', 'Umbral Amarillo', 'Umbral Rojo', 'Semáforo', ...months];
@@ -650,6 +652,8 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
             }}>
               <Download className="w-4 h-4 mr-2" />Descargar Todo
             </Button>
+            )}
+            {canDownload && (
             <Button variant="ghost" size="sm" onClick={() => {
               const headers = ['Objetivo', 'Indicador', 'Meta', 'Responsable', 'Área', 'Subárea', 'Unidad', 'Línea Base', 'Umbral Verde', 'Umbral Amarillo', 'Umbral Rojo', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
               const example = ['Incrementar ventas', 'Ventas mensuales', '100', 'Juan Pérez', 'Comercial', '', 'unidades', '50', '90', '70', '50', '55', '60', '65', '70', '75', '80', '85', '88', '90', '92', '95', '100'];
@@ -661,6 +665,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
             }}>
               <Download className="w-4 h-4 mr-2" />Plantilla
             </Button>
+            )}
             <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleImportExcel} />
             {isSuperAdmin && (
               <Button variant="outline" size="sm" disabled={importing} onClick={() => fileInputRef.current?.click()}>
