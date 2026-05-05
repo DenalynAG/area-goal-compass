@@ -518,14 +518,46 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
       'Subárea', 'Jefe Inmediato', 'Arl', 'Salud', 'Pensión', 'Cesantías',
       'Teléfono', 'Dirección', 'Municipio', 'Rol', 'Estado',
     ];
-    const example = [
-      'Juan Pérez García', '1234567890', 'juan@empresa.com', 'juan@gmail.com',
-      'Masculino', '1990-05-15', 'Cartagena', 'O+', 'Soltero', 'Profesional',
-      '2023-01-10', 'Indefinido', 'Analista', 'Tecnología', '', 'Maria Gomez',
-      'SURA', 'Sura EPS', 'Porvenir', 'Protección', '3001234567',
-      'Cra 1 # 2-3', 'Cartagena', 'Colaborador', 'Activo',
-    ];
-    const ws = XLSX.utils.aoa_to_sheet([headers, example]);
+    const roleLabels: Record<string, string> = {
+      super_admin: 'Super Admin',
+      admin_area: 'Admin de Área',
+      lider_subarea: 'Líder de Subárea',
+      gestor_area: 'Gestor de Área',
+      colaborador: 'Colaborador',
+      solo_lectura: 'Solo Lectura',
+    };
+    const rows = profiles.map((p) => {
+      const m = memberships.find((mm) => mm.user_id === p.id);
+      const role = userRoles.find((r) => r.user_id === p.id)?.role;
+      return [
+        p.name ?? '',
+        p.identificacion ?? '',
+        p.email ?? '',
+        p.correo_personal ?? '',
+        p.sexo ?? '',
+        p.birthday ?? '',
+        p.lugar_nacimiento ?? '',
+        p.rh ?? '',
+        p.estado_civil ?? '',
+        p.nivel_educativo ?? '',
+        p.fecha_ingreso ?? '',
+        p.tipo_contrato ?? '',
+        p.position ?? '',
+        getAreaNameFromList(areas, m?.area_id ?? ''),
+        getSubareaNameFromList(subareas, m?.subarea_id ?? ''),
+        p.jefe_inmediato ?? '',
+        p.arl ?? '',
+        p.entidad_salud ?? '',
+        p.fondo_pensiones ?? '',
+        p.fondo_cesantias ?? '',
+        p.phone ?? '',
+        p.direccion ?? '',
+        p.municipio ?? '',
+        role ? (roleLabels[role] ?? role) : '',
+        p.is_active ? 'Activo' : 'Inactivo',
+      ];
+    });
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
     ws['!cols'] = headers.map(h => ({ wch: Math.max(14, h.length + 2) }));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Colaboradores');
