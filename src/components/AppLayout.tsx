@@ -10,7 +10,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <header className="border-b bg-card px-4 md:px-6 lg:px-8 py-3">
           <div>
             <h1 className="text-sm font-bold text-foreground leading-tight">
-              Plataforma de Gestión Objetivos, Indicadores y Performance Admón
+              Plataforma de Gestión Objetivo e Indicadores
             </h1>
             <p className="text-[11px] text-muted-foreground leading-tight">V1.0.</p>
           </div>
