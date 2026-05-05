@@ -880,7 +880,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
 
 // Reusable objective card with circular progress
 function ObjectiveCard({
-  obj, index, objKpis, isOpen, onToggle, onEdit, onNewKPI, onEditKPI, profiles, areas, subareas, measurements, showAreaTags, otherAreas, canEdit = false, canEditKpi = false, hideOwner = false,
+  obj, index, objKpis, isOpen, onToggle, onEdit, onNewKPI, onEditKPI, profiles, areas, subareas, measurements, showAreaTags, otherAreas, canEdit = false, canEditKpi = false, hideOwner = false, hideExtras = false,
 }: {
   obj: Tables<'objectives'>;
   index: number;
@@ -899,6 +899,7 @@ function ObjectiveCard({
   canEdit?: boolean;
   canEditKpi?: boolean;
   hideOwner?: boolean;
+  hideExtras?: boolean;
 }) {
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [kpiEvidenceId, setKpiEvidenceId] = useState<string | null>(null);
@@ -1029,7 +1030,7 @@ function ObjectiveCard({
           )}
 
           <div className="flex items-center gap-2">
-            {objKpis.length > 0 && (
+            {!hideExtras && objKpis.length > 0 && (
               <button onClick={onToggle} className="flex items-center gap-1 text-xs text-accent font-medium hover:underline">
                 {isOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                 {objKpis.length} indicadores
@@ -1040,9 +1041,11 @@ function ObjectiveCard({
                 <Plus className="w-3 h-3" /> Indicador
               </button>
             )}
-            <button onClick={() => setEvidenceOpen(true)} className="flex items-center gap-1 text-xs text-muted-foreground font-medium hover:underline hover:text-foreground">
-              <Paperclip className="w-3 h-3" /> Evidencias
-            </button>
+            {!hideExtras && (
+              <button onClick={() => setEvidenceOpen(true)} className="flex items-center gap-1 text-xs text-muted-foreground font-medium hover:underline hover:text-foreground">
+                <Paperclip className="w-3 h-3" /> Evidencias
+              </button>
+            )}
           </div>
         </div>
 
@@ -1071,7 +1074,7 @@ function ObjectiveCard({
         )}
       </div>
 
-      {isOpen && objKpis.length > 0 && (
+      {!hideExtras && isOpen && objKpis.length > 0 && (
         <div className="border-t bg-muted/20 px-5 py-3">
           {/* Month tabs */}
           {objKpis.length > 0 && (
