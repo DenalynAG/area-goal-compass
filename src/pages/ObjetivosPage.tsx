@@ -920,11 +920,27 @@ function ObjectiveCard({
     return `${monthLabels[month] ?? month} ${year}`;
   };
 
-  // Financial KPIs (by unit) accumulate as SUM, others as AVERAGE
+  // Financial KPIs (by unit) accumulate as SUM, others as AVERAGE (fallback when calc_method is not set)
   const isFinancialKpi = (k: { unit?: string | null }) => {
     const u = (k.unit ?? '').toString().trim().toLowerCase();
     if (!u) return false;
     return /\$|cop|usd|eur|mxn|pesos?|d[oó]lares?|facturaci[oó]n|ingreso|venta|ventas|costo|gasto/.test(u);
+  };
+
+  const qcLocal = useQueryClient();
+  const updateCalcMethod = async (kpiId: string, method: 'promedio' | 'suma') => {
+    const { error } = await supabase.from('kpis').update({ calc_method: method } as any).eq('id', kpiId);
+    if (error) {
+      toast.error('No se pudo actualizar el método de cálculo');
+      return;
+    }
+    qcLocal.invalidateQueries({ queryKey: ['kpis'] });
+    toast.success(`Cálculo actualizado a ${method === 'suma' ? 'Suma total' : 'Promedio'}`);
+  };
+
+  const getCalcMethod = (k: any): 'promedio' | 'suma' => {
+    if (k?.calc_method === 'suma' || k?.calc_method === 'promedio') return k.calc_method;
+    return isFinancialKpi(k) ? 'suma' : 'promedio';
   };
 
   // Get KPI accumulated value up to current month in current year (sum for financial, average otherwise)
@@ -937,7 +953,8 @@ function ObjectiveCard({
     });
     if (kpiMeasurements.length === 0) return null;
     const sumValue = kpiMeasurements.reduce((sum, m) => sum + Number(m.value), 0);
-    const accumulated = kpi && isFinancialKpi(kpi) ? sumValue : sumValue / elapsedMonths;
+    const method = kpi ? getCalcMethod(kpi) : 'promedio';
+    const accumulated = method === 'suma' ? sumValue : sumValue / elapsedMonths;
     return Math.round(accumulated * 100) / 100;
   };
 
@@ -1074,6 +1091,7 @@ function ObjectiveCard({
                 <th className="text-left py-1">Meta</th>
                 <th className="text-left py-1">Actual</th>
                 <th className="text-center py-1">Prom. Acumulado</th>
+                <th className="text-center py-1">Cálculo</th>
                 <th className="text-left py-1">Semáforo</th>
                 <th className="text-right py-1"></th>
               </tr>
@@ -1103,6 +1121,17 @@ function ObjectiveCard({
                         ? <span className="font-semibold">{cumulativeAvg} {k.unit}</span>
                         : <span className="text-muted-foreground">—</span>
                       }
+                    </td>
+                    <td className="py-2 text-center">
+                      <select
+                        value={getCalcMethod(k)}
+                        onChange={(e) => updateCalcMethod(k.id, e.target.value as 'promedio' | 'suma')}
+                        disabled={!canEdit}
+                        className="text-xs rounded-md border border-border bg-background px-2 py-1 disabled:opacity-60"
+                      >
+                        <option value="promedio">Promedio</option>
+                        <option value="suma">Suma total</option>
+                      </select>
                     </td>
                     <td className="py-2">
                       {monthValue === null
@@ -1155,6 +1184,7 @@ function ObjectiveCard({
                     return `${avg}%`;
                   })()}
                 </td>
+                <td></td>
                 <td className="py-2">
                   {(() => {
                     const values = objKpis.map(k => {
