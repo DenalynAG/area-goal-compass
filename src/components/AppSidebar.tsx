@@ -191,12 +191,8 @@ export default function AppSidebar() {
 
   // Determine which area routes the user is allowed to see
   const allowedAreaRoutes = useMemo(() => {
-    // Super admins and HR roles see all area menus
-    if (
-      roles.includes("super_admin" as any) ||
-      roles.includes("admin_rh" as any) ||
-      roles.includes("rrhh" as any)
-    ) {
+    // Super admins see all area menus
+    if (roles.includes("super_admin" as any)) {
       return null; // null = no restriction
     }
     const userAreaIds = memberships
