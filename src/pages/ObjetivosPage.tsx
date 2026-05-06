@@ -40,7 +40,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   const { data: profiles = [] } = useProfiles();
   const { isSuperAdmin, hasRole } = useAuth();
   const canEditKpi = isSuperAdmin || hasRole('admin_area') || hasRole('gestor_area') || hasRole('lider_subarea');
-  const canDownload = !(hasRole('gestor_area') || hasRole('lider_subarea') || hasRole('colaborador')) || isSuperAdmin;
+  const canDownload = isSuperAdmin;
 
   const [searchParams, setSearchParams] = useSearchParams();
   const qc = useQueryClient();
