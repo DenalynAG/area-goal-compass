@@ -94,7 +94,7 @@ export function useActivityLog() {
   return useQuery({
     queryKey: ['activity_log'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('activity_log').select('*').order('created_at', { ascending: false }).limit(50);
+      const { data, error } = await supabase.from('activity_log').select('*').order('created_at', { ascending: false }).limit(500);
       if (error) throw error;
       return data as Tables<'activity_log'>[];
     },
