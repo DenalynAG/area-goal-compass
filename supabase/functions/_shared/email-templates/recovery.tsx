@@ -37,8 +37,7 @@ export const RecoveryEmail = ({
         />
         <Heading style={h1}>Restablecer contraseña</Heading>
         <Text style={text}>
-          Recibimos una solicitud para restablecer tu contraseña en EasyConnect OSH.
-          Haz clic en el botón a continuación para elegir una nueva contraseña.
+          Recibimos una solicitud para restablecer tu contraseña en la Plataforma de Objetivos e Indicadores. Haz clic en el botón a continuación para elegir una nueva contraseña.
         </Text>
         <Button style={button} href={confirmationUrl}>
           Restablecer Contraseña
