@@ -13,6 +13,7 @@ import EvaluacionCriteriaSection from '@/components/EvaluacionCriteriaSection';
 import MenuPermissionsSection from '@/components/MenuPermissionsSection';
 import LeaderPassAdminSection from '@/components/LeaderPassAdminSection';
 import KpiMonthLocksSection from '@/components/KpiMonthLocksSection';
+import UserManagementSection from '@/components/UserManagementSection';
 import * as XLSX from 'xlsx';
 import { cn } from '@/lib/utils';
 
@@ -23,6 +24,7 @@ const TABS = [
   { key: 'leaderpass', label: 'Leader Pass' },
   { key: 'evaluacion', label: 'Indicadores de Evaluación' },
   { key: 'menus', label: 'Gestión de Menús' },
+  { key: 'usuarios', label: 'Gestión de Usuarios' },
   { key: 'auditoria', label: 'Registro de Auditoría' },
 ] as const;
 
@@ -48,7 +50,10 @@ export default function AdministracionPage() {
   const [editingParam, setEditingParam] = useState<string | null>(null);
   const [editParamValue, setEditParamValue] = useState('');
 
-  const visibleTabs = TABS.filter(t => t.key !== 'menus' || isSuperAdmin);
+  const visibleTabs = TABS.filter(t => {
+    if (t.key === 'menus' || t.key === 'usuarios') return isSuperAdmin;
+    return true;
+  });
 
   const toggleArea = (areaId: string) => {
     setExpandedAreas(prev => ({ ...prev, [areaId]: !prev[areaId] }));
@@ -324,6 +329,9 @@ export default function AdministracionPage() {
 
           {/* Gestión de Menús */}
           {activeTab === 'menus' && isSuperAdmin && <MenuPermissionsSection />}
+
+          {/* Gestión de Usuarios */}
+          {activeTab === 'usuarios' && isSuperAdmin && <UserManagementSection />}
 
           {/* Registro de Auditoría */}
           {activeTab === 'auditoria' && (
