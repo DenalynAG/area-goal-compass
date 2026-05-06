@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useActivityLog, usePositions, useAreas, useSubareas, useSystemParameters } from '@/hooks/useSupabaseData';
 import { useAuth } from '@/contexts/AuthContext';
-import { Settings, Clock, User, Briefcase, Plus, Pencil, Trash2, Upload, ChevronDown, ChevronRight, Building2, FolderOpen, Check, X, GripVertical, ClipboardList } from 'lucide-react';
+import { Settings, Clock, User, Briefcase, Plus, Pencil, Trash2, Upload, ChevronDown, ChevronRight, Building2, FolderOpen, Check, X, GripVertical, ClipboardList, CalendarClock, Award, ListChecks, Menu as MenuIcon, Users, ScrollText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -18,14 +18,14 @@ import * as XLSX from 'xlsx';
 import { cn } from '@/lib/utils';
 
 const TABS = [
-  { key: 'parametros', label: 'Parámetros del Sistema' },
-  { key: 'kpilocks', label: 'Cierre de KPI por Mes' },
-  { key: 'cargos', label: 'Cargos por Área y Subárea' },
-  { key: 'leaderpass', label: 'Leader Pass' },
-  { key: 'evaluacion', label: 'Indicadores de Evaluación' },
-  { key: 'menus', label: 'Gestión de Menús' },
-  { key: 'usuarios', label: 'Gestión de Usuarios' },
-  { key: 'auditoria', label: 'Registro de Auditoría' },
+  { key: 'parametros', label: 'Parámetros del Sistema', icon: Settings },
+  { key: 'kpilocks', label: 'Cierre de KPI por Mes', icon: CalendarClock },
+  { key: 'cargos', label: 'Cargos por Área y Subárea', icon: Briefcase },
+  { key: 'leaderpass', label: 'Leader Pass', icon: Award },
+  { key: 'evaluacion', label: 'Indicadores de Evaluación', icon: ListChecks },
+  { key: 'menus', label: 'Gestión de Menús', icon: MenuIcon },
+  { key: 'usuarios', label: 'Gestión de Usuarios', icon: Users },
+  { key: 'auditoria', label: 'Registro de Auditoría', icon: ScrollText },
 ] as const;
 
 type TabKey = typeof TABS[number]['key'];
@@ -149,22 +149,27 @@ export default function AdministracionPage() {
 
       {/* Tabs */}
       <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
-        <div className="border-b overflow-x-auto">
-          <nav className="flex min-w-max">
-            {visibleTabs.map(tab => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={cn(
-                  "px-5 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors",
-                  activeTab === tab.key
-                    ? "border-primary text-primary"
-                    : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/30"
-                )}
-              >
-                {tab.label}
-              </button>
-            ))}
+        <div className="p-3 border-b bg-muted/20">
+          <nav className="flex flex-wrap gap-2">
+            {visibleTabs.map(tab => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={cn(
+                    "inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border transition-all",
+                    isActive
+                      ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                      : "bg-card text-foreground border-border hover:bg-muted hover:border-primary/40"
+                  )}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
           </nav>
         </div>
 
