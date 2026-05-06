@@ -21,6 +21,7 @@ import ObjetivoFormDialog from '@/components/ObjetivoFormDialog';
 import KPIFormDialog from '@/components/KPIFormDialog';
 import EvidencePanel from '@/components/EvidencePanel';
 import { supabase } from '@/integrations/supabase/client';
+import { logActivity } from '@/lib/activityLog';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
@@ -104,6 +105,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
       qc.invalidateQueries({ queryKey: ['objectives'] });
       qc.invalidateQueries({ queryKey: ['kpis'] });
       qc.invalidateQueries({ queryKey: ['kpi_measurements'] });
+      await logActivity('delete_all', 'objectives_kpis', null);
       toast.success('Todos los objetivos e indicadores fueron eliminados');
       setDeleteAllOpen(false);
     } catch (err: any) {
@@ -271,6 +273,12 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
       qc.invalidateQueries({ queryKey: ['objectives'] });
       qc.invalidateQueries({ queryKey: ['kpis'] });
       qc.invalidateQueries({ queryKey: ['kpi_measurements'] });
+      await logActivity('import_excel', 'objectives_kpis', null, {
+        objectives: { created: objCreated, updated: objUpdated },
+        kpis: { created: kpiCreated, updated: kpiUpdated },
+        measurements: { created: measCreated, updated: measUpdated },
+        skipped,
+      });
       toast.success('Importación completada', {
         description: `Objetivos: ${objCreated} creados, ${objUpdated} actualizados · KPIs: ${kpiCreated} creados, ${kpiUpdated} actualizados · Mediciones: ${measCreated} creadas, ${measUpdated} actualizadas · Filas omitidas: ${skipped}`,
         duration: 10000,
@@ -946,6 +954,7 @@ function ObjectiveCard({
       return;
     }
     qcLocal.invalidateQueries({ queryKey: ['kpis'] });
+    await logActivity('update', 'kpi_calc_method', kpiId, { method });
     toast.success(`Cálculo actualizado a ${method === 'suma' ? 'Suma total' : 'Promedio'}`);
   };
 
