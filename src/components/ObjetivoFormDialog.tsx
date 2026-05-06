@@ -104,12 +104,13 @@ export default function ObjetivoFormDialog({ open, onOpenChange, objective, area
       
     };
 
-    const { error } = objective
-      ? await supabase.from('objectives').update(payload).eq('id', objective.id)
-      : await supabase.from('objectives').insert(payload);
+    const { error, data } = objective
+      ? await supabase.from('objectives').update(payload).eq('id', objective.id).select('id').maybeSingle()
+      : await supabase.from('objectives').insert(payload).select('id').maybeSingle();
 
     setSaving(false);
     if (error) { toast.error(error.message); return; }
+    await logActivity(objective ? 'update' : 'create', 'objective', (data as any)?.id || objective?.id, { title: payload.title });
     toast.success(objective ? 'Objetivo actualizado' : 'Objetivo creado');
     qc.invalidateQueries({ queryKey: ['objectives'] });
     onOpenChange(false);
