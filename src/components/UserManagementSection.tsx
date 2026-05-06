@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useProfiles, useUserRoles } from '@/hooks/useSupabaseData';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,7 +15,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { SearchableSelect } from '@/components/ui/searchable-select';
-import { Search, KeyRound, Shield, User as UserIcon } from 'lucide-react';
+import { Search, KeyRound, Shield, User as UserIcon, CheckCircle2, XCircle, MinusCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -31,9 +32,27 @@ const ROLE_OPTIONS: { value: AppRole; label: string }[] = [
 
 const roleLabel = (r: string) => ROLE_OPTIONS.find(o => o.value === r)?.label ?? r;
 
+function useCredentialEmailLog() {
+  return useQuery({
+    queryKey: ['activity_log', 'user_credentials_email'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('activity_log')
+        .select('*')
+        .eq('entity', 'user_credentials_email')
+        .order('created_at', { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      return data ?? [];
+    },
+    staleTime: 15_000,
+  });
+}
+
 export default function UserManagementSection() {
   const { data: profiles = [], isLoading } = useProfiles();
   const { data: userRoles = [] } = useUserRoles();
+  const { data: credLog = [], refetch: refetchLog } = useCredentialEmailLog();
   const qc = useQueryClient();
 
   const [search, setSearch] = useState('');
@@ -52,6 +71,20 @@ export default function UserManagementSection() {
     }
     return m;
   }, [userRoles]);
+
+  // Latest credential email status per recipient email (lowercased)
+  const lastCredByEmail = useMemo(() => {
+    const m: Record<string, { status: 'enviado' | 'fallido'; at: string; error?: string }> = {};
+    for (const row of credLog) {
+      const raw = (row.entity_id || '') as string;
+      const [emailPart, ...rest] = raw.split('|').map(s => s.trim());
+      const email = emailPart.toLowerCase();
+      if (!email || m[email]) continue; // first row is latest because ordered desc
+      const status = row.action === 'send_credentials_success' ? 'enviado' : 'fallido';
+      m[email] = { status, at: row.created_at, error: rest.join(' | ') || undefined };
+    }
+    return m;
+  }, [credLog]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -87,7 +120,7 @@ export default function UserManagementSection() {
       return;
     }
     setBusy(true);
-    const { error } = await supabase.functions.invoke('reset-user-password', {
+    const { data, error } = await supabase.functions.invoke('reset-user-password', {
       body: { email: target.email, password: newPassword },
     });
     setBusy(false);
@@ -95,7 +128,14 @@ export default function UserManagementSection() {
       toast.error(error.message ?? 'Error al cambiar la contraseña');
       return;
     }
-    toast.success(`Contraseña actualizada para ${target.name}`);
+    const emailStatus = (data as any)?.email_status;
+    if (emailStatus === 'enviado') {
+      toast.success(`Contraseña actualizada y correo enviado a ${target.email}`);
+    } else {
+      toast.warning(`Contraseña actualizada. El correo de credenciales no pudo enviarse.`);
+    }
+    qc.invalidateQueries({ queryKey: ['activity_log'] });
+    refetchLog();
     setPwdOpen(false);
   };
 
@@ -147,16 +187,18 @@ export default function UserManagementSection() {
               <th className="text-left px-4 py-2 font-medium">Usuario</th>
               <th className="text-left px-4 py-2 font-medium">Correo</th>
               <th className="text-left px-4 py-2 font-medium">Rol(es)</th>
+              <th className="text-left px-4 py-2 font-medium">Último envío de credenciales</th>
               <th className="text-right px-4 py-2 font-medium">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {isLoading ? (
-              <tr><td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">Cargando...</td></tr>
+              <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">Cargando...</td></tr>
             ) : filtered.length === 0 ? (
-              <tr><td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">Sin resultados</td></tr>
+              <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">Sin resultados</td></tr>
             ) : filtered.map(p => {
               const userRoleList = rolesByUser[p.id] ?? [];
+              const cred = p.email ? lastCredByEmail[p.email.toLowerCase()] : undefined;
               return (
                 <tr key={p.id} className="hover:bg-muted/30">
                   <td className="px-4 py-2">
@@ -176,6 +218,31 @@ export default function UserManagementSection() {
                         {userRoleList.map(r => (
                           <span key={r} className="text-xs bg-muted px-2 py-0.5 rounded-full">{roleLabel(r)}</span>
                         ))}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-4 py-2">
+                    {!cred ? (
+                      <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
+                        <MinusCircle className="w-3.5 h-3.5" /> Sin envíos
+                      </span>
+                    ) : cred.status === 'enviado' ? (
+                      <div className="flex flex-col">
+                        <span className="text-xs inline-flex items-center gap-1 text-green-700">
+                          <CheckCircle2 className="w-3.5 h-3.5" /> Enviado
+                        </span>
+                        <span className="text-[11px] text-muted-foreground">
+                          {p.email} · {new Date(cred.at).toLocaleString('es-CO')}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col">
+                        <span className="text-xs inline-flex items-center gap-1 text-red-700" title={cred.error}>
+                          <XCircle className="w-3.5 h-3.5" /> Fallido
+                        </span>
+                        <span className="text-[11px] text-muted-foreground">
+                          {p.email} · {new Date(cred.at).toLocaleString('es-CO')}
+                        </span>
                       </div>
                     )}
                   </td>
