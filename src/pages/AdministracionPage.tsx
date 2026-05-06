@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useActivityLog, usePositions, useAreas, useSubareas, useSystemParameters } from '@/hooks/useSupabaseData';
 import { useAuth } from '@/contexts/AuthContext';
-import { Settings, Clock, User, Briefcase, Plus, Pencil, Trash2, Upload, ChevronDown, ChevronRight, Building2, FolderOpen, Check, X, GripVertical, ClipboardList, CalendarClock, Award, ListChecks, Menu as MenuIcon, Users, ScrollText } from 'lucide-react';
+import { Settings, Clock, User, Briefcase, Plus, Pencil, Trash2, Upload, ChevronDown, ChevronRight, Building2, FolderOpen, Check, X, GripVertical, ClipboardList, CalendarClock, Award, ListChecks, Menu as MenuIcon, Users, ScrollText, Search, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -49,6 +49,9 @@ export default function AdministracionPage() {
   const [importing, setImporting] = useState(false);
   const [editingParam, setEditingParam] = useState<string | null>(null);
   const [editParamValue, setEditParamValue] = useState('');
+  const [auditSearch, setAuditSearch] = useState('');
+  const [auditAction, setAuditAction] = useState<string>('all');
+  const [expandedLogs, setExpandedLogs] = useState<Record<string, boolean>>({});
 
   const visibleTabs = TABS.filter(t => {
     if (t.key === 'menus' || t.key === 'usuarios') return isSuperAdmin;
