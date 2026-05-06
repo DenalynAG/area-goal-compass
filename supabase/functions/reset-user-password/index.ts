@@ -120,8 +120,7 @@ Deno.serve(async (req) => {
     let emailStatus: "enviado" | "fallido" = "fallido";
     let emailError: string | null = null;
     try {
-      const origin = req.headers.get("origin") || "https://easyconnectosh.lovable.app";
-      const loginUrl = `${origin}/login`;
+      const loginUrl = "https://easyconnectosh.lovable.app/login";
       const message =
         `¡Bienvenido a la Plataforma de Gestión de Objetivos e Indicadores!\n\n` +
         `Te compartimos tus credenciales de acceso:\n` +
@@ -138,7 +137,7 @@ Deno.serve(async (req) => {
             title: "¡Bienvenido a la Plataforma de Gestión de Objetivos e Indicadores!",
             message,
             actionUrl: loginUrl,
-            actionLabel: "Iniciar sesión",
+            actionLabel: "Acceder a la plataforma",
           },
         },
       });
