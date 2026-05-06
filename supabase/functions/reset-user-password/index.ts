@@ -97,7 +97,27 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Audit: password reset
+    try {
+      const { data: callerProfile } = await serviceClient
+        .from("profiles")
+        .select("name,email")
+        .eq("id", callerId)
+        .maybeSingle();
+      await serviceClient.from("activity_log").insert({
+        user_id: callerId,
+        user_name: callerProfile?.name ?? callerProfile?.email ?? "",
+        action: "reset_password",
+        entity: "user_credentials",
+        entity_id: normalizedEmail,
+      });
+    } catch (e) {
+      console.error("activity_log reset_password failed", e);
+    }
+
     // Send credentials email to the user
+    let emailStatus: "enviado" | "fallido" = "fallido";
+    let emailError: string | null = null;
     try {
       const origin = req.headers.get("origin") || "https://easyconnectosh.lovable.app";
       const loginUrl = `${origin}/login`;
@@ -107,7 +127,7 @@ Deno.serve(async (req) => {
         `Contraseña temporal: ${password}\n\n` +
         `Por seguridad, te recomendamos cambiar tu contraseña al iniciar sesión.`;
 
-      await serviceClient.functions.invoke("send-transactional-email", {
+      const { error: mailErr } = await serviceClient.functions.invoke("send-transactional-email", {
         body: {
           template: "internal_notification",
           to: normalizedEmail,
@@ -120,12 +140,36 @@ Deno.serve(async (req) => {
           },
         },
       });
+      if (mailErr) {
+        emailError = mailErr.message ?? "send failed";
+      } else {
+        emailStatus = "enviado";
+      }
     } catch (mailErr) {
       console.error("Failed to send credentials email", mailErr);
+      emailError = mailErr instanceof Error ? mailErr.message : "send failed";
+    }
+
+    // Audit: credentials email status
+    try {
+      const { data: callerProfile } = await serviceClient
+        .from("profiles")
+        .select("name,email")
+        .eq("id", callerId)
+        .maybeSingle();
+      await serviceClient.from("activity_log").insert({
+        user_id: callerId,
+        user_name: callerProfile?.name ?? callerProfile?.email ?? "",
+        action: emailStatus === "enviado" ? "send_credentials_success" : "send_credentials_failed",
+        entity: "user_credentials_email",
+        entity_id: normalizedEmail + (emailError ? ` | ${emailError}` : ""),
+      });
+    } catch (e) {
+      console.error("activity_log send_credentials failed", e);
     }
 
     return new Response(
-      JSON.stringify({ success: true, user_id: targetUser.id }),
+      JSON.stringify({ success: true, user_id: targetUser.id, email_status: emailStatus, email_error: emailError }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
