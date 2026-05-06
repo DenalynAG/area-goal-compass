@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useActivityLog, usePositions, useAreas, useSubareas, useSystemParameters } from '@/hooks/useSupabaseData';
 import { useAuth } from '@/contexts/AuthContext';
-import { Settings, Clock, User, Briefcase, Plus, Pencil, Trash2, Upload, ChevronDown, ChevronRight, Building2, FolderOpen, Check, X, GripVertical, ClipboardList, CalendarLock, Award, ListChecks, Menu as MenuIcon, Users, ScrollText } from 'lucide-react';
+import { Settings, Clock, User, Briefcase, Plus, Pencil, Trash2, Upload, ChevronDown, ChevronRight, Building2, FolderOpen, Check, X, GripVertical, ClipboardList, CalendarClock, Award, ListChecks, Menu as MenuIcon, Users, ScrollText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 
 const TABS = [
   { key: 'parametros', label: 'Parámetros del Sistema', icon: Settings },
-  { key: 'kpilocks', label: 'Cierre de KPI por Mes', icon: CalendarLock },
+  { key: 'kpilocks', label: 'Cierre de KPI por Mes', icon: CalendarClock },
   { key: 'cargos', label: 'Cargos por Área y Subárea', icon: Briefcase },
   { key: 'leaderpass', label: 'Leader Pass', icon: Award },
   { key: 'evaluacion', label: 'Indicadores de Evaluación', icon: ListChecks },
