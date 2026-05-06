@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useActivityLog, usePositions, useAreas, useSubareas, useSystemParameters } from '@/hooks/useSupabaseData';
 import { useAuth } from '@/contexts/AuthContext';
-import { Settings, Clock, User, Briefcase, Plus, Pencil, Trash2, Upload, ChevronDown, ChevronRight, Building2, FolderOpen, Check, X, GripVertical, ClipboardList, CalendarClock, Award, ListChecks, Menu as MenuIcon, Users, ScrollText } from 'lucide-react';
+import { Settings, Clock, User, Briefcase, Plus, Pencil, Trash2, Upload, ChevronDown, ChevronRight, Building2, FolderOpen, Check, X, GripVertical, ClipboardList, CalendarClock, Award, ListChecks, Menu as MenuIcon, Users, ScrollText, Search, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -49,6 +49,9 @@ export default function AdministracionPage() {
   const [importing, setImporting] = useState(false);
   const [editingParam, setEditingParam] = useState<string | null>(null);
   const [editParamValue, setEditParamValue] = useState('');
+  const [auditSearch, setAuditSearch] = useState('');
+  const [auditAction, setAuditAction] = useState<string>('all');
+  const [expandedLogs, setExpandedLogs] = useState<Record<string, boolean>>({});
 
   const visibleTabs = TABS.filter(t => {
     if (t.key === 'menus' || t.key === 'usuarios') return isSuperAdmin;
@@ -340,26 +343,137 @@ export default function AdministracionPage() {
 
           {/* Registro de Auditoría */}
           {activeTab === 'auditoria' && (
-            <div className="divide-y -mx-5 -mb-5">
-              {isLoading ? (
-                <div className="px-5 py-8 text-center text-muted-foreground">Cargando registros...</div>
-              ) : activityLog.length === 0 ? (
-                <div className="px-5 py-8 text-center text-muted-foreground">No hay registros de auditoría</div>
-              ) : activityLog.map(log => (
-                <div key={log.id} className="flex items-center gap-4 px-5 py-3 hover:bg-muted/30 transition-colors">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                    <User className="w-4 h-4 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm">
-                      <span className="font-medium">{log.user_name}</span>
-                      {' '}<span className="text-muted-foreground">{log.action}</span>
-                      {' '}<span className="font-medium">{log.entity}</span>
-                    </p>
-                    <p className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleString()}</p>
-                  </div>
+            <div>
+              <div className="flex flex-wrap gap-2 mb-4">
+                <div className="relative flex-1 min-w-[240px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar por usuario, tabla, acción o ID..."
+                    value={auditSearch}
+                    onChange={(e) => setAuditSearch(e.target.value)}
+                    className="pl-9"
+                  />
                 </div>
-              ))}
+                {(['all','crear','editar','eliminar'] as const).map(a => (
+                  <button
+                    key={a}
+                    onClick={() => setAuditAction(a)}
+                    className={cn(
+                      'px-3 py-1.5 rounded-md text-xs font-medium border transition-colors capitalize',
+                      auditAction === a ? 'bg-primary text-primary-foreground border-primary' : 'bg-background hover:bg-muted'
+                    )}
+                  >
+                    {a === 'all' ? 'Todas' : a}
+                  </button>
+                ))}
+              </div>
+              <div className="divide-y border rounded-md overflow-hidden">
+                {isLoading ? (
+                  <div className="px-5 py-8 text-center text-muted-foreground">Cargando registros...</div>
+                ) : (() => {
+                  const filtered = activityLog.filter((log: any) => {
+                    if (auditAction !== 'all') {
+                      const a = String(log.action || '').toLowerCase();
+                      if (!a.includes(auditAction)) return false;
+                    }
+                    if (auditSearch.trim()) {
+                      const s = auditSearch.toLowerCase();
+                      const hay = `${log.user_name || ''} ${log.action || ''} ${log.entity || ''} ${log.table_name || ''} ${log.entity_id || ''}`.toLowerCase();
+                      if (!hay.includes(s)) return false;
+                    }
+                    return true;
+                  });
+                  if (filtered.length === 0) {
+                    return <div className="px-5 py-8 text-center text-muted-foreground">No hay registros de auditoría</div>;
+                  }
+                  return filtered.map((log: any) => {
+                    const expanded = expandedLogs[log.id];
+                    const details = log.details as any;
+                    const actionLower = String(log.action || '').toLowerCase();
+                    const actionColor = actionLower.includes('crear') ? 'bg-emerald-100 text-emerald-800'
+                      : actionLower.includes('editar') ? 'bg-blue-100 text-blue-800'
+                      : actionLower.includes('eliminar') ? 'bg-red-100 text-red-800'
+                      : 'bg-slate-100 text-slate-800';
+                    const hasDetails = !!details;
+                    return (
+                      <div key={log.id} className="bg-background">
+                        <div
+                          className={cn('flex items-start gap-3 px-4 py-3 hover:bg-muted/30 transition-colors', hasDetails && 'cursor-pointer')}
+                          onClick={() => hasDetails && setExpandedLogs(prev => ({ ...prev, [log.id]: !prev[log.id] }))}
+                        >
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                            <User className="w-4 h-4 text-primary" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-medium text-sm">{log.user_name || 'Sistema'}</span>
+                              <span className={cn('text-[11px] px-2 py-0.5 rounded-full font-medium', actionColor)}>
+                                {log.action}
+                              </span>
+                              <span className="text-xs text-muted-foreground">en</span>
+                              <span className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded">
+                                {log.table_name || log.entity}
+                              </span>
+                              {log.entity_id && (
+                                <span className="text-[10px] text-muted-foreground font-mono truncate max-w-[180px]">
+                                  #{log.entity_id}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {new Date(log.created_at).toLocaleString()}
+                            </p>
+                          </div>
+                          {hasDetails && (
+                            <ChevronDown className={cn('w-4 h-4 text-muted-foreground shrink-0 transition-transform mt-2', expanded && 'rotate-180')} />
+                          )}
+                        </div>
+                        {expanded && hasDetails && (
+                          <div className="px-4 pb-4 pl-15 bg-muted/20">
+                            {details.cambios && (
+                              <div className="space-y-1.5">
+                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Cambios</p>
+                                <div className="border rounded overflow-hidden bg-background">
+                                  <table className="w-full text-xs">
+                                    <thead className="bg-muted/50">
+                                      <tr>
+                                        <th className="text-left px-2 py-1.5 font-medium">Campo</th>
+                                        <th className="text-left px-2 py-1.5 font-medium text-red-700">Antes</th>
+                                        <th className="text-left px-2 py-1.5 font-medium text-emerald-700">Después</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody className="divide-y">
+                                      {Object.entries(details.cambios).map(([field, val]: [string, any]) => (
+                                        <tr key={field}>
+                                          <td className="px-2 py-1.5 font-mono text-[11px]">{field}</td>
+                                          <td className="px-2 py-1.5 text-red-700 break-all">{JSON.stringify(val?.antes) ?? '—'}</td>
+                                          <td className="px-2 py-1.5 text-emerald-700 break-all">{JSON.stringify(val?.despues) ?? '—'}</td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            )}
+                            {details.nuevo && (
+                              <div className="space-y-1.5">
+                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Datos creados</p>
+                                <pre className="text-[11px] bg-background border rounded p-2 overflow-x-auto max-h-60">{JSON.stringify(details.nuevo, null, 2)}</pre>
+                              </div>
+                            )}
+                            {details.eliminado && (
+                              <div className="space-y-1.5">
+                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Datos eliminados</p>
+                                <pre className="text-[11px] bg-background border rounded p-2 overflow-x-auto max-h-60">{JSON.stringify(details.eliminado, null, 2)}</pre>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
             </div>
           )}
         </div>
