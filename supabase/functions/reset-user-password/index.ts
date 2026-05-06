@@ -97,6 +97,33 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Send credentials email to the user
+    try {
+      const origin = req.headers.get("origin") || "https://easyconnectosh.lovable.app";
+      const loginUrl = `${origin}/login`;
+      const message =
+        `Se han actualizado tus credenciales de acceso a EasyConnect OSH.\n\n` +
+        `Usuario: ${normalizedEmail}\n` +
+        `Contraseña temporal: ${password}\n\n` +
+        `Por seguridad, te recomendamos cambiar tu contraseña al iniciar sesión.`;
+
+      await serviceClient.functions.invoke("send-transactional-email", {
+        body: {
+          template: "internal_notification",
+          to: normalizedEmail,
+          subject: "Tus credenciales de acceso a EasyConnect OSH",
+          data: {
+            title: "Acceso a EasyConnect OSH",
+            message,
+            actionUrl: loginUrl,
+            actionLabel: "Iniciar sesión",
+          },
+        },
+      });
+    } catch (mailErr) {
+      console.error("Failed to send credentials email", mailErr);
+    }
+
     return new Response(
       JSON.stringify({ success: true, user_id: targetUser.id }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
