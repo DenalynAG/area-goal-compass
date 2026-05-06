@@ -88,6 +88,7 @@ Deno.serve(async (req) => {
     const { error: updateError } = await serviceClient.auth.admin.updateUserById(targetUser.id, {
       password,
       email_confirm: true,
+      user_metadata: { ...(targetUser.user_metadata ?? {}), must_change_password: true },
     });
 
     if (updateError) {
@@ -122,7 +123,8 @@ Deno.serve(async (req) => {
       const origin = req.headers.get("origin") || "https://easyconnectosh.lovable.app";
       const loginUrl = `${origin}/login`;
       const message =
-        `Se han actualizado tus credenciales de acceso a EasyConnect OSH.\n\n` +
+        `¡Bienvenido a la Plataforma de Gestión de Objetivos e Indicadores!\n\n` +
+        `Te compartimos tus credenciales de acceso:\n` +
         `Usuario: ${normalizedEmail}\n` +
         `Contraseña temporal: ${password}\n\n` +
         `Por seguridad, te recomendamos cambiar tu contraseña al iniciar sesión.`;
@@ -133,7 +135,7 @@ Deno.serve(async (req) => {
           to: normalizedEmail,
           subject: "Tus credenciales de acceso a EasyConnect OSH",
           data: {
-            title: "Acceso a EasyConnect OSH",
+            title: "¡Bienvenido a la Plataforma de Gestión de Objetivos e Indicadores!",
             message,
             actionUrl: loginUrl,
             actionLabel: "Iniciar sesión",
