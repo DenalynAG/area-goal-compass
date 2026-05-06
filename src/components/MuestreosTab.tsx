@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { logActivity } from '@/lib/activityLog';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -290,6 +291,7 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
       }
       setPendingEdits({});
       qc.invalidateQueries({ queryKey: ['sampling_records'] });
+      await logActivity('save_batch', 'sampling_records', null, { count: Object.keys(pendingEdits).length, year: selectedYear, type: samplingType });
       toast.success('Muestreos guardados correctamente');
     } finally { setSaving(false); }
   };
@@ -322,6 +324,7 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
         }).eq('id', rowDialog.row.id);
         if (error) { toast.error(error.message); return; }
         toast.success('Fila actualizada');
+        await logActivity('update', 'sampling_grid_row', rowDialog.row.id, { ...rowForm });
       } else {
         // New: place at end of zone group (max sort_order in zone +1)
         const sameZone = dbRows.filter(r => r.zone_name === rowForm.zone_name.trim());
@@ -335,6 +338,7 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
         });
         if (error) { toast.error(error.message); return; }
         toast.success('Fila agregada');
+        await logActivity('create', 'sampling_grid_row', null, { ...rowForm });
       }
       setRowDialog(null);
       qc.invalidateQueries({ queryKey: ['sampling_grid_rows'] });
@@ -344,6 +348,7 @@ export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {})
     if (!deleteRow) return;
     const { error } = await supabase.from('sampling_grid_rows').delete().eq('id', deleteRow.id);
     if (error) { toast.error(error.message); return; }
+    await logActivity('delete', 'sampling_grid_row', deleteRow.id, { area: deleteRow.area_name, zone: deleteRow.zone_name, indicator: deleteRow.indicator_name });
     toast.success('Fila eliminada');
     setDeleteRow(null);
     qc.invalidateQueries({ queryKey: ['sampling_grid_rows'] });

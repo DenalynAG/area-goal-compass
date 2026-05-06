@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { logActivity } from "@/lib/activityLog";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
@@ -231,6 +232,7 @@ export default function KPIFormDialog({
         toast.error(error.message);
         return;
       }
+      await logActivity('update', 'kpi', kpi.id, { name: payload.name });
     } else {
       const { data, error } = await supabase.from("kpis").insert(payload).select("id").single();
       if (error) {
@@ -239,6 +241,7 @@ export default function KPIFormDialog({
         return;
       }
       kpiId = data.id;
+      await logActivity('create', 'kpi', kpiId, { name: payload.name });
     }
 
     // Upsert a kpi_measurement for the selected month so the grid reflects the value
@@ -259,13 +262,15 @@ export default function KPIFormDialog({
 
       if (existing) {
         await supabase.from("kpi_measurements").update({ value: currentValue }).eq("id", existing.id);
+        await logActivity('update', 'kpi_measurement', existing.id, { kpi_id: kpiId, period: measurementMonth, value: currentValue });
       } else {
-        await supabase.from("kpi_measurements").insert({
+        const { data: ins } = await supabase.from("kpi_measurements").insert({
           kpi_id: kpiId,
           period_date: periodDate,
           value: currentValue,
           created_by: (await supabase.auth.getUser()).data.user?.id ?? "",
-        });
+        }).select('id').maybeSingle();
+        await logActivity('create', 'kpi_measurement', (ins as any)?.id || null, { kpi_id: kpiId, period: measurementMonth, value: currentValue });
       }
     }
 

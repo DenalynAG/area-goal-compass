@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { logActivity } from "@/lib/activityLog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAreas, useSubareas, useProfiles, getProfileName, getAreaNameFromList, getSubareaNameFromList, useEvidences } from "@/hooks/useSupabaseData";
 import { Button } from "@/components/ui/button";
@@ -236,6 +237,7 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
       ? await supabase.from("audit_plans").update(payload).eq("id", editingPlan.id)
       : await supabase.from("audit_plans").insert(payload);
     if (error) { toast.error(error.message); return; }
+    await logActivity(editingPlan ? 'update' : 'create', 'audit_plan', editingPlan?.id, { title: payload.title });
     toast.success(editingPlan ? "Plan actualizado" : "Plan creado");
     qc.invalidateQueries({ queryKey: ["audit_plans"] });
     setPlanDialogOpen(false);
@@ -245,6 +247,7 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
     if (!deletePlanId) return;
     const { error } = await supabase.from("audit_plans").delete().eq("id", deletePlanId);
     if (error) { toast.error(error.message); return; }
+    await logActivity('delete', 'audit_plan', deletePlanId);
     toast.success("Plan eliminado");
     qc.invalidateQueries({ queryKey: ["audit_plans"] });
     setDeletePlanId(null);
@@ -322,10 +325,12 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
     if (editingFinding) {
       const { error } = await supabase.from("audit_findings").update(payload).eq("id", editingFinding.id);
       if (error) { toast.error(error.message); return; }
+      await logActivity('update', 'audit_finding', editingFinding.id, { severity: payload.severity, type: payload.finding_type });
     } else {
       const { data, error } = await supabase.from("audit_findings").insert(payload).select('id').single();
       if (error) { toast.error(error.message); return; }
       findingId = data.id;
+      await logActivity('create', 'audit_finding', findingId, { severity: payload.severity, type: payload.finding_type });
     }
     if (findingId && findingFiles.length > 0) await uploadFindingFiles(findingId);
     toast.success(editingFinding ? "Hallazgo actualizado" : "Hallazgo registrado");
@@ -350,6 +355,7 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
     setCommentText("");
     setCommentFindingId(null);
     qc.invalidateQueries({ queryKey: ["audit_comments"] });
+    await logActivity('create', 'audit_comment', findingId);
   };
 
   // ─── Filters ───

@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { logActivity } from "@/lib/activityLog";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -123,6 +124,7 @@ export default function BpmActionPlanTab() {
       ? await supabase.from("bpm_action_plan" as any).update(payload).eq("id", editing.id)
       : await supabase.from("bpm_action_plan" as any).insert(payload);
     if (error) { toast.error(error.message); return; }
+    await logActivity(editing ? 'update' : 'create', 'bpm_action_plan', editing?.id, { finding: (form.finding_description || '').slice(0, 80) });
     toast.success(editing ? "Registro actualizado" : "Registro guardado");
     qc.invalidateQueries({ queryKey: ["bpm_action_plan"] });
     setDialogOpen(false);
@@ -132,6 +134,7 @@ export default function BpmActionPlanTab() {
     if (!deleteId) return;
     const { error } = await supabase.from("bpm_action_plan" as any).delete().eq("id", deleteId);
     if (error) { toast.error(error.message); return; }
+    await logActivity('delete', 'bpm_action_plan', deleteId);
     toast.success("Registro eliminado");
     qc.invalidateQueries({ queryKey: ["bpm_action_plan"] });
     setDeleteId(null);

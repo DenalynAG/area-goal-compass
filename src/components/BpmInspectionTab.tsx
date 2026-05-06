@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { logActivity } from "@/lib/activityLog";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -127,6 +128,7 @@ export default function BpmInspectionTab() {
       ? await supabase.from("bpm_inspections" as any).update(payload).eq("id", editing.id)
       : await supabase.from("bpm_inspections" as any).upsert(payload, { onConflict: "year,month,zone" });
     if (error) { toast.error(error.message); return; }
+    await logActivity(editing ? 'update' : 'create', 'bpm_inspection', editing?.id, { year, month: form.month, zone: form.zone, percentage: pct });
     toast.success(editing ? "Registro actualizado" : "Registro guardado");
     await qc.invalidateQueries({ queryKey: ["bpm_inspections"] });
     await qc.refetchQueries({ queryKey: ["bpm_inspections", year] });
@@ -137,6 +139,7 @@ export default function BpmInspectionTab() {
     if (!deleteId) return;
     const { error } = await supabase.from("bpm_inspections" as any).delete().eq("id", deleteId);
     if (error) { toast.error(error.message); return; }
+    await logActivity('delete', 'bpm_inspection', deleteId);
     toast.success("Registro eliminado");
     qc.invalidateQueries({ queryKey: ["bpm_inspections"] });
     setDeleteId(null);
@@ -155,6 +158,7 @@ export default function BpmInspectionTab() {
     if (error) { toast.error(error.message); return; }
     toast.success("Zona renombrada");
     await qc.invalidateQueries({ queryKey: ["bpm_inspections"] });
+    await logActivity('rename', 'bpm_inspection_zone', null, { year, from: editingZone, to: newName });
     setEditingZone(null);
   };
 
@@ -168,6 +172,7 @@ export default function BpmInspectionTab() {
     if (error) { toast.error(error.message); return; }
     toast.success(`Zona "${deleteZone}" eliminada del ${year}`);
     await qc.invalidateQueries({ queryKey: ["bpm_inspections"] });
+    await logActivity('delete', 'bpm_inspection_zone', null, { year, zone: deleteZone });
     setDeleteZone(null);
   };
 
