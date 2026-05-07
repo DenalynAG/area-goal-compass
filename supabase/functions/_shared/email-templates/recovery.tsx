@@ -25,7 +25,7 @@ export const RecoveryEmail = ({
 }: RecoveryEmailProps) => (
   <Html lang="es" dir="ltr">
     <Head />
-    <Preview>Restablece tu contraseña en EasyConnect OSH</Preview>
+    <Preview>Restablecer tu contraseña - Plataforma de Objetivos e Indicadores</Preview>
     <Body style={main}>
       <Container style={container}>
         <Img
