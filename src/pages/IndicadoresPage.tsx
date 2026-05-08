@@ -41,7 +41,7 @@ export default function IndicadoresPage() {
     if (value === null || value === undefined || isNaN(Number(value))) return "—";
     const num = Number(value);
     if (isFinancialKpi(k)) {
-      return `$ ${new Intl.NumberFormat("es-CO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num)}`;
+      return `$ ${new Intl.NumberFormat("es-CO", { maximumFractionDigits: 0 }).format(num)}`;
     }
     return new Intl.NumberFormat("es-CO", { maximumFractionDigits: 2 }).format(num);
   };
