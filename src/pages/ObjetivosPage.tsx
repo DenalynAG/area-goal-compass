@@ -952,8 +952,7 @@ function ObjectiveCard({
     const num = Number(value);
     if (isFinancialKpi(k)) {
       const formatted = new Intl.NumberFormat('es-CO', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
+        maximumFractionDigits: 0,
       }).format(num);
       return `$ ${formatted}`;
     }
