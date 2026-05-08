@@ -96,14 +96,24 @@ export interface ActivityLog {
 }
 
 export function getTrafficLight(kpi: KPI): TrafficLight {
-  // Inverse calculation for savings/budget indicators (lower is better).
   const name = (kpi.name ?? '').toLowerCase();
-  const isInverse = ['ppto', 'presupuesto', 'ahorro', 'gop'].some((kw) => name.includes(kw));
-  if (isInverse) {
+
+  // Savings KPIs (higher real value than target is better).
+  const isSavings = ['ahorro', 'ahorros'].some((kw) => name.includes(kw));
+  if (isSavings) {
+    if (kpi.current_value > kpi.target) return 'verde';
+    if (kpi.current_value === kpi.target) return 'amarillo';
+    return 'rojo';
+  }
+
+  // Budget reduction KPIs (lower real value than target is better).
+  const isReduction = ['ppto', 'presupuesto', 'reducci', 'gop', 'gasto', 'costo'].some((kw) => name.includes(kw));
+  if (isReduction) {
     if (kpi.current_value < kpi.target) return 'verde';
     if (kpi.current_value === kpi.target) return 'amarillo';
     return 'rojo';
   }
+
   if (kpi.current_value >= kpi.threshold_green) return 'verde';
   if (kpi.current_value >= kpi.threshold_yellow) return 'amarillo';
   return 'rojo';
