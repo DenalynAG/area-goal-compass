@@ -946,6 +946,23 @@ function ObjectiveCard({
     return /\$|cop|usd|eur|mxn|pesos?|d[oó]lares?|facturaci[oó]n|ingreso|venta|ventas|costo|gasto/.test(u);
   };
 
+  // Format a numeric value for display: currency-aware (Spanish locale: 1.234,56)
+  const formatKpiValue = (value: number | null | undefined, k: { unit?: string | null }) => {
+    if (value === null || value === undefined || isNaN(Number(value))) return '—';
+    const num = Number(value);
+    if (isFinancialKpi(k)) {
+      const formatted = new Intl.NumberFormat('es-CO', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(num);
+      return `$ ${formatted}`;
+    }
+    const formatted = new Intl.NumberFormat('es-CO', {
+      maximumFractionDigits: 2,
+    }).format(num);
+    return `${formatted}${k.unit ? ` ${k.unit}` : ''}`;
+  };
+
   const qcLocal = useQueryClient();
   const updateCalcMethod = async (kpiId: string, method: 'promedio' | 'suma') => {
     const { error } = await supabase.from('kpis').update({ calc_method: method } as any).eq('id', kpiId);
@@ -1131,16 +1148,16 @@ function ObjectiveCard({
                     <td className="py-2 text-center">
                       {weight > 0 ? <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-accent/10 text-accent">{weight}%</span> : <span className="text-muted-foreground">—</span>}
                     </td>
-                    <td className="py-2">{k.target} {k.unit}</td>
+                    <td className="py-2">{formatKpiValue(k.target, k)}</td>
                     <td className="py-2">
                       {monthValue === null
                         ? <span className="text-muted-foreground italic">Sin dato</span>
-                        : <>{displayValue} {k.unit}</>
+                        : <>{formatKpiValue(displayValue, k)}</>
                       }
                     </td>
                     <td className="py-2 text-center">
                       {cumulativeAvg !== null
-                        ? <span className="font-semibold">{cumulativeAvg} {k.unit}</span>
+                        ? <span className="font-semibold">{formatKpiValue(cumulativeAvg, k)}</span>
                         : <span className="text-muted-foreground">—</span>
                       }
                     </td>
