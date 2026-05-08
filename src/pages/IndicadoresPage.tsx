@@ -31,6 +31,21 @@ export default function IndicadoresPage() {
     setDialogOpen(true);
   };
 
+  const isFinancialKpi = (k: { unit?: string | null }) => {
+    const u = (k.unit ?? "").toString().trim().toLowerCase();
+    if (!u) return false;
+    return /\$|cop|usd|eur|mxn|pesos?|d[oó]lares?|facturaci[oó]n|ingreso|venta|ventas|costo|gasto/.test(u);
+  };
+
+  const formatKpiValue = (value: number | null | undefined, k: { unit?: string | null }) => {
+    if (value === null || value === undefined || isNaN(Number(value))) return "—";
+    const num = Number(value);
+    if (isFinancialKpi(k)) {
+      return `$ ${new Intl.NumberFormat("es-CO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num)}`;
+    }
+    return new Intl.NumberFormat("es-CO", { maximumFractionDigits: 2 }).format(num);
+  };
+
   if (isLoading)
     return <div className="flex items-center justify-center py-20 text-muted-foreground">Cargando indicadores...</div>;
 
@@ -96,15 +111,15 @@ export default function IndicadoresPage() {
               <div className="px-5 py-4 space-y-4">
                 <div className="grid grid-cols-3 gap-3 text-center">
                   <div>
-                    <p className="text-lg font-bold">{kpi.current_value}</p>
+                    <p className="text-lg font-bold">{formatKpiValue(kpi.current_value, kpi)}</p>
                     <p className="text-[10px] text-muted-foreground">Valor Real</p>
                   </div>
                   <div>
-                    <p className="text-lg font-bold">{kpi.target}</p>
+                    <p className="text-lg font-bold">{formatKpiValue(kpi.target, kpi)}</p>
                     <p className="text-[10px] text-muted-foreground">Meta</p>
                   </div>
                   <div>
-                    <p className="text-lg font-bold">{kpi.baseline}</p>
+                    <p className="text-lg font-bold">{formatKpiValue(kpi.baseline, kpi)}</p>
                     <p className="text-[10px] text-muted-foreground">Línea Base</p>
                   </div>
                 </div>
