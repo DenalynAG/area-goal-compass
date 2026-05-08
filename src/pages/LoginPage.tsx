@@ -52,7 +52,7 @@ export default function LoginPage() {
             alt="OSHOME logo"
             className="w-20 h-20 rounded-2xl object-contain mx-auto mb-4"
           />
-          <h1 className="text-2xl font-display font-extrabold text-sidebar-foreground">Objetivos e Indicadores</h1>
+          <h1 className="text-2xl font-display font-extrabold text-sidebar-foreground">Work Plan</h1>
           <p className="text-sidebar-foreground/70 mt-1 text-sm">Plataforma de Gestión Objetivos e Indicadores</p>
           <p className="text-sidebar-foreground/50 mt-1 text-xs">Inicia sesión con tu cuenta</p>
         </div>
