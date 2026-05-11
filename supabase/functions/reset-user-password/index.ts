@@ -69,41 +69,73 @@ Deno.serve(async (req) => {
     // Find user — prefer direct lookup by user_id (profile id == auth.users.id),
     // since auth.users.email may differ from profiles.email.
     let targetUser: any = null;
+    const lookup = {
+      tried_user_id: false,
+      tried_profile_email: false,
+      tried_auth_email_scan: false,
+      user_id_found: false,
+      profile_email_found: false,
+      auth_email_found: false,
+      profile_resolved_id: null as string | null,
+    };
 
     // 1) Try by explicit user_id from caller
     if (user_id) {
+      lookup.tried_user_id = true;
       const { data, error } = await serviceClient.auth.admin.getUserById(user_id);
-      if (!error && data?.user) targetUser = data.user;
+      if (!error && data?.user) { targetUser = data.user; lookup.user_id_found = true; }
     }
 
     // 2) Try resolving via profiles table (profile email -> profile id -> auth user)
     if (!targetUser && normalizedEmail) {
+      lookup.tried_profile_email = true;
       const { data: prof } = await serviceClient
         .from("profiles")
         .select("id")
         .ilike("email", normalizedEmail)
         .maybeSingle();
       if (prof?.id) {
+        lookup.profile_resolved_id = prof.id;
         const { data, error } = await serviceClient.auth.admin.getUserById(prof.id);
-        if (!error && data?.user) targetUser = data.user;
+        if (!error && data?.user) { targetUser = data.user; lookup.profile_email_found = true; }
       }
     }
 
     // 3) Fallback: scan auth.users by email (legacy path)
     if (!targetUser && normalizedEmail) {
+      lookup.tried_auth_email_scan = true;
       const perPage = 200;
       for (let page = 1; page <= 25; page++) {
         const { data, error } = await serviceClient.auth.admin.listUsers({ page, perPage });
         if (error) throw error;
         const users = data?.users ?? [];
         const found = users.find((u: any) => u.email?.toLowerCase() === normalizedEmail);
-        if (found) { targetUser = found; break; }
+        if (found) { targetUser = found; lookup.auth_email_found = true; break; }
         if (users.length < perPage) break;
       }
     }
 
     if (!targetUser) {
-      return new Response(JSON.stringify({ error: "User not found" }), {
+      const reasons: string[] = [];
+      if (lookup.tried_user_id && !lookup.user_id_found) {
+        reasons.push(`No existe una cuenta de autenticación con el ID del perfil (${user_id}).`);
+      }
+      if (lookup.tried_profile_email) {
+        if (!lookup.profile_resolved_id) {
+          reasons.push(`No se encontró un perfil con el correo "${normalizedEmail}".`);
+        } else {
+          reasons.push(`El perfil existe (id ${lookup.profile_resolved_id}) pero no tiene cuenta de autenticación asociada.`);
+        }
+      }
+      if (lookup.tried_auth_email_scan && !lookup.auth_email_found) {
+        reasons.push(`Ningún usuario de autenticación tiene el correo "${normalizedEmail}".`);
+      }
+      const detail = reasons.length ? reasons.join(" ") : "No se pudo localizar al usuario.";
+      return new Response(JSON.stringify({
+        error: `Usuario no encontrado. ${detail}`,
+        code: "user_not_found",
+        lookup,
+      }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

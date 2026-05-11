@@ -125,7 +125,24 @@ export default function UserManagementSection() {
     });
     setBusy(false);
     if (error) {
-      toast.error(error.message ?? 'Error al cambiar la contraseña');
+      // supabase-js wraps non-2xx responses; parse the body for our detailed message
+      let detail: string | null = null;
+      try {
+        const ctx: any = (error as any).context;
+        const res: Response | undefined = ctx?.response ?? ctx;
+        if (res && typeof (res as any).json === 'function') {
+          const body = await (res as Response).clone().json();
+          if (body?.error) detail = String(body.error);
+        } else if (typeof ctx === 'string') {
+          const body = JSON.parse(ctx);
+          if (body?.error) detail = String(body.error);
+        }
+      } catch {
+        // ignore parse errors
+      }
+      toast.error(detail ?? error.message ?? 'Error al cambiar la contraseña', {
+        duration: 8000,
+      });
       return;
     }
     const emailStatus = (data as any)?.email_status;
