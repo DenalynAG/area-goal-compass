@@ -121,7 +121,7 @@ export default function UserManagementSection() {
     }
     setBusy(true);
     const { data, error } = await supabase.functions.invoke('reset-user-password', {
-      body: { email: target.email, password: newPassword },
+      body: { user_id: target.id, email: target.email, password: newPassword },
     });
     setBusy(false);
     if (error) {
