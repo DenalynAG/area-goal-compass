@@ -56,26 +56,50 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { email, password } = await req.json();
-    if (!email || !password) {
-      return new Response(JSON.stringify({ error: "email and password are required" }), {
+    const { email, password, user_id } = await req.json();
+    if ((!email && !user_id) || !password) {
+      return new Response(JSON.stringify({ error: "email or user_id, and password are required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const normalizedEmail = email.toString().trim().toLowerCase();
+    const normalizedEmail = email ? email.toString().trim().toLowerCase() : "";
 
-    // Find user by email
+    // Find user — prefer direct lookup by user_id (profile id == auth.users.id),
+    // since auth.users.email may differ from profiles.email.
     let targetUser: any = null;
-    const perPage = 200;
-    for (let page = 1; page <= 25; page++) {
-      const { data, error } = await serviceClient.auth.admin.listUsers({ page, perPage });
-      if (error) throw error;
-      const users = data?.users ?? [];
-      const found = users.find((u: any) => u.email?.toLowerCase() === normalizedEmail);
-      if (found) { targetUser = found; break; }
-      if (users.length < perPage) break;
+
+    // 1) Try by explicit user_id from caller
+    if (user_id) {
+      const { data, error } = await serviceClient.auth.admin.getUserById(user_id);
+      if (!error && data?.user) targetUser = data.user;
+    }
+
+    // 2) Try resolving via profiles table (profile email -> profile id -> auth user)
+    if (!targetUser && normalizedEmail) {
+      const { data: prof } = await serviceClient
+        .from("profiles")
+        .select("id")
+        .ilike("email", normalizedEmail)
+        .maybeSingle();
+      if (prof?.id) {
+        const { data, error } = await serviceClient.auth.admin.getUserById(prof.id);
+        if (!error && data?.user) targetUser = data.user;
+      }
+    }
+
+    // 3) Fallback: scan auth.users by email (legacy path)
+    if (!targetUser && normalizedEmail) {
+      const perPage = 200;
+      for (let page = 1; page <= 25; page++) {
+        const { data, error } = await serviceClient.auth.admin.listUsers({ page, perPage });
+        if (error) throw error;
+        const users = data?.users ?? [];
+        const found = users.find((u: any) => u.email?.toLowerCase() === normalizedEmail);
+        if (found) { targetUser = found; break; }
+        if (users.length < perPage) break;
+      }
     }
 
     if (!targetUser) {
@@ -121,17 +145,18 @@ Deno.serve(async (req) => {
     let emailError: string | null = null;
     try {
       const loginUrl = "https://easyconnectosh.lovable.app/login";
+      const recipientEmail = (targetUser.email || normalizedEmail) as string;
       const message =
         `¡Bienvenido a la Plataforma de Gestión de Objetivos e Indicadores!\n\n` +
         `Te compartimos tus credenciales de acceso:\n` +
-        `Usuario: ${normalizedEmail}\n` +
+        `Usuario: ${recipientEmail}\n` +
         `Contraseña temporal: ${password}\n\n` +
         `Por seguridad, te recomendamos cambiar tu contraseña al iniciar sesión.`;
 
       const { error: mailErr } = await serviceClient.functions.invoke("send-transactional-email", {
         body: {
           template: "internal_notification",
-          to: normalizedEmail,
+          to: recipientEmail,
           subject: "Tus credenciales de acceso a EasyConnect OSH",
           data: {
             title: "¡Bienvenido a la Plataforma de Gestión de Objetivos e Indicadores!",
