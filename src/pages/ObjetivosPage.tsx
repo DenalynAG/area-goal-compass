@@ -1029,7 +1029,8 @@ function ObjectiveCard({
     const values = objKpis.map(k => {
       const accumulatedAverage = getKpiAccumulatedAverage(k.id);
       if (accumulatedAverage === null) return null;
-      return k.target > 0 ? (accumulatedAverage / k.target) * 100 : 0;
+      const tgt = getKpiAccumulatedTarget(k);
+      return tgt > 0 ? (accumulatedAverage / tgt) * 100 : 0;
     }).filter((v): v is number => v !== null);
 
     if (values.length === 0) return 0;
