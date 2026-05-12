@@ -141,11 +141,36 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { error: updateError } = await serviceClient.auth.admin.updateUserById(targetUser.id, {
+    // Resolve the profile email so we can sync auth.email -> profile.email
+    // (admins reset passwords expecting the user to log in with the email shown in the UI,
+    // which lives in profiles.email and may differ from auth.users.email).
+    let profileEmail: string | null = null;
+    try {
+      const { data: prof } = await serviceClient
+        .from("profiles")
+        .select("email")
+        .eq("id", targetUser.id)
+        .maybeSingle();
+      profileEmail = prof?.email ? prof.email.toString().trim().toLowerCase() : null;
+    } catch (_) { /* ignore */ }
+
+    const desiredEmail = (normalizedEmail || profileEmail || targetUser.email || "").toLowerCase();
+    const currentAuthEmail = (targetUser.email || "").toLowerCase();
+    const shouldSyncEmail = !!desiredEmail && desiredEmail !== currentAuthEmail;
+
+    const updatePayload: Record<string, unknown> = {
       password,
       email_confirm: true,
       user_metadata: { ...(targetUser.user_metadata ?? {}), must_change_password: true },
-    });
+    };
+    if (shouldSyncEmail) {
+      updatePayload.email = desiredEmail;
+    }
+
+    const { error: updateError } = await serviceClient.auth.admin.updateUserById(
+      targetUser.id,
+      updatePayload,
+    );
 
     if (updateError) {
       return new Response(JSON.stringify({ error: updateError.message }), {
@@ -177,7 +202,7 @@ Deno.serve(async (req) => {
     let emailError: string | null = null;
     try {
       const loginUrl = "https://easyconnectosh.lovable.app/login";
-      const recipientEmail = (targetUser.email || normalizedEmail) as string;
+      const recipientEmail = (desiredEmail || targetUser.email || normalizedEmail) as string;
       const message =
         `¡Bienvenido a la Plataforma de Gestión de Objetivos e Indicadores!\n\n` +
         `Te compartimos tus credenciales de acceso:\n` +
