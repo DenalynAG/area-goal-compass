@@ -202,7 +202,7 @@ Deno.serve(async (req) => {
     let emailError: string | null = null;
     try {
       const loginUrl = "https://easyconnectosh.lovable.app/login";
-      const recipientEmail = (targetUser.email || normalizedEmail) as string;
+      const recipientEmail = (desiredEmail || targetUser.email || normalizedEmail) as string;
       const message =
         `¡Bienvenido a la Plataforma de Gestión de Objetivos e Indicadores!\n\n` +
         `Te compartimos tus credenciales de acceso:\n` +
