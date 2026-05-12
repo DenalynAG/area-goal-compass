@@ -1156,7 +1156,11 @@ function ObjectiveCard({
               {objKpis.map(k => {
                 const monthValue = getKpiMonthValue(k.id);
                 const displayValue = monthValue ?? 0;
-                const kpiForLight = { ...k, current_value: displayValue };
+                const isTotalView = selectedMonth === 'total';
+                const calcMethod = getCalcMethod(k);
+                const accumulatedTarget = getKpiAccumulatedTarget(k);
+                const displayTarget = isTotalView && calcMethod === 'suma' ? accumulatedTarget : k.target;
+                const kpiForLight = { ...k, current_value: displayValue, target: displayTarget };
                 const weight = (k as any).weight_percent ?? 0;
                 const cumulativeAvg = getKpiAccumulatedAverage(k.id);
                 return (
@@ -1165,7 +1169,7 @@ function ObjectiveCard({
                     <td className="py-2 text-center">
                       {weight > 0 ? <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-accent/10 text-accent">{weight}%</span> : <span className="text-muted-foreground">—</span>}
                     </td>
-                    <td className="py-2">{formatKpiValue(k.target, k)}</td>
+                    <td className="py-2">{formatKpiValue(displayTarget, k)}</td>
                     <td className="py-2">
                       {monthValue === null
                         ? <span className="text-muted-foreground italic">Sin dato</span>
