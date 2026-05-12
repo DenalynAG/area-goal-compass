@@ -994,6 +994,24 @@ function ObjectiveCard({
     return Math.round(accumulated * 100) / 100;
   };
 
+  // Count measured months in current year up to elapsedMonths (used to scale accumulated target)
+  const getKpiMeasuredMonthsCount = (kpiId: string) => {
+    return relevantMeasurements.filter(m => {
+      if (m.kpi_id !== kpiId) return false;
+      const d = new Date(m.period_date);
+      return d.getFullYear() === currentYear && (d.getMonth() + 1) <= elapsedMonths;
+    }).length;
+  };
+
+  // Accumulated target: for SUM-method KPIs, multiply monthly target by number of measured months.
+  // For AVG-method KPIs the target stays as the monthly target (comparable to the average).
+  const getKpiAccumulatedTarget = (k: any) => {
+    const method = getCalcMethod(k);
+    if (method !== 'suma') return Number(k.target) || 0;
+    const n = getKpiMeasuredMonthsCount(k.id);
+    return (Number(k.target) || 0) * (n > 0 ? n : 1);
+  };
+
   // Get KPI value for a given month (or accumulated average up to date for 'total')
   const getKpiMonthValue = (kpiId: string) => {
     if (selectedMonth === 'total') {
