@@ -994,6 +994,24 @@ function ObjectiveCard({
     return Math.round(accumulated * 100) / 100;
   };
 
+  // Count measured months in current year up to elapsedMonths (used to scale accumulated target)
+  const getKpiMeasuredMonthsCount = (kpiId: string) => {
+    return relevantMeasurements.filter(m => {
+      if (m.kpi_id !== kpiId) return false;
+      const d = new Date(m.period_date);
+      return d.getFullYear() === currentYear && (d.getMonth() + 1) <= elapsedMonths;
+    }).length;
+  };
+
+  // Accumulated target: for SUM-method KPIs, multiply monthly target by number of measured months.
+  // For AVG-method KPIs the target stays as the monthly target (comparable to the average).
+  const getKpiAccumulatedTarget = (k: any) => {
+    const method = getCalcMethod(k);
+    if (method !== 'suma') return Number(k.target) || 0;
+    const n = getKpiMeasuredMonthsCount(k.id);
+    return (Number(k.target) || 0) * (n > 0 ? n : 1);
+  };
+
   // Get KPI value for a given month (or accumulated average up to date for 'total')
   const getKpiMonthValue = (kpiId: string) => {
     if (selectedMonth === 'total') {
@@ -1011,7 +1029,8 @@ function ObjectiveCard({
     const values = objKpis.map(k => {
       const accumulatedAverage = getKpiAccumulatedAverage(k.id);
       if (accumulatedAverage === null) return null;
-      return k.target > 0 ? (accumulatedAverage / k.target) * 100 : 0;
+      const tgt = getKpiAccumulatedTarget(k);
+      return tgt > 0 ? (accumulatedAverage / tgt) * 100 : 0;
     }).filter((v): v is number => v !== null);
 
     if (values.length === 0) return 0;
@@ -1138,7 +1157,11 @@ function ObjectiveCard({
               {objKpis.map(k => {
                 const monthValue = getKpiMonthValue(k.id);
                 const displayValue = monthValue ?? 0;
-                const kpiForLight = { ...k, current_value: displayValue };
+                const isTotalView = selectedMonth === 'total';
+                const calcMethod = getCalcMethod(k);
+                const accumulatedTarget = getKpiAccumulatedTarget(k);
+                const displayTarget = isTotalView && calcMethod === 'suma' ? accumulatedTarget : k.target;
+                const kpiForLight = { ...k, current_value: displayValue, target: displayTarget };
                 const weight = (k as any).weight_percent ?? 0;
                 const cumulativeAvg = getKpiAccumulatedAverage(k.id);
                 return (
@@ -1147,7 +1170,7 @@ function ObjectiveCard({
                     <td className="py-2 text-center">
                       {weight > 0 ? <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-accent/10 text-accent">{weight}%</span> : <span className="text-muted-foreground">—</span>}
                     </td>
-                    <td className="py-2">{formatKpiValue(k.target, k)}</td>
+                    <td className="py-2">{formatKpiValue(displayTarget, k)}</td>
                     <td className="py-2">
                       {monthValue === null
                         ? <span className="text-muted-foreground italic">Sin dato</span>
@@ -1216,9 +1239,14 @@ function ObjectiveCard({
                 </td>
                 <td className="py-2 text-center font-bold text-sm">
                   {(() => {
-                    // Overall cumulative average across all KPIs
-                    const allVals = objKpis.flatMap(k => relevantMeasurements.filter(m => m.kpi_id === k.id).map(m => k.target > 0 ? (m.value / k.target) * 100 : 0));
-                    const avg = allVals.length > 0 ? Math.round(allVals.reduce((s, v) => s + v, 0) / allVals.length) : 0;
+                    // Overall cumulative percentage across all KPIs (uses accumulated target for SUM-method KPIs)
+                    const ratios = objKpis.map(k => {
+                      const acc = getKpiAccumulatedAverage(k.id);
+                      if (acc === null) return null;
+                      const tgt = getKpiAccumulatedTarget(k);
+                      return tgt > 0 ? (acc / tgt) * 100 : 0;
+                    }).filter((v): v is number => v !== null);
+                    const avg = ratios.length > 0 ? Math.round(ratios.reduce((s, v) => s + v, 0) / ratios.length) : 0;
                     return `${avg}%`;
                   })()}
                 </td>
