@@ -450,6 +450,13 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
     return subareas.filter(s => s.area_id === dashAreaId);
   }, [dashAreaId, subareas]);
 
+  // Traffic-light color from percentage (same thresholds as ProgressBar)
+  const lightColor = (v: number) => {
+    if (v >= 70) return 'hsl(var(--success))';
+    if (v >= 40) return 'hsl(var(--warning))';
+    return 'hsl(var(--danger))';
+  };
+
   // Drill-down view for a specific area
   if (selectedArea) {
     const areaObjs = getAreaObjectives(selectedArea.id);
