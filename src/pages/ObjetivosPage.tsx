@@ -385,6 +385,71 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
 
   if (isLoading) return <div className="flex items-center justify-center py-20 text-muted-foreground">Cargando objetivos...</div>;
 
+  // ───── Dashboard chart data ─────
+  const getKpiAchievement = (k: Tables<'kpis'>) => {
+    const currentYear = new Date().getFullYear();
+    const ms = measurements.filter(m => {
+      if (m.kpi_id !== k.id) return false;
+      const d = new Date(m.period_date);
+      return d.getFullYear() === currentYear && (d.getMonth() + 1) <= elapsedMonths;
+    });
+    if (ms.length === 0) return null;
+    const sumValue = ms.reduce((s, m) => s + Number(m.value), 0);
+    const accumulated = isFinancialKpi(k) ? sumValue : sumValue / elapsedMonths;
+    return k.target > 0 ? Math.round((accumulated / k.target) * 100) : 0;
+  };
+
+  const dashboardChartData = useMemo(() => {
+    // Decide grouping
+    if (dashAreaId === '__all__') {
+      // by area (excluding Dirección General? include all)
+      return areas.map(a => {
+        const objs = getAreaObjectives(a.id);
+        const ks = getAreaKpis(a.id);
+        const objAvg = objs.length ? Math.round(objs.reduce((s, o) => s + getObjProgress(o), 0) / objs.length) : 0;
+        const kpiVals = ks.map(k => getKpiAchievement(k)).filter((v): v is number => v !== null);
+        const kpiAvg = kpiVals.length ? Math.round(kpiVals.reduce((s, v) => s + v, 0) / kpiVals.length) : 0;
+        return { name: a.name, Objetivos: objAvg, Indicadores: kpiAvg };
+      }).filter(d => d.Objetivos > 0 || d.Indicadores > 0);
+    }
+    if (dashSubareaId === '__all__') {
+      // by subarea of selected area + direct area objectives
+      const subs = subareas.filter(s => s.area_id === dashAreaId);
+      const result: { name: string; Objetivos: number; Indicadores: number }[] = [];
+      const directObjs = objectives.filter(o => o.scope_type === 'area' && o.scope_id === dashAreaId);
+      if (directObjs.length) {
+        const ks = kpis.filter(k => directObjs.some(o => o.id === k.objective_id));
+        const objAvg = Math.round(directObjs.reduce((s, o) => s + getObjProgress(o), 0) / directObjs.length);
+        const kpiVals = ks.map(k => getKpiAchievement(k)).filter((v): v is number => v !== null);
+        const kpiAvg = kpiVals.length ? Math.round(kpiVals.reduce((s, v) => s + v, 0) / kpiVals.length) : 0;
+        result.push({ name: '(Área directa)', Objetivos: objAvg, Indicadores: kpiAvg });
+      }
+      subs.forEach(s => {
+        const objs = objectives.filter(o => o.scope_type === 'subarea' && o.scope_id === s.id);
+        if (!objs.length) return;
+        const ks = kpis.filter(k => objs.some(o => o.id === k.objective_id));
+        const objAvg = Math.round(objs.reduce((sum, o) => sum + getObjProgress(o), 0) / objs.length);
+        const kpiVals = ks.map(k => getKpiAchievement(k)).filter((v): v is number => v !== null);
+        const kpiAvg = kpiVals.length ? Math.round(kpiVals.reduce((sum, v) => sum + v, 0) / kpiVals.length) : 0;
+        result.push({ name: s.name, Objetivos: objAvg, Indicadores: kpiAvg });
+      });
+      return result;
+    }
+    // by objective inside selected subarea
+    const objs = objectives.filter(o => o.scope_type === 'subarea' && o.scope_id === dashSubareaId);
+    return objs.map(o => {
+      const ks = kpis.filter(k => k.objective_id === o.id);
+      const kpiVals = ks.map(k => getKpiAchievement(k)).filter((v): v is number => v !== null);
+      const kpiAvg = kpiVals.length ? Math.round(kpiVals.reduce((s, v) => s + v, 0) / kpiVals.length) : 0;
+      return { name: o.title.length > 40 ? o.title.slice(0, 40) + '…' : o.title, Objetivos: getObjProgress(o), Indicadores: kpiAvg };
+    });
+  }, [dashAreaId, dashSubareaId, areas, subareas, objectives, kpis, measurements]);
+
+  const dashSubareaOptions = useMemo(() => {
+    if (dashAreaId === '__all__') return [];
+    return subareas.filter(s => s.area_id === dashAreaId);
+  }, [dashAreaId, subareas]);
+
   // Drill-down view for a specific area
   if (selectedArea) {
     const areaObjs = getAreaObjectives(selectedArea.id);
