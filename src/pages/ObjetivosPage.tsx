@@ -28,7 +28,7 @@ import * as XLSX from 'xlsx';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import { SearchableSelect } from '@/components/ui/searchable-select';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, LabelList } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, Cell, XAxis, YAxis, Tooltip, CartesianGrid, Legend, LabelList } from 'recharts';
 import { LayoutDashboard } from 'lucide-react';
 
 interface ObjetivosPageProps {
