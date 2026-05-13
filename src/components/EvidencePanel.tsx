@@ -46,7 +46,7 @@ export default function EvidencePanel({ entityType, entityId, entityName, open, 
   const [reviewNotes, setReviewNotes] = useState('');
   const [reviewAction, setReviewAction] = useState<'aprobada' | 'rechazada'>('aprobada');
 
-  const canUpload = hasRole('admin_area') || hasRole('lider_subarea') || isSuperAdmin;
+  const canUpload = hasRole('admin_area') || hasRole('lider_subarea') || hasRole('gestor_area') || isSuperAdmin;
   const canReview = isSuperAdmin;
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
