@@ -392,7 +392,19 @@ export default function KPIFormDialog({
             </div>
             <div className="space-y-2">
               <Label>Meta</Label>
-              <Input type="number" value={target} onChange={(e) => setTarget(Number(e.target.value))} disabled={restrictedToValue} />
+              <Input
+                type="number"
+                value={target}
+                onChange={(e) => {
+                  const v = Number(e.target.value);
+                  setTarget(v);
+                  // Auto-cálculo de umbrales basado en la Meta
+                  setThresholdGreen(v + 1);
+                  setThresholdYellow(v);
+                  setThresholdRed(0);
+                }}
+                disabled={restrictedToValue}
+              />
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
