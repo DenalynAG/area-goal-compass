@@ -27,6 +27,9 @@ import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
+import { SearchableSelect } from '@/components/ui/searchable-select';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, LabelList } from 'recharts';
+import { LayoutDashboard } from 'lucide-react';
 
 interface ObjetivosPageProps {
   areaFilterName?: string;
@@ -56,6 +59,9 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null);
   const [expandedObj, setExpandedObj] = useState<Record<string, boolean>>({});
   const [globalExpanded, setGlobalExpanded] = useState(false);
+  const [dashboardExpanded, setDashboardExpanded] = useState(true);
+  const [dashAreaId, setDashAreaId] = useState<string>('__all__');
+  const [dashSubareaId, setDashSubareaId] = useState<string>('__all__');
   const [expandedAreas, setExpandedAreas] = useState<Record<string, boolean>>({});
   const toggleArea = (id: string) => setExpandedAreas(prev => ({ ...prev, [id]: !prev[id] }));
 
