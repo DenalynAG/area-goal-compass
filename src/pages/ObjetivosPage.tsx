@@ -28,7 +28,7 @@ import * as XLSX from 'xlsx';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import { SearchableSelect } from '@/components/ui/searchable-select';
-import { ResponsiveContainer, BarChart, Bar, Cell, XAxis, YAxis, Tooltip, CartesianGrid, Legend, LabelList } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, LabelList } from 'recharts';
 import { LayoutDashboard } from 'lucide-react';
 
 interface ObjetivosPageProps {
@@ -450,13 +450,6 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
     return subareas.filter(s => s.area_id === dashAreaId);
   }, [dashAreaId, subareas]);
 
-  // Traffic-light color from percentage (same thresholds as ProgressBar)
-  const lightColor = (v: number) => {
-    if (v >= 70) return 'hsl(var(--success))';
-    if (v >= 40) return 'hsl(var(--warning))';
-    return 'hsl(var(--danger))';
-  };
-
   // Drill-down view for a specific area
   if (selectedArea) {
     const areaObjs = getAreaObjectives(selectedArea.id);
@@ -682,29 +675,16 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                     <YAxis type="category" dataKey="name" width={180} stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 12 }} />
                     <Tooltip formatter={(v: any) => `${v}%`} contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }} />
                     <Legend />
-                    <Bar dataKey="Objetivos" radius={[0, 4, 4, 0]}>
-                      {dashboardChartData.map((d, i) => (
-                        <Cell key={`o-${i}`} fill={lightColor(d.Objetivos)} />
-                      ))}
+                    <Bar dataKey="Objetivos" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]}>
                       <LabelList dataKey="Objetivos" position="right" formatter={(v: any) => `${v}%`} style={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
                     </Bar>
-                    <Bar dataKey="Indicadores" radius={[0, 4, 4, 0]}>
-                      {dashboardChartData.map((d, i) => (
-                        <Cell key={`i-${i}`} fillOpacity={0.7} fill={lightColor(d.Indicadores)} />
-                      ))}
+                    <Bar dataKey="Indicadores" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]}>
                       <LabelList dataKey="Indicadores" position="right" formatter={(v: any) => `${v}%`} style={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             )}
-            {/* Traffic light legend */}
-            <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-sm" style={{ background: 'hsl(var(--success))' }} /> Verde (≥70%)</span>
-              <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-sm" style={{ background: 'hsl(var(--warning))' }} /> Amarillo (40–69%)</span>
-              <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-sm" style={{ background: 'hsl(var(--danger))' }} /> Rojo (&lt;40%)</span>
-              <span className="ml-auto opacity-70">Indicadores con tono más claro</span>
-            </div>
           </div>
         )}
       </section>
