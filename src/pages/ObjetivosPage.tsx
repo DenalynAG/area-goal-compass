@@ -626,6 +626,69 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   // Main view
   return (
     <div className="animate-fade-in space-y-8">
+      {/* Dashboard — Recursos Humanos */}
+      <section className="bg-card border rounded-xl shadow-sm overflow-hidden">
+        <button
+          onClick={() => setDashboardExpanded(!dashboardExpanded)}
+          className="w-full px-5 py-4 flex items-center gap-3 hover:bg-muted/30 transition-colors"
+        >
+          {dashboardExpanded ? <ChevronDown className="w-5 h-5 text-muted-foreground" /> : <ChevronRight className="w-5 h-5 text-muted-foreground" />}
+          <LayoutDashboard className="w-5 h-5 text-primary" />
+          <div className="flex-1 text-left">
+            <h1 className="text-base font-bold">Dashboard — Recursos Humanos</h1>
+            <p className="text-xs text-muted-foreground">% de avance de Objetivos e Indicadores por área</p>
+          </div>
+        </button>
+        {dashboardExpanded && (
+          <div className="border-t px-5 py-5 space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Área</label>
+                <SearchableSelect
+                  options={[{ value: '__all__', label: 'Todas las áreas' }, ...areas.map(a => ({ value: a.id, label: a.name }))]}
+                  value={dashAreaId}
+                  onValueChange={(v) => { setDashAreaId(v); setDashSubareaId('__all__'); }}
+                  placeholder="Selecciona un área"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Subárea</label>
+                <SearchableSelect
+                  options={[{ value: '__all__', label: 'Todas las subáreas' }, ...dashSubareaOptions.map(s => ({ value: s.id, label: s.name }))]}
+                  value={dashSubareaId}
+                  onValueChange={setDashSubareaId}
+                  placeholder="Selecciona una subárea"
+                  disabled={dashAreaId === '__all__' || dashSubareaOptions.length === 0}
+                />
+              </div>
+            </div>
+            {dashboardChartData.length === 0 ? (
+              <div className="text-center py-12 text-sm text-muted-foreground bg-muted/30 rounded-lg">
+                No hay datos para mostrar con los filtros seleccionados
+              </div>
+            ) : (
+              <div className="w-full" style={{ height: Math.max(280, dashboardChartData.length * 48 + 80) }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={dashboardChartData} layout="vertical" margin={{ top: 10, right: 40, left: 10, bottom: 10 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} stroke="hsl(var(--muted-foreground))" />
+                    <YAxis type="category" dataKey="name" width={180} stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 12 }} />
+                    <Tooltip formatter={(v: any) => `${v}%`} contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }} />
+                    <Legend />
+                    <Bar dataKey="Objetivos" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]}>
+                      <LabelList dataKey="Objetivos" position="right" formatter={(v: any) => `${v}%`} style={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
+                    </Bar>
+                    <Bar dataKey="Indicadores" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]}>
+                      <LabelList dataKey="Indicadores" position="right" formatter={(v: any) => `${v}%`} style={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+
       {/* Section 1: Global Objectives - Dirección General */}
       <section className="bg-card border rounded-xl shadow-sm overflow-hidden">
         <button
