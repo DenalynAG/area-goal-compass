@@ -846,6 +846,7 @@ export type Database = {
           kpi_id: string
           notes: string | null
           period_date: string
+          target: number | null
           value: number
         }
         Insert: {
@@ -855,6 +856,7 @@ export type Database = {
           kpi_id: string
           notes?: string | null
           period_date: string
+          target?: number | null
           value?: number
         }
         Update: {
@@ -864,6 +866,7 @@ export type Database = {
           kpi_id?: string
           notes?: string | null
           period_date?: string
+          target?: number | null
           value?: number
         }
         Relationships: [
