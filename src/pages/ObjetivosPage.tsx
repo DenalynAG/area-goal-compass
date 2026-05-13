@@ -361,7 +361,9 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   const getAreaProgress = (areaId: string) => {
     const areaObjs = getAreaObjectives(areaId);
     if (areaObjs.length === 0) return 0;
-    return Math.round(areaObjs.reduce((sum, o) => sum + getObjProgress(o), 0) / areaObjs.length);
+    return Math.round(
+      areaObjs.reduce((sum, o) => sum + Math.min(getObjProgress(o), 100), 0) / areaObjs.length
+    );
   };
 
   // Global KPIs for Dirección General objectives
@@ -372,7 +374,9 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
 
   const globalProgress = useMemo(() => {
     if (globalObjectives.length === 0) return 0;
-    return Math.round(globalObjectives.reduce((sum, o) => sum + getObjProgress(o), 0) / globalObjectives.length);
+    return Math.round(
+      globalObjectives.reduce((sum, o) => sum + Math.min(getObjProgress(o), 100), 0) / globalObjectives.length
+    );
   }, [globalObjectives, kpis]);
 
   // Get areas that the objectives reference (as tags)
@@ -564,7 +568,9 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
           {/* Subarea collapsible cards */}
           {areaSubareas.map(sub => {
             const subObjs = getSubareaObjs(sub.id);
-            const subProgress = subObjs.length > 0 ? Math.round(subObjs.reduce((s, o) => s + getObjProgress(o), 0) / subObjs.length) : 0;
+            const subProgress = subObjs.length > 0
+              ? Math.round(subObjs.reduce((s, o) => s + Math.min(getObjProgress(o), 100), 0) / subObjs.length)
+              : 0;
             const isSubExpanded = expandedAreas[`obj-sub-${sub.id}`];
 
             return (
@@ -914,7 +920,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                     {areaSubareas.map(sub => {
                       const subObjs = objectives.filter(o => o.scope_type === 'subarea' && o.scope_id === sub.id);
                       const subProgress = subObjs.length > 0
-                        ? Math.round(subObjs.reduce((s, o) => s + getObjProgress(o), 0) / subObjs.length)
+                        ? Math.round(subObjs.reduce((s, o) => s + Math.min(getObjProgress(o), 100), 0) / subObjs.length)
                         : 0;
                       const subKey = `inline-sub-${sub.id}`;
                       const isSubExpanded = expandedAreas[subKey];
