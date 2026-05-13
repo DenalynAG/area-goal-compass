@@ -1160,8 +1160,11 @@ function ObjectiveCard({
                 const isTotalView = selectedMonth === 'total';
                 const calcMethod = getCalcMethod(k);
                 const accumulatedTarget = getKpiAccumulatedTarget(k);
-                const displayTarget = isTotalView && calcMethod === 'suma' ? accumulatedTarget : k.target;
-                const kpiForLight = { ...k, current_value: displayValue, target: displayTarget };
+                // Meta column always shows the fixed monthly target defined for the KPI
+                const displayTarget = Number(k.target) || 0;
+                // Traffic light still compares against accumulated target on total view (sum method)
+                const lightTarget = isTotalView && calcMethod === 'suma' ? accumulatedTarget : displayTarget;
+                const kpiForLight = { ...k, current_value: displayValue, target: lightTarget };
                 const weight = (k as any).weight_percent ?? 0;
                 const cumulativeAvg = getKpiAccumulatedAverage(k.id);
                 return (
