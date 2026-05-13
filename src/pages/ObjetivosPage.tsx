@@ -383,8 +383,6 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
 
   const selectedArea = selectedAreaId ? areas.find(a => a.id === selectedAreaId) : null;
 
-  if (isLoading) return <div className="flex items-center justify-center py-20 text-muted-foreground">Cargando objetivos...</div>;
-
   // ───── Dashboard chart data ─────
   const getKpiAchievement = (k: Tables<'kpis'>) => {
     const currentYear = new Date().getFullYear();
@@ -449,6 +447,8 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
     if (dashAreaId === '__all__') return [];
     return subareas.filter(s => s.area_id === dashAreaId);
   }, [dashAreaId, subareas]);
+
+  if (isLoading) return <div className="flex items-center justify-center py-20 text-muted-foreground">Cargando objetivos...</div>;
 
   // Drill-down view for a specific area
   if (selectedArea) {
