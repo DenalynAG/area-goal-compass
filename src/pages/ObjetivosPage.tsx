@@ -361,7 +361,9 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   const getAreaProgress = (areaId: string) => {
     const areaObjs = getAreaObjectives(areaId);
     if (areaObjs.length === 0) return 0;
-    return Math.round(areaObjs.reduce((sum, o) => sum + getObjProgress(o), 0) / areaObjs.length);
+    return Math.round(
+      areaObjs.reduce((sum, o) => sum + Math.min(getObjProgress(o), 100), 0) / areaObjs.length
+    );
   };
 
   // Global KPIs for Dirección General objectives
@@ -372,7 +374,9 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
 
   const globalProgress = useMemo(() => {
     if (globalObjectives.length === 0) return 0;
-    return Math.round(globalObjectives.reduce((sum, o) => sum + getObjProgress(o), 0) / globalObjectives.length);
+    return Math.round(
+      globalObjectives.reduce((sum, o) => sum + Math.min(getObjProgress(o), 100), 0) / globalObjectives.length
+    );
   }, [globalObjectives, kpis]);
 
   // Get areas that the objectives reference (as tags)
