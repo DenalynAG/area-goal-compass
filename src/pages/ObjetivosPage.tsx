@@ -1021,6 +1021,14 @@ function ObjectiveCard({
     return m ? m.value : null;
   };
 
+  // Get per-month target for a KPI (falls back to KPI default target)
+  const getKpiMonthTarget = (k: any) => {
+    if (selectedMonth === 'total') return Number(k.target) || 0;
+    const m = relevantMeasurements.find(m => m.kpi_id === k.id && m.period_date.startsWith(selectedMonth));
+    const t = (m as any)?.target;
+    return (t === null || t === undefined) ? (Number(k.target) || 0) : Number(t);
+  };
+
   // Progress: accumulated average up to date / target
   const elapsedMonths = new Date().getMonth() + 1;
   const computedProgress = useMemo(() => {
@@ -1160,8 +1168,8 @@ function ObjectiveCard({
                 const isTotalView = selectedMonth === 'total';
                 const calcMethod = getCalcMethod(k);
                 const accumulatedTarget = getKpiAccumulatedTarget(k);
-                // Meta column always shows the fixed monthly target defined for the KPI
-                const displayTarget = Number(k.target) || 0;
+                // Meta column shows the per-month target (or KPI default target if no per-month value set)
+                const displayTarget = getKpiMonthTarget(k);
                 // Traffic light still compares against accumulated target on total view (sum method)
                 const lightTarget = isTotalView && calcMethod === 'suma' ? accumulatedTarget : displayTarget;
                 const kpiForLight = { ...k, current_value: displayValue, target: lightTarget };

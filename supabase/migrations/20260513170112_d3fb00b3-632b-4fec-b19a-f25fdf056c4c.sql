@@ -1,0 +1,1 @@
+ALTER TABLE public.kpi_measurements ADD COLUMN IF NOT EXISTS target numeric;

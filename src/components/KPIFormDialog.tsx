@@ -180,12 +180,14 @@ export default function KPIFormDialog({
         parseInt(mm) === 12 ? `${parseInt(yyyy) + 1}-01` : `${yyyy}-${String(parseInt(mm) + 1).padStart(2, "0")}`;
       const { data } = await supabase
         .from("kpi_measurements")
-        .select("value")
+        .select("value, target")
         .eq("kpi_id", kpi.id)
         .gte("period_date", periodDate)
         .lt("period_date", `${nextMonth}-01`)
         .maybeSingle();
       setCurrentValue(data?.value ?? 0);
+      // Per-month target: use stored monthly target, fallback to KPI default target
+      setTarget((data as any)?.target ?? kpi.target ?? 0);
     };
     loadMeasurement();
   }, [measurementMonth, kpi?.id, open]);
@@ -208,20 +210,23 @@ export default function KPIFormDialog({
       setSaving(false);
       return;
     }
-    const payload = {
+    // When editing an existing KPI we DO NOT update the global `target` field,
+    // because the meta is now stored per month in kpi_measurements. The global
+    // target is only set on creation as the default monthly meta.
+    const basePayload: any = {
       name: trimmed,
       definition: definition.trim().slice(0, 500),
       objective_id: objectiveId,
       unit: unit.trim() || null,
       frequency,
       baseline,
-      target,
       current_value: currentValue,
       threshold_green: thresholdGreen,
       threshold_yellow: thresholdYellow,
       threshold_red: thresholdRed,
       weight_percent: weightPercent,
-    } as any;
+    };
+    const payload = kpi ? basePayload : { ...basePayload, target };
 
     let kpiId = kpi?.id;
 
@@ -261,13 +266,14 @@ export default function KPIFormDialog({
         .maybeSingle();
 
       if (existing) {
-        await supabase.from("kpi_measurements").update({ value: currentValue }).eq("id", existing.id);
+        await supabase.from("kpi_measurements").update({ value: currentValue, target }).eq("id", existing.id);
         await logActivity('update', 'kpi_measurement', existing.id, { kpi_id: kpiId, period: measurementMonth, value: currentValue });
       } else {
         const { data: ins } = await supabase.from("kpi_measurements").insert({
           kpi_id: kpiId,
           period_date: periodDate,
           value: currentValue,
+          target,
           created_by: (await supabase.auth.getUser()).data.user?.id ?? "",
         }).select('id').maybeSingle();
         await logActivity('create', 'kpi_measurement', (ins as any)?.id || null, { kpi_id: kpiId, period: measurementMonth, value: currentValue });
