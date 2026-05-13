@@ -1021,6 +1021,14 @@ function ObjectiveCard({
     return m ? m.value : null;
   };
 
+  // Get per-month target for a KPI (falls back to KPI default target)
+  const getKpiMonthTarget = (k: any) => {
+    if (selectedMonth === 'total') return Number(k.target) || 0;
+    const m = relevantMeasurements.find(m => m.kpi_id === k.id && m.period_date.startsWith(selectedMonth));
+    const t = (m as any)?.target;
+    return (t === null || t === undefined) ? (Number(k.target) || 0) : Number(t);
+  };
+
   // Progress: accumulated average up to date / target
   const elapsedMonths = new Date().getMonth() + 1;
   const computedProgress = useMemo(() => {
