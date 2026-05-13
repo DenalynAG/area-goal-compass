@@ -568,7 +568,9 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
           {/* Subarea collapsible cards */}
           {areaSubareas.map(sub => {
             const subObjs = getSubareaObjs(sub.id);
-            const subProgress = subObjs.length > 0 ? Math.round(subObjs.reduce((s, o) => s + getObjProgress(o), 0) / subObjs.length) : 0;
+            const subProgress = subObjs.length > 0
+              ? Math.round(subObjs.reduce((s, o) => s + Math.min(getObjProgress(o), 100), 0) / subObjs.length)
+              : 0;
             const isSubExpanded = expandedAreas[`obj-sub-${sub.id}`];
 
             return (
@@ -918,7 +920,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                     {areaSubareas.map(sub => {
                       const subObjs = objectives.filter(o => o.scope_type === 'subarea' && o.scope_id === sub.id);
                       const subProgress = subObjs.length > 0
-                        ? Math.round(subObjs.reduce((s, o) => s + getObjProgress(o), 0) / subObjs.length)
+                        ? Math.round(subObjs.reduce((s, o) => s + Math.min(getObjProgress(o), 100), 0) / subObjs.length)
                         : 0;
                       const subKey = `inline-sub-${sub.id}`;
                       const isSubExpanded = expandedAreas[subKey];
