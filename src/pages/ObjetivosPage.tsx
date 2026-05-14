@@ -1245,12 +1245,13 @@ function ObjectiveCard({
   };
 
   // Inline-save the "Valor Real" for the currently selected month
-  const saveKpiMonthValue = async (kpiId: string, raw: string) => {
-    if (selectedMonth === 'total') return;
+  const saveKpiMonthValue = async (kpiId: string, raw: string, monthOverride?: string) => {
+    const month = monthOverride ?? selectedMonth;
+    if (month === 'total') return;
     const trimmed = (raw ?? '').toString().trim();
-    const periodDate = `${selectedMonth}-01`;
+    const periodDate = `${month}-01`;
     const existing = relevantMeasurements.find(
-      m => m.kpi_id === kpiId && m.period_date.startsWith(selectedMonth)
+      m => m.kpi_id === kpiId && m.period_date.startsWith(month)
     );
 
     if (trimmed === '') {
@@ -1258,7 +1259,7 @@ function ObjectiveCard({
         const { error } = await supabase.from('kpi_measurements').delete().eq('id', existing.id);
         if (error) { toast.error('No se pudo eliminar el valor'); return; }
         qcLocal.invalidateQueries({ queryKey: ['kpi_measurements'] });
-        await logActivity('delete', 'kpi_measurement', kpiId, { period: selectedMonth });
+        await logActivity('delete', 'kpi_measurement', kpiId, { period: month });
         toast.success('Valor eliminado');
       }
       return;
@@ -1282,7 +1283,7 @@ function ObjectiveCard({
       if (error) { toast.error('No se pudo guardar el valor'); return; }
     }
     qcLocal.invalidateQueries({ queryKey: ['kpi_measurements'] });
-    await logActivity('update', 'kpi_measurement', kpiId, { period: selectedMonth, value });
+    await logActivity('update', 'kpi_measurement', kpiId, { period: month, value });
     toast.success('Valor guardado');
   };
 
