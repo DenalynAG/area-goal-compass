@@ -1596,7 +1596,9 @@ function ObjectiveCard({
                     const values = objKpis.map(k => {
                       const monthValue = getKpiMonthValue(k.id);
                       if (monthValue === null) return null;
-                      return k.target > 0 ? (monthValue / k.target) * 100 : 0;
+                      const tgt = Number(getKpiMonthTarget(k)) || 0;
+                      const v = Number(monthValue);
+                      return tgt > 0 ? (v / tgt) * 100 : 0;
                     }).filter((v): v is number => v !== null);
                     const avg = values.length > 0 ? Math.round(values.reduce((s, v) => s + v, 0) / values.length) : 0;
                     return `${avg}%`;
@@ -1608,8 +1610,8 @@ function ObjectiveCard({
                     const ratios = objKpis.map(k => {
                       const acc = getKpiAccumulatedAverage(k.id);
                       if (acc === null) return null;
-                      const tgt = getKpiAccumulatedTarget(k);
-                      return tgt > 0 ? (acc / tgt) * 100 : 0;
+                      const tgt = Number(getKpiAccumulatedTarget(k)) || 0;
+                      return tgt > 0 ? (Number(acc) / tgt) * 100 : 0;
                     }).filter((v): v is number => v !== null);
                     const avg = ratios.length > 0 ? Math.round(ratios.reduce((s, v) => s + v, 0) / ratios.length) : 0;
                     return `${avg}%`;
@@ -1621,7 +1623,9 @@ function ObjectiveCard({
                     const values = objKpis.map(k => {
                       const monthValue = getKpiMonthValue(k.id);
                       if (monthValue === null) return null;
-                      return k.target > 0 ? (monthValue / k.target) * 100 : 0;
+                      const tgt = Number(getKpiMonthTarget(k)) || 0;
+                      const v = Number(monthValue);
+                      return tgt > 0 ? (v / tgt) * 100 : 0;
                     }).filter((v): v is number => v !== null);
                     const avg = values.length > 0 ? Math.round(values.reduce((s, v) => s + v, 0) / values.length) : 0;
                     const label = avg >= 100 ? 'Alto' : avg >= 80 ? 'Medio' : 'Bajo';
