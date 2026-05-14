@@ -1140,24 +1140,31 @@ function ObjectiveCard({
   // Get KPI accumulated value up to current month in current year (sum for financial, average otherwise)
   const getKpiAccumulatedAverage = (kpiId: string) => {
     const kpi = objKpis.find(k => k.id === kpiId);
+    const elapsed = new Date().getMonth() + 1;
+    const winEnd = Math.min(elapsed, 11);
+    const winMonths = Math.max(0, winEnd - 2 + 1);
     const kpiMeasurements = relevantMeasurements.filter(m => {
       if (m.kpi_id !== kpiId) return false;
       const measurementDate = new Date(m.period_date);
-      return measurementDate.getFullYear() === currentYear && (measurementDate.getMonth() + 1) <= elapsedMonths;
+      const mo = measurementDate.getMonth() + 1;
+      return measurementDate.getFullYear() === currentYear && mo >= 2 && mo <= winEnd;
     });
     if (kpiMeasurements.length === 0) return null;
     const sumValue = kpiMeasurements.reduce((sum, m) => sum + Number(m.value), 0);
     const method = kpi ? getCalcMethod(kpi) : 'promedio';
-    const accumulated = method === 'suma' ? sumValue : sumValue / elapsedMonths;
+    const accumulated = method === 'suma' ? sumValue : sumValue / (winMonths || 1);
     return Math.round(accumulated * 100) / 100;
   };
 
   // Count measured months in current year up to elapsedMonths (used to scale accumulated target)
   const getKpiMeasuredMonthsCount = (kpiId: string) => {
+    const elapsed = new Date().getMonth() + 1;
+    const winEnd = Math.min(elapsed, 11);
     return relevantMeasurements.filter(m => {
       if (m.kpi_id !== kpiId) return false;
       const d = new Date(m.period_date);
-      return d.getFullYear() === currentYear && (d.getMonth() + 1) <= elapsedMonths;
+      const mo = d.getMonth() + 1;
+      return d.getFullYear() === currentYear && mo >= 2 && mo <= winEnd;
     }).length;
   };
 
