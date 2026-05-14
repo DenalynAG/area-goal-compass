@@ -327,6 +327,10 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   };
 
   const elapsedMonths = new Date().getMonth() + 1;
+  // Accumulated average window: only Feb (2) to Nov (11)
+  const avgWindowEndTop = Math.min(elapsedMonths, 11);
+  const avgWindowMonthsTop = Math.max(0, avgWindowEndTop - 2 + 1);
+  const inAvgWindowTop = (mo: number) => mo >= 2 && mo <= avgWindowEndTop;
 
   // Financial KPIs (by unit) use SUM accumulated instead of average
   const isFinancialKpi = (k: { unit?: string | null }) => {
@@ -344,13 +348,13 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
       const kpiMeasurements = measurements.filter(m => {
         if (m.kpi_id !== k.id) return false;
         const measurementDate = new Date(m.period_date);
-        return measurementDate.getFullYear() === currentYear && (measurementDate.getMonth() + 1) <= elapsedMonths;
+        return measurementDate.getFullYear() === currentYear && inAvgWindowTop(measurementDate.getMonth() + 1);
       });
 
       if (kpiMeasurements.length === 0) return null;
 
       const sumValue = kpiMeasurements.reduce((sum, m) => sum + Number(m.value), 0);
-      const accumulated = isFinancialKpi(k) ? sumValue : sumValue / elapsedMonths;
+      const accumulated = isFinancialKpi(k) ? sumValue : sumValue / (avgWindowMonthsTop || 1);
       return k.target > 0 ? (accumulated / k.target) * 100 : 0;
     }).filter((v): v is number => v !== null);
 
@@ -393,11 +397,11 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
     const ms = measurements.filter(m => {
       if (m.kpi_id !== k.id) return false;
       const d = new Date(m.period_date);
-      return d.getFullYear() === currentYear && (d.getMonth() + 1) <= elapsedMonths;
+      return d.getFullYear() === currentYear && inAvgWindowTop(d.getMonth() + 1);
     });
     if (ms.length === 0) return null;
     const sumValue = ms.reduce((s, m) => s + Number(m.value), 0);
-    const accumulated = isFinancialKpi(k) ? sumValue : sumValue / elapsedMonths;
+    const accumulated = isFinancialKpi(k) ? sumValue : sumValue / (avgWindowMonthsTop || 1);
     return k.target > 0 ? Math.round((accumulated / k.target) * 100) : 0;
   };
 
