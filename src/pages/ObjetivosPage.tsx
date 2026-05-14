@@ -1137,6 +1137,48 @@ function ObjectiveCard({
     return isFinancialKpi(k) ? 'suma' : 'promedio';
   };
 
+  // Inline-save the "Valor Real" for the currently selected month
+  const saveKpiMonthValue = async (kpiId: string, raw: string) => {
+    if (selectedMonth === 'total') return;
+    const trimmed = (raw ?? '').toString().trim();
+    const periodDate = `${selectedMonth}-01`;
+    const existing = relevantMeasurements.find(
+      m => m.kpi_id === kpiId && m.period_date.startsWith(selectedMonth)
+    );
+
+    if (trimmed === '') {
+      if (existing) {
+        const { error } = await supabase.from('kpi_measurements').delete().eq('id', existing.id);
+        if (error) { toast.error('No se pudo eliminar el valor'); return; }
+        qcLocal.invalidateQueries({ queryKey: ['kpi_measurements'] });
+        await logActivity('delete', 'kpi_measurement', kpiId, { period: selectedMonth });
+        toast.success('Valor eliminado');
+      }
+      return;
+    }
+
+    // Accept "1.234,56" or "1234.56" formats
+    const normalized = trimmed.replace(/\s/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.');
+    const value = Number(normalized);
+    if (!isFinite(value)) { toast.error('Valor inválido'); return; }
+    if (existing && Number(existing.value) === value) return;
+
+    if (existing) {
+      const { error } = await supabase.from('kpi_measurements').update({ value }).eq('id', existing.id);
+      if (error) { toast.error('No se pudo actualizar el valor'); return; }
+    } else {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData?.session?.user?.id ?? null;
+      const { error } = await supabase.from('kpi_measurements').insert({
+        kpi_id: kpiId, period_date: periodDate, value, created_by: userId,
+      } as any);
+      if (error) { toast.error('No se pudo guardar el valor'); return; }
+    }
+    qcLocal.invalidateQueries({ queryKey: ['kpi_measurements'] });
+    await logActivity('update', 'kpi_measurement', kpiId, { period: selectedMonth, value });
+    toast.success('Valor guardado');
+  };
+
   // Get KPI accumulated value up to current month in current year (sum for financial, average otherwise)
   const getKpiAccumulatedAverage = (kpiId: string) => {
     const kpi = objKpis.find(k => k.id === kpiId);
@@ -1353,10 +1395,32 @@ function ObjectiveCard({
                     </td>
                     <td className="py-2">{formatKpiValue(displayTarget, k)}</td>
                     <td className="py-2">
-                      {monthValue === null
-                        ? <span className="text-muted-foreground italic">Sin dato</span>
-                        : <>{formatKpiValue(displayValue, k)}</>
-                      }
+                      {isTotalView || !(canEdit || canEditKpi) ? (
+                        monthValue === null
+                          ? <span className="text-muted-foreground italic">Sin dato</span>
+                          : <>{formatKpiValue(displayValue, k)}</>
+                      ) : (
+                        <input
+                          key={`${k.id}-${selectedMonth}-${monthValue ?? ''}`}
+                          type="text"
+                          inputMode="decimal"
+                          defaultValue={monthValue === null ? '' : String(monthValue)}
+                          placeholder="Sin dato"
+                          onBlur={(e) => {
+                            const v = e.target.value;
+                            const orig = monthValue === null ? '' : String(monthValue);
+                            if (v.trim() !== orig.trim()) saveKpiMonthValue(k.id, v);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                            if (e.key === 'Escape') {
+                              (e.target as HTMLInputElement).value = monthValue === null ? '' : String(monthValue);
+                              (e.target as HTMLInputElement).blur();
+                            }
+                          }}
+                          className="w-28 rounded-md border border-border bg-background px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                        />
+                      )}
                     </td>
                     <td className="py-2 text-center">
                       {cumulativeAvg !== null
