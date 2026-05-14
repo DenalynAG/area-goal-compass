@@ -1195,8 +1195,13 @@ function ObjectiveCard({
 
   const getMonthLabel = (ym: string) => {
     if (ym === 'total') return 'Total KPI';
-    const [year, month] = ym.split('-');
-    return `${monthLabels[month] ?? month} ${year}`;
+    const [, month] = ym.split('-');
+    return monthLabels[month] ?? month;
+  };
+
+  const monthLabelsFull: Record<string, string> = {
+    '01': 'Enero', '02': 'Febrero', '03': 'Marzo', '04': 'Abril', '05': 'Mayo', '06': 'Junio',
+    '07': 'Julio', '08': 'Agosto', '09': 'Septiembre', '10': 'Octubre', '11': 'Noviembre', '12': 'Diciembre',
   };
 
   // Financial KPIs (by unit) accumulate as SUM, others as AVERAGE (fallback when calc_method is not set)
