@@ -1089,7 +1089,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
 
 // Reusable objective card with circular progress
 function ObjectiveCard({
-  obj, index, objKpis, isOpen, onToggle, onEdit, onNewKPI, onEditKPI, profiles, areas, subareas, measurements, showAreaTags, otherAreas, canEdit = false, canEditKpi = false, hideOwner = false, hideExtras = false,
+  obj, index, objKpis, isOpen, onToggle, onEdit, onNewKPI, onEditKPI, onDelete, onDeleteKPI, profiles, areas, subareas, measurements, showAreaTags, otherAreas, canEdit = false, canEditKpi = false, canDelete = false, hideOwner = false, hideExtras = false,
 }: {
   obj: Tables<'objectives'>;
   index: number;
@@ -1099,6 +1099,8 @@ function ObjectiveCard({
   onEdit: () => void;
   onNewKPI: (month?: string) => void;
   onEditKPI: (k: Tables<'kpis'>, month?: string) => void;
+  onDelete?: () => void;
+  onDeleteKPI?: (k: Tables<'kpis'>) => void;
   profiles: Tables<'profiles'>[];
   areas: Tables<'areas'>[];
   subareas: Tables<'subareas'>[];
@@ -1107,6 +1109,7 @@ function ObjectiveCard({
   otherAreas?: Tables<'areas'>[];
   canEdit?: boolean;
   canEditKpi?: boolean;
+  canDelete?: boolean;
   hideOwner?: boolean;
   hideExtras?: boolean;
 }) {
