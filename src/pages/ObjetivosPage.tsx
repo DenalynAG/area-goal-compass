@@ -1055,6 +1055,20 @@ function ObjectiveCard({
   const currentMonth = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
   const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth);
 
+  const { data: kpiEvidenceRows = [] } = useEvidenceCountsByEntity('kpi');
+  const { data: objEvidenceRows = [] } = useEvidenceCountsByEntity('objective');
+  const objEvidenceCount = useMemo(
+    () => objEvidenceRows.filter(r => r.entity_id === obj.id).length,
+    [objEvidenceRows, obj.id]
+  );
+  const getKpiEvidenceCount = (kpiId: string) => {
+    return kpiEvidenceRows.filter(r => {
+      if (r.entity_id !== kpiId) return false;
+      if (selectedMonth === 'total') return true;
+      return (r.period ?? '').startsWith(selectedMonth);
+    }).length;
+  };
+
   // Build months for the current year
   const kpiIds = objKpis.map(k => k.id);
   const relevantMeasurements = (measurements ?? []).filter(m => kpiIds.includes(m.kpi_id));
