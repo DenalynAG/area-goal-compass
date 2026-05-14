@@ -1396,6 +1396,11 @@ function ObjectiveCard({
             <Edit className="w-4 h-4" />
           </Button>
         )}
+        {canDelete && onDelete && (
+          <Button variant="ghost" size="icon" className="shrink-0 text-destructive hover:text-destructive" onClick={onDelete} title="Eliminar objetivo">
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        )}
       </div>
 
       {!hideExtras && isOpen && objKpis.length > 0 && (
@@ -1521,6 +1526,11 @@ function ObjectiveCard({
                         {(canEdit || canEditKpi) && (
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEditKPI(k, selectedMonth)}>
                             <Edit className="w-3 h-3" />
+                          </Button>
+                        )}
+                        {canDelete && onDeleteKPI && (
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => onDeleteKPI(k)} title="Eliminar indicador">
+                            <Trash2 className="w-3 h-3" />
                           </Button>
                         )}
                       </div>
