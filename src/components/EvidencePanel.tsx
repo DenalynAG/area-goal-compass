@@ -15,6 +15,7 @@ interface Props {
   entityName: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  period?: string | null;
 }
 
 const FILE_ICONS: Record<string, typeof FileText> = {
@@ -36,10 +37,10 @@ const STATUS_CONFIG: Record<string, { icon: typeof Clock; label: string; classNa
   rechazada: { icon: XCircle, label: 'Rechazada', className: 'text-destructive bg-destructive/10' },
 };
 
-export default function EvidencePanel({ entityType, entityId, entityName, open, onOpenChange }: Props) {
+export default function EvidencePanel({ entityType, entityId, entityName, open, onOpenChange, period }: Props) {
   const { user, profile, isSuperAdmin, hasRole } = useAuth();
   const qc = useQueryClient();
-  const { data: evidences = [], isLoading } = useEvidences(entityType, entityId);
+  const { data: evidences = [], isLoading } = useEvidences(entityType, entityId, period);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [reviewingId, setReviewingId] = useState<string | null>(null);
@@ -61,7 +62,8 @@ export default function EvidencePanel({ entityType, entityId, entityName, open, 
           continue;
         }
 
-        const filePath = `${entityType}/${entityId}/${Date.now()}_${file.name}`;
+        const periodSegment = period ? `${period}/` : '';
+        const filePath = `${entityType}/${entityId}/${periodSegment}${Date.now()}_${file.name}`;
         const { error: uploadError } = await supabase.storage
           .from('evidencias')
           .upload(filePath, file);
@@ -80,6 +82,7 @@ export default function EvidencePanel({ entityType, entityId, entityName, open, 
           file_size: file.size,
           uploaded_by: user.id,
           uploaded_by_name: profile?.name ?? user.email,
+          period: period ?? null,
         });
 
         if (insertError) {
