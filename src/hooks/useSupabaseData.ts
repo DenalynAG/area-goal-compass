@@ -149,15 +149,23 @@ export interface Evidence {
   reviewed_at: string | null;
   review_notes: string | null;
   created_at: string;
+  period?: string | null;
 }
 
-export function useEvidences(entityType?: string, entityId?: string) {
+export function useEvidences(entityType?: string, entityId?: string, period?: string | null) {
   return useQuery({
-    queryKey: ['evidences', entityType, entityId],
+    queryKey: ['evidences', entityType, entityId, period ?? null],
     queryFn: async () => {
       let q = supabase.from('evidences').select('*').order('created_at', { ascending: false });
       if (entityType) q = q.eq('entity_type', entityType);
       if (entityId) q = q.eq('entity_id', entityId);
+      if (period !== undefined) {
+        if (period === null) {
+          q = q.is('period', null);
+        } else {
+          q = q.eq('period', period);
+        }
+      }
       const { data, error } = await q;
       if (error) throw error;
       return data as Evidence[];
