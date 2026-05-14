@@ -1160,6 +1160,7 @@ function ObjectiveCard({
   const [kpiEvidenceName, setKpiEvidenceName] = useState('');
   const currentMonth = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
   const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth);
+  const [editingCell, setEditingCell] = useState<string | null>(null);
 
   const { data: kpiEvidenceRows = [] } = useEvidenceCountsByEntity('kpi');
   const { data: objEvidenceRows = [] } = useEvidenceCountsByEntity('objective');
