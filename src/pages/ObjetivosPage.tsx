@@ -1457,220 +1457,182 @@ function ObjectiveCard({
 
       {!hideExtras && isOpen && objKpis.length > 0 && (
         <div className="border-t bg-muted/20 px-5 py-3">
-          {/* Month tabs */}
-          {objKpis.length > 0 && (
-            <div className="flex items-center gap-1 mb-3 overflow-x-auto pb-1">
-              <Calendar className="w-4 h-4 text-muted-foreground shrink-0 mr-1" />
-              {availableMonths.map(ym => (
-                <button
-                  key={ym}
-                  onClick={() => setSelectedMonth(ym)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                    selectedMonth === ym
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                  }`}
-                >
-                  {getMonthLabel(ym)}
-                </button>
-              ))}
-            </div>
-          )}
-
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-xs text-muted-foreground">
-                <th className="text-left py-1">KPI</th>
-                <th className="text-center py-1">Peso %</th>
-                <th className="text-left py-1">Meta</th>
-                <th className="text-left py-1">Valor Real</th>
-                <th className="text-center py-1">Prom. Acumulado</th>
-                <th className="text-center py-1">Cálculo</th>
-                <th className="text-left py-1">Semáforo</th>
-                <th className="text-right py-1"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {objKpis.map(k => {
-                const monthValue = getKpiMonthValue(k.id);
-                const displayValue = monthValue ?? 0;
-                const isTotalView = selectedMonth === 'total';
-                const calcMethod = getCalcMethod(k);
-                const accumulatedTarget = getKpiAccumulatedTarget(k);
-                // Meta column shows the per-month target (or KPI default target if no per-month value set)
-                const displayTarget = getKpiMonthTarget(k);
-                // Traffic light still compares against accumulated target on total view (sum method)
-                const lightTarget = isTotalView && calcMethod === 'suma' ? accumulatedTarget : displayTarget;
-                const kpiForLight = { ...k, current_value: displayValue, target: lightTarget };
-                const weight = (k as any).weight_percent ?? 0;
-                const cumulativeAvg = getKpiAccumulatedAverage(k.id);
-                return (
-                  <tr key={k.id} className="border-t border-border/50">
-                    <td className="py-2 font-medium">{k.name}</td>
-                    <td className="py-2 text-center">
-                      {weight > 0 ? <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-accent/10 text-accent">{weight}%</span> : <span className="text-muted-foreground">—</span>}
-                    </td>
-                    <td className="py-2">{formatKpiValue(displayTarget, k)}</td>
-                    <td className="py-2">
-                      {isTotalView || !(canEdit || canEditKpi) ? (
-                        monthValue === null
-                          ? <span className="text-muted-foreground italic">Sin dato</span>
-                          : <>{formatKpiValue(displayValue, k)}</>
-                      ) : (
-                        (() => {
-                          const isFin = isFinancialKpi(k);
-                          const formatDisplay = (v: number | null) => {
-                            if (v === null || v === undefined || isNaN(Number(v))) return '';
-                            if (isFin) {
-                              return `$ ${new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 }).format(Math.round(Number(v)))}`;
-                            }
-                            return new Intl.NumberFormat('es-CO', { maximumFractionDigits: 2 }).format(Number(v));
-                          };
-                          return (
-                            <input
-                              key={`${k.id}-${selectedMonth}-${monthValue ?? ''}`}
-                              type="text"
-                              inputMode={isFin ? 'numeric' : 'decimal'}
-                              defaultValue={formatDisplay(monthValue)}
-                              placeholder="Sin dato"
-                              onFocus={(e) => {
-                                e.target.value = monthValue === null ? '' : String(isFin ? Math.round(Number(monthValue)) : monthValue);
-                                e.target.select();
-                              }}
-                              onBlur={(e) => {
-                                const raw = e.target.value;
-                                const orig = monthValue === null ? '' : String(monthValue);
-                                if (raw.trim() !== orig.trim() && !(raw.trim() === '' && monthValue === null)) {
-                                  saveKpiMonthValue(k.id, raw);
-                                } else {
-                                  e.target.value = formatDisplay(monthValue);
-                                }
-                              }}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-                                if (e.key === 'Escape') {
-                                  (e.target as HTMLInputElement).value = formatDisplay(monthValue);
-                                  (e.target as HTMLInputElement).blur();
-                                }
-                              }}
-                              className="w-32 rounded-md border border-border bg-background px-2 py-1 text-sm text-right tabular-nums focus:outline-none focus:ring-2 focus:ring-primary/40"
-                            />
-                          );
-                        })()
-                      )}
-                    </td>
-                    <td className="py-2 text-center">
-                      {cumulativeAvg !== null
-                        ? <span className="font-semibold">{formatKpiValue(cumulativeAvg, k)}</span>
-                        : <span className="text-muted-foreground">—</span>
-                      }
-                    </td>
-                    <td className="py-2 text-center">
-                      <select
-                        value={getCalcMethod(k)}
-                        onChange={(e) => updateCalcMethod(k.id, e.target.value as 'promedio' | 'suma')}
-                        disabled={!canEdit}
-                        className="text-xs rounded-md border border-border bg-background px-2 py-1 disabled:opacity-60"
-                      >
-                        <option value="promedio">Promedio</option>
-                        <option value="suma">Suma total</option>
-                      </select>
-                    </td>
-                    <td className="py-2">
-                      {monthValue === null
-                        ? <span className="text-muted-foreground">—</span>
-                        : <TrafficLightBadge light={getTrafficLight(kpiForLight as any)} />
-                      }
-                    </td>
-                    <td className="py-2 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button variant="ghost" size="icon" className="h-7 w-7 relative" onClick={() => { setKpiEvidenceId(k.id); setKpiEvidenceName(k.name); }}>
-                          <Paperclip className="w-3 h-3" />
-                          {(() => {
-                            const c = getKpiEvidenceCount(k.id);
-                            return c > 0 ? (
-                              <span className="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-amber-500 text-white text-[9px] font-bold leading-none">
-                                {c}
-                              </span>
-                            ) : null;
-                          })()}
-                        </Button>
-                        {(canEdit || canEditKpi) && (
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEditKPI(k, selectedMonth)}>
-                            <Edit className="w-3 h-3" />
-                          </Button>
-                        )}
-                        {canDelete && onDeleteKPI && (
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => onDeleteKPI(k)} title="Eliminar indicador">
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-            <tfoot>
-              <tr className="border-t-2 border-border">
-                <td className="py-2 font-semibold text-sm">Promedio General:</td>
-                <td className="py-2 text-center font-semibold text-xs">
-                  {(() => {
-                    const totalWeight = objKpis.reduce((s, k) => s + ((k as any).weight_percent ?? 0), 0);
-                    return totalWeight > 0 ? `${totalWeight}%` : '—';
-                  })()}
-                </td>
-                <td></td>
-                <td className="py-2 font-bold text-sm">
-                  {(() => {
-                    const values = objKpis.map(k => {
-                      const monthValue = getKpiMonthValue(k.id);
-                      if (monthValue === null) return null;
-                      const tgt = Number(getKpiMonthTarget(k)) || 0;
-                      if (tgt <= 0) return null;
-                      const ratio = (Number(monthValue) / tgt) * 100;
-                      return Math.max(0, Math.min(ratio, 200));
-                    }).filter((v): v is number => v !== null);
-                    const avg = values.length > 0 ? Math.round(values.reduce((s, v) => s + v, 0) / values.length) : 0;
-                    return `${avg}%`;
-                  })()}
-                </td>
-                <td className="py-2 text-center font-bold text-sm">
-                  {(() => {
-                    // Overall cumulative percentage across all KPIs (uses accumulated target for SUM-method KPIs)
-                    const ratios = objKpis.map(k => {
-                      const acc = getKpiAccumulatedAverage(k.id);
-                      if (acc === null) return null;
-                      const tgt = Number(getKpiAccumulatedTarget(k)) || 0;
-                      if (tgt <= 0) return null;
-                      const ratio = (Number(acc) / tgt) * 100;
-                      return Math.max(0, Math.min(ratio, 200));
-                    }).filter((v): v is number => v !== null);
-                    const avg = ratios.length > 0 ? Math.round(ratios.reduce((s, v) => s + v, 0) / ratios.length) : 0;
-                    return `${avg}%`;
-                  })()}
-                </td>
-                <td></td>
-                <td className="py-2">
-                  {(() => {
-                    const values = objKpis.map(k => {
-                      const monthValue = getKpiMonthValue(k.id);
-                      if (monthValue === null) return null;
-                      const tgt = Number(getKpiMonthTarget(k)) || 0;
-                      if (tgt <= 0) return null;
-                      const ratio = (Number(monthValue) / tgt) * 100;
-                      return Math.max(0, Math.min(ratio, 200));
-                    }).filter((v): v is number => v !== null);
-                    const avg = values.length > 0 ? Math.round(values.reduce((s, v) => s + v, 0) / values.length) : 0;
-                    const label = avg >= 100 ? 'Alto' : avg >= 80 ? 'Medio' : 'Bajo';
-                    const color = avg >= 100 ? 'text-green-600 bg-green-50' : avg >= 80 ? 'text-yellow-600 bg-yellow-50' : 'text-red-600 bg-red-50';
-                    return <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${color}`}>{label} ({avg}%)</span>;
-                  })()}
-                </td>
-                <td></td>
-              </tr>
-            </tfoot>
-          </table>
+          {(() => {
+            const monthCols = availableMonths.filter(m => m !== 'total');
+            const getValueFor = (kpiId: string, ym: string) => {
+              const m = relevantMeasurements.find(mm => mm.kpi_id === kpiId && mm.period_date.startsWith(ym));
+              return m ? Number(m.value) : null;
+            };
+            const getTargetFor = (k: any, ym: string) => {
+              const m = relevantMeasurements.find(mm => mm.kpi_id === k.id && mm.period_date.startsWith(ym));
+              const t = (m as any)?.target;
+              return (t === null || t === undefined) ? (Number(k.target) || 0) : Number(t);
+            };
+            const pctClass = (pct: number | null) => {
+              if (pct === null) return 'text-muted-foreground';
+              if (pct >= 100) return 'text-emerald-600 font-semibold';
+              if (pct >= 80) return 'text-amber-600 font-semibold';
+              return 'text-red-600 font-semibold';
+            };
+            const fmtNumberInput = (v: number | null, isFin: boolean) => {
+              if (v === null || v === undefined || isNaN(Number(v))) return '';
+              if (isFin) return `$ ${new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 }).format(Math.round(Number(v)))}`;
+              return new Intl.NumberFormat('es-CO', { maximumFractionDigits: 2 }).format(Number(v));
+            };
+            const editKey = (kpiId: string, ym: string) => `${kpiId}__${ym}`;
+            return (
+              <div className="overflow-x-auto rounded-lg border border-border bg-card">
+                <table className="w-full text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-muted/40 text-muted-foreground">
+                      <th className="text-left py-2 px-3 border-b border-r border-border font-semibold sticky left-0 bg-muted/40 z-10 min-w-[180px]">Indicador clave</th>
+                      {monthCols.map(ym => (
+                        <th key={ym} className="text-center py-2 px-2 border-b border-r border-border font-semibold whitespace-nowrap">
+                          {monthLabelsFull[ym.split('-')[1]]}
+                        </th>
+                      ))}
+                      <th className="text-center py-2 px-2 border-b border-r border-border font-semibold whitespace-nowrap">% Acum.</th>
+                      <th className="text-center py-2 px-2 border-b border-border font-semibold w-[1%]"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {objKpis.map(k => {
+                      const isFin = isFinancialKpi(k);
+                      const cumulativeAvg = getKpiAccumulatedAverage(k.id);
+                      const accTgt = Number(getKpiAccumulatedTarget(k)) || 0;
+                      const accPct = (cumulativeAvg !== null && accTgt > 0)
+                        ? Math.max(0, Math.min(Math.round((Number(cumulativeAvg) / accTgt) * 100), 200))
+                        : null;
+                      return (
+                        <tr key={k.id} className="hover:bg-muted/20 border-b border-border">
+                          <td className="py-2 px-3 border-r border-border font-medium text-primary sticky left-0 bg-card">
+                            {k.name}
+                          </td>
+                          {monthCols.map(ym => {
+                            const v = getValueFor(k.id, ym);
+                            const tgt = getTargetFor(k, ym);
+                            const pct = (v !== null && tgt > 0)
+                              ? Math.max(0, Math.min(Math.round((v / tgt) * 100), 200))
+                              : null;
+                            const isEditing = editingCell === editKey(k.id, ym);
+                            const editable = canEdit || canEditKpi;
+                            return (
+                              <td
+                                key={ym}
+                                className="text-center border-r border-border p-0 align-middle"
+                                title={v !== null ? `${formatKpiValue(v, k)} / Meta: ${formatKpiValue(tgt, k)}` : 'Sin dato'}
+                              >
+                                {isEditing && editable ? (
+                                  <input
+                                    autoFocus
+                                    type="text"
+                                    inputMode={isFin ? 'numeric' : 'decimal'}
+                                    defaultValue={v === null ? '' : String(isFin ? Math.round(v) : v)}
+                                    onBlur={(e) => {
+                                      const raw = e.target.value;
+                                      const orig = v === null ? '' : String(v);
+                                      if (raw.trim() !== orig.trim()) {
+                                        saveKpiMonthValue(k.id, raw, ym);
+                                      }
+                                      setEditingCell(null);
+                                    }}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                                      if (e.key === 'Escape') { setEditingCell(null); }
+                                    }}
+                                    className="w-full px-2 py-2 text-center text-xs bg-background border border-primary/40 rounded-none focus:outline-none focus:ring-1 focus:ring-primary"
+                                  />
+                                ) : (
+                                  <button
+                                    type="button"
+                                    disabled={!editable}
+                                    onClick={() => editable && setEditingCell(editKey(k.id, ym))}
+                                    className={`w-full h-full px-2 py-2 ${pctClass(pct)} ${editable ? 'hover:bg-muted/40 cursor-pointer' : 'cursor-default'}`}
+                                  >
+                                    {pct !== null ? `${pct}%` : ''}
+                                  </button>
+                                )}
+                              </td>
+                            );
+                          })}
+                          <td className={`text-center py-2 px-2 border-r border-border ${pctClass(accPct)}`}>
+                            {accPct !== null ? `${accPct}%` : '—'}
+                          </td>
+                          <td className="py-2 px-2 whitespace-nowrap">
+                            <div className="flex items-center justify-end gap-0.5">
+                              <Button variant="ghost" size="icon" className="h-6 w-6 relative" onClick={() => { setKpiEvidenceId(k.id); setKpiEvidenceName(k.name); }}>
+                                <Paperclip className="w-3 h-3" />
+                                {(() => {
+                                  const c = getKpiEvidenceCount(k.id);
+                                  return c > 0 ? (
+                                    <span className="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[14px] h-[14px] px-1 rounded-full bg-amber-500 text-white text-[9px] font-bold leading-none">
+                                      {c}
+                                    </span>
+                                  ) : null;
+                                })()}
+                              </Button>
+                              {(canEdit || canEditKpi) && (
+                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onEditKPI(k, selectedMonth)} title="Editar indicador">
+                                  <Edit className="w-3 h-3" />
+                                </Button>
+                              )}
+                              {canDelete && onDeleteKPI && (
+                                <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => onDeleteKPI(k)} title="Eliminar indicador">
+                                  <Trash2 className="w-3 h-3" />
+                                </Button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                  <tfoot>
+                    <tr className="bg-muted/30 border-t-2 border-border">
+                      <td className="py-2 px-3 border-r border-border font-bold text-sm sticky left-0 bg-muted/30">Promedio</td>
+                      {monthCols.map(ym => {
+                        const ratios = objKpis.map(k => {
+                          const v = getValueFor(k.id, ym);
+                          if (v === null) return null;
+                          const tgt = getTargetFor(k, ym);
+                          if (tgt <= 0) return null;
+                          return Math.max(0, Math.min((v / tgt) * 100, 200));
+                        }).filter((x): x is number => x !== null);
+                        const avg = ratios.length > 0 ? Math.round(ratios.reduce((s, x) => s + x, 0) / ratios.length) : null;
+                        return (
+                          <td key={ym} className={`text-center py-2 px-2 border-r border-border ${pctClass(avg)}`}>
+                            {avg !== null ? `${avg}%` : ''}
+                          </td>
+                        );
+                      })}
+                      <td className={`text-center py-2 px-2 border-r border-border font-bold ${pctClass((() => {
+                        const ratios = objKpis.map(k => {
+                          const acc = getKpiAccumulatedAverage(k.id);
+                          if (acc === null) return null;
+                          const tgt = Number(getKpiAccumulatedTarget(k)) || 0;
+                          if (tgt <= 0) return null;
+                          return Math.max(0, Math.min((Number(acc) / tgt) * 100, 200));
+                        }).filter((x): x is number => x !== null);
+                        return ratios.length > 0 ? Math.round(ratios.reduce((s, x) => s + x, 0) / ratios.length) : null;
+                      })())}`}>
+                        {(() => {
+                          const ratios = objKpis.map(k => {
+                            const acc = getKpiAccumulatedAverage(k.id);
+                            if (acc === null) return null;
+                            const tgt = Number(getKpiAccumulatedTarget(k)) || 0;
+                            if (tgt <= 0) return null;
+                            return Math.max(0, Math.min((Number(acc) / tgt) * 100, 200));
+                          }).filter((x): x is number => x !== null);
+                          return ratios.length > 0 ? `${Math.round(ratios.reduce((s, x) => s + x, 0) / ratios.length)}%` : '—';
+                        })()}
+                      </td>
+                      <td></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            );
+          })()}
         </div>
       )}
 
