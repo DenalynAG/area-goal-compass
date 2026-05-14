@@ -53,6 +53,9 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   const [importProgress, setImportProgress] = useState({ current: 0, total: 0 });
   const [deleteAllOpen, setDeleteAllOpen] = useState(false);
   const [deletingAll, setDeletingAll] = useState(false);
+  const [objToDelete, setObjToDelete] = useState<Tables<'objectives'> | null>(null);
+  const [kpiToDelete, setKpiToDelete] = useState<Tables<'kpis'> | null>(null);
+  const [deletingItem, setDeletingItem] = useState(false);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingObj, setEditingObj] = useState<Tables<'objectives'> | null>(null);
@@ -118,6 +121,52 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
       toast.error('Error al eliminar: ' + (err.message || err));
     } finally {
       setDeletingAll(false);
+    }
+  };
+
+  // ───── Delete single Objective (cascade KPIs + measurements) ─────
+  const handleDeleteObjective = async (obj: Tables<'objectives'>) => {
+    setDeletingItem(true);
+    try {
+      const objKpiIds = kpis.filter(k => k.objective_id === obj.id).map(k => k.id);
+      if (objKpiIds.length > 0) {
+        const { error: mErr } = await supabase.from('kpi_measurements').delete().in('kpi_id', objKpiIds);
+        if (mErr) throw mErr;
+        const { error: kErr } = await supabase.from('kpis').delete().in('id', objKpiIds);
+        if (kErr) throw kErr;
+      }
+      const { error: oErr } = await supabase.from('objectives').delete().eq('id', obj.id);
+      if (oErr) throw oErr;
+      qc.invalidateQueries({ queryKey: ['objectives'] });
+      qc.invalidateQueries({ queryKey: ['kpis'] });
+      qc.invalidateQueries({ queryKey: ['kpi_measurements'] });
+      await logActivity('eliminar', 'objective', obj.id, { titulo: obj.title });
+      toast.success('Objetivo eliminado');
+      setObjToDelete(null);
+    } catch (err: any) {
+      toast.error('Error al eliminar: ' + (err.message || err));
+    } finally {
+      setDeletingItem(false);
+    }
+  };
+
+  // ───── Delete single KPI (cascade measurements) ─────
+  const handleDeleteKpi = async (k: Tables<'kpis'>) => {
+    setDeletingItem(true);
+    try {
+      const { error: mErr } = await supabase.from('kpi_measurements').delete().eq('kpi_id', k.id);
+      if (mErr) throw mErr;
+      const { error: kErr } = await supabase.from('kpis').delete().eq('id', k.id);
+      if (kErr) throw kErr;
+      qc.invalidateQueries({ queryKey: ['kpis'] });
+      qc.invalidateQueries({ queryKey: ['kpi_measurements'] });
+      await logActivity('eliminar', 'kpi', k.id, { nombre: k.name });
+      toast.success('Indicador eliminado');
+      setKpiToDelete(null);
+    } catch (err: any) {
+      toast.error('Error al eliminar: ' + (err.message || err));
+    } finally {
+      setDeletingItem(false);
     }
   };
 
