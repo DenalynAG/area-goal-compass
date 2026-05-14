@@ -1250,6 +1250,11 @@ function ObjectiveCard({
             {!hideExtras && (
               <button onClick={() => setEvidenceOpen(true)} className="flex items-center gap-1 text-xs text-muted-foreground font-medium hover:underline hover:text-foreground">
                 <Paperclip className="w-3 h-3" /> Evidencias
+                {objEvidenceCount > 0 && (
+                  <span className="ml-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-white text-[10px] font-bold leading-none">
+                    {objEvidenceCount}
+                  </span>
+                )}
               </button>
             )}
           </div>
