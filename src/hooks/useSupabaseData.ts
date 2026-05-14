@@ -173,6 +173,20 @@ export function useEvidences(entityType?: string, entityId?: string, period?: st
   });
 }
 
+export function useEvidenceCountsByEntity(entityType: string) {
+  return useQuery({
+    queryKey: ['evidence-counts', entityType],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('evidences')
+        .select('entity_id,period')
+        .eq('entity_type', entityType);
+      if (error) throw error;
+      return (data ?? []) as { entity_id: string; period: string | null }[];
+    },
+  });
+}
+
 // Helper to get name from profiles array
 export function getProfileName(profiles: Tables<'profiles'>[], userId: string | null): string {
   if (!userId) return 'N/A';

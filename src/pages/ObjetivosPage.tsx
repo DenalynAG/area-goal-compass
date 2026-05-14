@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useObjectives, useKPIs, useKPIMeasurements, useAreas, useSubareas, useProfiles, getProfileName, getAreaNameFromList } from '@/hooks/useSupabaseData';
+import { useObjectives, useKPIs, useKPIMeasurements, useAreas, useSubareas, useProfiles, getProfileName, getAreaNameFromList, useEvidenceCountsByEntity } from '@/hooks/useSupabaseData';
 import { getTrafficLight } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { StatusBadge, ProgressBar, TrafficLightBadge } from '@/components/StatusBadge';
@@ -1055,6 +1055,20 @@ function ObjectiveCard({
   const currentMonth = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
   const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth);
 
+  const { data: kpiEvidenceRows = [] } = useEvidenceCountsByEntity('kpi');
+  const { data: objEvidenceRows = [] } = useEvidenceCountsByEntity('objective');
+  const objEvidenceCount = useMemo(
+    () => objEvidenceRows.filter(r => r.entity_id === obj.id).length,
+    [objEvidenceRows, obj.id]
+  );
+  const getKpiEvidenceCount = (kpiId: string) => {
+    return kpiEvidenceRows.filter(r => {
+      if (r.entity_id !== kpiId) return false;
+      if (selectedMonth === 'total') return true;
+      return (r.period ?? '').startsWith(selectedMonth);
+    }).length;
+  };
+
   // Build months for the current year
   const kpiIds = objKpis.map(k => k.id);
   const relevantMeasurements = (measurements ?? []).filter(m => kpiIds.includes(m.kpi_id));
@@ -1236,6 +1250,11 @@ function ObjectiveCard({
             {!hideExtras && (
               <button onClick={() => setEvidenceOpen(true)} className="flex items-center gap-1 text-xs text-muted-foreground font-medium hover:underline hover:text-foreground">
                 <Paperclip className="w-3 h-3" /> Evidencias
+                {objEvidenceCount > 0 && (
+                  <span className="ml-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-white text-[10px] font-bold leading-none">
+                    {objEvidenceCount}
+                  </span>
+                )}
               </button>
             )}
           </div>
@@ -1353,8 +1372,16 @@ function ObjectiveCard({
                     </td>
                     <td className="py-2 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setKpiEvidenceId(k.id); setKpiEvidenceName(k.name); }}>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 relative" onClick={() => { setKpiEvidenceId(k.id); setKpiEvidenceName(k.name); }}>
                           <Paperclip className="w-3 h-3" />
+                          {(() => {
+                            const c = getKpiEvidenceCount(k.id);
+                            return c > 0 ? (
+                              <span className="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-amber-500 text-white text-[9px] font-bold leading-none">
+                                {c}
+                              </span>
+                            ) : null;
+                          })()}
                         </Button>
                         {(canEdit || canEditKpi) && (
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEditKPI(k, selectedMonth)}>
