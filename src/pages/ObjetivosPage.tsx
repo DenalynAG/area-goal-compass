@@ -1346,8 +1346,12 @@ function ObjectiveCard({
     const values = objKpis.map(k => {
       const accumulatedAverage = getKpiAccumulatedAverage(k.id);
       if (accumulatedAverage === null) return null;
-      const tgt = getKpiAccumulatedTarget(k);
-      return tgt > 0 ? (accumulatedAverage / tgt) * 100 : 0;
+      const tgt = Number(getKpiAccumulatedTarget(k)) || 0;
+      // Skip KPIs without a usable target (avoids dividing by 0 / bogus targets)
+      if (tgt <= 0) return null;
+      const ratio = (Number(accumulatedAverage) / tgt) * 100;
+      // Clamp to avoid one mis-captured target (e.g. 9 instead of 9.000.000) blowing up the average
+      return Math.max(0, Math.min(ratio, 200));
     }).filter((v): v is number => v !== null);
 
     if (values.length === 0) return 0;
@@ -1617,8 +1621,9 @@ function ObjectiveCard({
                       const monthValue = getKpiMonthValue(k.id);
                       if (monthValue === null) return null;
                       const tgt = Number(getKpiMonthTarget(k)) || 0;
-                      const v = Number(monthValue);
-                      return tgt > 0 ? (v / tgt) * 100 : 0;
+                      if (tgt <= 0) return null;
+                      const ratio = (Number(monthValue) / tgt) * 100;
+                      return Math.max(0, Math.min(ratio, 200));
                     }).filter((v): v is number => v !== null);
                     const avg = values.length > 0 ? Math.round(values.reduce((s, v) => s + v, 0) / values.length) : 0;
                     return `${avg}%`;
@@ -1631,7 +1636,9 @@ function ObjectiveCard({
                       const acc = getKpiAccumulatedAverage(k.id);
                       if (acc === null) return null;
                       const tgt = Number(getKpiAccumulatedTarget(k)) || 0;
-                      return tgt > 0 ? (Number(acc) / tgt) * 100 : 0;
+                      if (tgt <= 0) return null;
+                      const ratio = (Number(acc) / tgt) * 100;
+                      return Math.max(0, Math.min(ratio, 200));
                     }).filter((v): v is number => v !== null);
                     const avg = ratios.length > 0 ? Math.round(ratios.reduce((s, v) => s + v, 0) / ratios.length) : 0;
                     return `${avg}%`;
@@ -1644,8 +1651,9 @@ function ObjectiveCard({
                       const monthValue = getKpiMonthValue(k.id);
                       if (monthValue === null) return null;
                       const tgt = Number(getKpiMonthTarget(k)) || 0;
-                      const v = Number(monthValue);
-                      return tgt > 0 ? (v / tgt) * 100 : 0;
+                      if (tgt <= 0) return null;
+                      const ratio = (Number(monthValue) / tgt) * 100;
+                      return Math.max(0, Math.min(ratio, 200));
                     }).filter((v): v is number => v !== null);
                     const avg = values.length > 0 ? Math.round(values.reduce((s, v) => s + v, 0) / values.length) : 0;
                     const label = avg >= 100 ? 'Alto' : avg >= 80 ? 'Medio' : 'Bajo';
