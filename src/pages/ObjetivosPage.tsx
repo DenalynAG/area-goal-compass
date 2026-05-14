@@ -53,6 +53,9 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   const [importProgress, setImportProgress] = useState({ current: 0, total: 0 });
   const [deleteAllOpen, setDeleteAllOpen] = useState(false);
   const [deletingAll, setDeletingAll] = useState(false);
+  const [objToDelete, setObjToDelete] = useState<Tables<'objectives'> | null>(null);
+  const [kpiToDelete, setKpiToDelete] = useState<Tables<'kpis'> | null>(null);
+  const [deletingItem, setDeletingItem] = useState(false);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingObj, setEditingObj] = useState<Tables<'objectives'> | null>(null);
@@ -118,6 +121,52 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
       toast.error('Error al eliminar: ' + (err.message || err));
     } finally {
       setDeletingAll(false);
+    }
+  };
+
+  // ───── Delete single Objective (cascade KPIs + measurements) ─────
+  const handleDeleteObjective = async (obj: Tables<'objectives'>) => {
+    setDeletingItem(true);
+    try {
+      const objKpiIds = kpis.filter(k => k.objective_id === obj.id).map(k => k.id);
+      if (objKpiIds.length > 0) {
+        const { error: mErr } = await supabase.from('kpi_measurements').delete().in('kpi_id', objKpiIds);
+        if (mErr) throw mErr;
+        const { error: kErr } = await supabase.from('kpis').delete().in('id', objKpiIds);
+        if (kErr) throw kErr;
+      }
+      const { error: oErr } = await supabase.from('objectives').delete().eq('id', obj.id);
+      if (oErr) throw oErr;
+      qc.invalidateQueries({ queryKey: ['objectives'] });
+      qc.invalidateQueries({ queryKey: ['kpis'] });
+      qc.invalidateQueries({ queryKey: ['kpi_measurements'] });
+      await logActivity('eliminar', 'objective', obj.id, { titulo: obj.title });
+      toast.success('Objetivo eliminado');
+      setObjToDelete(null);
+    } catch (err: any) {
+      toast.error('Error al eliminar: ' + (err.message || err));
+    } finally {
+      setDeletingItem(false);
+    }
+  };
+
+  // ───── Delete single KPI (cascade measurements) ─────
+  const handleDeleteKpi = async (k: Tables<'kpis'>) => {
+    setDeletingItem(true);
+    try {
+      const { error: mErr } = await supabase.from('kpi_measurements').delete().eq('kpi_id', k.id);
+      if (mErr) throw mErr;
+      const { error: kErr } = await supabase.from('kpis').delete().eq('id', k.id);
+      if (kErr) throw kErr;
+      qc.invalidateQueries({ queryKey: ['kpis'] });
+      qc.invalidateQueries({ queryKey: ['kpi_measurements'] });
+      await logActivity('eliminar', 'kpi', k.id, { nombre: k.name });
+      toast.success('Indicador eliminado');
+      setKpiToDelete(null);
+    } catch (err: any) {
+      toast.error('Error al eliminar: ' + (err.message || err));
+    } finally {
+      setDeletingItem(false);
     }
   };
 
@@ -561,7 +610,8 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                     return (
                       <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
                         onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={(month) => openNewKPI(obj.id, month)} onEditKPI={(k, month) => openEditKPI(k, month)}
-                          profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} canEditKpi={canEditKpi} />
+                          onDelete={() => setObjToDelete(obj)} onDeleteKPI={(k) => setKpiToDelete(k)}
+                          profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin} />
                     );
                   })}
                 </div>
@@ -612,7 +662,8 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                       return (
                         <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
                           onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={(month) => openNewKPI(obj.id, month)} onEditKPI={(k, month) => openEditKPI(k, month)}
-                          profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} canEditKpi={canEditKpi} />
+                          onDelete={() => setObjToDelete(obj)} onDeleteKPI={(k) => setKpiToDelete(k)}
+                          profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin} />
                       );
                     })}
                     {subObjs.length === 0 && (
@@ -745,13 +796,15 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                   onEdit={() => openEdit(obj)}
                   onNewKPI={(month) => openNewKPI(obj.id, month)}
                   onEditKPI={(k, month) => openEditKPI(k, month)}
+                  onDelete={() => setObjToDelete(obj)}
+                  onDeleteKPI={(k) => setKpiToDelete(k)}
                   profiles={profiles}
                   areas={areas}
                   subareas={subareas}
                   measurements={measurements}
                   showAreaTags
                   otherAreas={otherAreas}
-                  canEdit={isSuperAdmin} canEditKpi={canEditKpi}
+                  canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin}
                   hideOwner={!isSuperAdmin}
                   hideExtras={!isSuperAdmin}
                 />
@@ -908,11 +961,13 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                                 onEdit={() => openEdit(obj)}
                                 onNewKPI={(month) => openNewKPI(obj.id, month)}
                                 onEditKPI={(k, month) => openEditKPI(k, month)}
+                                onDelete={() => setObjToDelete(obj)}
+                                onDeleteKPI={(k) => setKpiToDelete(k)}
                                 profiles={profiles}
                                 areas={areas}
                                 subareas={subareas}
                                 measurements={measurements}
-                                canEdit={isSuperAdmin} canEditKpi={canEditKpi}
+                                canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin}
                               />
                             );
                           })}
@@ -974,11 +1029,13 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                                     onEdit={() => openEdit(obj)}
                                     onNewKPI={(month) => openNewKPI(obj.id, month)}
                                     onEditKPI={(k, month) => openEditKPI(k, month)}
+                                    onDelete={() => setObjToDelete(obj)}
+                                    onDeleteKPI={(k) => setKpiToDelete(k)}
                                     profiles={profiles}
                                     areas={areas}
                                     subareas={subareas}
                                     measurements={measurements}
-                                    canEdit={isSuperAdmin} canEditKpi={canEditKpi}
+                                    canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin}
                                   />
                                 );
                               })}
@@ -1026,13 +1083,55 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={!!objToDelete} onOpenChange={(o) => !o && setObjToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar este objetivo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminará <strong>{objToDelete?.title}</strong> junto con todos sus indicadores y mediciones asociadas. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingItem}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); if (objToDelete) handleDeleteObjective(objToDelete); }}
+              disabled={deletingItem}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deletingItem ? 'Eliminando...' : 'Sí, eliminar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!kpiToDelete} onOpenChange={(o) => !o && setKpiToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar este indicador?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminará <strong>{kpiToDelete?.name}</strong> junto con todas sus mediciones. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingItem}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); if (kpiToDelete) handleDeleteKpi(kpiToDelete); }}
+              disabled={deletingItem}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deletingItem ? 'Eliminando...' : 'Sí, eliminar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
 
 // Reusable objective card with circular progress
 function ObjectiveCard({
-  obj, index, objKpis, isOpen, onToggle, onEdit, onNewKPI, onEditKPI, profiles, areas, subareas, measurements, showAreaTags, otherAreas, canEdit = false, canEditKpi = false, hideOwner = false, hideExtras = false,
+  obj, index, objKpis, isOpen, onToggle, onEdit, onNewKPI, onEditKPI, onDelete, onDeleteKPI, profiles, areas, subareas, measurements, showAreaTags, otherAreas, canEdit = false, canEditKpi = false, canDelete = false, hideOwner = false, hideExtras = false,
 }: {
   obj: Tables<'objectives'>;
   index: number;
@@ -1042,6 +1141,8 @@ function ObjectiveCard({
   onEdit: () => void;
   onNewKPI: (month?: string) => void;
   onEditKPI: (k: Tables<'kpis'>, month?: string) => void;
+  onDelete?: () => void;
+  onDeleteKPI?: (k: Tables<'kpis'>) => void;
   profiles: Tables<'profiles'>[];
   areas: Tables<'areas'>[];
   subareas: Tables<'subareas'>[];
@@ -1050,6 +1151,7 @@ function ObjectiveCard({
   otherAreas?: Tables<'areas'>[];
   canEdit?: boolean;
   canEditKpi?: boolean;
+  canDelete?: boolean;
   hideOwner?: boolean;
   hideExtras?: boolean;
 }) {
@@ -1336,6 +1438,11 @@ function ObjectiveCard({
             <Edit className="w-4 h-4" />
           </Button>
         )}
+        {canDelete && onDelete && (
+          <Button variant="ghost" size="icon" className="shrink-0 text-destructive hover:text-destructive" onClick={onDelete} title="Eliminar objetivo">
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        )}
       </div>
 
       {!hideExtras && isOpen && objKpis.length > 0 && (
@@ -1461,6 +1568,11 @@ function ObjectiveCard({
                         {(canEdit || canEditKpi) && (
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEditKPI(k, selectedMonth)}>
                             <Edit className="w-3 h-3" />
+                          </Button>
+                        )}
+                        {canDelete && onDeleteKPI && (
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => onDeleteKPI(k)} title="Eliminar indicador">
+                            <Trash2 className="w-3 h-3" />
                           </Button>
                         )}
                       </div>
