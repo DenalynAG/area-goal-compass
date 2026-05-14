@@ -1507,26 +1507,46 @@ function ObjectiveCard({
                           ? <span className="text-muted-foreground italic">Sin dato</span>
                           : <>{formatKpiValue(displayValue, k)}</>
                       ) : (
-                        <input
-                          key={`${k.id}-${selectedMonth}-${monthValue ?? ''}`}
-                          type="text"
-                          inputMode="decimal"
-                          defaultValue={monthValue === null ? '' : String(monthValue)}
-                          placeholder="Sin dato"
-                          onBlur={(e) => {
-                            const v = e.target.value;
-                            const orig = monthValue === null ? '' : String(monthValue);
-                            if (v.trim() !== orig.trim()) saveKpiMonthValue(k.id, v);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-                            if (e.key === 'Escape') {
-                              (e.target as HTMLInputElement).value = monthValue === null ? '' : String(monthValue);
-                              (e.target as HTMLInputElement).blur();
+                        (() => {
+                          const isFin = isFinancialKpi(k);
+                          const formatDisplay = (v: number | null) => {
+                            if (v === null || v === undefined || isNaN(Number(v))) return '';
+                            if (isFin) {
+                              return `$ ${new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 }).format(Math.round(Number(v)))}`;
                             }
-                          }}
-                          className="w-28 rounded-md border border-border bg-background px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-                        />
+                            return new Intl.NumberFormat('es-CO', { maximumFractionDigits: 2 }).format(Number(v));
+                          };
+                          return (
+                            <input
+                              key={`${k.id}-${selectedMonth}-${monthValue ?? ''}`}
+                              type="text"
+                              inputMode={isFin ? 'numeric' : 'decimal'}
+                              defaultValue={formatDisplay(monthValue)}
+                              placeholder="Sin dato"
+                              onFocus={(e) => {
+                                e.target.value = monthValue === null ? '' : String(isFin ? Math.round(Number(monthValue)) : monthValue);
+                                e.target.select();
+                              }}
+                              onBlur={(e) => {
+                                const raw = e.target.value;
+                                const orig = monthValue === null ? '' : String(monthValue);
+                                if (raw.trim() !== orig.trim() && !(raw.trim() === '' && monthValue === null)) {
+                                  saveKpiMonthValue(k.id, raw);
+                                } else {
+                                  e.target.value = formatDisplay(monthValue);
+                                }
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                                if (e.key === 'Escape') {
+                                  (e.target as HTMLInputElement).value = formatDisplay(monthValue);
+                                  (e.target as HTMLInputElement).blur();
+                                }
+                              }}
+                              className="w-32 rounded-md border border-border bg-background px-2 py-1 text-sm text-right tabular-nums focus:outline-none focus:ring-2 focus:ring-primary/40"
+                            />
+                          );
+                        })()
                       )}
                     </td>
                     <td className="py-2 text-center">
