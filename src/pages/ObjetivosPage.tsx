@@ -1372,8 +1372,16 @@ function ObjectiveCard({
                     </td>
                     <td className="py-2 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setKpiEvidenceId(k.id); setKpiEvidenceName(k.name); }}>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 relative" onClick={() => { setKpiEvidenceId(k.id); setKpiEvidenceName(k.name); }}>
                           <Paperclip className="w-3 h-3" />
+                          {(() => {
+                            const c = getKpiEvidenceCount(k.id);
+                            return c > 0 ? (
+                              <span className="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-amber-500 text-white text-[9px] font-bold leading-none">
+                                {c}
+                              </span>
+                            ) : null;
+                          })()}
                         </Button>
                         {(canEdit || canEditKpi) && (
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEditKPI(k, selectedMonth)}>
