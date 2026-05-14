@@ -610,7 +610,8 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                     return (
                       <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
                         onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={(month) => openNewKPI(obj.id, month)} onEditKPI={(k, month) => openEditKPI(k, month)}
-                          profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} canEditKpi={canEditKpi} />
+                          onDelete={() => setObjToDelete(obj)} onDeleteKPI={(k) => setKpiToDelete(k)}
+                          profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin} />
                     );
                   })}
                 </div>
@@ -661,7 +662,8 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                       return (
                         <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
                           onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={(month) => openNewKPI(obj.id, month)} onEditKPI={(k, month) => openEditKPI(k, month)}
-                          profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} canEditKpi={canEditKpi} />
+                          onDelete={() => setObjToDelete(obj)} onDeleteKPI={(k) => setKpiToDelete(k)}
+                          profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin} />
                       );
                     })}
                     {subObjs.length === 0 && (
