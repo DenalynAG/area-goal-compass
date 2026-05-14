@@ -1434,7 +1434,8 @@ function ObjectiveCard({
         <EvidencePanel
           entityType="kpi"
           entityId={kpiEvidenceId}
-          entityName={kpiEvidenceName}
+          entityName={`${kpiEvidenceName} — ${getMonthLabel(selectedMonth)}`}
+          period={selectedMonth}
           open={!!kpiEvidenceId}
           onOpenChange={(open) => { if (!open) setKpiEvidenceId(null); }}
         />

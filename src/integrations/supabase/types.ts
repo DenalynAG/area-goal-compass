@@ -797,6 +797,7 @@ export type Database = {
           file_size: number | null
           file_type: string | null
           id: string
+          period: string | null
           review_notes: string | null
           reviewed_at: string | null
           reviewed_by: string | null
@@ -813,6 +814,7 @@ export type Database = {
           file_size?: number | null
           file_type?: string | null
           id?: string
+          period?: string | null
           review_notes?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -829,6 +831,7 @@ export type Database = {
           file_size?: number | null
           file_type?: string | null
           id?: string
+          period?: string | null
           review_notes?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
