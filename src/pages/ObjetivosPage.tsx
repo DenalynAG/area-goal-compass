@@ -1083,6 +1083,48 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={!!objToDelete} onOpenChange={(o) => !o && setObjToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar este objetivo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminará <strong>{objToDelete?.title}</strong> junto con todos sus indicadores y mediciones asociadas. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingItem}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); if (objToDelete) handleDeleteObjective(objToDelete); }}
+              disabled={deletingItem}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deletingItem ? 'Eliminando...' : 'Sí, eliminar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!kpiToDelete} onOpenChange={(o) => !o && setKpiToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar este indicador?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminará <strong>{kpiToDelete?.name}</strong> junto con todas sus mediciones. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingItem}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); if (kpiToDelete) handleDeleteKpi(kpiToDelete); }}
+              disabled={deletingItem}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deletingItem ? 'Eliminando...' : 'Sí, eliminar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
