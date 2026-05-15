@@ -556,6 +556,7 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
                       <TableHead className="w-8"></TableHead>
                       <TableHead>Título</TableHead>
                       <TableHead>Área</TableHead>
+                      <TableHead>Subárea</TableHead>
                       <TableHead>Responsable</TableHead>
                       <TableHead>Auditor</TableHead>
                       <TableHead>Fecha</TableHead>
@@ -583,6 +584,7 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
                             </TableCell>
                             <TableCell className="font-semibold">{plan.title}</TableCell>
                             <TableCell className="text-xs">{getAreaNameFromList(areas, plan.area_id)}</TableCell>
+                            <TableCell className="text-xs">{getSubareaNameFromList(subareas, (plan as any).subarea_id ?? null) || '—'}</TableCell>
                             <TableCell className="text-xs">{getProfileName(profiles, plan.responsible_user_id)}</TableCell>
                             <TableCell className="text-xs">{getProfileName(profiles, plan.auditor_user_id)}</TableCell>
                             <TableCell className="text-xs whitespace-nowrap">{format(new Date(plan.planned_date), "d MMM yyyy", { locale: es })}</TableCell>
