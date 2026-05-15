@@ -611,7 +611,7 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
                           </TableRow>
                           {isExpanded && (
                             <TableRow key={`${plan.id}-exp`} className="bg-muted/20 hover:bg-muted/20">
-                              <TableCell colSpan={9} className="p-4 space-y-4">
+                              <TableCell colSpan={10} className="p-4 space-y-4">
                         {plan.description && <p className="text-sm text-muted-foreground">{plan.description}</p>}
 
                         <div className="flex items-center justify-between">
