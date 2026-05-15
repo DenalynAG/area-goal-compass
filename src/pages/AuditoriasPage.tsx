@@ -763,21 +763,42 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
               const typedPlanIds = new Set(typedPlans.map(p => p.id));
               const typedFindings = yearFindings.filter(f => typedPlanIds.has(f.audit_plan_id));
 
-              const tableData = areas.map((area, idx) => {
+              type Row = { name: string; color: string; abierto: number; cerrado: number; isSubarea?: boolean };
+              const tableData: Row[] = [];
+              areas.forEach((area, idx) => {
+                const color = AREA_COLORS[idx % AREA_COLORS.length];
                 const ap = typedPlans.filter(p => p.area_id === area.id);
                 const ids = ap.map(p => p.id);
                 const af = typedFindings.filter(f => ids.includes(f.audit_plan_id));
-                return {
-                  name: area.name,
-                  color: AREA_COLORS[idx % AREA_COLORS.length],
-                  abierto: af.filter(f => f.finding_type === 'abierta').length,
-                  cerrado: af.filter(f => f.finding_type === 'cerrada').length,
-                };
-              }).filter(d => d.abierto > 0 || d.cerrado > 0);
+                const aArea = af.filter(f => f.finding_type === 'abierta').length;
+                const cArea = af.filter(f => f.finding_type === 'cerrada').length;
+                if (aArea === 0 && cArea === 0) return;
+                tableData.push({ name: area.name, color, abierto: aArea, cerrado: cArea });
+                const areaSubs = subareas.filter(s => s.area_id === area.id);
+                areaSubs.forEach(sub => {
+                  const sp = ap.filter(p => (p as any).subarea_id === sub.id);
+                  const sids = sp.map(p => p.id);
+                  const sf = typedFindings.filter(f => sids.includes(f.audit_plan_id));
+                  const aSub = sf.filter(f => f.finding_type === 'abierta').length;
+                  const cSub = sf.filter(f => f.finding_type === 'cerrada').length;
+                  if (aSub > 0 || cSub > 0) {
+                    tableData.push({ name: sub.name, color, abierto: aSub, cerrado: cSub, isSubarea: true });
+                  }
+                });
+                const sinSub = ap.filter(p => !(p as any).subarea_id);
+                const sinIds = sinSub.map(p => p.id);
+                const sinF = typedFindings.filter(f => sinIds.includes(f.audit_plan_id));
+                const aSin = sinF.filter(f => f.finding_type === 'abierta').length;
+                const cSin = sinF.filter(f => f.finding_type === 'cerrada').length;
+                if (areaSubs.length > 0 && (aSin > 0 || cSin > 0)) {
+                  tableData.push({ name: 'Sin subárea', color, abierto: aSin, cerrado: cSin, isSubarea: true });
+                }
+              });
 
+              const areaRows = tableData.filter(d => !d.isSubarea);
               const chartData = [
-                { name: 'Abierto', ...Object.fromEntries(tableData.map(d => [d.name, d.abierto])) },
-                { name: 'Cerrado', ...Object.fromEntries(tableData.map(d => [d.name, d.cerrado])) },
+                { name: 'Abierto', ...Object.fromEntries(areaRows.map(d => [d.name, d.abierto])) },
+                { name: 'Cerrado', ...Object.fromEntries(areaRows.map(d => [d.name, d.cerrado])) },
               ];
 
               const totalAbierto = tableData.reduce((s, d) => s + d.abierto, 0);
@@ -813,17 +834,22 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
                               </TableRow>
                             ) : (
                               <>
-                                {tableData.map(d => (
-                                  <TableRow key={d.name}>
-                                    <TableCell className="font-medium" style={{ color: d.color }}>{d.name}</TableCell>
+                                {tableData.map((d, i) => (
+                                  <TableRow key={`${d.name}-${i}`}>
+                                    <TableCell
+                                      className={cn(d.isSubarea ? "pl-8 text-xs" : "font-medium")}
+                                      style={{ color: d.color }}
+                                    >
+                                      {d.isSubarea ? `↳ ${d.name}` : d.name}
+                                    </TableCell>
                                     <TableCell className="text-center">{d.abierto}</TableCell>
                                     <TableCell className="text-center">{d.cerrado}</TableCell>
                                   </TableRow>
                                 ))}
                                 <TableRow className="font-bold border-t-2">
                                   <TableCell className="text-destructive">Total</TableCell>
-                                  <TableCell className="text-center">{totalAbierto}</TableCell>
-                                  <TableCell className="text-center">{totalCerrado}</TableCell>
+                                  <TableCell className="text-center">{tableData.filter(d => !d.isSubarea).reduce((s, d) => s + d.abierto, 0)}</TableCell>
+                                  <TableCell className="text-center">{tableData.filter(d => !d.isSubarea).reduce((s, d) => s + d.cerrado, 0)}</TableCell>
                                 </TableRow>
                               </>
                             )}
@@ -847,7 +873,7 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
                               <YAxis allowDecimals={false} />
                               <Tooltip />
                               <Legend />
-                              {tableData.map(d => (
+                              {areaRows.map(d => (
                                 <Bar key={d.name} dataKey={d.name} fill={d.color} />
                               ))}
                             </BarChart>
