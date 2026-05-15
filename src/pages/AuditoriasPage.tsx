@@ -185,6 +185,7 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
   const [searchTerm, setSearchTerm] = useState("");
   const [filterArea, setFilterArea] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [filterSubarea, setFilterSubarea] = useState<string>("all");
 
   // Auto-set area filter when areaFilterName is provided
   useEffect(() => {
@@ -358,9 +359,18 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
     await logActivity('create', 'audit_comment', findingId);
   };
 
+  // Reset subarea filter when area changes
+  useEffect(() => { setFilterSubarea("all"); }, [filterArea]);
+
+  const subareasForFilter = useMemo(
+    () => subareas.filter(s => s.area_id === filterArea && s.status === 'activo'),
+    [subareas, filterArea]
+  );
+
   // ─── Filters ───
   const filteredPlans = plans.filter((p) => {
     if (filterArea !== "all" && p.area_id !== filterArea) return false;
+    if (filterSubarea !== "all" && (p as any).subarea_id !== filterSubarea) return false;
     if (filterStatus !== "all" && p.status !== filterStatus) return false;
     if (searchTerm) {
       const s = searchTerm.toLowerCase();
@@ -478,6 +488,34 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
                 );
               })}
             </div>
+            {filterArea !== "all" && subareasForFilter.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Subárea:</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn("h-7 text-xs border", filterSubarea === "all" ? ALL_AREAS_COLOR.active : ALL_AREAS_COLOR.inactive)}
+                  onClick={() => setFilterSubarea("all")}
+                >
+                  Todas
+                </Button>
+                {subareasForFilter.map((s, i) => {
+                  const palette = AREA_PALETTE[i % AREA_PALETTE.length];
+                  const isActive = filterSubarea === s.id;
+                  return (
+                    <Button
+                      key={s.id}
+                      variant="outline"
+                      size="sm"
+                      className={cn("h-7 text-xs border", isActive ? palette.active : palette.inactive)}
+                      onClick={() => setFilterSubarea(s.id)}
+                    >
+                      {s.name}
+                    </Button>
+                  );
+                })}
+              </div>
+            )}
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Estado:</span>
               <Button
