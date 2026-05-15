@@ -795,9 +795,10 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
                 }
               });
 
+              const areaRows = tableData.filter(d => !d.isSubarea);
               const chartData = [
-                { name: 'Abierto', ...Object.fromEntries(tableData.map(d => [d.name, d.abierto])) },
-                { name: 'Cerrado', ...Object.fromEntries(tableData.map(d => [d.name, d.cerrado])) },
+                { name: 'Abierto', ...Object.fromEntries(areaRows.map(d => [d.name, d.abierto])) },
+                { name: 'Cerrado', ...Object.fromEntries(areaRows.map(d => [d.name, d.cerrado])) },
               ];
 
               const totalAbierto = tableData.reduce((s, d) => s + d.abierto, 0);
@@ -872,7 +873,7 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
                               <YAxis allowDecimals={false} />
                               <Tooltip />
                               <Legend />
-                              {tableData.map(d => (
+                              {areaRows.map(d => (
                                 <Bar key={d.name} dataKey={d.name} fill={d.color} />
                               ))}
                             </BarChart>
