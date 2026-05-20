@@ -97,6 +97,15 @@ export interface ActivityLog {
 
 export function getTrafficLight(kpi: KPI): TrafficLight {
   const name = (kpi.name ?? '').toLowerCase();
+  const unit = (kpi.unit ?? '').trim();
+
+  // KPIs with unit "#" use inverse thresholds (lower is better).
+  // Verde: current <= threshold_green, Amarillo: == threshold_yellow, Rojo: > threshold_red
+  if (unit === '#') {
+    if (kpi.current_value <= kpi.threshold_green) return 'verde';
+    if (kpi.current_value <= kpi.threshold_yellow) return 'amarillo';
+    return 'rojo';
+  }
 
   // Savings KPIs (higher real value than target is better).
   const isSavings = ['ahorro', 'ahorros'].some((kw) => name.includes(kw));
