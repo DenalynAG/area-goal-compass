@@ -465,10 +465,13 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
       !roleUserIds || (o.owner_user_id ? roleUserIds.has(o.owner_user_id) : false);
     // Decide grouping
     if (dashAreaId === '__all__') {
-      // by area (excluding Dirección General? include all)
+      // by area — usa el mismo cálculo que la barra de la tarjeta (getAreaProgress, capeado a 100)
       return areas.map(a => {
         const objs = getAreaObjectives(a.id).filter(matchesRole);
-        const objAvg = objs.length ? Math.round(objs.reduce((s, o) => s + getObjProgress(o), 0) / objs.length) : 0;
+        if (!objs.length) return { name: a.name, Objetivos: 0 };
+        const objAvg = Math.round(
+          objs.reduce((s, o) => s + Math.min(getObjProgress(o), 100), 0) / objs.length,
+        );
         return { name: a.name, Objetivos: objAvg };
       }).filter(d => d.Objetivos > 0);
     }
@@ -478,13 +481,17 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
       const result: { name: string; Objetivos: number }[] = [];
       const directObjs = objectives.filter(o => o.scope_type === 'area' && o.scope_id === dashAreaId).filter(matchesRole);
       if (directObjs.length) {
-        const objAvg = Math.round(directObjs.reduce((s, o) => s + getObjProgress(o), 0) / directObjs.length);
+        const objAvg = Math.round(
+          directObjs.reduce((s, o) => s + Math.min(getObjProgress(o), 100), 0) / directObjs.length,
+        );
         result.push({ name: '(Área directa)', Objetivos: objAvg });
       }
       subs.forEach(s => {
         const objs = objectives.filter(o => o.scope_type === 'subarea' && o.scope_id === s.id).filter(matchesRole);
         if (!objs.length) return;
-        const objAvg = Math.round(objs.reduce((sum, o) => sum + getObjProgress(o), 0) / objs.length);
+        const objAvg = Math.round(
+          objs.reduce((sum, o) => sum + Math.min(getObjProgress(o), 100), 0) / objs.length,
+        );
         result.push({ name: s.name, Objetivos: objAvg });
       });
       return result;
@@ -492,7 +499,10 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
     // by objective inside selected subarea
     const objs = objectives.filter(o => o.scope_type === 'subarea' && o.scope_id === dashSubareaId).filter(matchesRole);
     return objs.map(o => {
-      return { name: o.title.length > 40 ? o.title.slice(0, 40) + '…' : o.title, Objetivos: getObjProgress(o) };
+      return {
+        name: o.title.length > 40 ? o.title.slice(0, 40) + '…' : o.title,
+        Objetivos: Math.min(getObjProgress(o), 100),
+      };
     });
   }, [dashAreaId, dashSubareaId, dashRoleFilter, userRoles, areas, subareas, objectives, kpis, measurements]);
 
