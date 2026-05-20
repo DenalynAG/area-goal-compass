@@ -693,12 +693,12 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
           <LayoutDashboard className="w-5 h-5 text-primary" />
           <div className="flex-1 text-left">
             <h1 className="text-base font-bold">Dashboard — Recursos Humanos</h1>
-            <p className="text-xs text-muted-foreground">% de avance de Objetivos e Indicadores por área</p>
+            <p className="text-xs text-muted-foreground">Promedio acumulado del semáforo de Objetivos por área</p>
           </div>
         </button>
         {dashboardExpanded && (
           <div className="border-t px-5 py-5 space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">Área</label>
                 <SearchableSelect
@@ -718,6 +718,20 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                   disabled={dashAreaId === '__all__' || dashSubareaOptions.length === 0}
                 />
               </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Rol</label>
+                <SearchableSelect
+                  options={[
+                    { value: '__all__', label: 'Todos los roles' },
+                    { value: 'admin_area', label: 'Admin de Área' },
+                    { value: 'lider_subarea', label: 'Líder Subárea' },
+                    { value: 'gestor_area', label: 'Gestor de Área' },
+                  ]}
+                  value={dashRoleFilter}
+                  onValueChange={setDashRoleFilter}
+                  placeholder="Selecciona un rol"
+                />
+              </div>
             </div>
             {dashboardChartData.length === 0 ? (
               <div className="text-center py-12 text-sm text-muted-foreground bg-muted/30 rounded-lg">
@@ -734,9 +748,6 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                     <Legend />
                     <Bar dataKey="Objetivos" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]}>
                       <LabelList dataKey="Objetivos" position="right" formatter={(v: any) => `${v}%`} style={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
-                    </Bar>
-                    <Bar dataKey="Indicadores" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]}>
-                      <LabelList dataKey="Indicadores" position="right" formatter={(v: any) => `${v}%`} style={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
