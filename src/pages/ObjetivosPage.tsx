@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useObjectives, useKPIs, useKPIMeasurements, useAreas, useSubareas, useProfiles, getProfileName, getAreaNameFromList, useEvidenceCountsByEntity } from '@/hooks/useSupabaseData';
+import { useObjectives, useKPIs, useKPIMeasurements, useAreas, useSubareas, useProfiles, useUserRoles, getProfileName, getAreaNameFromList, useEvidenceCountsByEntity } from '@/hooks/useSupabaseData';
 import { getTrafficLight } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { StatusBadge, ProgressBar, TrafficLightBadge } from '@/components/StatusBadge';
@@ -42,6 +42,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   const { data: areas = [] } = useAreas();
   const { data: subareas = [] } = useSubareas();
   const { data: profiles = [] } = useProfiles();
+  const { data: userRoles = [] } = useUserRoles();
   const { isSuperAdmin, hasRole } = useAuth();
   const canEditKpi = isSuperAdmin || hasRole('admin_area') || hasRole('gestor_area') || hasRole('lider_subarea');
   const canDownload = isSuperAdmin;
@@ -65,6 +66,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   const [dashboardExpanded, setDashboardExpanded] = useState(true);
   const [dashAreaId, setDashAreaId] = useState<string>('__all__');
   const [dashSubareaId, setDashSubareaId] = useState<string>('__all__');
+  const [dashRoleFilter, setDashRoleFilter] = useState<string>('__all__');
   const [expandedAreas, setExpandedAreas] = useState<Record<string, boolean>>({});
   const toggleArea = (id: string) => setExpandedAreas(prev => ({ ...prev, [id]: !prev[id] }));
 
@@ -455,50 +457,44 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   };
 
   const dashboardChartData = useMemo(() => {
+    // Build set of user IDs matching the selected role filter
+    const roleUserIds = dashRoleFilter === '__all__'
+      ? null
+      : new Set(userRoles.filter(r => r.role === dashRoleFilter).map(r => r.user_id));
+    const matchesRole = (o: Tables<'objectives'>) =>
+      !roleUserIds || (o.owner_user_id ? roleUserIds.has(o.owner_user_id) : false);
     // Decide grouping
     if (dashAreaId === '__all__') {
       // by area (excluding Dirección General? include all)
       return areas.map(a => {
-        const objs = getAreaObjectives(a.id);
-        const ks = getAreaKpis(a.id);
+        const objs = getAreaObjectives(a.id).filter(matchesRole);
         const objAvg = objs.length ? Math.round(objs.reduce((s, o) => s + getObjProgress(o), 0) / objs.length) : 0;
-        const kpiVals = ks.map(k => getKpiAchievement(k)).filter((v): v is number => v !== null);
-        const kpiAvg = kpiVals.length ? Math.round(kpiVals.reduce((s, v) => s + v, 0) / kpiVals.length) : 0;
-        return { name: a.name, Objetivos: objAvg, Indicadores: kpiAvg };
-      }).filter(d => d.Objetivos > 0 || d.Indicadores > 0);
+        return { name: a.name, Objetivos: objAvg };
+      }).filter(d => d.Objetivos > 0);
     }
     if (dashSubareaId === '__all__') {
       // by subarea of selected area + direct area objectives
       const subs = subareas.filter(s => s.area_id === dashAreaId);
-      const result: { name: string; Objetivos: number; Indicadores: number }[] = [];
-      const directObjs = objectives.filter(o => o.scope_type === 'area' && o.scope_id === dashAreaId);
+      const result: { name: string; Objetivos: number }[] = [];
+      const directObjs = objectives.filter(o => o.scope_type === 'area' && o.scope_id === dashAreaId).filter(matchesRole);
       if (directObjs.length) {
-        const ks = kpis.filter(k => directObjs.some(o => o.id === k.objective_id));
         const objAvg = Math.round(directObjs.reduce((s, o) => s + getObjProgress(o), 0) / directObjs.length);
-        const kpiVals = ks.map(k => getKpiAchievement(k)).filter((v): v is number => v !== null);
-        const kpiAvg = kpiVals.length ? Math.round(kpiVals.reduce((s, v) => s + v, 0) / kpiVals.length) : 0;
-        result.push({ name: '(Área directa)', Objetivos: objAvg, Indicadores: kpiAvg });
+        result.push({ name: '(Área directa)', Objetivos: objAvg });
       }
       subs.forEach(s => {
-        const objs = objectives.filter(o => o.scope_type === 'subarea' && o.scope_id === s.id);
+        const objs = objectives.filter(o => o.scope_type === 'subarea' && o.scope_id === s.id).filter(matchesRole);
         if (!objs.length) return;
-        const ks = kpis.filter(k => objs.some(o => o.id === k.objective_id));
         const objAvg = Math.round(objs.reduce((sum, o) => sum + getObjProgress(o), 0) / objs.length);
-        const kpiVals = ks.map(k => getKpiAchievement(k)).filter((v): v is number => v !== null);
-        const kpiAvg = kpiVals.length ? Math.round(kpiVals.reduce((sum, v) => sum + v, 0) / kpiVals.length) : 0;
-        result.push({ name: s.name, Objetivos: objAvg, Indicadores: kpiAvg });
+        result.push({ name: s.name, Objetivos: objAvg });
       });
       return result;
     }
     // by objective inside selected subarea
-    const objs = objectives.filter(o => o.scope_type === 'subarea' && o.scope_id === dashSubareaId);
+    const objs = objectives.filter(o => o.scope_type === 'subarea' && o.scope_id === dashSubareaId).filter(matchesRole);
     return objs.map(o => {
-      const ks = kpis.filter(k => k.objective_id === o.id);
-      const kpiVals = ks.map(k => getKpiAchievement(k)).filter((v): v is number => v !== null);
-      const kpiAvg = kpiVals.length ? Math.round(kpiVals.reduce((s, v) => s + v, 0) / kpiVals.length) : 0;
-      return { name: o.title.length > 40 ? o.title.slice(0, 40) + '…' : o.title, Objetivos: getObjProgress(o), Indicadores: kpiAvg };
+      return { name: o.title.length > 40 ? o.title.slice(0, 40) + '…' : o.title, Objetivos: getObjProgress(o) };
     });
-  }, [dashAreaId, dashSubareaId, areas, subareas, objectives, kpis, measurements]);
+  }, [dashAreaId, dashSubareaId, dashRoleFilter, userRoles, areas, subareas, objectives, kpis, measurements]);
 
   const dashSubareaOptions = useMemo(() => {
     if (dashAreaId === '__all__') return [];
@@ -697,12 +693,12 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
           <LayoutDashboard className="w-5 h-5 text-primary" />
           <div className="flex-1 text-left">
             <h1 className="text-base font-bold">Dashboard — Recursos Humanos</h1>
-            <p className="text-xs text-muted-foreground">% de avance de Objetivos e Indicadores por área</p>
+            <p className="text-xs text-muted-foreground">Promedio acumulado del semáforo de Objetivos por área</p>
           </div>
         </button>
         {dashboardExpanded && (
           <div className="border-t px-5 py-5 space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">Área</label>
                 <SearchableSelect
@@ -722,6 +718,20 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                   disabled={dashAreaId === '__all__' || dashSubareaOptions.length === 0}
                 />
               </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Rol</label>
+                <SearchableSelect
+                  options={[
+                    { value: '__all__', label: 'Todos los roles' },
+                    { value: 'admin_area', label: 'Admin de Área' },
+                    { value: 'lider_subarea', label: 'Líder Subárea' },
+                    { value: 'gestor_area', label: 'Gestor de Área' },
+                  ]}
+                  value={dashRoleFilter}
+                  onValueChange={setDashRoleFilter}
+                  placeholder="Selecciona un rol"
+                />
+              </div>
             </div>
             {dashboardChartData.length === 0 ? (
               <div className="text-center py-12 text-sm text-muted-foreground bg-muted/30 rounded-lg">
@@ -738,9 +748,6 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                     <Legend />
                     <Bar dataKey="Objetivos" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]}>
                       <LabelList dataKey="Objetivos" position="right" formatter={(v: any) => `${v}%`} style={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
-                    </Bar>
-                    <Bar dataKey="Indicadores" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]}>
-                      <LabelList dataKey="Indicadores" position="right" formatter={(v: any) => `${v}%`} style={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
