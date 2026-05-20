@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useObjectives, useKPIs, useKPIMeasurements, useAreas, useSubareas, useProfiles, getProfileName, getAreaNameFromList, useEvidenceCountsByEntity } from '@/hooks/useSupabaseData';
+import { useObjectives, useKPIs, useKPIMeasurements, useAreas, useSubareas, useProfiles, useUserRoles, getProfileName, getAreaNameFromList, useEvidenceCountsByEntity } from '@/hooks/useSupabaseData';
 import { getTrafficLight } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { StatusBadge, ProgressBar, TrafficLightBadge } from '@/components/StatusBadge';
@@ -42,6 +42,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   const { data: areas = [] } = useAreas();
   const { data: subareas = [] } = useSubareas();
   const { data: profiles = [] } = useProfiles();
+  const { data: userRoles = [] } = useUserRoles();
   const { isSuperAdmin, hasRole } = useAuth();
   const canEditKpi = isSuperAdmin || hasRole('admin_area') || hasRole('gestor_area') || hasRole('lider_subarea');
   const canDownload = isSuperAdmin;
@@ -65,6 +66,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   const [dashboardExpanded, setDashboardExpanded] = useState(true);
   const [dashAreaId, setDashAreaId] = useState<string>('__all__');
   const [dashSubareaId, setDashSubareaId] = useState<string>('__all__');
+  const [dashRoleFilter, setDashRoleFilter] = useState<string>('__all__');
   const [expandedAreas, setExpandedAreas] = useState<Record<string, boolean>>({});
   const toggleArea = (id: string) => setExpandedAreas(prev => ({ ...prev, [id]: !prev[id] }));
 
