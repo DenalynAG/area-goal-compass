@@ -398,10 +398,13 @@ export default function KPIFormDialog({
                 onChange={(e) => {
                   const v = Number(e.target.value);
                   setTarget(v);
-                  // Auto-cálculo de umbrales basado en la Meta
-                  setThresholdGreen(v + 1);
-                  setThresholdYellow(v);
-                  setThresholdRed(0);
+                  // Auto-cálculo de umbrales basado en la Meta.
+                  // Indicadores con Unidad "#" usan lógica inversa (manual): no se recalculan.
+                  if (unit.trim() !== "#") {
+                    setThresholdGreen(Number((v * 1.1).toFixed(2)));
+                    setThresholdYellow(v);
+                    setThresholdRed(Number((v * 0.9).toFixed(2)));
+                  }
                 }}
                 disabled={restrictedToValue}
               />
