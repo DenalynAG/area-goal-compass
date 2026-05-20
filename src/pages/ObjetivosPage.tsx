@@ -457,50 +457,44 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   };
 
   const dashboardChartData = useMemo(() => {
+    // Build set of user IDs matching the selected role filter
+    const roleUserIds = dashRoleFilter === '__all__'
+      ? null
+      : new Set(userRoles.filter(r => r.role === dashRoleFilter).map(r => r.user_id));
+    const matchesRole = (o: Tables<'objectives'>) =>
+      !roleUserIds || (o.owner_user_id ? roleUserIds.has(o.owner_user_id) : false);
     // Decide grouping
     if (dashAreaId === '__all__') {
       // by area (excluding Dirección General? include all)
       return areas.map(a => {
-        const objs = getAreaObjectives(a.id);
-        const ks = getAreaKpis(a.id);
+        const objs = getAreaObjectives(a.id).filter(matchesRole);
         const objAvg = objs.length ? Math.round(objs.reduce((s, o) => s + getObjProgress(o), 0) / objs.length) : 0;
-        const kpiVals = ks.map(k => getKpiAchievement(k)).filter((v): v is number => v !== null);
-        const kpiAvg = kpiVals.length ? Math.round(kpiVals.reduce((s, v) => s + v, 0) / kpiVals.length) : 0;
-        return { name: a.name, Objetivos: objAvg, Indicadores: kpiAvg };
-      }).filter(d => d.Objetivos > 0 || d.Indicadores > 0);
+        return { name: a.name, Objetivos: objAvg };
+      }).filter(d => d.Objetivos > 0);
     }
     if (dashSubareaId === '__all__') {
       // by subarea of selected area + direct area objectives
       const subs = subareas.filter(s => s.area_id === dashAreaId);
-      const result: { name: string; Objetivos: number; Indicadores: number }[] = [];
-      const directObjs = objectives.filter(o => o.scope_type === 'area' && o.scope_id === dashAreaId);
+      const result: { name: string; Objetivos: number }[] = [];
+      const directObjs = objectives.filter(o => o.scope_type === 'area' && o.scope_id === dashAreaId).filter(matchesRole);
       if (directObjs.length) {
-        const ks = kpis.filter(k => directObjs.some(o => o.id === k.objective_id));
         const objAvg = Math.round(directObjs.reduce((s, o) => s + getObjProgress(o), 0) / directObjs.length);
-        const kpiVals = ks.map(k => getKpiAchievement(k)).filter((v): v is number => v !== null);
-        const kpiAvg = kpiVals.length ? Math.round(kpiVals.reduce((s, v) => s + v, 0) / kpiVals.length) : 0;
-        result.push({ name: '(Área directa)', Objetivos: objAvg, Indicadores: kpiAvg });
+        result.push({ name: '(Área directa)', Objetivos: objAvg });
       }
       subs.forEach(s => {
-        const objs = objectives.filter(o => o.scope_type === 'subarea' && o.scope_id === s.id);
+        const objs = objectives.filter(o => o.scope_type === 'subarea' && o.scope_id === s.id).filter(matchesRole);
         if (!objs.length) return;
-        const ks = kpis.filter(k => objs.some(o => o.id === k.objective_id));
         const objAvg = Math.round(objs.reduce((sum, o) => sum + getObjProgress(o), 0) / objs.length);
-        const kpiVals = ks.map(k => getKpiAchievement(k)).filter((v): v is number => v !== null);
-        const kpiAvg = kpiVals.length ? Math.round(kpiVals.reduce((sum, v) => sum + v, 0) / kpiVals.length) : 0;
-        result.push({ name: s.name, Objetivos: objAvg, Indicadores: kpiAvg });
+        result.push({ name: s.name, Objetivos: objAvg });
       });
       return result;
     }
     // by objective inside selected subarea
-    const objs = objectives.filter(o => o.scope_type === 'subarea' && o.scope_id === dashSubareaId);
+    const objs = objectives.filter(o => o.scope_type === 'subarea' && o.scope_id === dashSubareaId).filter(matchesRole);
     return objs.map(o => {
-      const ks = kpis.filter(k => k.objective_id === o.id);
-      const kpiVals = ks.map(k => getKpiAchievement(k)).filter((v): v is number => v !== null);
-      const kpiAvg = kpiVals.length ? Math.round(kpiVals.reduce((s, v) => s + v, 0) / kpiVals.length) : 0;
-      return { name: o.title.length > 40 ? o.title.slice(0, 40) + '…' : o.title, Objetivos: getObjProgress(o), Indicadores: kpiAvg };
+      return { name: o.title.length > 40 ? o.title.slice(0, 40) + '…' : o.title, Objetivos: getObjProgress(o) };
     });
-  }, [dashAreaId, dashSubareaId, areas, subareas, objectives, kpis, measurements]);
+  }, [dashAreaId, dashSubareaId, dashRoleFilter, userRoles, areas, subareas, objectives, kpis, measurements]);
 
   const dashSubareaOptions = useMemo(() => {
     if (dashAreaId === '__all__') return [];
