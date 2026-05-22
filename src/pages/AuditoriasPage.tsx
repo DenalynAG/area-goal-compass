@@ -172,7 +172,8 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
   const { data: profiles = [] } = useProfiles();
 
   const isRRHH = !areaFilterName || areaFilterName === 'Recursos Humanos';
-  const canManage = (isSuperAdmin || hasRole("admin_area")) && isRRHH;
+  const hasCalidadGlobal = (profile as any)?.calidad_global_access === true;
+  const canManage = (isSuperAdmin || hasRole("admin_area") || hasCalidadGlobal) && isRRHH;
 
   // Resolve area filter from name
   const presetAreaId = useMemo(() => {
