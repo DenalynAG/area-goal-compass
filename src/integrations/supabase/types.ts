@@ -1325,6 +1325,7 @@ export type Database = {
           arl: string | null
           avatar: string | null
           birthday: string | null
+          calidad_global_access: boolean
           correo_personal: string | null
           created_at: string
           direccion: string | null
@@ -1356,6 +1357,7 @@ export type Database = {
           arl?: string | null
           avatar?: string | null
           birthday?: string | null
+          calidad_global_access?: boolean
           correo_personal?: string | null
           created_at?: string
           direccion?: string | null
@@ -1387,6 +1389,7 @@ export type Database = {
           arl?: string | null
           avatar?: string | null
           birthday?: string | null
+          calidad_global_access?: boolean
           correo_personal?: string | null
           created_at?: string
           direccion?: string | null
@@ -1692,6 +1695,7 @@ export type Database = {
       }
       get_user_area_id: { Args: { _user_id: string }; Returns: string }
       get_user_subarea_id: { Args: { _user_id: string }; Returns: string }
+      has_calidad_global: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
