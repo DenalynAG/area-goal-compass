@@ -210,22 +210,24 @@ export default function ControlActivosPage() {
 
   const downloadEquiposTemplate = () => {
     const headers = [
-      "Responsable (Nombre o Email)",
       "Área",
       "Subárea",
+      "Responsable",
+      "Cargo",
       "Equipo Asignado",
-      "Nro Serial",
+      "Nro. Serial",
       "Código Registro OSH",
-      "Estado (Ingreso/Salida)",
+      "Estado (Activo/Inactivo)",
     ];
     const example = [
-      "Juan Pérez",
       "Alimentos y Bebidas",
       "Cocina",
+      "Juan Pérez",
+      "Jefe de Cocina",
       "HP ProBook 450",
       "SN123456",
       "OSH-001",
-      "Ingreso",
+      "Activo",
     ];
     const ws = XLSX.utils.aoa_to_sheet([headers, example]);
     const wb = XLSX.utils.book_new();
