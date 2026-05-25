@@ -31,6 +31,7 @@ export type Database = {
           has_activity: boolean | null
           id: string
           photo_url: string | null
+          requester_user_id: string | null
           subarea_id: string | null
           visitor_name: string
           zone_requirement: string
@@ -51,6 +52,7 @@ export type Database = {
           has_activity?: boolean | null
           id?: string
           photo_url?: string | null
+          requester_user_id?: string | null
           subarea_id?: string | null
           visitor_name: string
           zone_requirement?: string
@@ -71,6 +73,7 @@ export type Database = {
           has_activity?: boolean | null
           id?: string
           photo_url?: string | null
+          requester_user_id?: string | null
           subarea_id?: string | null
           visitor_name?: string
           zone_requirement?: string

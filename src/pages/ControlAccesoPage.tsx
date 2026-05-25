@@ -66,6 +66,7 @@ export default function ControlAccesoPage() {
   const [areaId, setAreaId] = useState("");
   const [subareaId, setSubareaId] = useState("");
   const [companionId, setCompanionId] = useState("");
+  const [requesterId, setRequesterId] = useState("");
   const [zoneReq, setZoneReq] = useState("");
   const [arl, setArl] = useState("");
   const [bloque, setBloque] = useState("");
@@ -79,6 +80,7 @@ export default function ControlAccesoPage() {
     setCompanyName(""); setVisitorName(""); setDocumentId("");
     setEntryDatetime(""); setEstimatedExit("");
     setAreaId(""); setSubareaId(""); setCompanionId("");
+    setRequesterId("");
     setZoneReq(""); setArl(""); setBloque("");
     setHasActivity(false);
     setArlFile(null); setArlFileName(null);
@@ -95,6 +97,7 @@ export default function ControlAccesoPage() {
     setAreaId(r.area_id || "");
     setSubareaId(r.subarea_id || "");
     setCompanionId(r.companion_user_id || "");
+    setRequesterId(r.requester_user_id || "");
     setZoneReq(r.zone_requirement || "");
     setArl(r.arl || "");
     setBloque(r.bloque || "");
@@ -163,6 +166,7 @@ export default function ControlAccesoPage() {
       area_id: areaId || null,
       subarea_id: subareaId || null,
       companion_user_id: companionId || null,
+      requester_user_id: requesterId || null,
       zone_requirement: zoneReq.trim(),
       arl: arl.trim(),
       bloque: bloque || null,
@@ -407,6 +411,7 @@ export default function ControlAccesoPage() {
               <DetailRow label="Salida Real" value={detailRecord.exit_datetime ? format(new Date(detailRecord.exit_datetime), "dd/MM/yyyy HH:mm", { locale: es }) : "En sitio"} />
               <DetailRow label="Área" value={`${getAreaName(detailRecord.area_id)}${detailRecord.subarea_id ? ` / ${getSubareaName(detailRecord.subarea_id)}` : ""}`} />
               <DetailRow label="Acompañante" value={getProfileName(detailRecord.companion_user_id)} />
+              <DetailRow label="Responsable Solicitante" value={getProfileName(detailRecord.requester_user_id)} />
               <DetailRow label="Zona / Requerimiento" value={detailRecord.zone_requirement || "—"} />
               <DetailRow label="Bloque" value={detailRecord.bloque ? `Bloque ${detailRecord.bloque}` : "—"} />
               {detailRecord.arl_document_url && (
@@ -484,6 +489,16 @@ export default function ControlAccesoPage() {
                   value={companionId}
                   onValueChange={setCompanionId}
                   placeholder="Buscar colaborador"
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Responsable Solicitante</Label>
+                <SearchableSelect
+                  options={profiles.map((p) => ({ value: p.id, label: p.name }))}
+                  value={requesterId}
+                  onValueChange={setRequesterId}
+                  placeholder="Buscar responsable"
                   className="w-full"
                 />
               </div>
