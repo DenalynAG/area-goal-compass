@@ -1,0 +1,1 @@
+ALTER TABLE public.access_control ADD COLUMN IF NOT EXISTS requester_user_id uuid;
