@@ -646,7 +646,15 @@ export default function ControlActivosPage() {
                                   </Button>
                                 </div>
                               ) : (
-                                <span className="text-muted-foreground text-xs">—</span>
+                                <Button size="sm" variant="outline" className="h-8" title="Asignar equipo"
+                                  onClick={() => {
+                                    resetForm();
+                                    setIsEquipoMode(true);
+                                    setCollaboratorId(leader.userId);
+                                    setDialogOpen(true);
+                                  }}>
+                                  <Plus className="h-3.5 w-3.5 mr-1" /> Asignar
+                                </Button>
                               )}
                             </TableCell>
                           </TableRow>
