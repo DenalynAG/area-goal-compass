@@ -260,16 +260,17 @@ export default function ControlActivosPage() {
       const payloads: any[] = [];
       const errors: string[] = [];
       rows.forEach((row, idx) => {
-        const respRaw = (findKey(row, "responsable") || "").toString().trim();
         const areaRaw = (findKey(row, "área", "area") || "").toString().trim();
         const subRaw = (findKey(row, "subárea", "subarea") || "").toString().trim();
+        const respRaw = (findKey(row, "responsable") || "").toString().trim();
+        const cargoRaw = (findKey(row, "cargo") || "").toString().trim();
         const equipoRaw = (findKey(row, "equipo", "activo") || "").toString().trim();
         const serialRaw = (findKey(row, "serial", "serie") || "").toString().trim();
         const oshRaw = (findKey(row, "osh", "código", "codigo") || "").toString().trim();
         const estadoRaw = norm(findKey(row, "estado"));
 
         if (!respRaw || !equipoRaw) {
-          errors.push(`Fila ${idx + 2}: Responsable y Equipo son obligatorios`);
+          errors.push(`Fila ${idx + 2}: Responsable y Equipo Asignado son obligatorios`);
           return;
         }
         const profile = profiles.find(
@@ -279,21 +280,26 @@ export default function ControlActivosPage() {
           errors.push(`Fila ${idx + 2}: Responsable "${respRaw}" no encontrado`);
           return;
         }
+        // Optional cargo validation: warn if cargo in Excel differs from profile
+        if (cargoRaw && norm(cargoRaw) !== norm(profile.position || "")) {
+          console.warn(`Fila ${idx + 2}: Cargo en Excel "${cargoRaw}" difiere del perfil "${profile.position || ""}"`);
+        }
         const area = areas.find((a) => norm(a.name) === norm(areaRaw));
         const subarea = subRaw
           ? subareas.find((s) => norm(s.name) === norm(subRaw) && (!area || s.area_id === area.id))
           : null;
-        const isIngreso = estadoRaw.includes("ingreso") || estadoRaw.includes("recibido") || estadoRaw.includes("entrada");
+        const isActivo = estadoRaw.includes("activo");
+        const isInactivo = estadoRaw.includes("inactivo");
         payloads.push({
           area_id: area?.id || null,
           subarea_id: subarea?.id || null,
           collaborator_user_id: profile.id,
-          movement_type: isIngreso ? "entrada" : "salida",
+          movement_type: isInactivo ? "entrada" : "salida",
           asset_type: equipoRaw,
           asset_serial: serialRaw,
           reason: oshRaw,
-          status: isIngreso ? "recibido" : "pendiente",
-          entry_datetime: isIngreso ? new Date().toISOString() : null,
+          status: isInactivo ? "recibido" : "pendiente",
+          entry_datetime: isInactivo ? new Date().toISOString() : null,
           created_by: user?.id,
         });
       });
