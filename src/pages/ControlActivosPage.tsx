@@ -68,6 +68,7 @@ export default function ControlActivosPage() {
   const photoInputRef = useRef<HTMLInputElement>(null);
   const excelInputRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState<{ current: number; total: number; processed: number; errors: number } | null>(null);
   const [page, setPage] = useState(1);
   const [equipoPage, setEquipoPage] = useState(1);
   const [activeTab, setActiveTab] = useState("movements");
