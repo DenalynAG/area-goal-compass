@@ -1,5 +1,6 @@
 import { useState, useRef, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import * as XLSX from "xlsx";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAreas, useSubareas, useProfiles, useMemberships, useUserRoles } from "@/hooks/useSupabaseData";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -17,6 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Package, ArrowDownToLine, ArrowUpFromLine, Camera, X, Image as ImageIcon, Eye, Pencil, Trash2, ChevronLeft, ChevronRight, Laptop, Monitor } from "lucide-react";
+import { Upload, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
