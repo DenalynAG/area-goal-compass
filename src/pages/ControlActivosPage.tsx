@@ -1,5 +1,6 @@
 import { useState, useRef, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import * as XLSX from "xlsx";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAreas, useSubareas, useProfiles, useMemberships, useUserRoles } from "@/hooks/useSupabaseData";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -17,6 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Package, ArrowDownToLine, ArrowUpFromLine, Camera, X, Image as ImageIcon, Eye, Pencil, Trash2, ChevronLeft, ChevronRight, Laptop, Monitor } from "lucide-react";
+import { Upload, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -64,6 +66,8 @@ export default function ControlActivosPage() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const excelInputRef = useRef<HTMLInputElement>(null);
+  const [importing, setImporting] = useState(false);
   const [page, setPage] = useState(1);
   const [equipoPage, setEquipoPage] = useState(1);
   const [activeTab, setActiveTab] = useState("movements");
@@ -204,6 +208,112 @@ export default function ControlActivosPage() {
     qc.invalidateQueries({ queryKey: ["asset_movements"] });
   };
 
+  const downloadEquiposTemplate = () => {
+    const headers = [
+      "Responsable (Nombre o Email)",
+      "Área",
+      "Subárea",
+      "Equipo Asignado",
+      "Nro Serial",
+      "Código Registro OSH",
+      "Estado (Ingreso/Salida)",
+    ];
+    const example = [
+      "Juan Pérez",
+      "Alimentos y Bebidas",
+      "Cocina",
+      "HP ProBook 450",
+      "SN123456",
+      "OSH-001",
+      "Ingreso",
+    ];
+    const ws = XLSX.utils.aoa_to_sheet([headers, example]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Equipos");
+    XLSX.writeFile(wb, "plantilla_equipos_asignados.xlsx");
+  };
+
+  const handleImportEquipos = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    try {
+      const data = await file.arrayBuffer();
+      const wb = XLSX.read(data, { cellDates: true });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows: any[] = XLSX.utils.sheet_to_json(ws, { defval: "" });
+      if (rows.length === 0) {
+        toast.error("El archivo está vacío");
+        return;
+      }
+      const norm = (s: string) => (s || "").toString().trim().toLowerCase();
+      const findKey = (row: any, ...keys: string[]) => {
+        for (const k of Object.keys(row)) {
+          const nk = norm(k);
+          if (keys.some((kk) => nk.includes(kk))) return row[k];
+        }
+        return "";
+      };
+
+      const payloads: any[] = [];
+      const errors: string[] = [];
+      rows.forEach((row, idx) => {
+        const respRaw = (findKey(row, "responsable") || "").toString().trim();
+        const areaRaw = (findKey(row, "área", "area") || "").toString().trim();
+        const subRaw = (findKey(row, "subárea", "subarea") || "").toString().trim();
+        const equipoRaw = (findKey(row, "equipo", "activo") || "").toString().trim();
+        const serialRaw = (findKey(row, "serial", "serie") || "").toString().trim();
+        const oshRaw = (findKey(row, "osh", "código", "codigo") || "").toString().trim();
+        const estadoRaw = norm(findKey(row, "estado"));
+
+        if (!respRaw || !equipoRaw) {
+          errors.push(`Fila ${idx + 2}: Responsable y Equipo son obligatorios`);
+          return;
+        }
+        const profile = profiles.find(
+          (p) => norm(p.name) === norm(respRaw) || norm(p.email) === norm(respRaw)
+        );
+        if (!profile) {
+          errors.push(`Fila ${idx + 2}: Responsable "${respRaw}" no encontrado`);
+          return;
+        }
+        const area = areas.find((a) => norm(a.name) === norm(areaRaw));
+        const subarea = subRaw
+          ? subareas.find((s) => norm(s.name) === norm(subRaw) && (!area || s.area_id === area.id))
+          : null;
+        const isIngreso = estadoRaw.includes("ingreso") || estadoRaw.includes("recibido") || estadoRaw.includes("entrada");
+        payloads.push({
+          area_id: area?.id || null,
+          subarea_id: subarea?.id || null,
+          collaborator_user_id: profile.id,
+          movement_type: isIngreso ? "entrada" : "salida",
+          asset_type: equipoRaw,
+          asset_serial: serialRaw,
+          reason: oshRaw,
+          status: isIngreso ? "recibido" : "pendiente",
+          entry_datetime: isIngreso ? new Date().toISOString() : null,
+          created_by: user?.id,
+        });
+      });
+
+      if (payloads.length > 0) {
+        const { error } = await supabase.from("asset_movements" as any).insert(payloads);
+        if (error) { toast.error("Error al importar: " + error.message); return; }
+        toast.success(`${payloads.length} equipos importados${errors.length ? ` (${errors.length} con errores)` : ""}`);
+        qc.invalidateQueries({ queryKey: ["asset_movements"] });
+      }
+      if (errors.length > 0) {
+        console.warn("Errores de importación:", errors);
+        if (payloads.length === 0) toast.error(`No se importó ningún registro. ${errors[0]}`);
+      }
+    } catch (err: any) {
+      toast.error("Error al procesar el archivo: " + err.message);
+    } finally {
+      setImporting(false);
+      if (excelInputRef.current) excelInputRef.current.value = "";
+    }
+  };
+
   const getProfileName = (id: string | null) => profiles.find((p) => p.id === id)?.name || "—";
 
   const filtered = records.filter((r: any) =>
@@ -303,6 +413,19 @@ export default function ControlActivosPage() {
                       onChange={(e) => { setEquipoSearch(e.target.value); setEquipoPage(1); }}
                       className="max-w-xs"
                     />
+                    <input
+                      ref={excelInputRef}
+                      type="file"
+                      accept=".xlsx,.xls"
+                      className="hidden"
+                      onChange={handleImportEquipos}
+                    />
+                    <Button size="sm" variant="outline" onClick={downloadEquiposTemplate}>
+                      <Download className="h-4 w-4 mr-2" /> Plantilla
+                    </Button>
+                    <Button size="sm" variant="outline" disabled={importing} onClick={() => excelInputRef.current?.click()}>
+                      <Upload className="h-4 w-4 mr-2" /> {importing ? "Importando..." : "Importar Excel"}
+                    </Button>
                     <Button size="sm" onClick={() => {
                       resetForm();
                       setAssetType("");
@@ -523,7 +646,15 @@ export default function ControlActivosPage() {
                                   </Button>
                                 </div>
                               ) : (
-                                <span className="text-muted-foreground text-xs">—</span>
+                                <Button size="sm" variant="outline" className="h-8" title="Asignar equipo"
+                                  onClick={() => {
+                                    resetForm();
+                                    setIsEquipoMode(true);
+                                    setCollaboratorId(leader.userId);
+                                    setDialogOpen(true);
+                                  }}>
+                                  <Plus className="h-3.5 w-3.5 mr-1" /> Asignar
+                                </Button>
                               )}
                             </TableCell>
                           </TableRow>
