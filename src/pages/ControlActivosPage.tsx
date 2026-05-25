@@ -57,7 +57,6 @@ export default function ControlActivosPage() {
   const { data: records = [], isLoading } = useAssetMovements();
 
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [equipoSearch, setEquipoSearch] = useState("");
   const [oshCode, setOshCode] = useState("");
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
@@ -69,8 +68,6 @@ export default function ControlActivosPage() {
   const [importing, setImporting] = useState(false);
   const [importProgress, setImportProgress] = useState<{ current: number; total: number; processed: number; errors: number } | null>(null);
   const [page, setPage] = useState(1);
-  const [equipoPage, setEquipoPage] = useState(1);
-  const [activeTab, setActiveTab] = useState("movements");
 
   // Detail / Edit / Delete
   const [detailRecord, setDetailRecord] = useState<any>(null);
