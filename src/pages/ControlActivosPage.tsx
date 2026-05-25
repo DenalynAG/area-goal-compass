@@ -642,6 +642,40 @@ export default function ControlActivosPage() {
                   </Select>
                 </div>
               )}
+              {!isEquipoMode && (
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Código Registro OSH</Label>
+                  <SearchableSelect
+                    options={leadersWithLaptops
+                      .filter((l: any) => l.lastMovement)
+                      .map((l: any) => {
+                        const code = l.lastMovement.reason || l.lastMovement.id.substring(0, 8).toUpperCase();
+                        return {
+                          value: l.lastMovement.id,
+                          label: `${code} — ${l.name} (${l.lastMovement.asset_type}${l.lastMovement.asset_serial ? ` · ${l.lastMovement.asset_serial}` : ""})`,
+                        };
+                      })}
+                    value={oshCode}
+                    onValueChange={(v) => {
+                      setOshCode(v);
+                      const leader = leadersWithLaptops.find((l: any) => l.lastMovement?.id === v);
+                      if (leader?.lastMovement) {
+                        const m = leader.lastMovement;
+                        setAreaId(m.area_id || "");
+                        setSubareaId(m.subarea_id || "");
+                        setCollaboratorId(m.collaborator_user_id || "");
+                        const isKnown = ASSET_TYPES.includes(m.asset_type);
+                        setAssetType(isKnown ? m.asset_type : "Otros");
+                        setCustomAssetType(isKnown ? "" : m.asset_type || "");
+                        setAssetSerial(m.asset_serial || "");
+                      }
+                    }}
+                    placeholder="Buscar por código OSH para autocompletar"
+                    searchPlaceholder="Buscar código OSH, responsable, equipo..."
+                    className="w-full"
+                  />
+                </div>
+              )}
               <div className="space-y-2">
                 <Label>{isEquipoMode ? "Equipo Asignado *" : "Tipo de Activo *"}</Label>
                 {isEquipoMode ? (
