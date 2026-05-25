@@ -200,6 +200,21 @@ export default function ControlAccesoPage() {
     qc.invalidateQueries({ queryKey: ["access_control"] });
   };
 
+  const handleToggleStatus = async (record: any) => {
+    const now = new Date().toISOString();
+    const isInside = !record.exit_datetime;
+    const updates: any = isInside
+      ? { exit_datetime: now }
+      : { exit_datetime: null, entry_datetime: record.entry_datetime || now };
+    const { error } = await supabase
+      .from("access_control" as any)
+      .update(updates)
+      .eq("id", record.id);
+    if (error) { toast.error("Error al actualizar estado"); return; }
+    toast.success(isInside ? "Salida registrada" : "Entrada registrada");
+    qc.invalidateQueries({ queryKey: ["access_control"] });
+  };
+
   const handleDelete = async () => {
     if (!deleteId) return;
     const { error } = await supabase.from("access_control" as any).delete().eq("id", deleteId);
@@ -262,6 +277,7 @@ export default function ControlAccesoPage() {
                       <TableHead>Ingreso</TableHead>
                       <TableHead>Salida Est.</TableHead>
                       <TableHead>Salida Real</TableHead>
+                      <TableHead>Estado</TableHead>
                       <TableHead>Área</TableHead>
                       <TableHead>Bloque</TableHead>
                       <TableHead>Actividad</TableHead>
@@ -286,6 +302,17 @@ export default function ControlAccesoPage() {
                           ) : (
                             <Badge variant="destructive">En sitio</Badge>
                           )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={!r.exit_datetime}
+                              onCheckedChange={() => handleToggleStatus(r)}
+                            />
+                            <span className={`text-xs font-medium ${!r.exit_datetime ? "text-emerald-600" : "text-destructive"}`}>
+                              {!r.exit_datetime ? "Entrada" : "Salida"}
+                            </span>
+                          </div>
                         </TableCell>
                         <TableCell>{getAreaName(r.area_id)}{r.subarea_id ? ` / ${getSubareaName(r.subarea_id)}` : ""}</TableCell>
                         <TableCell>
@@ -329,11 +356,6 @@ export default function ControlAccesoPage() {
                               onClick={() => setDeleteId(r.id)}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
-                            {!r.exit_datetime && (
-                              <Button size="sm" variant="outline" onClick={() => handleMarkExit(r.id)}>
-                                <LogOutIcon className="h-3 w-3 mr-1" /> Salida
-                              </Button>
-                            )}
                           </div>
                         </TableCell>
                       </TableRow>
