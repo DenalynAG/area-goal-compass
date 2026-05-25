@@ -413,6 +413,19 @@ export default function ControlActivosPage() {
                       onChange={(e) => { setEquipoSearch(e.target.value); setEquipoPage(1); }}
                       className="max-w-xs"
                     />
+                    <input
+                      ref={excelInputRef}
+                      type="file"
+                      accept=".xlsx,.xls"
+                      className="hidden"
+                      onChange={handleImportEquipos}
+                    />
+                    <Button size="sm" variant="outline" onClick={downloadEquiposTemplate}>
+                      <Download className="h-4 w-4 mr-2" /> Plantilla
+                    </Button>
+                    <Button size="sm" variant="outline" disabled={importing} onClick={() => excelInputRef.current?.click()}>
+                      <Upload className="h-4 w-4 mr-2" /> {importing ? "Importando..." : "Importar Excel"}
+                    </Button>
                     <Button size="sm" onClick={() => {
                       resetForm();
                       setAssetType("");
