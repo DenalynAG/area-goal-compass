@@ -240,6 +240,7 @@ export default function ControlActivosPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     setImporting(true);
+    setImportProgress({ current: 0, total: 0, processed: 0, errors: 0 });
     try {
       const data = await file.arrayBuffer();
       const wb = XLSX.read(data, { cellDates: true });
@@ -249,7 +250,10 @@ export default function ControlActivosPage() {
         toast.error("El archivo está vacío");
         return;
       }
-      const norm = (s: string) => (s || "").toString().trim().toLowerCase();
+      const stripAccents = (s: string) =>
+        (s || "").toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const norm = (s: string) => stripAccents(s).trim().toLowerCase().replace(/\s+/g, " ");
+      const nameKey = (s: string) => norm(s).split(" ").filter(Boolean).sort().join(" ");
       const findKey = (row: any, ...keys: string[]) => {
         for (const k of Object.keys(row)) {
           const nk = norm(k);
@@ -257,6 +261,7 @@ export default function ControlActivosPage() {
         }
         return "";
       };
+      setImportProgress({ current: 0, total: rows.length, processed: 0, errors: 0 });
 
       const payloads: any[] = [];
       const errors: string[] = [];
@@ -274,9 +279,15 @@ export default function ControlActivosPage() {
           errors.push(`Fila ${idx + 2}: Responsable y Equipo Asignado son obligatorios`);
           return;
         }
-        const profile = profiles.find(
-          (p) => norm(p.name) === norm(respRaw) || norm(p.email) === norm(respRaw)
-        );
+        const respKey = nameKey(respRaw);
+        const profile =
+          profiles.find((p) => norm(p.name) === norm(respRaw)) ||
+          profiles.find((p) => norm(p.email) === norm(respRaw)) ||
+          profiles.find((p) => nameKey(p.name) === respKey) ||
+          profiles.find((p) => {
+            const pk = nameKey(p.name);
+            return pk && respKey && (pk.includes(respKey) || respKey.includes(pk));
+          });
         if (!profile) {
           errors.push(`Fila ${idx + 2}: Responsable "${respRaw}" no encontrado`);
           return;
@@ -304,21 +315,32 @@ export default function ControlActivosPage() {
           created_by: user?.id,
         });
       });
+      setImportProgress({ current: rows.length, total: rows.length, processed: 0, errors: errors.length });
 
       if (payloads.length > 0) {
-        const { error } = await supabase.from("asset_movements" as any).insert(payloads);
-        if (error) { toast.error("Error al importar: " + error.message); return; }
-        toast.success(`${payloads.length} equipos importados${errors.length ? ` (${errors.length} con errores)` : ""}`);
+        const BATCH = 200;
+        let inserted = 0;
+        for (let i = 0; i < payloads.length; i += BATCH) {
+          const chunk = payloads.slice(i, i + BATCH);
+          const { error } = await supabase.from("asset_movements" as any).insert(chunk);
+          if (error) { toast.error("Error al importar: " + error.message); return; }
+          inserted += chunk.length;
+          setImportProgress({ current: rows.length, total: rows.length, processed: inserted, errors: errors.length });
+        }
+        toast.success(`${inserted} equipos importados${errors.length ? ` (${errors.length} con errores)` : ""}`);
         qc.invalidateQueries({ queryKey: ["asset_movements"] });
       }
       if (errors.length > 0) {
         console.warn("Errores de importación:", errors);
-        if (payloads.length === 0) toast.error(`No se importó ningún registro. ${errors[0]}`);
+        if (payloads.length === 0) {
+          toast.error(`No se importó ningún registro. ${errors[0]}${errors.length > 1 ? ` (+${errors.length - 1} más, ver consola)` : ""}`);
+        }
       }
     } catch (err: any) {
       toast.error("Error al procesar el archivo: " + err.message);
     } finally {
       setImporting(false);
+      setTimeout(() => setImportProgress(null), 1500);
       if (excelInputRef.current) excelInputRef.current.value = "";
     }
   };
