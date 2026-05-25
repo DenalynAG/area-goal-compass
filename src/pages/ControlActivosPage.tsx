@@ -411,66 +411,40 @@ export default function ControlActivosPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Control de Activos</h1>
+        <h1 className="text-2xl font-bold text-foreground">Movimiento de Activos IT</h1>
         <p className="text-muted-foreground text-sm">Registro de entrada y salida de activos</p>
       </div>
 
       <Card>
         <CardHeader className="pb-3">
-          <Tabs defaultValue="movements" value={activeTab} onValueChange={setActiveTab}>
-            <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
-              <TabsList>
-                <TabsTrigger value="movements" className="gap-1.5"><Package className="h-4 w-4" /> Movimientos</TabsTrigger>
-                <TabsTrigger value="recurring" className="gap-1.5"><Laptop className="h-4 w-4" /> Equipos Asignados</TabsTrigger>
-              </TabsList>
-              <div className="flex items-center gap-3">
-                {activeTab === "movements" ? (
-                  <>
-                    <Input
-                      placeholder="Buscar por tipo, serie, colaborador..."
-                      value={search}
-                      onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                      className="max-w-xs"
-                    />
-                    <Button onClick={() => { resetForm(); setDialogOpen(true); }}>
-                      <Plus className="h-4 w-4 mr-2" /> Nuevo Movimiento
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Input
-                      placeholder="Buscar por nombre, área, serial..."
-                      value={equipoSearch}
-                      onChange={(e) => { setEquipoSearch(e.target.value); setEquipoPage(1); }}
-                      className="max-w-xs"
-                    />
-                    <input
-                      ref={excelInputRef}
-                      type="file"
-                      accept=".xlsx,.xls"
-                      className="hidden"
-                      onChange={handleImportEquipos}
-                    />
-                    <Button size="sm" variant="outline" onClick={downloadEquiposTemplate}>
-                      <Download className="h-4 w-4 mr-2" /> Plantilla
-                    </Button>
-                    <Button size="sm" variant="outline" disabled={importing} onClick={() => excelInputRef.current?.click()}>
-                      <Upload className="h-4 w-4 mr-2" /> {importing ? "Importando..." : "Importar Excel"}
-                    </Button>
-                    <Button size="sm" onClick={() => {
-                      resetForm();
-                      setAssetType("");
-                      setIsEquipoMode(true);
-                      setDialogOpen(true);
-                    }}>
-                      <Plus className="h-4 w-4 mr-2" /> Asignar Equipo
-                    </Button>
-                  </>
-                )}
-              </div>
+          <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
+            <Input
+              placeholder="Buscar por tipo, serie, colaborador..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              className="max-w-xs"
+            />
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                ref={excelInputRef}
+                type="file"
+                accept=".xlsx,.xls"
+                className="hidden"
+                onChange={handleImportEquipos}
+              />
+              <Button size="sm" variant="outline" onClick={downloadEquiposTemplate}>
+                <Download className="h-4 w-4 mr-2" /> Plantilla
+              </Button>
+              <Button size="sm" variant="outline" disabled={importing} onClick={() => excelInputRef.current?.click()}>
+                <Upload className="h-4 w-4 mr-2" /> {importing ? "Importando..." : "Importar Excel"}
+              </Button>
+              <Button onClick={() => { resetForm(); setDialogOpen(true); }}>
+                <Plus className="h-4 w-4 mr-2" /> Nuevo Movimiento
+              </Button>
             </div>
+          </div>
 
-            <TabsContent value="movements" className="mt-4">
+          <div className="mt-4">
               {isLoading ? (
                 <p className="text-muted-foreground text-center py-8">Cargando...</p>
               ) : filtered.length === 0 ? (
@@ -581,147 +555,7 @@ export default function ControlActivosPage() {
                   )}
                 </>
               )}
-            </TabsContent>
-
-            <TabsContent value="recurring" className="mt-4">
-              {leadersWithLaptops.length === 0 ? (
-                <div className="text-center py-12 space-y-2">
-                  <Monitor className="h-12 w-12 mx-auto text-muted-foreground/40" />
-                  <p className="text-muted-foreground">No se encontraron equipos asignados</p>
-                  <p className="text-xs text-muted-foreground">Registra movimientos de activos tipo "Portátil" o "Computador Escritorio" para líderes de área o subárea</p>
-                </div>
-              ) : (
-                <>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                       <TableRow>
-                         <TableHead>Área / Subárea</TableHead>
-                         <TableHead>Responsable</TableHead>
-                         <TableHead>Cargo</TableHead>
-                         <TableHead>Equipo Asignado</TableHead>
-                         <TableHead>Nro. Serial</TableHead>
-                         <TableHead>Código Registro OSH</TableHead>
-                         <TableHead>Estado</TableHead>
-                         <TableHead>Acciones</TableHead>
-                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                    {(() => {
-                      const filteredEquipos = leadersWithLaptops.filter((l: any) =>
-                        [l.name, l.areaName, l.subareaName, l.position, l.lastMovement?.asset_serial || ""].join(" ").toLowerCase().includes(equipoSearch.toLowerCase())
-                      );
-                      const eqTotalPages = Math.max(1, Math.ceil(filteredEquipos.length / PAGE_SIZE));
-                      const eqCurrentPage = Math.min(equipoPage, eqTotalPages);
-                      const eqPaginated = filteredEquipos.slice((eqCurrentPage - 1) * PAGE_SIZE, eqCurrentPage * PAGE_SIZE);
-                      return (<>
-                        {eqPaginated.map((leader: any) => (
-                          <TableRow key={leader.userId}>
-                            <TableCell>
-                              {leader.areaName}{leader.subareaName ? ` / ${leader.subareaName}` : ""}
-                            </TableCell>
-                            <TableCell className="font-medium">{leader.name}</TableCell>
-                            <TableCell>{leader.position}</TableCell>
-                            <TableCell>
-                              {leader.hasLaptop ? (
-                                <div className="flex items-center gap-1.5">
-                                  <Laptop className="h-4 w-4 text-primary" />
-                                  <span>{leader.lastMovement?.asset_type}</span>
-                                </div>
-                              ) : (
-                                <span className="text-muted-foreground">Sin asignación</span>
-                              )}
-                            </TableCell>
-                            <TableCell>{leader.lastMovement?.asset_serial || "—"}</TableCell>
-                            <TableCell>
-                              {leader.lastMovement ? (
-                                <Badge variant="outline" className="text-xs font-mono">
-                                  {leader.lastMovement.reason || leader.lastMovement.id.substring(0, 8).toUpperCase()}
-                                </Badge>
-                              ) : "—"}
-                            </TableCell>
-                            <TableCell>
-                              {leader.lastMovement ? (
-                                <div className="flex items-center gap-2">
-                                  <Switch
-                                    checked={leader.lastMovement.status === "recibido"}
-                                    onCheckedChange={() => handleToggleStatus(leader.lastMovement)}
-                                  />
-                                  <span className={`text-xs font-semibold ${leader.lastMovement.status === "recibido" ? "text-emerald-600" : "text-destructive"}`}>
-                                    {leader.lastMovement.status === "recibido" ? "Ingreso" : "Salida"}
-                                  </span>
-                                </div>
-                              ) : (
-                                <span className="text-muted-foreground text-xs">—</span>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {leader.lastMovement ? (
-                                <div className="flex items-center gap-1">
-                                  <Button size="icon" variant="ghost" className="h-8 w-8" title="Ver detalle"
-                                    onClick={() => { setDetailRecord(leader.lastMovement); setDetailOpen(true); }}>
-                                    <Eye className="h-4 w-4" />
-                                  </Button>
-                                  <Button size="icon" variant="ghost" className="h-8 w-8" title="Editar"
-                                    onClick={() => {
-                                      setEditRecord(leader.lastMovement);
-                                      populateForm(leader.lastMovement);
-                                      setIsEquipoMode(true);
-                                      setDialogOpen(true);
-                                    }}>
-                                    <Pencil className="h-4 w-4" />
-                                  </Button>
-                                  <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" title="Eliminar"
-                                    onClick={() => setDeleteId(leader.lastMovement.id)}>
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              ) : (
-                                <Button size="sm" variant="outline" className="h-8" title="Asignar equipo"
-                                  onClick={() => {
-                                    resetForm();
-                                    setIsEquipoMode(true);
-                                    setCollaboratorId(leader.userId);
-                                    setDialogOpen(true);
-                                  }}>
-                                  <Plus className="h-3.5 w-3.5 mr-1" /> Asignar
-                                </Button>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </>);
-                    })()}
-                    </TableBody>
-                  </Table>
-                </div>
-                {(() => {
-                  const filteredEquipos = leadersWithLaptops.filter((l: any) =>
-                    [l.name, l.areaName, l.subareaName, l.position, l.lastMovement?.asset_serial || ""].join(" ").toLowerCase().includes(equipoSearch.toLowerCase())
-                  );
-                  const eqTotalPages = Math.max(1, Math.ceil(filteredEquipos.length / PAGE_SIZE));
-                  const eqCurrentPage = Math.min(equipoPage, eqTotalPages);
-                  return eqTotalPages > 1 ? (
-                    <div className="flex items-center justify-between pt-4">
-                      <p className="text-sm text-muted-foreground">
-                        Mostrando {(eqCurrentPage - 1) * PAGE_SIZE + 1}–{Math.min(eqCurrentPage * PAGE_SIZE, filteredEquipos.length)} de {filteredEquipos.length}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <Button size="sm" variant="outline" disabled={eqCurrentPage <= 1} onClick={() => setEquipoPage(eqCurrentPage - 1)}>
-                          <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        <span className="text-sm font-medium">{eqCurrentPage} / {eqTotalPages}</span>
-                        <Button size="sm" variant="outline" disabled={eqCurrentPage >= eqTotalPages} onClick={() => setEquipoPage(eqCurrentPage + 1)}>
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ) : null;
-                })()}
-                </>
-              )}
-            </TabsContent>
-          </Tabs>
+          </div>
         </CardHeader>
       </Card>
 
