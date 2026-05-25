@@ -961,6 +961,37 @@ export default function ControlActivosPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!importProgress} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle>Importando equipos asignados</DialogTitle>
+            <DialogDescription>
+              {importProgress && importProgress.total > 0
+                ? `Procesando ${importProgress.processed} de ${importProgress.total} registros…`
+                : "Leyendo archivo…"}
+            </DialogDescription>
+          </DialogHeader>
+          {importProgress && importProgress.total > 0 && (
+            <div className="space-y-2">
+              <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full bg-primary transition-all"
+                  style={{
+                    width: `${Math.min(100, Math.round((importProgress.processed / importProgress.total) * 100))}%`,
+                  }}
+                />
+              </div>
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>{importProgress.processed}/{importProgress.total} insertados</span>
+                {importProgress.errors > 0 && (
+                  <span className="text-destructive">{importProgress.errors} con errores</span>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
