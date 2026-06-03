@@ -83,9 +83,24 @@ export function useKPIMeasurements() {
   return useQuery({
     queryKey: ['kpi_measurements'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('kpi_measurements').select('*').order('period_date');
-      if (error) throw error;
-      return data as Tables<'kpi_measurements'>[];
+      // Paginate to bypass PostgREST's default 1000-row limit
+      const pageSize = 1000;
+      let from = 0;
+      const all: Tables<'kpi_measurements'>[] = [];
+      // Loop until we get fewer than pageSize rows
+      while (true) {
+        const { data, error } = await supabase
+          .from('kpi_measurements')
+          .select('*')
+          .order('period_date')
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        const batch = (data ?? []) as Tables<'kpi_measurements'>[];
+        all.push(...batch);
+        if (batch.length < pageSize) break;
+        from += pageSize;
+      }
+      return all;
     },
   });
 }
