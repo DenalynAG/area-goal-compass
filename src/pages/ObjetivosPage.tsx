@@ -67,6 +67,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   const [dashAreaId, setDashAreaId] = useState<string>('__all__');
   const [dashSubareaId, setDashSubareaId] = useState<string>('__all__');
   const [dashRoleFilter, setDashRoleFilter] = useState<string>('__all__');
+  const [dashMonth, setDashMonth] = useState<string>('__all__');
   const [expandedAreas, setExpandedAreas] = useState<Record<string, boolean>>({});
   const toggleArea = (id: string) => setExpandedAreas(prev => ({ ...prev, [id]: !prev[id] }));
 
@@ -457,6 +458,31 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   };
 
   const dashboardChartData = useMemo(() => {
+    // Month-aware progress: if a specific month is selected, restrict the
+    // accumulated window to Feb..selectedMonth. Otherwise use default window.
+    const monthNum = dashMonth === '__all__' ? null : parseInt(dashMonth, 10);
+    const winEnd = monthNum ?? avgWindowEndTop;
+    const winStart = 2;
+    const winLen = Math.max(0, winEnd - winStart + 1);
+    const inWin = (mo: number) => mo >= winStart && mo <= winEnd;
+    const currentYear = new Date().getFullYear();
+    const objProgress = (obj: Tables<'objectives'>) => {
+      const objKpis = kpis.filter(k => k.objective_id === obj.id);
+      if (objKpis.length === 0) return obj.progress_percent;
+      const values = objKpis.map(k => {
+        const ms = measurements.filter(m => {
+          if (m.kpi_id !== k.id) return false;
+          const d = new Date(m.period_date);
+          return d.getFullYear() === currentYear && inWin(d.getMonth() + 1);
+        });
+        if (ms.length === 0) return null;
+        const sumValue = ms.reduce((s, m) => s + Number(m.value), 0);
+        const accumulated = isFinancialKpi(k) ? sumValue : sumValue / (winLen || 1);
+        return k.target > 0 ? (accumulated / k.target) * 100 : 0;
+      }).filter((v): v is number => v !== null);
+      if (values.length === 0) return 0;
+      return Math.round(values.reduce((s, v) => s + v, 0) / values.length);
+    };
     // Build set of user IDs matching the selected role filter
     const roleUserIds = dashRoleFilter === '__all__'
       ? null
@@ -465,12 +491,11 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
       !roleUserIds || (o.owner_user_id ? roleUserIds.has(o.owner_user_id) : false);
     // Decide grouping
     if (dashAreaId === '__all__') {
-      // by area — usa el mismo cálculo que la barra de la tarjeta (getAreaProgress, capeado a 100)
       return areas.map(a => {
         const objs = getAreaObjectives(a.id).filter(matchesRole);
         if (!objs.length) return { name: a.name, Objetivos: 0 };
         const objAvg = Math.round(
-          objs.reduce((s, o) => s + Math.min(getObjProgress(o), 100), 0) / objs.length,
+          objs.reduce((s, o) => s + Math.min(objProgress(o), 100), 0) / objs.length,
         );
         return { name: a.name, Objetivos: objAvg };
       }).filter(d => d.Objetivos > 0);
@@ -482,7 +507,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
       const directObjs = objectives.filter(o => o.scope_type === 'area' && o.scope_id === dashAreaId).filter(matchesRole);
       if (directObjs.length) {
         const objAvg = Math.round(
-          directObjs.reduce((s, o) => s + Math.min(getObjProgress(o), 100), 0) / directObjs.length,
+          directObjs.reduce((s, o) => s + Math.min(objProgress(o), 100), 0) / directObjs.length,
         );
         result.push({ name: '(Área directa)', Objetivos: objAvg });
       }
@@ -490,7 +515,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
         const objs = objectives.filter(o => o.scope_type === 'subarea' && o.scope_id === s.id).filter(matchesRole);
         if (!objs.length) return;
         const objAvg = Math.round(
-          objs.reduce((sum, o) => sum + Math.min(getObjProgress(o), 100), 0) / objs.length,
+          objs.reduce((sum, o) => sum + Math.min(objProgress(o), 100), 0) / objs.length,
         );
         result.push({ name: s.name, Objetivos: objAvg });
       });
@@ -501,10 +526,10 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
     return objs.map(o => {
       return {
         name: o.title.length > 40 ? o.title.slice(0, 40) + '…' : o.title,
-        Objetivos: Math.min(getObjProgress(o), 100),
+        Objetivos: Math.min(objProgress(o), 100),
       };
     });
-  }, [dashAreaId, dashSubareaId, dashRoleFilter, userRoles, areas, subareas, objectives, kpis, measurements]);
+  }, [dashAreaId, dashSubareaId, dashRoleFilter, dashMonth, userRoles, areas, subareas, objectives, kpis, measurements, avgWindowEndTop]);
 
   const dashSubareaOptions = useMemo(() => {
     if (dashAreaId === '__all__') return [];
@@ -708,7 +733,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
         </button>
         {dashboardExpanded && (
           <div className="border-t px-5 py-5 space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">Área</label>
                 <SearchableSelect
@@ -740,6 +765,29 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                   value={dashRoleFilter}
                   onValueChange={setDashRoleFilter}
                   placeholder="Selecciona un rol"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Mes</label>
+                <SearchableSelect
+                  options={[
+                    { value: '__all__', label: 'Acumulado año' },
+                    { value: '01', label: 'Enero' },
+                    { value: '02', label: 'Febrero' },
+                    { value: '03', label: 'Marzo' },
+                    { value: '04', label: 'Abril' },
+                    { value: '05', label: 'Mayo' },
+                    { value: '06', label: 'Junio' },
+                    { value: '07', label: 'Julio' },
+                    { value: '08', label: 'Agosto' },
+                    { value: '09', label: 'Septiembre' },
+                    { value: '10', label: 'Octubre' },
+                    { value: '11', label: 'Noviembre' },
+                    { value: '12', label: 'Diciembre' },
+                  ]}
+                  value={dashMonth}
+                  onValueChange={setDashMonth}
+                  placeholder="Selecciona un mes"
                 />
               </div>
             </div>
