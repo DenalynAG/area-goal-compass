@@ -28,6 +28,30 @@ export function useProfiles() {
   return useQuery({
     queryKey: ['profiles'],
     queryFn: async () => {
+      // Public directory: returns only non-sensitive columns (name, email, phone,
+      // position, avatar, is_active, jefe_inmediato). Use useProfilesFull() in admin
+      // contexts that need sensitive PII.
+      const { data, error } = await (supabase as any)
+        .from('profiles_directory')
+        .select('*')
+        .order('name');
+      if (error) throw error;
+      return data as Tables<'profiles'>[];
+    },
+  });
+}
+
+/**
+ * Returns full profile rows including sensitive PII. RLS restricts visible rows to:
+ * - the requesting user's own profile
+ * - Super Admin / HR / Calidad Global (all)
+ * - Admin de Área (profiles in the same area)
+ * Use only on screens that genuinely need sensitive fields (e.g. RRHH/Colaboradores).
+ */
+export function useProfilesFull() {
+  return useQuery({
+    queryKey: ['profiles_full'],
+    queryFn: async () => {
       const { data, error } = await supabase.from('profiles').select('*').order('name');
       if (error) throw error;
       return data as Tables<'profiles'>[];
