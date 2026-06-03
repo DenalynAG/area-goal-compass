@@ -67,6 +67,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   const [dashAreaId, setDashAreaId] = useState<string>('__all__');
   const [dashSubareaId, setDashSubareaId] = useState<string>('__all__');
   const [dashRoleFilter, setDashRoleFilter] = useState<string>('__all__');
+  const [dashMonth, setDashMonth] = useState<string>('__all__');
   const [expandedAreas, setExpandedAreas] = useState<Record<string, boolean>>({});
   const toggleArea = (id: string) => setExpandedAreas(prev => ({ ...prev, [id]: !prev[id] }));
 
