@@ -170,6 +170,13 @@ export default function KPIFormDialog({
     setMeasurementMonth(initialMonth && initialMonth !== "total" ? initialMonth : defaultMonth());
   }, [kpi, open]);
 
+  // Helper: recalcula umbrales desde la Meta (±10%)
+  const recalcThresholdsFromTarget = (v: number) => {
+    setThresholdGreen(Number((v * 1.1).toFixed(2)));
+    setThresholdYellow(v);
+    setThresholdRed(Number((v * 0.9).toFixed(2)));
+  };
+
   // Load existing measurement value when month changes (for editing)
   useEffect(() => {
     if (!open || !kpi?.id || !measurementMonth) return;
@@ -187,7 +194,9 @@ export default function KPIFormDialog({
         .maybeSingle();
       setCurrentValue(data?.value ?? 0);
       // Per-month target: use stored monthly target, fallback to KPI default target
-      setTarget((data as any)?.target ?? kpi.target ?? 0);
+      const t = (data as any)?.target ?? kpi.target ?? 0;
+      setTarget(t);
+      recalcThresholdsFromTarget(Number(t) || 0);
     };
     loadMeasurement();
   }, [measurementMonth, kpi?.id, open]);
@@ -398,13 +407,8 @@ export default function KPIFormDialog({
                 onChange={(e) => {
                   const v = Number(e.target.value);
                   setTarget(v);
-                  // Auto-cálculo de umbrales basado en la Meta.
-                  // Indicadores con Unidad "#" usan lógica inversa (manual): no se recalculan.
-                  if (unit.trim() !== "#") {
-                    setThresholdGreen(Number((v * 1.1).toFixed(2)));
-                    setThresholdYellow(v);
-                    setThresholdRed(Number((v * 0.9).toFixed(2)));
-                  }
+                  // Auto-cálculo de umbrales basado en la Meta (±10%).
+                  recalcThresholdsFromTarget(v);
                 }}
                 disabled={restrictedToValue}
               />
