@@ -733,7 +733,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
         </button>
         {dashboardExpanded && (
           <div className="border-t px-5 py-5 space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">Área</label>
                 <SearchableSelect
@@ -765,6 +765,29 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                   value={dashRoleFilter}
                   onValueChange={setDashRoleFilter}
                   placeholder="Selecciona un rol"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Mes</label>
+                <SearchableSelect
+                  options={[
+                    { value: '__all__', label: 'Acumulado año' },
+                    { value: '01', label: 'Enero' },
+                    { value: '02', label: 'Febrero' },
+                    { value: '03', label: 'Marzo' },
+                    { value: '04', label: 'Abril' },
+                    { value: '05', label: 'Mayo' },
+                    { value: '06', label: 'Junio' },
+                    { value: '07', label: 'Julio' },
+                    { value: '08', label: 'Agosto' },
+                    { value: '09', label: 'Septiembre' },
+                    { value: '10', label: 'Octubre' },
+                    { value: '11', label: 'Noviembre' },
+                    { value: '12', label: 'Diciembre' },
+                  ]}
+                  value={dashMonth}
+                  onValueChange={setDashMonth}
+                  placeholder="Selecciona un mes"
                 />
               </div>
             </div>
