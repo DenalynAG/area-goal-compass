@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo, useEffect } from 'react';
-import { useProfiles, useMemberships, useUserRoles, useAreas, useSubareas, getAreaNameFromList, getSubareaNameFromList } from '@/hooks/useSupabaseData';
+import { useProfilesFull, useMemberships, useUserRoles, useAreas, useSubareas, getAreaNameFromList, getSubareaNameFromList } from '@/hooks/useSupabaseData';
 import { getRoleLabel } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,7 +33,7 @@ type BulkDeleteResult = {
 const getErrorMessage = (error: unknown) => error instanceof Error ? error.message : 'Error desconocido';
 
 export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageProps = {}) {
-  const { data: profiles = [], isLoading } = useProfiles();
+  const { data: profiles = [], isLoading } = useProfilesFull();
   const { data: memberships = [] } = useMemberships();
   const { data: userRoles = [] } = useUserRoles();
   const { data: areas = [] } = useAreas();
