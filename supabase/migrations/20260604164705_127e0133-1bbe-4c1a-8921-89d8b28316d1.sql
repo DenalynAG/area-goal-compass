@@ -1,0 +1,1 @@
+ALTER TABLE public.kpis ADD COLUMN IF NOT EXISTS inverse_thresholds boolean NOT NULL DEFAULT false;

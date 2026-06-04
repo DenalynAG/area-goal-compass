@@ -28,6 +28,7 @@ import * as XLSX from 'xlsx';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import { SearchableSelect } from '@/components/ui/searchable-select';
+import { Switch } from '@/components/ui/switch';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, LabelList } from 'recharts';
 import { LayoutDashboard } from 'lucide-react';
 
@@ -1304,6 +1305,31 @@ function ObjectiveCard({
     return isFinancialKpi(k) ? 'suma' : 'promedio';
   };
 
+  const updateInverseThresholds = async (kpiId: string, inverse: boolean) => {
+    const { error } = await supabase.from('kpis').update({ inverse_thresholds: inverse } as any).eq('id', kpiId);
+    if (error) {
+      toast.error('No se pudo actualizar el Tipo KPI');
+      return;
+    }
+    qcLocal.invalidateQueries({ queryKey: ['kpis'] });
+    await logActivity('update', 'kpi_inverse_thresholds', kpiId, { inverse });
+    toast.success(`Tipo KPI ${inverse ? 'activado (menor es mejor)' : 'desactivado (mayor es mejor)'}`);
+  };
+
+  // Compute traffic light from Meta using ±10% bands. Inverse = lower is better.
+  const computeMetaLight = (value: number, target: number, inverse: boolean): 'verde' | 'amarillo' | 'rojo' => {
+    if (!target || target <= 0) return 'rojo';
+    const ratio = value / target;
+    if (inverse) {
+      if (ratio <= 0.90) return 'verde';
+      if (ratio <= 1.10) return 'amarillo';
+      return 'rojo';
+    }
+    if (ratio >= 1.10) return 'verde';
+    if (ratio >= 0.90) return 'amarillo';
+    return 'rojo';
+  };
+
   // Inline-save the "Valor Real" for the currently selected month
   const saveKpiMonthValue = async (kpiId: string, raw: string) => {
     if (selectedMonth === 'total') return;
@@ -1548,6 +1574,7 @@ function ObjectiveCard({
                 <th className="text-left py-1">Valor Real</th>
                 <th className="text-center py-1">Prom. Acumulado</th>
                 <th className="text-center py-1">Cálculo</th>
+                <th className="text-center py-1">Tipo KPI</th>
                 <th className="text-left py-1">Semáforo</th>
                 <th className="text-right py-1"></th>
               </tr>
@@ -1638,10 +1665,23 @@ function ObjectiveCard({
                         <option value="suma">Suma total</option>
                       </select>
                     </td>
+                    <td className="py-2 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <Switch
+                          checked={Boolean((k as any).inverse_thresholds)}
+                          onCheckedChange={(v) => updateInverseThresholds(k.id, v)}
+                          disabled={!canEdit}
+                          aria-label="Tipo KPI (menor es mejor)"
+                        />
+                        <span className="text-[10px] text-muted-foreground">
+                          {(k as any).inverse_thresholds ? 'Menor mejor' : 'Mayor mejor'}
+                        </span>
+                      </div>
+                    </td>
                     <td className="py-2">
                       {monthValue === null
                         ? <span className="text-muted-foreground">—</span>
-                        : <TrafficLightBadge light={getTrafficLight(kpiForLight as any)} />
+                        : <TrafficLightBadge light={computeMetaLight(Number(displayValue) || 0, Number(lightTarget) || 0, Boolean((k as any).inverse_thresholds))} />
                       }
                     </td>
                     <td className="py-2 text-right">
@@ -1712,6 +1752,7 @@ function ObjectiveCard({
                     return `${avg}%`;
                   })()}
                 </td>
+                <td></td>
                 <td></td>
                 <td className="py-2">
                   {(() => {

@@ -984,6 +984,7 @@ export type Database = {
           definition: string | null
           frequency: Database["public"]["Enums"]["kpi_frequency"]
           id: string
+          inverse_thresholds: boolean
           name: string
           objective_id: string
           target: number
@@ -1001,6 +1002,7 @@ export type Database = {
           definition?: string | null
           frequency?: Database["public"]["Enums"]["kpi_frequency"]
           id?: string
+          inverse_thresholds?: boolean
           name: string
           objective_id: string
           target?: number
@@ -1018,6 +1020,7 @@ export type Database = {
           definition?: string | null
           frequency?: Database["public"]["Enums"]["kpi_frequency"]
           id?: string
+          inverse_thresholds?: boolean
           name?: string
           objective_id?: string
           target?: number
