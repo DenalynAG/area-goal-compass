@@ -1330,6 +1330,17 @@ function ObjectiveCard({
     return 'rojo';
   };
 
+  // Performance ratio (%) considering Tipo KPI (inverse means lower is better).
+  // For inverse KPIs: perf = target/value * 100 (so a value below target yields >100%).
+  const computePerfRatio = (value: number, target: number, inverse: boolean): number | null => {
+    if (!target || target <= 0) return null;
+    if (inverse) {
+      if (!value || value <= 0) return 200;
+      return (target / value) * 100;
+    }
+    return (value / target) * 100;
+  };
+
   // Inline-save the "Valor Real" for the currently selected month
   const saveKpiMonthValue = async (kpiId: string, raw: string) => {
     if (selectedMonth === 'total') return;
@@ -1440,8 +1451,8 @@ function ObjectiveCard({
       const monthValue = getKpiMonthValue(k.id);
       if (monthValue === null) return null;
       const tgt = Number(getKpiMonthTarget(k)) || 0;
-      if (tgt <= 0) return null;
-      const ratio = (Number(monthValue) / tgt) * 100;
+      const ratio = computePerfRatio(Number(monthValue), tgt, Boolean((k as any).inverse_thresholds));
+      if (ratio === null) return null;
       return Math.max(0, Math.min(ratio, 200));
     }).filter((v): v is number => v !== null);
 
@@ -1729,8 +1740,8 @@ function ObjectiveCard({
                       const monthValue = getKpiMonthValue(k.id);
                       if (monthValue === null) return null;
                       const tgt = Number(getKpiMonthTarget(k)) || 0;
-                      if (tgt <= 0) return null;
-                      const ratio = (Number(monthValue) / tgt) * 100;
+                      const ratio = computePerfRatio(Number(monthValue), tgt, Boolean((k as any).inverse_thresholds));
+                      if (ratio === null) return null;
                       return Math.max(0, Math.min(ratio, 200));
                     }).filter((v): v is number => v !== null);
                     const avg = values.length > 0 ? Math.round(values.reduce((s, v) => s + v, 0) / values.length) : 0;
@@ -1744,8 +1755,8 @@ function ObjectiveCard({
                       const acc = getKpiAccumulatedAverage(k.id);
                       if (acc === null) return null;
                       const tgt = Number(getKpiAccumulatedTarget(k)) || 0;
-                      if (tgt <= 0) return null;
-                      const ratio = (Number(acc) / tgt) * 100;
+                      const ratio = computePerfRatio(Number(acc), tgt, Boolean((k as any).inverse_thresholds));
+                      if (ratio === null) return null;
                       return Math.max(0, Math.min(ratio, 200));
                     }).filter((v): v is number => v !== null);
                     const avg = ratios.length > 0 ? Math.round(ratios.reduce((s, v) => s + v, 0) / ratios.length) : 0;
@@ -1760,8 +1771,8 @@ function ObjectiveCard({
                       const monthValue = getKpiMonthValue(k.id);
                       if (monthValue === null) return null;
                       const tgt = Number(getKpiMonthTarget(k)) || 0;
-                      if (tgt <= 0) return null;
-                      const ratio = (Number(monthValue) / tgt) * 100;
+                      const ratio = computePerfRatio(Number(monthValue), tgt, Boolean((k as any).inverse_thresholds));
+                      if (ratio === null) return null;
                       return Math.max(0, Math.min(ratio, 200));
                     }).filter((v): v is number => v !== null);
                     const avg = values.length > 0 ? Math.round(values.reduce((s, v) => s + v, 0) / values.length) : 0;
