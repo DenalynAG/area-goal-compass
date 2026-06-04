@@ -1539,7 +1539,11 @@ function ObjectiveCard({
             />
           </svg>
           <span className="text-lg font-bold -mt-11">{computedProgress}%</span>
-          <span className={`text-xs font-semibold ${progressLabelClass}`}>{progressLabel}</span>
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+            computedProgress >= 100 ? 'text-green-600 bg-green-50'
+            : computedProgress >= 80 ? 'text-yellow-600 bg-yellow-50'
+            : 'text-red-600 bg-red-50'
+          }`}>{progressLabel} ({computedProgress}%)</span>
         </div>
 
         {canEdit && (
