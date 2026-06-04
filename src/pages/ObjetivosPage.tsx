@@ -1587,7 +1587,6 @@ function ObjectiveCard({
                 <th className="text-center py-1">Peso %</th>
                 <th className="text-left py-1">Meta</th>
                 <th className="text-left py-1">Valor Real</th>
-                <th className="text-center py-1">Prom. Acumulado</th>
                 <th className="text-center py-1">Cálculo</th>
                 <th className="text-center py-1">Tipo KPI</th>
                 <th className="text-left py-1">Semáforo</th>
@@ -1607,7 +1606,6 @@ function ObjectiveCard({
                 const lightTarget = isTotalView && calcMethod === 'suma' ? accumulatedTarget : displayTarget;
                 const kpiForLight = { ...k, current_value: displayValue, target: lightTarget };
                 const weight = (k as any).weight_percent ?? 0;
-                const cumulativeAvg = getKpiAccumulatedAverage(k.id);
                 return (
                   <tr key={k.id} className="border-t border-border/50">
                     <td className="py-2 font-medium">{k.name}</td>
@@ -1662,12 +1660,6 @@ function ObjectiveCard({
                           );
                         })()
                       )}
-                    </td>
-                    <td className="py-2 text-center">
-                      {cumulativeAvg !== null
-                        ? <span className="font-semibold">{formatKpiValue(cumulativeAvg, k)}</span>
-                        : <span className="text-muted-foreground">—</span>
-                      }
                     </td>
                     <td className="py-2 text-center">
                       <select
