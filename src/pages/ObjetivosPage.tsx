@@ -1744,21 +1744,6 @@ function ObjectiveCard({
                     return `${avg}%`;
                   })()}
                 </td>
-                <td className="py-2 text-center font-bold text-sm">
-                  {(() => {
-                    // Overall cumulative percentage across all KPIs (uses accumulated target for SUM-method KPIs)
-                    const ratios = objKpis.map(k => {
-                      const acc = getKpiAccumulatedAverage(k.id);
-                      if (acc === null) return null;
-                      const tgt = Number(getKpiAccumulatedTarget(k)) || 0;
-                      const ratio = computePerfRatio(Number(acc), tgt, Boolean((k as any).inverse_thresholds));
-                      if (ratio === null) return null;
-                      return Math.max(0, Math.min(ratio, 200));
-                    }).filter((v): v is number => v !== null);
-                    const avg = ratios.length > 0 ? Math.round(ratios.reduce((s, v) => s + v, 0) / ratios.length) : 0;
-                    return `${avg}%`;
-                  })()}
-                </td>
                 <td></td>
                 <td className="py-2">
                   {(() => {
