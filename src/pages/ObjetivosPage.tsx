@@ -1675,9 +1675,6 @@ function ObjectiveCard({
                           disabled={!canEdit}
                           aria-label="Tipo KPI (menor es mejor)"
                         />
-                        <span className="text-[10px] text-muted-foreground">
-                          {(k as any).inverse_thresholds ? 'Menor mejor' : 'Mayor mejor'}
-                        </span>
                       </div>
                     </td>
                     <td className="py-2">
