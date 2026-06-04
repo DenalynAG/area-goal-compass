@@ -1760,7 +1760,6 @@ function ObjectiveCard({
                   })()}
                 </td>
                 <td></td>
-                <td></td>
                 <td className="py-2">
                   {(() => {
                     const values = objKpis.map(k => {
