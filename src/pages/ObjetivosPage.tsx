@@ -1538,8 +1538,7 @@ function ObjectiveCard({
               className="transition-all duration-500"
             />
           </svg>
-          <span className="text-lg font-bold -mt-11">{computedProgress}%</span>
-          <span className={`text-xs font-semibold ${progressLabelClass}`}>{progressLabel}</span>
+          <span className={`text-lg font-bold -mt-11 ${progressLabelClass}`}>{progressLabel}</span>
         </div>
 
         {canEdit && (
