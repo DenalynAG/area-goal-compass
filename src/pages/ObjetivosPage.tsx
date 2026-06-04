@@ -1539,7 +1539,11 @@ function ObjectiveCard({
             />
           </svg>
           <span className="text-lg font-bold -mt-11">{computedProgress}%</span>
-          <span className={`text-xs font-semibold ${progressLabelClass}`}>{progressLabel}</span>
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+            computedProgress >= 100 ? 'text-green-600 bg-green-50'
+            : computedProgress >= 80 ? 'text-yellow-600 bg-yellow-50'
+            : 'text-red-600 bg-red-50'
+          }`}>{progressLabel} ({computedProgress}%)</span>
         </div>
 
         {canEdit && (
@@ -1583,7 +1587,6 @@ function ObjectiveCard({
                 <th className="text-center py-1">Peso %</th>
                 <th className="text-left py-1">Meta</th>
                 <th className="text-left py-1">Valor Real</th>
-                <th className="text-center py-1">Prom. Acumulado</th>
                 <th className="text-center py-1">Cálculo</th>
                 <th className="text-center py-1">Tipo KPI</th>
                 <th className="text-left py-1">Semáforo</th>
@@ -1603,7 +1606,6 @@ function ObjectiveCard({
                 const lightTarget = isTotalView && calcMethod === 'suma' ? accumulatedTarget : displayTarget;
                 const kpiForLight = { ...k, current_value: displayValue, target: lightTarget };
                 const weight = (k as any).weight_percent ?? 0;
-                const cumulativeAvg = getKpiAccumulatedAverage(k.id);
                 return (
                   <tr key={k.id} className="border-t border-border/50">
                     <td className="py-2 font-medium">{k.name}</td>
@@ -1658,12 +1660,6 @@ function ObjectiveCard({
                           );
                         })()
                       )}
-                    </td>
-                    <td className="py-2 text-center">
-                      {cumulativeAvg !== null
-                        ? <span className="font-semibold">{formatKpiValue(cumulativeAvg, k)}</span>
-                        : <span className="text-muted-foreground">—</span>
-                      }
                     </td>
                     <td className="py-2 text-center">
                       <select
@@ -1748,22 +1744,6 @@ function ObjectiveCard({
                     return `${avg}%`;
                   })()}
                 </td>
-                <td className="py-2 text-center font-bold text-sm">
-                  {(() => {
-                    // Overall cumulative percentage across all KPIs (uses accumulated target for SUM-method KPIs)
-                    const ratios = objKpis.map(k => {
-                      const acc = getKpiAccumulatedAverage(k.id);
-                      if (acc === null) return null;
-                      const tgt = Number(getKpiAccumulatedTarget(k)) || 0;
-                      const ratio = computePerfRatio(Number(acc), tgt, Boolean((k as any).inverse_thresholds));
-                      if (ratio === null) return null;
-                      return Math.max(0, Math.min(ratio, 200));
-                    }).filter((v): v is number => v !== null);
-                    const avg = ratios.length > 0 ? Math.round(ratios.reduce((s, v) => s + v, 0) / ratios.length) : 0;
-                    return `${avg}%`;
-                  })()}
-                </td>
-                <td></td>
                 <td></td>
                 <td className="py-2">
                   {(() => {
