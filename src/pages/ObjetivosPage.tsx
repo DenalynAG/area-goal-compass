@@ -1305,6 +1305,31 @@ function ObjectiveCard({
     return isFinancialKpi(k) ? 'suma' : 'promedio';
   };
 
+  const updateInverseThresholds = async (kpiId: string, inverse: boolean) => {
+    const { error } = await supabase.from('kpis').update({ inverse_thresholds: inverse } as any).eq('id', kpiId);
+    if (error) {
+      toast.error('No se pudo actualizar el Tipo KPI');
+      return;
+    }
+    qcLocal.invalidateQueries({ queryKey: ['kpis'] });
+    await logActivity('update', 'kpi_inverse_thresholds', kpiId, { inverse });
+    toast.success(`Tipo KPI ${inverse ? 'activado (menor es mejor)' : 'desactivado (mayor es mejor)'}`);
+  };
+
+  // Compute traffic light from Meta using ±10% bands. Inverse = lower is better.
+  const computeMetaLight = (value: number, target: number, inverse: boolean): 'verde' | 'amarillo' | 'rojo' => {
+    if (!target || target <= 0) return 'rojo';
+    const ratio = value / target;
+    if (inverse) {
+      if (ratio <= 0.90) return 'verde';
+      if (ratio <= 1.10) return 'amarillo';
+      return 'rojo';
+    }
+    if (ratio >= 1.10) return 'verde';
+    if (ratio >= 0.90) return 'amarillo';
+    return 'rojo';
+  };
+
   // Inline-save the "Valor Real" for the currently selected month
   const saveKpiMonthValue = async (kpiId: string, raw: string) => {
     if (selectedMonth === 'total') return;
