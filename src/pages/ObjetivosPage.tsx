@@ -1408,24 +1408,26 @@ function ObjectiveCard({
   const computedProgress = useMemo(() => {
     if (objKpis.length === 0) return obj.progress_percent;
 
+    // Match the "Promedio General" (Valor Real) shown in the footer for the selected month
+    // so the circle reflects the same semáforo del mes seleccionado.
     const values = objKpis.map(k => {
-      const accumulatedAverage = getKpiAccumulatedAverage(k.id);
-      if (accumulatedAverage === null) return null;
-      const tgt = Number(getKpiAccumulatedTarget(k)) || 0;
-      // Skip KPIs without a usable target (avoids dividing by 0 / bogus targets)
+      const monthValue = getKpiMonthValue(k.id);
+      if (monthValue === null) return null;
+      const tgt = Number(getKpiMonthTarget(k)) || 0;
       if (tgt <= 0) return null;
-      const ratio = (Number(accumulatedAverage) / tgt) * 100;
-      // Clamp to avoid one mis-captured target (e.g. 9 instead of 9.000.000) blowing up the average
+      const ratio = (Number(monthValue) / tgt) * 100;
       return Math.max(0, Math.min(ratio, 200));
     }).filter((v): v is number => v !== null);
 
     if (values.length === 0) return 0;
     return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
-  }, [objKpis, obj.progress_percent, relevantMeasurements, currentYear, elapsedMonths]);
+  }, [objKpis, obj.progress_percent, relevantMeasurements, selectedMonth]);
 
   const circumference = 2 * Math.PI * 28;
   const strokeDashoffset = circumference - (Math.min(computedProgress, 100) / 100) * circumference;
-  const progressColor = computedProgress >= 70 ? 'hsl(var(--success))' : computedProgress >= 40 ? 'hsl(var(--warning))' : 'hsl(var(--destructive))';
+  const progressColor = computedProgress >= 100 ? 'hsl(var(--success))' : computedProgress >= 80 ? 'hsl(var(--warning))' : 'hsl(var(--destructive))';
+  const progressLabel = computedProgress >= 100 ? 'Alto' : computedProgress >= 80 ? 'Medio' : 'Bajo';
+  const progressLabelClass = computedProgress >= 100 ? 'text-green-600' : computedProgress >= 80 ? 'text-yellow-600' : 'text-red-600';
 
   return (
     <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
