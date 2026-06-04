@@ -1665,10 +1665,23 @@ function ObjectiveCard({
                         <option value="suma">Suma total</option>
                       </select>
                     </td>
+                    <td className="py-2 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <Switch
+                          checked={Boolean((k as any).inverse_thresholds)}
+                          onCheckedChange={(v) => updateInverseThresholds(k.id, v)}
+                          disabled={!canEdit}
+                          aria-label="Tipo KPI (menor es mejor)"
+                        />
+                        <span className="text-[10px] text-muted-foreground">
+                          {(k as any).inverse_thresholds ? 'Menor mejor' : 'Mayor mejor'}
+                        </span>
+                      </div>
+                    </td>
                     <td className="py-2">
                       {monthValue === null
                         ? <span className="text-muted-foreground">—</span>
-                        : <TrafficLightBadge light={getTrafficLight(kpiForLight as any)} />
+                        : <TrafficLightBadge light={computeMetaLight(Number(displayValue) || 0, Number(lightTarget) || 0, Boolean((k as any).inverse_thresholds))} />
                       }
                     </td>
                     <td className="py-2 text-right">
