@@ -1583,7 +1583,6 @@ function ObjectiveCard({
                 <th className="text-center py-1">Peso %</th>
                 <th className="text-left py-1">Meta</th>
                 <th className="text-left py-1">Valor Real</th>
-                <th className="text-center py-1">Prom. Acumulado</th>
                 <th className="text-center py-1">Cálculo</th>
                 <th className="text-center py-1">Tipo KPI</th>
                 <th className="text-left py-1">Semáforo</th>
@@ -1603,7 +1602,6 @@ function ObjectiveCard({
                 const lightTarget = isTotalView && calcMethod === 'suma' ? accumulatedTarget : displayTarget;
                 const kpiForLight = { ...k, current_value: displayValue, target: lightTarget };
                 const weight = (k as any).weight_percent ?? 0;
-                const cumulativeAvg = getKpiAccumulatedAverage(k.id);
                 return (
                   <tr key={k.id} className="border-t border-border/50">
                     <td className="py-2 font-medium">{k.name}</td>
@@ -1658,12 +1656,6 @@ function ObjectiveCard({
                           );
                         })()
                       )}
-                    </td>
-                    <td className="py-2 text-center">
-                      {cumulativeAvg !== null
-                        ? <span className="font-semibold">{formatKpiValue(cumulativeAvg, k)}</span>
-                        : <span className="text-muted-foreground">—</span>
-                      }
                     </td>
                     <td className="py-2 text-center">
                       <select
@@ -1745,21 +1737,6 @@ function ObjectiveCard({
                       return Math.max(0, Math.min(ratio, 200));
                     }).filter((v): v is number => v !== null);
                     const avg = values.length > 0 ? Math.round(values.reduce((s, v) => s + v, 0) / values.length) : 0;
-                    return `${avg}%`;
-                  })()}
-                </td>
-                <td className="py-2 text-center font-bold text-sm">
-                  {(() => {
-                    // Overall cumulative percentage across all KPIs (uses accumulated target for SUM-method KPIs)
-                    const ratios = objKpis.map(k => {
-                      const acc = getKpiAccumulatedAverage(k.id);
-                      if (acc === null) return null;
-                      const tgt = Number(getKpiAccumulatedTarget(k)) || 0;
-                      const ratio = computePerfRatio(Number(acc), tgt, Boolean((k as any).inverse_thresholds));
-                      if (ratio === null) return null;
-                      return Math.max(0, Math.min(ratio, 200));
-                    }).filter((v): v is number => v !== null);
-                    const avg = ratios.length > 0 ? Math.round(ratios.reduce((s, v) => s + v, 0) / ratios.length) : 0;
                     return `${avg}%`;
                   })()}
                 </td>
