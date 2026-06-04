@@ -29,7 +29,7 @@ import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Switch } from '@/components/ui/switch';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, LabelList } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, LabelList, Cell } from 'recharts';
 import { LayoutDashboard } from 'lucide-react';
 
 interface ObjetivosPageProps {
@@ -805,7 +805,12 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                     <YAxis type="category" dataKey="name" width={180} stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 12 }} />
                     <Tooltip formatter={(v: any) => `${v}%`} contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }} />
                     <Legend />
-                    <Bar dataKey="Objetivos" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]}>
+                    <Bar dataKey="Objetivos" radius={[0, 4, 4, 0]}>
+                      {dashboardChartData.map((entry: any, index: number) => {
+                        const v = Number(entry.Objetivos) || 0;
+                        const color = v > 95 ? '#16a34a' : v > 75 ? '#eab308' : '#dc2626';
+                        return <Cell key={`cell-${index}`} fill={color} />;
+                      })}
                       <LabelList dataKey="Objetivos" position="right" formatter={(v: any) => `${v}%`} style={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
                     </Bar>
                   </BarChart>
