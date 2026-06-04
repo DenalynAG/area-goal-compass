@@ -1574,6 +1574,7 @@ function ObjectiveCard({
                 <th className="text-left py-1">Valor Real</th>
                 <th className="text-center py-1">Prom. Acumulado</th>
                 <th className="text-center py-1">Cálculo</th>
+                <th className="text-center py-1">Tipo KPI</th>
                 <th className="text-left py-1">Semáforo</th>
                 <th className="text-right py-1"></th>
               </tr>
