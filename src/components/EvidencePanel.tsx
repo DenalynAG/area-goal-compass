@@ -91,6 +91,7 @@ export default function EvidencePanel({ entityType, entityId, entityName, open, 
       }
       toast.success('Evidencia(s) cargada(s)');
       qc.invalidateQueries({ queryKey: ['evidences'] });
+      qc.invalidateQueries({ queryKey: ['evidence-counts'] });
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -111,6 +112,7 @@ export default function EvidencePanel({ entityType, entityId, entityName, open, 
     setReviewingId(null);
     setReviewNotes('');
     qc.invalidateQueries({ queryKey: ['evidences'] });
+    qc.invalidateQueries({ queryKey: ['evidence-counts'] });
   };
 
   const handleDelete = async (ev: Evidence) => {
@@ -119,6 +121,7 @@ export default function EvidencePanel({ entityType, entityId, entityName, open, 
     if (error) { toast.error(error.message); return; }
     toast.success('Evidencia eliminada');
     qc.invalidateQueries({ queryKey: ['evidences'] });
+    qc.invalidateQueries({ queryKey: ['evidence-counts'] });
   };
 
   const handleDownload = async (ev: Evidence) => {
