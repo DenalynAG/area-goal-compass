@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
     // Load finding + plan
     const { data: finding, error: fErr } = await admin
       .from('audit_findings')
-      .select('id, description, severity, audit_plan_id, due_date')
+      .select('id, description, severity, audit_plan_id, due_date, responsible_user_id')
       .eq('id', finding_id)
       .single()
     if (fErr || !finding) {
@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
 
     const { data: plan } = await admin
       .from('audit_plans')
-      .select('id, title, area_id, subarea_id')
+      .select('id, title, area_id, subarea_id, responsible_user_id, auditor_user_id')
       .eq('id', finding.audit_plan_id)
       .single()
 
@@ -73,6 +73,11 @@ Deno.serve(async (req) => {
       if (sub?.leader_user_id) recipients.add(sub.leader_user_id)
       subareaName = sub?.name ?? ''
     }
+
+    // Responsables del plan y del hallazgo (fallback cuando no hay líder asignado)
+    if (plan.responsible_user_id) recipients.add(plan.responsible_user_id)
+    if (plan.auditor_user_id) recipients.add(plan.auditor_user_id)
+    if (finding.responsible_user_id) recipients.add(finding.responsible_user_id)
 
     // Exclude caller
     if (callerId) recipients.delete(callerId)
