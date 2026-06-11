@@ -333,6 +333,9 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
       if (error) { toast.error(error.message); return; }
       findingId = data.id;
       await logActivity('create', 'audit_finding', findingId, { severity: payload.severity, type: payload.finding_type });
+      // Notificar al líder de área y de subárea (in-app + correo)
+      supabase.functions.invoke('notify-new-finding', { body: { finding_id: findingId } })
+        .catch((e) => console.warn('notify-new-finding failed', e));
     }
     if (findingId && findingFiles.length > 0) await uploadFindingFiles(findingId);
     toast.success(editingFinding ? "Hallazgo actualizado" : "Hallazgo registrado");
