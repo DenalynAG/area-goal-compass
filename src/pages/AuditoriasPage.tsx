@@ -181,6 +181,15 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
     return areas.find(a => a.name === areaFilterName)?.id ?? null;
   }, [areaFilterName, areas]);
 
+  // Show Muestreos / Inspección BPM tabs only for Alimentos y Bebidas, Gestión Humana, or super admin
+  const showFoodQualityTabs = useMemo(() => {
+    if (isSuperAdmin) return true;
+    const allowed = ['Alimentos y Bebidas', 'Gestión Humana'];
+    if (areaFilterName && allowed.includes(areaFilterName)) return true;
+    const userAreaName = areas.find(a => a.id === (profile as any)?.area_id)?.name;
+    return !!userAreaName && allowed.includes(userAreaName);
+  }, [isSuperAdmin, areaFilterName, areas, profile]);
+
   const [activeTab, setActiveTab] = useState("planes");
   const [resumenYear, setResumenYear] = useState(new Date().getFullYear());
   const [searchTerm, setSearchTerm] = useState("");
@@ -436,18 +445,22 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
           >
             Planes de Auditoría
           </TabsTrigger>
-          <TabsTrigger
-            value="muestreos"
-            className="border border-amber-300 bg-amber-50 text-amber-800 data-[state=active]:bg-amber-500 data-[state=active]:text-white data-[state=active]:border-amber-500"
-          >
-            Muestreos
-          </TabsTrigger>
-          <TabsTrigger
-            value="bpm"
-            className="border border-emerald-300 bg-emerald-50 text-emerald-800 data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:border-emerald-600"
-          >
-            Inspección BPM
-          </TabsTrigger>
+          {showFoodQualityTabs && (
+            <>
+              <TabsTrigger
+                value="muestreos"
+                className="border border-amber-300 bg-amber-50 text-amber-800 data-[state=active]:bg-amber-500 data-[state=active]:text-white data-[state=active]:border-amber-500"
+              >
+                Muestreos
+              </TabsTrigger>
+              <TabsTrigger
+                value="bpm"
+                className="border border-emerald-300 bg-emerald-50 text-emerald-800 data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:border-emerald-600"
+              >
+                Inspección BPM
+              </TabsTrigger>
+            </>
+          )}
           <TabsTrigger
             value="resumen"
             className="border border-violet-300 bg-violet-50 text-violet-800 data-[state=active]:bg-violet-600 data-[state=active]:text-white data-[state=active]:border-violet-600"
