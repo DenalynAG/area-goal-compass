@@ -79,8 +79,9 @@ Deno.serve(async (req) => {
     if (plan.auditor_user_id) recipients.add(plan.auditor_user_id)
     if (finding.responsible_user_id) recipients.add(finding.responsible_user_id)
 
-    // Exclude caller
-    if (callerId) recipients.delete(callerId)
+    // Excluir al creador solo si NO es el responsable directo del hallazgo.
+    // Regla de negocio: el responsable del hallazgo siempre debe recibir correo y alerta.
+    if (callerId && callerId !== finding.responsible_user_id) recipients.delete(callerId)
 
     if (recipients.size === 0) {
       return new Response(JSON.stringify({ ok: true, notified: 0 }), {
@@ -113,7 +114,7 @@ Deno.serve(async (req) => {
     for (const p of profiles ?? []) {
       if (!p.email) continue
       try {
-        await admin.functions.invoke('send-transactional-email', {
+        const { error: emailError } = await admin.functions.invoke('send-transactional-email', {
           body: {
             template: 'internal_notification',
             to: p.email,
@@ -126,6 +127,7 @@ Deno.serve(async (req) => {
             },
           },
         })
+        if (emailError) throw emailError
         emailsSent++
       } catch (e) {
         console.error('email send failed', p.email, e)
