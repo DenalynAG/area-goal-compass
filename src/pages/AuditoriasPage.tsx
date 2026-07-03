@@ -698,7 +698,7 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
                               const findingComments = comments.filter((c) => c.finding_id === finding.id);
 
                               return (
-                                <div key={finding.id} className="rounded-lg border bg-muted/30 p-3 space-y-3">
+                                <div key={finding.id} id={`finding-${finding.id}`} className="rounded-lg border bg-muted/30 p-3 space-y-3">
                                   <div className="flex items-start justify-between gap-2">
                                     <div className="flex-1">
                                       <div className="flex items-center gap-2 flex-wrap mb-1">
