@@ -1142,6 +1142,20 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* ─── Delete Finding Confirm ─── */}
+      <AlertDialog open={!!deleteFindingId} onOpenChange={() => setDeleteFindingId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar hallazgo?</AlertDialogTitle>
+            <AlertDialogDescription>Se eliminarán también los comentarios y evidencias asociadas. Esta acción no se puede deshacer.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={deleteFinding} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Eliminar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* ─── Evidence Panel for Findings ─── */}
       <EvidencePanel
         entityType="audit_finding"
