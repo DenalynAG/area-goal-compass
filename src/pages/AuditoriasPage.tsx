@@ -370,9 +370,14 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
       if (error) { toast.error(error.message); return; }
       findingId = data.id;
       await logActivity('create', 'audit_finding', findingId, { severity: payload.severity, type: payload.finding_type });
-      // Notificar al líder de área y de subárea (in-app + correo)
-      supabase.functions.invoke('notify-new-finding', { body: { finding_id: findingId } })
-        .catch((e) => console.warn('notify-new-finding failed', e));
+      // Notificar al líder de área/subárea y al responsable del hallazgo (in-app + correo)
+      const { error: notifyError } = await supabase.functions.invoke('notify-new-finding', {
+        body: { finding_id: findingId },
+      });
+      if (notifyError) {
+        console.error('notify-new-finding failed', notifyError);
+        toast.warning('Hallazgo registrado, pero no se pudo enviar la notificación por correo');
+      }
     }
     if (findingId && findingFiles.length > 0) await uploadFindingFiles(findingId);
     toast.success(editingFinding ? "Hallazgo actualizado" : "Hallazgo registrado");
