@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
     const areaLabel = [area?.name, subareaName].filter(Boolean).join(' / ')
     const title = `Nuevo hallazgo registrado (${finding.severity})`
     const body = `Se registró un nuevo hallazgo en ${areaLabel || 'tu área'} dentro de la auditoría "${plan.title}": ${finding.description}`
-    const actionUrl = `${APP_URL}/calidad/auditorias`
+    const actionUrl = `${APP_URL}/calidad/auditorias?finding=${finding.id}`
 
     // In-app notifications
     const notifRows = userIds.map((uid) => ({
@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
               title,
               message: `Hola ${p.name ?? ''},\n\n${body}${finding.due_date ? `\n\nFecha compromiso: ${finding.due_date}` : ''}`,
               actionUrl,
-              actionLabel: 'Ver en EasyConnect OSH',
+              actionLabel: 'Ver hallazgo en la plataforma',
             },
           },
         })
