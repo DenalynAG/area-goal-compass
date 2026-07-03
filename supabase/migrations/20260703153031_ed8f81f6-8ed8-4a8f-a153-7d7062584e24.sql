@@ -1,0 +1,2 @@
+ALTER TABLE public.evidences DROP CONSTRAINT IF EXISTS evidences_entity_type_check;
+ALTER TABLE public.evidences ADD CONSTRAINT evidences_entity_type_check CHECK (entity_type = ANY (ARRAY['objective'::text, 'kpi'::text, 'audit_finding'::text, 'leader_pass'::text, 'sampling'::text]));
