@@ -216,6 +216,7 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
   const [planDialogOpen, setPlanDialogOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<AuditPlan | null>(null);
   const [deletePlanId, setDeletePlanId] = useState<string | null>(null);
+  const [deleteFindingId, setDeleteFindingId] = useState<string | null>(null);
 
   // Finding dialog
   const [findingDialogOpen, setFindingDialogOpen] = useState(false);
@@ -270,6 +271,25 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
     toast.success("Plan eliminado");
     qc.invalidateQueries({ queryKey: ["audit_plans"] });
     setDeletePlanId(null);
+  };
+
+  const deleteFinding = async () => {
+    if (!deleteFindingId) return;
+    // Remove associated evidences (storage + rows) and comments
+    const { data: evs } = await supabase.from('evidences').select('file_path').eq('entity_type', 'audit_finding').eq('entity_id', deleteFindingId);
+    if (evs && evs.length > 0) {
+      const paths = evs.map((e: any) => e.file_path).filter(Boolean);
+      if (paths.length > 0) await supabase.storage.from('evidencias').remove(paths);
+      await supabase.from('evidences').delete().eq('entity_type', 'audit_finding').eq('entity_id', deleteFindingId);
+    }
+    await supabase.from('audit_comments').delete().eq('finding_id', deleteFindingId);
+    const { error } = await supabase.from('audit_findings').delete().eq('id', deleteFindingId);
+    if (error) { toast.error(error.message); return; }
+    await logActivity('delete', 'audit_finding', deleteFindingId);
+    toast.success('Hallazgo eliminado');
+    qc.invalidateQueries({ queryKey: ['audit_findings'] });
+    qc.invalidateQueries({ queryKey: ['evidence-counts'] });
+    setDeleteFindingId(null);
   };
 
   // ─── Finding CRUD ───
