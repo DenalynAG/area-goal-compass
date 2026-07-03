@@ -113,6 +113,7 @@ Deno.serve(async (req) => {
     let emailsSent = 0
     for (const p of profiles ?? []) {
       if (!p.email) continue
+      if (!p.email.toLowerCase().endsWith('@oshhotels.com')) continue
       try {
         const { error: emailError } = await admin.functions.invoke('send-transactional-email', {
           body: {
