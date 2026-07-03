@@ -723,6 +723,11 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
                                           <Pencil className="w-3 h-3" />
                                         </Button>
                                       )}
+                                      {canManage && (
+                                        <Button variant="ghost" size="icon" className="w-7 h-7 text-destructive" title="Eliminar hallazgo" onClick={() => setDeleteFindingId(finding.id)}>
+                                          <Trash2 className="w-3 h-3" />
+                                        </Button>
+                                      )}
                                     </div>
                                   </div>
                                   {/* Comments */}
