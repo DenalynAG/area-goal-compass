@@ -170,6 +170,14 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
   const { data: areas = [] } = useAreas();
   const { data: subareas = [] } = useSubareas();
   const { data: profiles = [] } = useProfiles();
+  const { data: findingEvidenceRows = [] } = useEvidenceCountsByEntity('audit_finding');
+  const findingEvidenceCounts = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const row of findingEvidenceRows) {
+      map.set(row.entity_id, (map.get(row.entity_id) ?? 0) + 1);
+    }
+    return map;
+  }, [findingEvidenceRows]);
 
   const isRRHH = !areaFilterName || areaFilterName === 'Recursos Humanos';
   const hasCalidadGlobal = (profile as any)?.calidad_global_access === true;
