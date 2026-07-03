@@ -679,9 +679,25 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
                                       </div>
                                     </div>
                                     <div className="flex items-center gap-1 shrink-0">
-                                      <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => { setEvidenceFindingId(finding.id); setEvidenceFindingName(finding.description.substring(0, 50)); }}>
-                                        <Paperclip className="w-3 h-3" />
-                                      </Button>
+                                      {(() => {
+                                        const count = findingEvidenceCounts.get(finding.id) ?? 0;
+                                        return (
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="w-7 h-7 relative"
+                                            title={count > 0 ? `${count} evidencia${count === 1 ? '' : 's'} adjunta${count === 1 ? '' : 's'}` : 'Adjuntar evidencia'}
+                                            onClick={() => { setEvidenceFindingId(finding.id); setEvidenceFindingName(finding.description.substring(0, 50)); }}
+                                          >
+                                            <Paperclip className={cn("w-3 h-3", count > 0 && "text-primary")} />
+                                            {count > 0 && (
+                                              <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold flex items-center justify-center leading-none">
+                                                {count}
+                                              </span>
+                                            )}
+                                          </Button>
+                                        );
+                                      })()}
                                       {canManage && (
                                         <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => openFindingDialog(plan.id, finding)}>
                                           <Pencil className="w-3 h-3" />
