@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { logActivity } from "@/lib/activityLog";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAreas, useSubareas, useProfiles, getProfileName, getAreaNameFromList, getSubareaNameFromList, useEvidences } from "@/hooks/useSupabaseData";
+import { useAreas, useSubareas, useProfiles, getProfileName, getAreaNameFromList, getSubareaNameFromList, useEvidences, useEvidenceCountsByEntity } from "@/hooks/useSupabaseData";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
