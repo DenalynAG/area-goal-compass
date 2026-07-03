@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { logActivity } from "@/lib/activityLog";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAreas, useSubareas, useProfiles, getProfileName, getAreaNameFromList, getSubareaNameFromList, useEvidences } from "@/hooks/useSupabaseData";
+import { useAreas, useSubareas, useProfiles, getProfileName, getAreaNameFromList, getSubareaNameFromList, useEvidences, useEvidenceCountsByEntity } from "@/hooks/useSupabaseData";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -170,6 +170,14 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
   const { data: areas = [] } = useAreas();
   const { data: subareas = [] } = useSubareas();
   const { data: profiles = [] } = useProfiles();
+  const { data: findingEvidenceRows = [] } = useEvidenceCountsByEntity('audit_finding');
+  const findingEvidenceCounts = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const row of findingEvidenceRows) {
+      map.set(row.entity_id, (map.get(row.entity_id) ?? 0) + 1);
+    }
+    return map;
+  }, [findingEvidenceRows]);
 
   const isRRHH = !areaFilterName || areaFilterName === 'Recursos Humanos';
   const hasCalidadGlobal = (profile as any)?.calidad_global_access === true;
@@ -671,9 +679,25 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
                                       </div>
                                     </div>
                                     <div className="flex items-center gap-1 shrink-0">
-                                      <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => { setEvidenceFindingId(finding.id); setEvidenceFindingName(finding.description.substring(0, 50)); }}>
-                                        <Paperclip className="w-3 h-3" />
-                                      </Button>
+                                      {(() => {
+                                        const count = findingEvidenceCounts.get(finding.id) ?? 0;
+                                        return (
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="w-7 h-7 relative"
+                                            title={count > 0 ? `${count} evidencia${count === 1 ? '' : 's'} adjunta${count === 1 ? '' : 's'}` : 'Adjuntar evidencia'}
+                                            onClick={() => { setEvidenceFindingId(finding.id); setEvidenceFindingName(finding.description.substring(0, 50)); }}
+                                          >
+                                            <Paperclip className={cn("w-3 h-3", count > 0 && "text-primary")} />
+                                            {count > 0 && (
+                                              <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold flex items-center justify-center leading-none">
+                                                {count}
+                                              </span>
+                                            )}
+                                          </Button>
+                                        );
+                                      })()}
                                       {canManage && (
                                         <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => openFindingDialog(plan.id, finding)}>
                                           <Pencil className="w-3 h-3" />
