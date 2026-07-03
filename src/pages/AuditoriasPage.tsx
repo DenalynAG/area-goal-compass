@@ -226,6 +226,21 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
   // Expanded plan for findings view
   const [expandedPlanId, setExpandedPlanId] = useState<string | null>(null);
 
+  // Auto-expand plan when arriving from email link (?finding=<id>)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const findingId = params.get('finding');
+    if (!findingId || findings.length === 0) return;
+    const f = findings.find((x) => x.id === findingId);
+    if (f) {
+      setExpandedPlanId(f.audit_plan_id);
+      setTimeout(() => {
+        const el = document.getElementById(`finding-${findingId}`);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
+    }
+  }, [findings]);
+
   // ─── Plan CRUD ───
   const [planForm, setPlanForm] = useState({ audit_type: "anual" as "anual" | "diaria", title: "", description: "", area_id: "", subarea_id: "", responsible_user_id: "", auditor_user_id: "", planned_date: "", status: "pendiente" as "pendiente" | "en_proceso" | "cumple" | "no_cumple" | "pendiente_cierre" });
 
