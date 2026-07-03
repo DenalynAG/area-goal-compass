@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
               title,
               message: `Hola ${p.name ?? ''},\n\n${body}${finding.due_date ? `\n\nFecha compromiso: ${finding.due_date}` : ''}`,
               actionUrl,
-              actionLabel: 'Ver en EasyConnect OSH',
+              actionLabel: 'Ver hallazgo en la plataforma',
             },
           },
         })
