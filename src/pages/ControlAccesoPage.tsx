@@ -254,6 +254,7 @@ export default function ControlAccesoPage({ areaFilterName }: ControlAccesoPageP
 
   const filtered = records
     .filter((r: any) => !scopedAreaId || r.area_id === scopedAreaId)
+    .filter((r: any) => !scopedSubareaId || r.subarea_id === scopedSubareaId)
     .filter((r: any) =>
       [r.visitor_name, r.company_name, r.document_id]
         .join(" ").toLowerCase().includes(search.toLowerCase())
