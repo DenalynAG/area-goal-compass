@@ -499,6 +499,7 @@ export default function ControlAccesoPage({ areaFilterName }: ControlAccesoPageP
                   value={areaId}
                   onValueChange={(v) => { setAreaId(v); setSubareaId(""); }}
                   placeholder="Seleccionar área"
+                  disabled={lockArea}
                   className="w-full"
                 />
               </div>
@@ -509,7 +510,7 @@ export default function ControlAccesoPage({ areaFilterName }: ControlAccesoPageP
                   value={subareaId}
                   onValueChange={setSubareaId}
                   placeholder="Seleccionar subárea"
-                  disabled={!areaId}
+                  disabled={!areaId || lockSubarea}
                   className="w-full"
                 />
               </div>
