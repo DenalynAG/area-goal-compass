@@ -734,7 +734,7 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
                                             variant="ghost"
                                             size="icon"
                                             className="w-7 h-7 relative"
-                                            title={count > 0 ? `${count} evidencia${count === 1 ? '' : 's'} adjunta${count === 1 ? '' : 's'}` : 'Adjuntar evidencia'}
+                                            title={count > 0 ? `${count} soporte${count === 1 ? '' : 's'} adjunto${count === 1 ? '' : 's'}` : 'Adjuntar soporte del hallazgo'}
                                             onClick={() => { setEvidenceFindingId(finding.id); setEvidenceFindingName(finding.description.substring(0, 50)); }}
                                           >
                                             <Paperclip className={cn("w-3 h-3", count > 0 && "text-primary")} />
@@ -778,7 +778,7 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
                                   {commentFindingId === finding.id ? (
                                     <div className="flex gap-2">
                                       <Input
-                                        placeholder="Escribe tu justificación o avance…"
+                                        placeholder="Escribe tu respuesta o avance…"
                                         value={commentText}
                                         onChange={(e) => setCommentText(e.target.value)}
                                         className="text-xs h-8"
@@ -793,7 +793,7 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
                                       className="flex items-center gap-1 text-xs text-primary hover:underline"
                                       onClick={() => { setCommentFindingId(finding.id); setCommentText(""); }}
                                     >
-                                      <MessageSquare className="w-3 h-3" /> Comentar
+                                      <MessageSquare className="w-3 h-3" /> Responder
                                     </button>
                                   )}
                                 </div>
