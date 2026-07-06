@@ -79,7 +79,7 @@ const text = {
   margin: '0 0 20px',
 }
 const button = {
-  backgroundColor: 'hsl(116, 21%, 45%)',
+  backgroundColor: '#1f7a3a',
   borderRadius: '6px',
   color: '#ffffff',
   fontSize: '14px',
@@ -89,6 +89,9 @@ const button = {
   display: 'inline-block',
   padding: '12px 28px',
   margin: '0 0 24px',
+  border: '1px solid #1f7a3a',
+  lineHeight: '1.2',
+  mso_padding_alt: '0px',
 }
 const hr = { borderColor: '#e8ede8', margin: '24px 0' }
 const footer = { fontSize: '12px', color: '#999999', margin: '0' }
