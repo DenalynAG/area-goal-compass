@@ -407,7 +407,15 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
 
   const addComment = async (findingId: string) => {
     if (!commentText.trim()) return;
-    const roleLabel = isSuperAdmin ? "Super Admin" : hasRole("admin_area") ? "Analista de Calidad" : "Líder de Área";
+    const roleLabel = isSuperAdmin
+      ? "Super Admin"
+      : hasRole("admin_area")
+        ? "Admin de Área"
+        : hasRole("lider_subarea")
+          ? "Líder de Subárea"
+          : hasRole("colaborador")
+            ? "Colaborador"
+            : "Usuario";
     const { error } = await supabase.from("audit_comments").insert({
       finding_id: findingId, user_id: user!.id,
       user_name: profile?.name ?? "", role_label: roleLabel,
