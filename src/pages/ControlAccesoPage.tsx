@@ -34,13 +34,21 @@ function useAccessControl() {
 
 const PAGE_SIZE = 10;
 
-export default function ControlAccesoPage() {
+interface ControlAccesoPageProps {
+  areaFilterName?: string;
+}
+
+export default function ControlAccesoPage({ areaFilterName }: ControlAccesoPageProps = {}) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { data: areas = [] } = useAreas();
   const { data: subareas = [] } = useSubareas();
   const { data: profiles = [] } = useProfiles();
   const { data: records = [], isLoading } = useAccessControl();
+
+  const scopedAreaId = areaFilterName
+    ? areas.find((a) => a.name === areaFilterName)?.id ?? null
+    : null;
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -79,7 +87,7 @@ export default function ControlAccesoPage() {
   const resetForm = () => {
     setCompanyName(""); setVisitorName(""); setDocumentId("");
     setEntryDatetime(""); setEstimatedExit("");
-    setAreaId(""); setSubareaId(""); setCompanionId("");
+    setAreaId(scopedAreaId || ""); setSubareaId(""); setCompanionId("");
     setRequesterId("");
     setZoneReq(""); setArl(""); setBloque("");
     setHasActivity(false);
@@ -228,10 +236,12 @@ export default function ControlAccesoPage() {
     qc.invalidateQueries({ queryKey: ["access_control"] });
   };
 
-  const filtered = records.filter((r: any) =>
-    [r.visitor_name, r.company_name, r.document_id]
-      .join(" ").toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = records
+    .filter((r: any) => !scopedAreaId || r.area_id === scopedAreaId)
+    .filter((r: any) =>
+      [r.visitor_name, r.company_name, r.document_id]
+        .join(" ").toLowerCase().includes(search.toLowerCase())
+    );
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -244,8 +254,12 @@ export default function ControlAccesoPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Control de Acceso Interno</h1>
-        <p className="text-muted-foreground text-sm">Registro de ingreso y salida de visitantes</p>
+        <h1 className="text-2xl font-bold text-foreground">
+          Control de Acceso{areaFilterName ? ` — ${areaFilterName}` : " Interno"}
+        </h1>
+        <p className="text-muted-foreground text-sm">
+          Registro de ingreso y salida de visitantes{areaFilterName ? ` del área de ${areaFilterName}` : ""}
+        </p>
       </div>
 
       <Card>
