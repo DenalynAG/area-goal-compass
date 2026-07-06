@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAreas, useSubareas, useProfiles } from "@/hooks/useSupabaseData";
+import { useAreas, useSubareas, useProfiles, useMemberships } from "@/hooks/useSupabaseData";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -39,16 +39,30 @@ interface ControlAccesoPageProps {
 }
 
 export default function ControlAccesoPage({ areaFilterName }: ControlAccesoPageProps = {}) {
-  const { user } = useAuth();
+  const { user, roles } = useAuth();
   const qc = useQueryClient();
   const { data: areas = [] } = useAreas();
   const { data: subareas = [] } = useSubareas();
   const { data: profiles = [] } = useProfiles();
+  const { data: memberships = [] } = useMemberships();
   const { data: records = [], isLoading } = useAccessControl();
 
-  const scopedAreaId = areaFilterName
+  const isSuperAdmin = roles.includes("super_admin" as any);
+  const isAdminArea = roles.includes("admin_area" as any);
+  const isLiderSubarea = roles.includes("lider_subarea" as any);
+  const userMembership = memberships.find((m) => m.user_id === user?.id) ?? null;
+  const userAreaId = userMembership?.area_id ?? null;
+  const userSubareaId = userMembership?.subarea_id ?? null;
+
+  // Effective scope: URL param → user's own area (for non-privileged roles)
+  const routeAreaId = areaFilterName
     ? areas.find((a) => a.name === areaFilterName)?.id ?? null
     : null;
+  const scopedAreaId = routeAreaId ?? (!isSuperAdmin ? userAreaId : null);
+  const scopedSubareaId = isLiderSubarea && !isSuperAdmin && !isAdminArea ? userSubareaId : null;
+
+  const lockArea = !isSuperAdmin && !!scopedAreaId;
+  const lockSubarea = !!scopedSubareaId;
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -87,7 +101,9 @@ export default function ControlAccesoPage({ areaFilterName }: ControlAccesoPageP
   const resetForm = () => {
     setCompanyName(""); setVisitorName(""); setDocumentId("");
     setEntryDatetime(""); setEstimatedExit("");
-    setAreaId(scopedAreaId || ""); setSubareaId(""); setCompanionId("");
+    setAreaId(scopedAreaId || "");
+    setSubareaId(scopedSubareaId || "");
+    setCompanionId("");
     setRequesterId("");
     setZoneReq(""); setArl(""); setBloque("");
     setHasActivity(false);
@@ -238,6 +254,7 @@ export default function ControlAccesoPage({ areaFilterName }: ControlAccesoPageP
 
   const filtered = records
     .filter((r: any) => !scopedAreaId || r.area_id === scopedAreaId)
+    .filter((r: any) => !scopedSubareaId || r.subarea_id === scopedSubareaId)
     .filter((r: any) =>
       [r.visitor_name, r.company_name, r.document_id]
         .join(" ").toLowerCase().includes(search.toLowerCase())
@@ -482,6 +499,7 @@ export default function ControlAccesoPage({ areaFilterName }: ControlAccesoPageP
                   value={areaId}
                   onValueChange={(v) => { setAreaId(v); setSubareaId(""); }}
                   placeholder="Seleccionar área"
+                  disabled={lockArea}
                   className="w-full"
                 />
               </div>
@@ -492,7 +510,7 @@ export default function ControlAccesoPage({ areaFilterName }: ControlAccesoPageP
                   value={subareaId}
                   onValueChange={setSubareaId}
                   placeholder="Seleccionar subárea"
-                  disabled={!areaId}
+                  disabled={!areaId || lockSubarea}
                   className="w-full"
                 />
               </div>
