@@ -79,6 +79,7 @@ const navItems: NavItem[] = [
       { to: "/ayb/leader-pass", label: "Leader Pass", icon: ClipboardList },
       { to: "/ayb/calidad", label: "Calidad", icon: ShieldCheck },
       { to: "/ayb/evaluaciones", label: "Evaluaciones", icon: ClipboardCheck },
+      { to: "/ayb/control-acceso", label: "Control de Acceso", icon: DoorOpen },
     ],
   },
   {
@@ -93,6 +94,7 @@ const navItems: NavItem[] = [
       { to: "/comercial/leader-pass", label: "Leader Pass", icon: ClipboardList },
       { to: "/comercial/calidad", label: "Calidad", icon: ShieldCheck },
       { to: "/comercial/evaluaciones", label: "Evaluaciones", icon: ClipboardCheck },
+      { to: "/comercial/control-acceso", label: "Control de Acceso", icon: DoorOpen },
     ],
   },
   {
@@ -104,6 +106,7 @@ const navItems: NavItem[] = [
       { to: "/compras/leader-pass", label: "Leader Pass", icon: ClipboardList },
       { to: "/compras/calidad", label: "Calidad", icon: ShieldCheck },
       { to: "/compras/evaluaciones", label: "Evaluaciones", icon: ClipboardCheck },
+      { to: "/compras/control-acceso", label: "Control de Acceso", icon: DoorOpen },
     ],
   },
   {
@@ -115,6 +118,7 @@ const navItems: NavItem[] = [
       { to: "/contraloria/leader-pass", label: "Leader Pass", icon: ClipboardList },
       { to: "/contraloria/calidad", label: "Calidad", icon: ShieldCheck },
       { to: "/contraloria/evaluaciones", label: "Evaluaciones", icon: ClipboardCheck },
+      { to: "/contraloria/control-acceso", label: "Control de Acceso", icon: DoorOpen },
     ],
   },
   {
@@ -126,6 +130,7 @@ const navItems: NavItem[] = [
       { to: "/mercadeo/leader-pass", label: "Leader Pass", icon: ClipboardList },
       { to: "/mercadeo/calidad", label: "Calidad", icon: ShieldCheck },
       { to: "/mercadeo/evaluaciones", label: "Evaluaciones", icon: ClipboardCheck },
+      { to: "/mercadeo/control-acceso", label: "Control de Acceso", icon: DoorOpen },
     ],
   },
   {
@@ -149,6 +154,7 @@ const navItems: NavItem[] = [
       { to: "/operaciones/leader-pass", label: "Leader Pass", icon: ClipboardList },
       { to: "/operaciones/calidad", label: "Calidad", icon: ShieldCheck },
       { to: "/operaciones/evaluaciones", label: "Evaluaciones", icon: ClipboardCheck },
+      { to: "/operaciones/control-acceso", label: "Control de Acceso", icon: DoorOpen },
     ],
   },
   {
@@ -174,6 +180,7 @@ const navItems: NavItem[] = [
       { to: "/tecnologia/leader-pass", label: "Leader Pass", icon: ClipboardList },
       { to: "/tecnologia/calidad", label: "Calidad", icon: ShieldCheck },
       { to: "/tecnologia/evaluaciones", label: "Evaluaciones", icon: ClipboardCheck },
+      { to: "/tecnologia/control-acceso", label: "Control de Acceso", icon: DoorOpen },
     ],
   },
   { to: "/organigrama", icon: Building2, label: "Organigrama" },

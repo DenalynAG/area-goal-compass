@@ -2,6 +2,7 @@ import LeaderPassPage from './LeaderPassPage';
 import AuditoriasPage from './AuditoriasPage';
 import EvaluacionesPage from './EvaluacionesPage';
 import ColaboradoresPage from './ColaboradoresPage';
+import ControlAccesoPage from './ControlAccesoPage';
 
 const AREA_ROUTE_MAP: Record<string, string> = {
   ayb: 'Alimentos y Bebidas',
@@ -13,7 +14,7 @@ const AREA_ROUTE_MAP: Record<string, string> = {
   tecnologia: 'Tecnología',
 };
 
-type ModuleType = 'leader-pass' | 'calidad' | 'evaluaciones' | 'colaboradores';
+type ModuleType = 'leader-pass' | 'calidad' | 'evaluaciones' | 'colaboradores' | 'control-acceso';
 
 interface Props {
   areaKey: string;
@@ -32,5 +33,7 @@ export default function AreaModulePage({ areaKey, module }: Props) {
       return <EvaluacionesPage areaFilterName={areaName} />;
     case 'colaboradores':
       return <ColaboradoresPage areaFilterName={areaName} />;
+    case 'control-acceso':
+      return <ControlAccesoPage areaFilterName={areaName} />;
   }
 }
