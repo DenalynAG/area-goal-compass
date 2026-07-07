@@ -192,11 +192,12 @@ export default function AuditoriasPage({ areaFilterName }: AuditoriasPageProps =
   // Show Muestreos / Inspección BPM tabs only for Alimentos y Bebidas, Gestión Humana, or super admin
   const showFoodQualityTabs = useMemo(() => {
     if (isSuperAdmin) return true;
+    if (hasCalidadGlobal) return true;
     const allowed = ['Alimentos y Bebidas', 'Gestión Humana'];
     if (areaFilterName && allowed.includes(areaFilterName)) return true;
     const userAreaName = areas.find(a => a.id === (profile as any)?.area_id)?.name;
     return !!userAreaName && allowed.includes(userAreaName);
-  }, [isSuperAdmin, areaFilterName, areas, profile]);
+  }, [isSuperAdmin, hasCalidadGlobal, areaFilterName, areas, profile]);
 
   const [activeTab, setActiveTab] = useState("planes");
   const [resumenYear, setResumenYear] = useState(new Date().getFullYear());
