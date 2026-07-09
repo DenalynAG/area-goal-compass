@@ -774,7 +774,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
           <LayoutDashboard className="w-5 h-5 text-primary" />
           <div className="flex-1 text-left">
             <h1 className="text-base font-bold">Dashboard — Recursos Humanos</h1>
-            <p className="text-xs text-muted-foreground">Promedio acumulado del semáforo de Objetivos por área</p>
+            <p className="text-xs text-muted-foreground">Cumplimiento acumulado de indicadores por área (Feb–Nov) · Bajo &lt; 80% · Medio 80–99% · Alto ≥ 100%</p>
           </div>
         </button>
         {dashboardExpanded && (
