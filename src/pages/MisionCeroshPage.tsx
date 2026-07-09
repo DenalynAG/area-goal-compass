@@ -255,6 +255,15 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
     return [...byArea.entries()].filter(([_, v]) => v.subareas.size > 0);
   }, [byArea]);
 
+  // Cargar el área por defecto en cada pestaña: primero con datos, sino la primera disponible
+  useEffect(() => {
+    if (!calArea && areas.length > 0) {
+      const firstWithData = populatedAreas[0]?.[0];
+      setCalArea(firstWithData ?? areas[0].id);
+      setCalSubarea("__none__");
+    }
+  }, [areas, populatedAreas, calArea]);
+
   const handleDelete = async (id: string) => {
     if (!confirm("¿Eliminar este reporte?")) return;
     const { error } = await supabase.from("mision_cerosh_reports" as any).delete().eq("id", id);
