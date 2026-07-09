@@ -335,16 +335,8 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
         </Dialog>
       </div>
 
-      {isLoading ? (
-        <p className="text-sm text-muted-foreground">Cargando...</p>
-      ) : populatedAreas.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
-          Sin reportes registrados en {MONTH_NAMES[month]} {year}.
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {/* Calendario diario: cumplimiento + evidencia */}
-          <div className="rounded-lg border p-4 space-y-3 bg-card">
+      {/* Calendario diario: cumplimiento + evidencia */}
+      <div className="rounded-lg border p-4 space-y-3 bg-card">
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <div>
                 <h4 className="font-display font-extrabold text-base">Calendario diario</h4>
@@ -430,8 +422,16 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
                 })}
               </div>
             )}
-          </div>
+      </div>
 
+      {isLoading ? (
+        <p className="text-sm text-muted-foreground">Cargando...</p>
+      ) : populatedAreas.length === 0 ? (
+        <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+          Sin reportes registrados en {MONTH_NAMES[month]} {year}.
+        </div>
+      ) : (
+        <div className="space-y-4">
           {populatedAreas.map(([areaId, areaData]) => (
             <div key={areaId} className="rounded-lg border p-4 space-y-3">
               <h4 className="font-display font-extrabold text-base">{areaData.areaName}</h4>
