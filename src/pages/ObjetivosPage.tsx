@@ -1746,6 +1746,9 @@ function ObjectiveCard({
                             ) : null;
                           })()}
                         </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" title="Historial de cambios" onClick={() => { setHistoryKpiId(k.id); setHistoryKpiName(k.name); }}>
+                          <History className="w-3 h-3" />
+                        </Button>
                         {(canEdit || canEditKpi) && (
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEditKPI(k, selectedMonth)}>
                             <Edit className="w-3 h-3" />
