@@ -13,6 +13,7 @@ import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Sparkles, ShieldAlert, HeartPulse, Trash2, Paperclip, FileCheck2, Loader2, Check, X } from "lucide-react";
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceLine } from "recharts";
 import misionLogo from "@/assets/mision-cerosh-logo.png.asset.json";
 
 type ReportType = "orden_aseo" | "accion_preventiva" | "accidente_trabajo";
@@ -54,6 +55,24 @@ function useReports(reportType: ReportType, year: number, month: number) {
         .gte("report_date", start)
         .lt("report_date", end)
         .order("report_date", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as unknown as Report[];
+    },
+  });
+}
+
+function useYearReports(reportType: ReportType, year: number) {
+  const start = `${year}-01-01`;
+  const end = `${year + 1}-01-01`;
+  return useQuery({
+    queryKey: ["mision_cerosh_reports_year", reportType, year],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("mision_cerosh_reports" as any)
+        .select("report_type, area_id, subarea_id, report_date, completed")
+        .eq("report_type", reportType)
+        .gte("report_date", start)
+        .lt("report_date", end);
       if (error) throw error;
       return (data ?? []) as unknown as Report[];
     },
