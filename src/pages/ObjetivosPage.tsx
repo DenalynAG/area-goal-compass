@@ -1388,6 +1388,19 @@ function ObjectiveCard({
     return (value / target) * 100;
   };
 
+  const parseKpiNumber = (raw: string) => {
+    const normalized = (raw ?? '').toString().trim().replace(/\s/g, '').replace(/\$/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.');
+    return Number(normalized);
+  };
+
+  const formatKpiInputValue = (value: number | null | undefined, k: { unit?: string | null }) => {
+    if (value === null || value === undefined || isNaN(Number(value))) return '';
+    if (isFinancialKpi(k)) {
+      return `$ ${new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 }).format(Math.round(Number(value)))}`;
+    }
+    return new Intl.NumberFormat('es-CO', { maximumFractionDigits: 2 }).format(Number(value));
+  };
+
   // Inline-save the "Valor Real" for the currently selected month
   const saveKpiMonthValue = async (kpiId: string, raw: string) => {
     if (selectedMonth === 'total') return;
@@ -1408,9 +1421,8 @@ function ObjectiveCard({
       return;
     }
 
-    // Accept "1.234,56" or "1234.56" formats
-    const normalized = trimmed.replace(/\s/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.');
-    const value = Number(normalized);
+    // Accept "$ 1.234", "1.234,56" or "1234.56" formats
+    const value = parseKpiNumber(trimmed);
     if (!isFinite(value)) { toast.error('Valor inválido'); return; }
     if (existing && Number(existing.value) === value) return;
 
@@ -1428,6 +1440,49 @@ function ObjectiveCard({
     qcLocal.invalidateQueries({ queryKey: ['kpi_measurements'] });
     await logActivity('update', 'kpi_measurement', kpiId, { period: selectedMonth, value });
     toast.success('Valor guardado');
+  };
+
+  // Inline-save the monthly "Meta" for the currently selected month
+  const saveKpiMonthTarget = async (kpiId: string, raw: string) => {
+    if (selectedMonth === 'total') return;
+    const trimmed = (raw ?? '').toString().trim();
+    const periodDate = `${selectedMonth}-01`;
+    const existing = relevantMeasurements.find(
+      m => m.kpi_id === kpiId && m.period_date.startsWith(selectedMonth)
+    );
+    const kpi = objKpis.find(k => k.id === kpiId);
+    const fallbackTarget = Number(kpi?.target) || 0;
+    const existingTarget = (existing as any)?.target;
+    const currentTarget = existingTarget === null || existingTarget === undefined ? fallbackTarget : Number(existingTarget);
+
+    if (trimmed === '') {
+      if (!existing || existingTarget === null || existingTarget === undefined) return;
+      const { error } = await supabase.from('kpi_measurements').update({ target: null } as any).eq('id', existing.id);
+      if (error) { toast.error(`No se pudo actualizar la meta: ${error.message}`); return; }
+      qcLocal.invalidateQueries({ queryKey: ['kpi_measurements'] });
+      await logActivity('update', 'kpi_measurement_target', kpiId, { period: selectedMonth, target: null });
+      toast.success('Meta restablecida');
+      return;
+    }
+
+    const target = parseKpiNumber(trimmed);
+    if (!isFinite(target)) { toast.error('Meta inválida'); return; }
+    if (Number(currentTarget) === target) return;
+
+    if (existing) {
+      const { error } = await supabase.from('kpi_measurements').update({ target } as any).eq('id', existing.id);
+      if (error) { toast.error(`No se pudo actualizar la meta: ${error.message}`); return; }
+    } else {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData?.session?.user?.id ?? null;
+      const { error } = await supabase.from('kpi_measurements').insert({
+        kpi_id: kpiId, period_date: periodDate, target, value: 0, created_by: userId,
+      } as any);
+      if (error) { toast.error(`No se pudo guardar la meta: ${error.message}`); return; }
+    }
+    qcLocal.invalidateQueries({ queryKey: ['kpi_measurements'] });
+    await logActivity('update', 'kpi_measurement_target', kpiId, { period: selectedMonth, target });
+    toast.success('Meta guardada');
   };
 
   // Get KPI accumulated value up to current month in current year (sum for financial, average otherwise)
@@ -1654,7 +1709,40 @@ function ObjectiveCard({
                     <td className="py-2 text-center">
                       {weight > 0 ? <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-accent/10 text-accent">{weight}%</span> : <span className="text-muted-foreground">—</span>}
                     </td>
-                    <td className="py-2">{formatKpiValue(displayTarget, k)}</td>
+                    <td className="py-2">
+                      {isTotalView || !(canEdit || canEditKpi) ? (
+                        <>{formatKpiValue(displayTarget, k)}</>
+                      ) : (
+                        <input
+                          key={`${k.id}-${selectedMonth}-target-${displayTarget ?? ''}`}
+                          type="text"
+                          inputMode={isFinancialKpi(k) ? 'numeric' : 'decimal'}
+                          defaultValue={formatKpiInputValue(displayTarget, k)}
+                          placeholder="Meta"
+                          onFocus={(e) => {
+                            e.target.value = String(displayTarget ?? '');
+                            e.target.select();
+                          }}
+                          onBlur={(e) => {
+                            const raw = e.target.value;
+                            const orig = displayTarget === null || displayTarget === undefined ? '' : String(displayTarget);
+                            if (raw.trim() !== orig.trim() && !(raw.trim() === '' && orig === '')) {
+                              saveKpiMonthTarget(k.id, raw);
+                            } else {
+                              e.target.value = formatKpiInputValue(displayTarget, k);
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                            if (e.key === 'Escape') {
+                              (e.target as HTMLInputElement).value = formatKpiInputValue(displayTarget, k);
+                              (e.target as HTMLInputElement).blur();
+                            }
+                          }}
+                          className="w-24 rounded-md border border-border bg-background px-2 py-1 text-sm text-right tabular-nums focus:outline-none focus:ring-2 focus:ring-primary/40"
+                        />
+                      )}
+                    </td>
                     <td className="py-2">
                       {isTotalView || !(canEdit || canEditKpi) ? (
                         monthValue === null
@@ -1663,19 +1751,12 @@ function ObjectiveCard({
                       ) : (
                         (() => {
                           const isFin = isFinancialKpi(k);
-                          const formatDisplay = (v: number | null) => {
-                            if (v === null || v === undefined || isNaN(Number(v))) return '';
-                            if (isFin) {
-                              return `$ ${new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 }).format(Math.round(Number(v)))}`;
-                            }
-                            return new Intl.NumberFormat('es-CO', { maximumFractionDigits: 2 }).format(Number(v));
-                          };
                           return (
                             <input
                               key={`${k.id}-${selectedMonth}-${monthValue ?? ''}`}
                               type="text"
                               inputMode={isFin ? 'numeric' : 'decimal'}
-                              defaultValue={formatDisplay(monthValue)}
+                              defaultValue={formatKpiInputValue(monthValue, k)}
                               placeholder="Sin dato"
                               onFocus={(e) => {
                                 e.target.value = monthValue === null ? '' : String(isFin ? Math.round(Number(monthValue)) : monthValue);
@@ -1687,13 +1768,13 @@ function ObjectiveCard({
                                 if (raw.trim() !== orig.trim() && !(raw.trim() === '' && monthValue === null)) {
                                   saveKpiMonthValue(k.id, raw);
                                 } else {
-                                  e.target.value = formatDisplay(monthValue);
+                                  e.target.value = formatKpiInputValue(monthValue, k);
                                 }
                               }}
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
                                 if (e.key === 'Escape') {
-                                  (e.target as HTMLInputElement).value = formatDisplay(monthValue);
+                                  (e.target as HTMLInputElement).value = formatKpiInputValue(monthValue, k);
                                   (e.target as HTMLInputElement).blur();
                                 }
                               }}
