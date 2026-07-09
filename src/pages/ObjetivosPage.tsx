@@ -461,9 +461,12 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   const dashboardChartData = useMemo(() => {
     // Month-aware progress: if a specific month is selected, restrict the
     // accumulated window to Feb..selectedMonth. Otherwise use default window.
-    const monthNum = dashMonth === '__all__' ? null : parseInt(dashMonth, 10);
-    const winEnd = monthNum ?? avgWindowEndTop;
+    // Only Feb..Nov counts for the accumulated compliance percentage.
     const winStart = 2;
+    const winCap = 11;
+    const monthNum = dashMonth === '__all__' ? null : parseInt(dashMonth, 10);
+    const requestedEnd = monthNum ?? avgWindowEndTop;
+    const winEnd = Math.min(Math.max(requestedEnd, winStart), winCap);
     const winLen = Math.max(0, winEnd - winStart + 1);
     const inWin = (mo: number) => mo >= winStart && mo <= winEnd;
     const currentYear = new Date().getFullYear();
