@@ -1,0 +1,1 @@
+ALTER TABLE public.mision_cerosh_reports ADD COLUMN IF NOT EXISTS rejection_reason text;
