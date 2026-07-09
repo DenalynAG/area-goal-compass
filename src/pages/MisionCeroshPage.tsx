@@ -400,6 +400,14 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
                           )}
                         </div>
                       )}
+                      {isRejected && d.rejectionReason && (
+                        <p
+                          className="text-[10px] text-rose-700 leading-tight break-words"
+                          title={d.rejectionReason}
+                        >
+                          <span className="font-semibold">Motivo:</span> {d.rejectionReason}
+                        </p>
+                      )}
                     </div>
                   );
                 })}
