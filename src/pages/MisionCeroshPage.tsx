@@ -525,8 +525,12 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
               <h4 className="font-display font-extrabold text-base">{areaData.areaName}</h4>
               {[...areaData.subareas.entries()].map(([subKey, subData]) => (
                 (() => {
-                  const daysWithReport = subData.days.filter((v) => v > 0).length;
-                  const compliancePct = Math.round((daysWithReport / daysInMonth) * 100);
+                  const validDays = subData.days.reduce(
+                    (n, v, i) => n + (v > 0 && !subData.rejected[i] ? 1 : 0),
+                    0,
+                  );
+                  const rejectedDays = subData.rejected.filter(Boolean).length;
+                  const compliancePct = Math.round((validDays / daysInMonth) * 100);
                   const toneClass =
                     compliancePct >= 80
                       ? "text-emerald-600"
@@ -545,7 +549,11 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
                         <span className="font-medium">{subData.subName}</span>
                         <div className="flex items-center gap-3">
                           <span className="text-xs text-muted-foreground">
-                            {daysWithReport}/{daysInMonth} días · Total <strong className="text-foreground">{subData.total}</strong>
+                            {validDays}/{daysInMonth} días
+                            {rejectedDays > 0 && (
+                              <> · <span className="text-rose-600 font-medium">{rejectedDays} rechazado{rejectedDays !== 1 ? "s" : ""}</span></>
+                            )}
+                            {" · "}Total <strong className="text-foreground">{subData.total}</strong>
                           </span>
                           <span className={`font-display font-extrabold text-base tabular-nums ${toneClass}`}>
                             {compliancePct}%
@@ -556,21 +564,33 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
                       <div className="flex gap-[3px] items-end h-16 bg-muted/40 rounded-md p-1.5 ring-1 ring-border/50">
                         {subData.days.map((v, i) => {
                           const pct = v > 0 ? Math.max(15, (v / maxDay) * 100) : 0;
+                          const isRejected = subData.rejected[i];
                           return (
                             <div
                               key={i}
                               className="flex-1 flex flex-col items-center justify-end gap-1"
-                              title={`Día ${i + 1}: ${v}`}
+                              title={`Día ${i + 1}: ${v}${isRejected ? " · Rechazado" : ""}`}
                             >
                               <div
                                 className={`w-full rounded-sm transition-all ${
-                                  v > 0
+                                  isRejected
+                                    ? "bg-gradient-to-t from-rose-500 to-rose-600 shadow-sm"
+                                    : v > 0
                                     ? `bg-gradient-to-t ${barGradient} shadow-sm`
                                     : "bg-muted"
                                 }`}
-                                style={{ height: `${pct}%`, minHeight: v > 0 ? 6 : 2 }}
+                                style={{
+                                  height: `${isRejected && pct === 0 ? 20 : pct}%`,
+                                  minHeight: v > 0 || isRejected ? 6 : 2,
+                                }}
                               />
-                              <span className="text-[9px] text-muted-foreground leading-none">{i + 1}</span>
+                              <span
+                                className={`text-[9px] leading-none ${
+                                  isRejected ? "text-rose-600 font-semibold" : "text-muted-foreground"
+                                }`}
+                              >
+                                {i + 1}
+                              </span>
                             </div>
                           );
                         })}
