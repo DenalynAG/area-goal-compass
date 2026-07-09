@@ -343,6 +343,95 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
         </div>
       ) : (
         <div className="space-y-4">
+          {/* Calendario diario: cumplimiento + evidencia */}
+          <div className="rounded-lg border p-4 space-y-3 bg-card">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div>
+                <h4 className="font-display font-extrabold text-base">Calendario diario</h4>
+                <p className="text-xs text-muted-foreground">
+                  Marca cada día como cumplido y adjunta evidencia (foto o PDF).
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Select value={calArea} onValueChange={(v) => { setCalArea(v); setCalSubarea("__none__"); }}>
+                  <SelectTrigger className="w-48"><SelectValue placeholder="Selecciona área" /></SelectTrigger>
+                  <SelectContent>
+                    {areas.map((a) => (<SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+                <Select value={calSubarea} onValueChange={setCalSubarea} disabled={!calArea}>
+                  <SelectTrigger className="w-44"><SelectValue placeholder="Subárea" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">— General —</SelectItem>
+                    {calAreaSubareas.map((s) => (<SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {!calArea ? (
+              <p className="text-sm text-muted-foreground py-6 text-center">
+                Selecciona un área para ver el calendario del mes.
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 gap-2">
+                {calDays.map((d, i) => {
+                  const isUploading = uploadingDay === i;
+                  return (
+                    <div
+                      key={i}
+                      className={`rounded-md border p-2 flex flex-col gap-1.5 text-xs transition-colors ${
+                        d.completed ? "border-emerald-400 bg-emerald-50" : "bg-background"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-sm">Día {i + 1}</span>
+                        <Checkbox
+                          checked={d.completed}
+                          onCheckedChange={(v) => toggleCompleted(i, Boolean(v))}
+                          aria-label={`Cumplido día ${i + 1}`}
+                        />
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {d.evidenceUrl ? (
+                          <button
+                            type="button"
+                            onClick={() => viewEvidence(d.evidenceUrl!)}
+                            className="flex items-center gap-1 text-emerald-700 hover:underline"
+                            title="Ver evidencia"
+                          >
+                            <FileCheck2 className="w-3.5 h-3.5" />
+                            <span>Evidencia</span>
+                          </button>
+                        ) : (
+                          <label className="flex items-center gap-1 cursor-pointer text-muted-foreground hover:text-foreground">
+                            {isUploading ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Paperclip className="w-3.5 h-3.5" />
+                            )}
+                            <span>{isUploading ? "Subiendo..." : "Adjuntar"}</span>
+                            <input
+                              type="file"
+                              className="hidden"
+                              accept="image/*,application/pdf"
+                              disabled={isUploading}
+                              onChange={(e) => {
+                                const f = e.target.files?.[0];
+                                if (f) uploadEvidence(i, f);
+                                e.target.value = "";
+                              }}
+                            />
+                          </label>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
           {populatedAreas.map(([areaId, areaData]) => (
             <div key={areaId} className="rounded-lg border p-4 space-y-3">
               <h4 className="font-display font-extrabold text-base">{areaData.areaName}</h4>
