@@ -409,7 +409,10 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
                                 <button
                                   type="button"
                                   title="Rechazar"
-                                  onClick={() => reviewEvidence(d.recordId!, false)}
+                                  onClick={() => {
+                                    setRejectingId(d.recordId!);
+                                    setRejectionNote("");
+                                  }}
                                   className="p-0.5 rounded hover:bg-rose-100 text-rose-700"
                                 >
                                   <X className="w-3.5 h-3.5" />
@@ -417,6 +420,34 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
                               )}
                             </div>
                           )}
+                        </div>
+                      )}
+                      {isSuperAdmin && d.recordId && rejectingId === d.recordId && (
+                        <div className="mt-1 space-y-1 rounded border border-rose-200 bg-rose-50/60 p-1.5">
+                          <Textarea
+                            value={rejectionNote}
+                            onChange={(e) => setRejectionNote(e.target.value)}
+                            placeholder="Motivo del rechazo…"
+                            rows={2}
+                            autoFocus
+                            className="text-[11px] min-h-[48px] resize-none bg-background"
+                          />
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              onClick={() => { setRejectingId(null); setRejectionNote(""); }}
+                              className="text-[10px] px-1.5 py-0.5 rounded hover:bg-muted text-muted-foreground"
+                            >
+                              Cancelar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => reviewEvidence(d.recordId!, false, rejectionNote.trim() || null)}
+                              className="text-[10px] px-2 py-0.5 rounded bg-rose-600 text-white hover:bg-rose-700"
+                            >
+                              Rechazar
+                            </button>
+                          </div>
                         </div>
                       )}
                       {isRejected && d.rejectionReason && (
