@@ -1523,6 +1523,7 @@ export type Database = {
           is_active: boolean
           jefe_inmediato: string | null
           lugar_nacimiento: string | null
+          mision_cerosh_admin: boolean
           municipio: string | null
           name: string
           nivel_educativo: string | null
@@ -1555,6 +1556,7 @@ export type Database = {
           is_active?: boolean
           jefe_inmediato?: string | null
           lugar_nacimiento?: string | null
+          mision_cerosh_admin?: boolean
           municipio?: string | null
           name: string
           nivel_educativo?: string | null
@@ -1587,6 +1589,7 @@ export type Database = {
           is_active?: boolean
           jefe_inmediato?: string | null
           lugar_nacimiento?: string | null
+          mision_cerosh_admin?: boolean
           municipio?: string | null
           name?: string
           nivel_educativo?: string | null
@@ -1942,6 +1945,7 @@ export type Database = {
       get_user_area_id: { Args: { _user_id: string }; Returns: string }
       get_user_subarea_id: { Args: { _user_id: string }; Returns: string }
       has_calidad_global: { Args: { _user_id: string }; Returns: boolean }
+      has_mision_cerosh_admin: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
