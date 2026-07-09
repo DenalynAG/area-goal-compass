@@ -848,15 +848,32 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} stroke="hsl(var(--muted-foreground))" />
                     <YAxis type="category" dataKey="name" width={180} stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 12 }} />
-                    <Tooltip formatter={(v: any) => `${v}%`} contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }} />
+                    <Tooltip
+                      formatter={(v: any) => {
+                        const n = Number(v) || 0;
+                        const label = n >= 100 ? 'Alto' : n >= 80 ? 'Medio' : 'Bajo';
+                        return [`${n}% · ${label}`, 'Cumplimiento (Feb–Nov)'];
+                      }}
+                      contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }}
+                    />
                     <Legend />
                     <Bar dataKey="Objetivos" radius={[0, 4, 4, 0]}>
                       {dashboardChartData.map((entry: any, index: number) => {
                         const v = Number(entry.Objetivos) || 0;
-                        const color = v > 95 ? '#16a34a' : v > 75 ? '#eab308' : '#dc2626';
+                        // Regla de cumplimiento: Alto ≥ 100 (verde), Medio ≥ 80 (amarillo), Bajo < 80 (rojo).
+                        const color = v >= 100 ? '#16a34a' : v >= 80 ? '#eab308' : '#dc2626';
                         return <Cell key={`cell-${index}`} fill={color} />;
                       })}
-                      <LabelList dataKey="Objetivos" position="right" formatter={(v: any) => `${v}%`} style={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
+                      <LabelList
+                        dataKey="Objetivos"
+                        position="right"
+                        formatter={(v: any) => {
+                          const n = Number(v) || 0;
+                          const label = n >= 100 ? 'Alto' : n >= 80 ? 'Medio' : 'Bajo';
+                          return `${n}% · ${label}`;
+                        }}
+                        style={{ fontSize: 11, fill: 'hsl(var(--foreground))' }}
+                      />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
