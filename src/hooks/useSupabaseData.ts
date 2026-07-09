@@ -117,6 +117,7 @@ export function useKPIMeasurements() {
           .from('kpi_measurements')
           .select('*')
           .order('period_date')
+          .order('kpi_id')
           .range(from, from + pageSize - 1);
         if (error) throw error;
         const batch = (data ?? []) as Tables<'kpi_measurements'>[];
