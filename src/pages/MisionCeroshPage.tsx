@@ -79,6 +79,116 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
 
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
+  // Calendar (cumplimiento + evidencia) state
+  const [calArea, setCalArea] = useState<string>("");
+  const [calSubarea, setCalSubarea] = useState<string>("__none__");
+  const [uploadingDay, setUploadingDay] = useState<number | null>(null);
+
+  const calAreaSubareas = useMemo(
+    () => subareas.filter((s) => s.area_id === calArea),
+    [subareas, calArea],
+  );
+
+  // Per-day info for selected area/subarea
+  const calDays = useMemo(() => {
+    const arr: { completed: boolean; evidenceUrl: string | null; recordId: string | null; hasReport: boolean }[] =
+      Array.from({ length: daysInMonth }, () => ({ completed: false, evidenceUrl: null, recordId: null, hasReport: false }));
+    if (!calArea) return arr;
+    const subFilter = calSubarea === "__none__" ? null : calSubarea;
+    for (const r of reports) {
+      if (r.area_id !== calArea) continue;
+      if ((r.subarea_id ?? null) !== subFilter) continue;
+      const dayIdx = new Date(r.report_date + "T00:00:00").getDate() - 1;
+      const slot = arr[dayIdx];
+      if (!slot) continue;
+      slot.hasReport = true;
+      if (r.completed) slot.completed = true;
+      if (r.evidence_url) {
+        slot.evidenceUrl = r.evidence_url;
+        slot.recordId = r.id;
+      } else if (!slot.recordId) {
+        slot.recordId = r.id;
+      }
+    }
+    return arr;
+  }, [reports, calArea, calSubarea, daysInMonth]);
+
+  const dateStrFor = (dayIdx: number) =>
+    `${year}-${String(month + 1).padStart(2, "0")}-${String(dayIdx + 1).padStart(2, "0")}`;
+
+  const toggleCompleted = async (dayIdx: number, next: boolean) => {
+    if (!calArea) return;
+    const subFilter = calSubarea === "__none__" ? null : calSubarea;
+    const dateStr = dateStrFor(dayIdx);
+    if (next) {
+      const { error } = await supabase.from("mision_cerosh_reports" as any).insert({
+        report_type: reportType,
+        area_id: calArea,
+        subarea_id: subFilter,
+        report_date: dateStr,
+        count: 1,
+        completed: true,
+        created_by: user?.id ?? null,
+      });
+      if (error) { toast.error("No se pudo marcar: " + error.message); return; }
+    } else {
+      const q = supabase
+        .from("mision_cerosh_reports" as any)
+        .update({ completed: false })
+        .eq("report_type", reportType)
+        .eq("area_id", calArea)
+        .eq("report_date", dateStr);
+      const { error } = subFilter
+        ? await q.eq("subarea_id", subFilter)
+        : await q.is("subarea_id", null);
+      if (error) { toast.error("No se pudo desmarcar: " + error.message); return; }
+    }
+    qc.invalidateQueries({ queryKey: ["mision_cerosh_reports", reportType] });
+  };
+
+  const uploadEvidence = async (dayIdx: number, file: File) => {
+    if (!calArea || !file) return;
+    const subFilter = calSubarea === "__none__" ? null : calSubarea;
+    const dateStr = dateStrFor(dayIdx);
+    setUploadingDay(dayIdx);
+    try {
+      const ext = file.name.split(".").pop() || "bin";
+      const path = `mision-cerosh/${reportType}/${calArea}/${year}-${String(month + 1).padStart(2, "0")}/${dateStr}-${crypto.randomUUID()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("evidencias").upload(path, file, { upsert: false });
+      if (upErr) { toast.error("Error subiendo evidencia: " + upErr.message); return; }
+      const existing = calDays[dayIdx].recordId;
+      if (existing) {
+        const { error } = await supabase
+          .from("mision_cerosh_reports" as any)
+          .update({ evidence_url: path, completed: true })
+          .eq("id", existing);
+        if (error) { toast.error("Error guardando: " + error.message); return; }
+      } else {
+        const { error } = await supabase.from("mision_cerosh_reports" as any).insert({
+          report_type: reportType,
+          area_id: calArea,
+          subarea_id: subFilter,
+          report_date: dateStr,
+          count: 1,
+          completed: true,
+          evidence_url: path,
+          created_by: user?.id ?? null,
+        });
+        if (error) { toast.error("Error guardando: " + error.message); return; }
+      }
+      toast.success("Evidencia adjuntada");
+      qc.invalidateQueries({ queryKey: ["mision_cerosh_reports", reportType] });
+    } finally {
+      setUploadingDay(null);
+    }
+  };
+
+  const viewEvidence = async (path: string) => {
+    const { data, error } = await supabase.storage.from("evidencias").createSignedUrl(path, 300);
+    if (error || !data?.signedUrl) { toast.error("No se pudo abrir la evidencia"); return; }
+    window.open(data.signedUrl, "_blank");
+  };
+
   // Group counts per (area,subarea) per day
   const byArea = useMemo(() => {
     const map = new Map<string, { areaName: string; subareas: Map<string, { subName: string; days: number[]; total: number }> }>();
