@@ -1832,6 +1832,12 @@ function ObjectiveCard({
           onOpenChange={(open) => { if (!open) setKpiEvidenceId(null); }}
         />
       )}
+      <KpiHistoryDialog
+        kpiId={historyKpiId}
+        kpiName={historyKpiName}
+        open={!!historyKpiId}
+        onOpenChange={(open) => { if (!open) setHistoryKpiId(null); }}
+      />
     </div>
   );
 }
