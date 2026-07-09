@@ -262,29 +262,48 @@ export default function KPIFormDialog({
     // (allow 0 and negative values too — the user may need to correct or reset a month)
     if (kpiId) {
       const periodDate = `${measurementMonth}-01`;
-      const [yyyy, mm] = measurementMonth.split("-");
-      const nextMonth =
-        parseInt(mm) === 12 ? `${parseInt(yyyy) + 1}-01` : `${yyyy}-${String(parseInt(mm) + 1).padStart(2, "0")}`;
-      // Check if measurement already exists for this month
-      const { data: existing } = await supabase
+      // Check if measurement already exists for this KPI and exact month. The
+      // database also enforces uniqueness so saving one KPI cannot create or
+      // overwrite rows from sibling KPIs.
+      const { data: existing, error: existingError } = await supabase
         .from("kpi_measurements")
         .select("id")
         .eq("kpi_id", kpiId)
-        .gte("period_date", periodDate)
-        .lt("period_date", `${nextMonth}-01`)
+        .eq("period_date", periodDate)
         .maybeSingle();
 
+      if (existingError) {
+        setSaving(false);
+        toast.error("No se pudo validar la medición del mes");
+        return;
+      }
+
       if (existing) {
-        await supabase.from("kpi_measurements").update({ value: currentValue, target }).eq("id", existing.id);
+        const { error: updateMeasurementError } = await supabase
+          .from("kpi_measurements")
+          .update({ value: currentValue, target })
+          .eq("id", existing.id)
+          .eq("kpi_id", kpiId)
+          .eq("period_date", periodDate);
+        if (updateMeasurementError) {
+          setSaving(false);
+          toast.error("No se pudo actualizar la medición del mes");
+          return;
+        }
         await logActivity('update', 'kpi_measurement', existing.id, { kpi_id: kpiId, period: measurementMonth, value: currentValue });
       } else {
-        const { data: ins } = await supabase.from("kpi_measurements").insert({
+        const { data: ins, error: insertMeasurementError } = await supabase.from("kpi_measurements").upsert({
           kpi_id: kpiId,
           period_date: periodDate,
           value: currentValue,
           target,
           created_by: (await supabase.auth.getUser()).data.user?.id ?? "",
-        }).select('id').maybeSingle();
+        }, { onConflict: "kpi_id,period_date" }).select('id').maybeSingle();
+        if (insertMeasurementError) {
+          setSaving(false);
+          toast.error("No se pudo guardar la medición del mes");
+          return;
+        }
         await logActivity('create', 'kpi_measurement', (ins as any)?.id || null, { kpi_id: kpiId, period: measurementMonth, value: currentValue });
       }
     }
