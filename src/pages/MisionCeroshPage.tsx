@@ -98,15 +98,6 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectionNote, setRejectionNote] = useState("");
 
-  // Cargar el área por defecto en cada pestaña: primero con datos, sino la primera disponible
-  useEffect(() => {
-    if (!calArea && areas.length > 0) {
-      const firstWithData = [...byArea.entries()].find(([_, v]) => v.subareas.size > 0)?.[0];
-      setCalArea(firstWithData ?? areas[0].id);
-      setCalSubarea("__none__");
-    }
-  }, [areas, byArea, calArea]);
-
   const calAreaSubareas = useMemo(
     () => subareas.filter((s) => s.area_id === calArea),
     [subareas, calArea],
