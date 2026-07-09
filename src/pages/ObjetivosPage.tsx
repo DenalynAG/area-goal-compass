@@ -461,9 +461,12 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   const dashboardChartData = useMemo(() => {
     // Month-aware progress: if a specific month is selected, restrict the
     // accumulated window to Feb..selectedMonth. Otherwise use default window.
-    const monthNum = dashMonth === '__all__' ? null : parseInt(dashMonth, 10);
-    const winEnd = monthNum ?? avgWindowEndTop;
+    // Only Feb..Nov counts for the accumulated compliance percentage.
     const winStart = 2;
+    const winCap = 11;
+    const monthNum = dashMonth === '__all__' ? null : parseInt(dashMonth, 10);
+    const requestedEnd = monthNum ?? avgWindowEndTop;
+    const winEnd = Math.min(Math.max(requestedEnd, winStart), winCap);
     const winLen = Math.max(0, winEnd - winStart + 1);
     const inWin = (mo: number) => mo >= winStart && mo <= winEnd;
     const currentYear = new Date().getFullYear();
@@ -771,7 +774,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
           <LayoutDashboard className="w-5 h-5 text-primary" />
           <div className="flex-1 text-left">
             <h1 className="text-base font-bold">Dashboard — Recursos Humanos</h1>
-            <p className="text-xs text-muted-foreground">Promedio acumulado del semáforo de Objetivos por área</p>
+            <p className="text-xs text-muted-foreground">Cumplimiento acumulado de indicadores por área (Feb–Nov) · Bajo &lt; 80% · Medio 80–99% · Alto ≥ 100%</p>
           </div>
         </button>
         {dashboardExpanded && (
@@ -845,15 +848,32 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} stroke="hsl(var(--muted-foreground))" />
                     <YAxis type="category" dataKey="name" width={180} stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 12 }} />
-                    <Tooltip formatter={(v: any) => `${v}%`} contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }} />
+                    <Tooltip
+                      formatter={(v: any) => {
+                        const n = Number(v) || 0;
+                        const label = n >= 100 ? 'Alto' : n >= 80 ? 'Medio' : 'Bajo';
+                        return [`${n}% · ${label}`, 'Cumplimiento (Feb–Nov)'];
+                      }}
+                      contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }}
+                    />
                     <Legend />
                     <Bar dataKey="Objetivos" radius={[0, 4, 4, 0]}>
                       {dashboardChartData.map((entry: any, index: number) => {
                         const v = Number(entry.Objetivos) || 0;
-                        const color = v > 95 ? '#16a34a' : v > 75 ? '#eab308' : '#dc2626';
+                        // Regla de cumplimiento: Alto ≥ 100 (verde), Medio ≥ 80 (amarillo), Bajo < 80 (rojo).
+                        const color = v >= 100 ? '#16a34a' : v >= 80 ? '#eab308' : '#dc2626';
                         return <Cell key={`cell-${index}`} fill={color} />;
                       })}
-                      <LabelList dataKey="Objetivos" position="right" formatter={(v: any) => `${v}%`} style={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
+                      <LabelList
+                        dataKey="Objetivos"
+                        position="right"
+                        formatter={(v: any) => {
+                          const n = Number(v) || 0;
+                          const label = n >= 100 ? 'Alto' : n >= 80 ? 'Medio' : 'Bajo';
+                          return `${n}% · ${label}`;
+                        }}
+                        style={{ fontSize: 11, fill: 'hsl(var(--foreground))' }}
+                      />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
