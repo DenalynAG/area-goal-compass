@@ -13,6 +13,7 @@ import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Sparkles, ShieldAlert, HeartPulse, Trash2, Paperclip, FileCheck2, Loader2, Check, X } from "lucide-react";
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceLine } from "recharts";
 import misionLogo from "@/assets/mision-cerosh-logo.png.asset.json";
 
 type ReportType = "orden_aseo" | "accion_preventiva" | "accidente_trabajo";
@@ -60,6 +61,24 @@ function useReports(reportType: ReportType, year: number, month: number) {
   });
 }
 
+function useYearReports(reportType: ReportType, year: number) {
+  const start = `${year}-01-01`;
+  const end = `${year + 1}-01-01`;
+  return useQuery({
+    queryKey: ["mision_cerosh_reports_year", reportType, year],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("mision_cerosh_reports" as any)
+        .select("report_type, area_id, subarea_id, report_date, completed")
+        .eq("report_type", reportType)
+        .gte("report_date", start)
+        .lt("report_date", end);
+      if (error) throw error;
+      return (data ?? []) as unknown as Report[];
+    },
+  });
+}
+
 function ReportSection({ reportType, year, month }: { reportType: ReportType; year: number; month: number }) {
   const { user, isSuperAdmin } = useAuth();
   const meta = REPORT_META[reportType];
@@ -67,6 +86,7 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
   const { data: areas = [] } = useAreas();
   const { data: subareas = [] } = useSubareas();
   const { data: reports = [], isLoading } = useReports(reportType, year, month);
+  const { data: yearReports = [] } = useYearReports(reportType, year);
 
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
@@ -414,6 +434,82 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
               </div>
             )}
       </div>
+
+      {/* Tendencia mensual de cumplimiento */}
+      {calArea && (() => {
+        const subFilter = calSubarea === "__none__" ? null : calSubarea;
+        const perMonth = Array.from({ length: 12 }, (_, m) => {
+          const days = new Set<number>();
+          for (const r of yearReports) {
+            if (r.area_id !== calArea) continue;
+            if ((r.subarea_id ?? null) !== subFilter) continue;
+            const d = new Date(r.report_date + "T00:00:00");
+            if (d.getMonth() !== m) continue;
+            if (r.completed) days.add(d.getDate());
+          }
+          const dim = new Date(year, m + 1, 0).getDate();
+          const pct = Math.round((days.size / dim) * 100);
+          return { month: MONTH_NAMES[m].slice(0, 3), pct, days: days.size, dim };
+        });
+        const avg = Math.round(perMonth.reduce((s, x) => s + x.pct, 0) / 12);
+        const strokeColor =
+          reportType === "orden_aseo" ? "#10b981" : reportType === "accion_preventiva" ? "#f59e0b" : "#f43f5e";
+        const areaName = areas.find((a) => a.id === calArea)?.name ?? "";
+        const subName = subFilter ? subareas.find((s) => s.id === subFilter)?.name ?? "" : "General";
+        return (
+          <div className="rounded-lg border p-4 space-y-3 bg-card">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div>
+                <h4 className="font-display font-extrabold text-base">Tendencia de cumplimiento {year}</h4>
+                <p className="text-xs text-muted-foreground">
+                  {areaName} · {subName} · Promedio anual{" "}
+                  <strong className="text-foreground">{avg}%</strong>
+                </p>
+              </div>
+            </div>
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={perMonth} margin={{ top: 10, right: 20, left: -10, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id={`grad-${reportType}`} x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor={strokeColor} stopOpacity={0.4} />
+                      <stop offset="100%" stopColor={strokeColor} stopOpacity={1} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
+                  <YAxis
+                    domain={[0, 100]}
+                    tickFormatter={(v) => `${v}%`}
+                    tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      background: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: 8,
+                      fontSize: 12,
+                    }}
+                    formatter={(value: any, _n: any, p: any) => [
+                      `${value}% (${p.payload.days}/${p.payload.dim} días)`,
+                      "Cumplimiento",
+                    ]}
+                  />
+                  <ReferenceLine y={avg} stroke={strokeColor} strokeDasharray="4 4" opacity={0.5} />
+                  <Line
+                    type="monotone"
+                    dataKey="pct"
+                    stroke={`url(#grad-${reportType})`}
+                    strokeWidth={3}
+                    dot={{ r: 4, fill: strokeColor, stroke: "white", strokeWidth: 2 }}
+                    activeDot={{ r: 6 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        );
+      })()}
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Cargando...</p>
