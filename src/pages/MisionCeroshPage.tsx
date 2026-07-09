@@ -293,12 +293,23 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
               <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 gap-2">
                 {calDays.map((d, i) => {
                   const isUploading = uploadingDay === i;
+                  const hasEvidence = !!d.evidenceUrl;
+                  const isApproved = hasEvidence && d.status === "aprobado";
+                  const isPending = hasEvidence && d.status === "pendiente";
+                  const isRejected = hasEvidence && d.status === "rechazado";
+                  const cardTone = isApproved
+                    ? "border-emerald-400 bg-emerald-50"
+                    : isPending
+                    ? "border-amber-400 bg-amber-50"
+                    : isRejected
+                    ? "border-rose-300 bg-rose-50"
+                    : d.completed
+                    ? "border-emerald-400 bg-emerald-50"
+                    : "bg-background";
                   return (
                     <div
                       key={i}
-                      className={`rounded-md border p-2 flex flex-col gap-1.5 text-xs transition-colors ${
-                        d.completed ? "border-emerald-400 bg-emerald-50" : "bg-background"
-                      }`}
+                      className={`rounded-md border p-2 flex flex-col gap-1.5 text-xs transition-colors ${cardTone}`}
                     >
                       <div className="flex items-center justify-between">
                         <span className="font-bold text-sm">Día {i + 1}</span>
@@ -313,7 +324,9 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
                           <button
                             type="button"
                             onClick={() => viewEvidence(d.evidenceUrl!)}
-                            className="flex items-center gap-1 text-emerald-700 hover:underline"
+                            className={`flex items-center gap-1 hover:underline ${
+                              isApproved ? "text-emerald-700" : isRejected ? "text-rose-700" : "text-amber-700"
+                            }`}
                             title="Ver evidencia"
                           >
                             <FileCheck2 className="w-3.5 h-3.5" />
@@ -341,6 +354,43 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
                           </label>
                         )}
                       </div>
+                      {hasEvidence && (
+                        <div className="flex items-center justify-between gap-1">
+                          <span
+                            className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                              isApproved
+                                ? "bg-emerald-600 text-white"
+                                : isRejected
+                                ? "bg-rose-600 text-white"
+                                : "bg-amber-500 text-white"
+                            }`}
+                          >
+                            {isApproved ? "Aprobada" : isRejected ? "Rechazada" : "Pendiente"}
+                          </span>
+                          {isSuperAdmin && !isApproved && d.recordId && (
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                title="Aprobar"
+                                onClick={() => reviewEvidence(d.recordId!, true)}
+                                className="p-0.5 rounded hover:bg-emerald-100 text-emerald-700"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                              </button>
+                              {!isRejected && (
+                                <button
+                                  type="button"
+                                  title="Rechazar"
+                                  onClick={() => reviewEvidence(d.recordId!, false)}
+                                  className="p-0.5 rounded hover:bg-rose-100 text-rose-700"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
