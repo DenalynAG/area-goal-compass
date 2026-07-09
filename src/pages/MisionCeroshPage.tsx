@@ -11,8 +11,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, Sparkles, ShieldAlert, HeartPulse, Trash2 } from "lucide-react";
+import { Plus, Sparkles, ShieldAlert, HeartPulse, Trash2, Paperclip, FileCheck2, Loader2 } from "lucide-react";
 import misionLogo from "@/assets/mision-cerosh-logo.png.asset.json";
 
 type ReportType = "orden_aseo" | "accion_preventiva" | "accidente_trabajo";
@@ -26,6 +27,8 @@ interface Report {
   count: number;
   notes: string | null;
   created_by: string | null;
+  completed?: boolean | null;
+  evidence_url?: string | null;
 }
 
 const REPORT_META: Record<ReportType, { label: string; short: string; icon: any; color: string }> = {
