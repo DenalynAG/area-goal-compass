@@ -226,11 +226,6 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
     return [...byArea.entries()].filter(([_, v]) => v.subareas.size > 0);
   }, [byArea]);
 
-  const areaSubareas = useMemo(
-    () => subareas.filter((s) => s.area_id === form.area_id),
-    [subareas, form.area_id],
-  );
-
   const handleDelete = async (id: string) => {
     if (!confirm("¿Eliminar este reporte?")) return;
     const { error } = await supabase.from("mision_cerosh_reports" as any).delete().eq("id", id);
@@ -262,58 +257,6 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
             </p>
           </div>
         </div>
-
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm">
-              <Plus className="w-4 h-4 mr-1" /> Registrar reporte
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Nuevo {meta.short.toLowerCase()}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3">
-              <div>
-                <Label>Área</Label>
-                <Select value={form.area_id} onValueChange={(v) => setForm({ ...form, area_id: v, subarea_id: "__none__" })}>
-                  <SelectTrigger><SelectValue placeholder="Selecciona área" /></SelectTrigger>
-                  <SelectContent>
-                    {areas.map((a) => (<SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Subárea</Label>
-                <Select value={form.subarea_id} onValueChange={(v) => setForm({ ...form, subarea_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Selecciona subárea" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">— General —</SelectItem>
-                    {areaSubareas.map((s) => (<SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>Fecha</Label>
-                  <Input type="date" value={form.report_date} onChange={(e) => setForm({ ...form, report_date: e.target.value })} />
-                </div>
-                <div>
-                  <Label>Cantidad</Label>
-                  <Input type="number" min={1} value={form.count} onChange={(e) => setForm({ ...form, count: Number(e.target.value) })} />
-                </div>
-              </div>
-              <div>
-                <Label>Observaciones</Label>
-                <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-              <Button onClick={handleSubmit}>Guardar</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
 
       {/* Calendario diario: cumplimiento + evidencia */}
