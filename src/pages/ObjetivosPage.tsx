@@ -1272,6 +1272,8 @@ function ObjectiveCard({
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [kpiEvidenceId, setKpiEvidenceId] = useState<string | null>(null);
   const [kpiEvidenceName, setKpiEvidenceName] = useState('');
+  const [historyKpiId, setHistoryKpiId] = useState<string | null>(null);
+  const [historyKpiName, setHistoryKpiName] = useState('');
   const currentMonth = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
   const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth);
 
