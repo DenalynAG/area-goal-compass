@@ -1406,9 +1406,20 @@ function ObjectiveCard({
     if (selectedMonth === 'total') return;
     const trimmed = (raw ?? '').toString().trim();
     const periodDate = `${selectedMonth}-01`;
-    const existing = relevantMeasurements.find(
+    let existing = relevantMeasurements.find(
       m => m.kpi_id === kpiId && m.period_date.startsWith(selectedMonth)
     );
+
+    if (!existing) {
+      const { data, error } = await supabase
+        .from('kpi_measurements')
+        .select('*')
+        .eq('kpi_id', kpiId)
+        .eq('period_date', periodDate)
+        .maybeSingle();
+      if (error) { toast.error(`No se pudo consultar el valor: ${error.message}`); return; }
+      existing = data as any;
+    }
 
     if (trimmed === '') {
       if (existing) {
@@ -1428,14 +1439,14 @@ function ObjectiveCard({
 
     if (existing) {
       const { error } = await supabase.from('kpi_measurements').update({ value }).eq('id', existing.id);
-      if (error) { toast.error('No se pudo actualizar el valor'); return; }
+      if (error) { toast.error(`No se pudo actualizar el valor: ${error.message}`); return; }
     } else {
       const { data: sessionData } = await supabase.auth.getSession();
       const userId = sessionData?.session?.user?.id ?? null;
       const { error } = await supabase.from('kpi_measurements').insert({
         kpi_id: kpiId, period_date: periodDate, value, created_by: userId,
       } as any);
-      if (error) { toast.error('No se pudo guardar el valor'); return; }
+      if (error) { toast.error(`No se pudo guardar el valor: ${error.message}`); return; }
     }
     qcLocal.invalidateQueries({ queryKey: ['kpi_measurements'] });
     await logActivity('update', 'kpi_measurement', kpiId, { period: selectedMonth, value });
@@ -1447,9 +1458,19 @@ function ObjectiveCard({
     if (selectedMonth === 'total') return;
     const trimmed = (raw ?? '').toString().trim();
     const periodDate = `${selectedMonth}-01`;
-    const existing = relevantMeasurements.find(
+    let existing = relevantMeasurements.find(
       m => m.kpi_id === kpiId && m.period_date.startsWith(selectedMonth)
     );
+    if (!existing) {
+      const { data, error } = await supabase
+        .from('kpi_measurements')
+        .select('*')
+        .eq('kpi_id', kpiId)
+        .eq('period_date', periodDate)
+        .maybeSingle();
+      if (error) { toast.error(`No se pudo consultar la meta: ${error.message}`); return; }
+      existing = data as any;
+    }
     const kpi = objKpis.find(k => k.id === kpiId);
     const fallbackTarget = Number(kpi?.target) || 0;
     const existingTarget = (existing as any)?.target;
