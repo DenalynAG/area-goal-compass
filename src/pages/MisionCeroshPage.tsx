@@ -341,7 +341,7 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
                       className={`rounded-md border p-2 flex flex-col gap-1.5 text-xs transition-colors ${cardTone}`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-sm">Día {i + 1}</span>
+                        <span className="font-bold text-sm">Día {i + 1} - {DAY_NAMES[new Date(year, month, i + 1).getDay()].toLowerCase()}</span>
                         <Checkbox
                           checked={d.completed}
                           onCheckedChange={(v) => toggleCompleted(i, Boolean(v))}
