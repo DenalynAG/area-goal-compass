@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAreas, useSubareas } from "@/hooks/useSupabaseData";
@@ -254,6 +254,15 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
   const populatedAreas = useMemo(() => {
     return [...byArea.entries()].filter(([_, v]) => v.subareas.size > 0);
   }, [byArea]);
+
+  // Cargar el área por defecto en cada pestaña: primero con datos, sino la primera disponible
+  useEffect(() => {
+    if (!calArea && areas.length > 0) {
+      const firstWithData = populatedAreas[0]?.[0];
+      setCalArea(firstWithData ?? areas[0].id);
+      setCalSubarea("__none__");
+    }
+  }, [areas, populatedAreas, calArea]);
 
   const handleDelete = async (id: string) => {
     if (!confirm("¿Eliminar este reporte?")) return;
