@@ -94,6 +94,8 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
   const [calArea, setCalArea] = useState<string>("");
   const [calSubarea, setCalSubarea] = useState<string>("__none__");
   const [uploadingDay, setUploadingDay] = useState<number | null>(null);
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [rejectionNote, setRejectionNote] = useState("");
 
   const calAreaSubareas = useMemo(
     () => subareas.filter((s) => s.area_id === calArea),
@@ -203,13 +205,7 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
     window.open(data.signedUrl, "_blank");
   };
 
-  const reviewEvidence = async (recordId: string, approve: boolean) => {
-    let reason: string | null = null;
-    if (!approve) {
-      const input = window.prompt("Motivo del rechazo (opcional):", "");
-      if (input === null) return; // user cancelled
-      reason = input.trim() || null;
-    }
+  const reviewEvidence = async (recordId: string, approve: boolean, reason: string | null = null) => {
     const { error } = await supabase
       .from("mision_cerosh_reports" as any)
       .update({
@@ -221,6 +217,8 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
       .eq("id", recordId);
     if (error) { toast.error("No se pudo actualizar: " + error.message); return; }
     toast.success(approve ? "Evidencia aprobada" : "Evidencia rechazada");
+    setRejectingId(null);
+    setRejectionNote("");
     qc.invalidateQueries({ queryKey: ["mision_cerosh_reports", reportType] });
   };
 
