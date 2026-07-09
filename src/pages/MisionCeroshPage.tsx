@@ -40,6 +40,7 @@ const REPORT_META: Record<ReportType, { label: string; short: string; icon: any;
 };
 
 const MONTH_NAMES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const DAY_NAMES = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
 
 function useReports(reportType: ReportType, year: number, month: number) {
   const start = `${year}-${String(month + 1).padStart(2, "0")}-01`;
