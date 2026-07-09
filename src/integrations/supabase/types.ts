@@ -893,48 +893,6 @@ export type Database = {
         }
         Relationships: []
       }
-      kpi_measurement_history: {
-        Row: {
-          action: string
-          changed_at: string
-          changed_by: string | null
-          changed_by_name: string | null
-          field: string
-          id: string
-          kpi_id: string
-          measurement_id: string | null
-          new_value: number | null
-          old_value: number | null
-          period_date: string
-        }
-        Insert: {
-          action: string
-          changed_at?: string
-          changed_by?: string | null
-          changed_by_name?: string | null
-          field: string
-          id?: string
-          kpi_id: string
-          measurement_id?: string | null
-          new_value?: number | null
-          old_value?: number | null
-          period_date: string
-        }
-        Update: {
-          action?: string
-          changed_at?: string
-          changed_by?: string | null
-          changed_by_name?: string | null
-          field?: string
-          id?: string
-          kpi_id?: string
-          measurement_id?: string | null
-          new_value?: number | null
-          old_value?: number | null
-          period_date?: string
-        }
-        Relationships: []
-      }
       kpi_measurements: {
         Row: {
           created_at: string
