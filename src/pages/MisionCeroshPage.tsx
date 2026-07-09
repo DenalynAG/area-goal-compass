@@ -69,7 +69,7 @@ function useYearReports(reportType: ReportType, year: number) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("mision_cerosh_reports" as any)
-        .select("report_type, area_id, subarea_id, report_date, completed")
+        .select("report_type, area_id, subarea_id, report_date, completed, evidence_status")
         .eq("report_type", reportType)
         .gte("report_date", start)
         .lt("report_date", end);
@@ -441,16 +441,19 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
         const subFilter = calSubarea === "__none__" ? null : calSubarea;
         const perMonth = Array.from({ length: 12 }, (_, m) => {
           const days = new Set<number>();
+          const rejected = new Set<number>();
           for (const r of yearReports) {
             if (r.area_id !== calArea) continue;
             if ((r.subarea_id ?? null) !== subFilter) continue;
             const d = new Date(r.report_date + "T00:00:00");
             if (d.getMonth() !== m) continue;
-            if (r.completed) days.add(d.getDate());
+            if (r.evidence_status === "rechazado") rejected.add(d.getDate());
+            else if (r.completed) days.add(d.getDate());
           }
+          for (const day of rejected) days.delete(day);
           const dim = new Date(year, m + 1, 0).getDate();
           const pct = Math.round((days.size / dim) * 100);
-          return { month: MONTH_NAMES[m].slice(0, 3), pct, days: days.size, dim };
+          return { month: MONTH_NAMES[m].slice(0, 3), pct, days: days.size, dim, rejected: rejected.size };
         });
         const avg = Math.round(perMonth.reduce((s, x) => s + x.pct, 0) / 12);
         const strokeColor =
