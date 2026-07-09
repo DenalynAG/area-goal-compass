@@ -94,6 +94,8 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
   const [calArea, setCalArea] = useState<string>("");
   const [calSubarea, setCalSubarea] = useState<string>("__none__");
   const [uploadingDay, setUploadingDay] = useState<number | null>(null);
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [rejectionNote, setRejectionNote] = useState("");
 
   const calAreaSubareas = useMemo(
     () => subareas.filter((s) => s.area_id === calArea),
@@ -203,13 +205,7 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
     window.open(data.signedUrl, "_blank");
   };
 
-  const reviewEvidence = async (recordId: string, approve: boolean) => {
-    let reason: string | null = null;
-    if (!approve) {
-      const input = window.prompt("Motivo del rechazo (opcional):", "");
-      if (input === null) return; // user cancelled
-      reason = input.trim() || null;
-    }
+  const reviewEvidence = async (recordId: string, approve: boolean, reason: string | null = null) => {
     const { error } = await supabase
       .from("mision_cerosh_reports" as any)
       .update({
@@ -221,6 +217,8 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
       .eq("id", recordId);
     if (error) { toast.error("No se pudo actualizar: " + error.message); return; }
     toast.success(approve ? "Evidencia aprobada" : "Evidencia rechazada");
+    setRejectingId(null);
+    setRejectionNote("");
     qc.invalidateQueries({ queryKey: ["mision_cerosh_reports", reportType] });
   };
 
@@ -411,7 +409,10 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
                                 <button
                                   type="button"
                                   title="Rechazar"
-                                  onClick={() => reviewEvidence(d.recordId!, false)}
+                                  onClick={() => {
+                                    setRejectingId(d.recordId!);
+                                    setRejectionNote("");
+                                  }}
                                   className="p-0.5 rounded hover:bg-rose-100 text-rose-700"
                                 >
                                   <X className="w-3.5 h-3.5" />
@@ -419,6 +420,34 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
                               )}
                             </div>
                           )}
+                        </div>
+                      )}
+                      {isSuperAdmin && d.recordId && rejectingId === d.recordId && (
+                        <div className="mt-1 space-y-1 rounded border border-rose-200 bg-rose-50/60 p-1.5">
+                          <Textarea
+                            value={rejectionNote}
+                            onChange={(e) => setRejectionNote(e.target.value)}
+                            placeholder="Motivo del rechazo…"
+                            rows={2}
+                            autoFocus
+                            className="text-[11px] min-h-[48px] resize-none bg-background"
+                          />
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              onClick={() => { setRejectingId(null); setRejectionNote(""); }}
+                              className="text-[10px] px-1.5 py-0.5 rounded hover:bg-muted text-muted-foreground"
+                            >
+                              Cancelar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => reviewEvidence(d.recordId!, false, rejectionNote.trim() || null)}
+                              className="text-[10px] px-2 py-0.5 rounded bg-rose-600 text-white hover:bg-rose-700"
+                            >
+                              Rechazar
+                            </button>
+                          </div>
                         </div>
                       )}
                       {isRejected && d.rejectionReason && (
