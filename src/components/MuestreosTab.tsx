@@ -105,11 +105,12 @@ interface MuestreosTabProps {
 
 export default function MuestreosTab({ areaFilterName }: MuestreosTabProps = {}) {
   const { user, profile, isSuperAdmin, hasRole } = useAuth();
+  const hasCalidadGlobal = (profile as any)?.calidad_global_access === true;
   const qc = useQueryClient();
   const { data: records = [], isLoading } = useSamplingRecords();
   const { data: dbRows = [] } = useSamplingGridRows();
   const isRRHH = !areaFilterName || areaFilterName === 'Recursos Humanos';
-  const canManage = (isSuperAdmin || hasRole('admin_area')) && isRRHH;
+  const canManage = (isSuperAdmin || hasRole('admin_area') || hasCalidadGlobal) && isRRHH;
 
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [samplingType, setSamplingType] = useState('microbiologico');
