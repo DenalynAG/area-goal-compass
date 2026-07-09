@@ -29,6 +29,7 @@ interface Report {
   completed?: boolean | null;
   evidence_url?: string | null;
   evidence_status?: string | null;
+  rejection_reason?: string | null;
 }
 
 const REPORT_META: Record<ReportType, { label: string; short: string; icon: any; color: string }> = {
@@ -81,8 +82,8 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
 
   // Per-day info for selected area/subarea
   const calDays = useMemo(() => {
-    const arr: { completed: boolean; evidenceUrl: string | null; recordId: string | null; hasReport: boolean; status: string }[] =
-      Array.from({ length: daysInMonth }, () => ({ completed: false, evidenceUrl: null, recordId: null, hasReport: false, status: "pendiente" }));
+    const arr: { completed: boolean; evidenceUrl: string | null; recordId: string | null; hasReport: boolean; status: string; rejectionReason: string | null }[] =
+      Array.from({ length: daysInMonth }, () => ({ completed: false, evidenceUrl: null, recordId: null, hasReport: false, status: "pendiente", rejectionReason: null }));
     if (!calArea) return arr;
     const subFilter = calSubarea === "__none__" ? null : calSubarea;
     for (const r of reports) {
@@ -97,6 +98,7 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
         slot.evidenceUrl = r.evidence_url;
         slot.recordId = r.id;
         slot.status = r.evidence_status ?? "pendiente";
+        slot.rejectionReason = r.rejection_reason ?? null;
       } else if (!slot.recordId) {
         slot.recordId = r.id;
       }
@@ -182,12 +184,19 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
   };
 
   const reviewEvidence = async (recordId: string, approve: boolean) => {
+    let reason: string | null = null;
+    if (!approve) {
+      const input = window.prompt("Motivo del rechazo (opcional):", "");
+      if (input === null) return; // user cancelled
+      reason = input.trim() || null;
+    }
     const { error } = await supabase
       .from("mision_cerosh_reports" as any)
       .update({
         evidence_status: approve ? "aprobado" : "rechazado",
         approved_by: user?.id ?? null,
         approved_at: new Date().toISOString(),
+        rejection_reason: approve ? null : reason,
       })
       .eq("id", recordId);
     if (error) { toast.error("No se pudo actualizar: " + error.message); return; }
