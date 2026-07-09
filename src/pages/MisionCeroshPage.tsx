@@ -344,10 +344,25 @@ export default function MisionCeroshPage() {
       </div>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as ReportType)}>
-        <TabsList className="grid grid-cols-3 w-full max-w-2xl">
-          <TabsTrigger value="orden_aseo">Orden y Aseo</TabsTrigger>
-          <TabsTrigger value="accion_preventiva">Acción Preventiva</TabsTrigger>
-          <TabsTrigger value="accidente_trabajo">Accidentes</TabsTrigger>
+        <TabsList className="flex-wrap h-auto gap-1 bg-transparent p-0">
+          <TabsTrigger
+            value="orden_aseo"
+            className="border border-emerald-300 bg-emerald-50 text-emerald-800 data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:border-emerald-600"
+          >
+            Orden y Aseo
+          </TabsTrigger>
+          <TabsTrigger
+            value="accion_preventiva"
+            className="border border-amber-300 bg-amber-50 text-amber-800 data-[state=active]:bg-amber-500 data-[state=active]:text-white data-[state=active]:border-amber-500"
+          >
+            Acción Preventiva
+          </TabsTrigger>
+          <TabsTrigger
+            value="accidente_trabajo"
+            className="border border-rose-300 bg-rose-50 text-rose-800 data-[state=active]:bg-rose-600 data-[state=active]:text-white data-[state=active]:border-rose-600"
+          >
+            Accidentes
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="orden_aseo" className="mt-6">
           <ReportSection reportType="orden_aseo" year={year} month={month} />
