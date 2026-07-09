@@ -1221,11 +1221,14 @@ export type Database = {
       }
       mision_cerosh_reports: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           area_id: string
           completed: boolean
           count: number
           created_at: string
           created_by: string | null
+          evidence_status: string
           evidence_url: string | null
           id: string
           notes: string | null
@@ -1235,11 +1238,14 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           area_id: string
           completed?: boolean
           count?: number
           created_at?: string
           created_by?: string | null
+          evidence_status?: string
           evidence_url?: string | null
           id?: string
           notes?: string | null
@@ -1249,11 +1255,14 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           area_id?: string
           completed?: boolean
           count?: number
           created_at?: string
           created_by?: string | null
+          evidence_status?: string
           evidence_url?: string | null
           id?: string
           notes?: string | null
