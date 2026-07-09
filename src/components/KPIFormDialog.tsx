@@ -71,7 +71,9 @@ export default function KPIFormDialog({
   const [weightPercent, setWeightPercent] = useState(0);
   const defaultMonth = () => {
     const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    // Default to previous month (e.g., July -> June)
+    const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    return `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, "0")}`;
   };
   const [measurementMonth, setMeasurementMonth] = useState(defaultMonth());
 
