@@ -68,7 +68,9 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   const [dashAreaId, setDashAreaId] = useState<string>('__all__');
   const [dashSubareaId, setDashSubareaId] = useState<string>('__all__');
   const [dashRoleFilter, setDashRoleFilter] = useState<string>('__all__');
-  const [dashMonth, setDashMonth] = useState<string>('__all__');
+  // Default dashboard month to previous month (e.g., July -> June)
+  const defaultDashMonth = String(new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).getMonth() + 1).padStart(2, '0');
+  const [dashMonth, setDashMonth] = useState<string>(defaultDashMonth);
   const [expandedAreas, setExpandedAreas] = useState<Record<string, boolean>>({});
   const toggleArea = (id: string) => setExpandedAreas(prev => ({ ...prev, [id]: !prev[id] }));
 
@@ -1291,8 +1293,10 @@ function ObjectiveCard({
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [kpiEvidenceId, setKpiEvidenceId] = useState<string | null>(null);
   const [kpiEvidenceName, setKpiEvidenceName] = useState('');
-  const currentMonth = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
-  const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth);
+  // Default to previous month (e.g., July -> June)
+  const prevMonthDate = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1);
+  const previousMonth = `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth() + 1).padStart(2, '0')}`;
+  const [selectedMonth, setSelectedMonth] = useState<string>(previousMonth);
 
   const { data: kpiEvidenceRows = [] } = useEvidenceCountsByEntity('kpi');
   const { data: objEvidenceRows = [] } = useEvidenceCountsByEntity('objective');
