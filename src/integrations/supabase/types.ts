@@ -1222,9 +1222,11 @@ export type Database = {
       mision_cerosh_reports: {
         Row: {
           area_id: string
+          completed: boolean
           count: number
           created_at: string
           created_by: string | null
+          evidence_url: string | null
           id: string
           notes: string | null
           report_date: string
@@ -1234,9 +1236,11 @@ export type Database = {
         }
         Insert: {
           area_id: string
+          completed?: boolean
           count?: number
           created_at?: string
           created_by?: string | null
+          evidence_url?: string | null
           id?: string
           notes?: string | null
           report_date?: string
@@ -1246,9 +1250,11 @@ export type Database = {
         }
         Update: {
           area_id?: string
+          completed?: boolean
           count?: number
           created_at?: string
           created_by?: string | null
+          evidence_url?: string | null
           id?: string
           notes?: string | null
           report_date?: string
