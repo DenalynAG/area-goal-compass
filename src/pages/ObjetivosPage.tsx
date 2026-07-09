@@ -5,7 +5,7 @@ import { getTrafficLight } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { StatusBadge, ProgressBar, TrafficLightBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
-import { Plus, Target, ChevronRight, ChevronDown, Edit, TrendingUp, Settings, ArrowLeft, BarChart3, Paperclip, Calendar, Upload, Download, Layers, User, Trash2 } from 'lucide-react';
+import { Plus, Target, ChevronRight, ChevronDown, Edit, TrendingUp, Settings, ArrowLeft, BarChart3, Paperclip, Calendar, Upload, Download, Layers, User, Trash2, History } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +20,7 @@ import type { Tables } from '@/integrations/supabase/types';
 import ObjetivoFormDialog from '@/components/ObjetivoFormDialog';
 import KPIFormDialog from '@/components/KPIFormDialog';
 import EvidencePanel from '@/components/EvidencePanel';
+import KpiHistoryDialog from '@/components/KpiHistoryDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { logActivity } from '@/lib/activityLog';
 import { useQueryClient } from '@tanstack/react-query';
@@ -1271,6 +1272,8 @@ function ObjectiveCard({
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [kpiEvidenceId, setKpiEvidenceId] = useState<string | null>(null);
   const [kpiEvidenceName, setKpiEvidenceName] = useState('');
+  const [historyKpiId, setHistoryKpiId] = useState<string | null>(null);
+  const [historyKpiName, setHistoryKpiName] = useState('');
   const currentMonth = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
   const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth);
 
@@ -1743,6 +1746,9 @@ function ObjectiveCard({
                             ) : null;
                           })()}
                         </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" title="Historial de cambios" onClick={() => { setHistoryKpiId(k.id); setHistoryKpiName(k.name); }}>
+                          <History className="w-3 h-3" />
+                        </Button>
                         {(canEdit || canEditKpi) && (
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEditKPI(k, selectedMonth)}>
                             <Edit className="w-3 h-3" />
@@ -1826,6 +1832,12 @@ function ObjectiveCard({
           onOpenChange={(open) => { if (!open) setKpiEvidenceId(null); }}
         />
       )}
+      <KpiHistoryDialog
+        kpiId={historyKpiId}
+        kpiName={historyKpiName}
+        open={!!historyKpiId}
+        onOpenChange={(open) => { if (!open) setHistoryKpiId(null); }}
+      />
     </div>
   );
 }
