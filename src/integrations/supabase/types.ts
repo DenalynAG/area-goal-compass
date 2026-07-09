@@ -1232,6 +1232,7 @@ export type Database = {
           evidence_url: string | null
           id: string
           notes: string | null
+          rejection_reason: string | null
           report_date: string
           report_type: Database["public"]["Enums"]["mision_cerosh_report_type"]
           subarea_id: string | null
@@ -1249,6 +1250,7 @@ export type Database = {
           evidence_url?: string | null
           id?: string
           notes?: string | null
+          rejection_reason?: string | null
           report_date?: string
           report_type: Database["public"]["Enums"]["mision_cerosh_report_type"]
           subarea_id?: string | null
@@ -1266,6 +1268,7 @@ export type Database = {
           evidence_url?: string | null
           id?: string
           notes?: string | null
+          rejection_reason?: string | null
           report_date?: string
           report_type?: Database["public"]["Enums"]["mision_cerosh_report_type"]
           subarea_id?: string | null
