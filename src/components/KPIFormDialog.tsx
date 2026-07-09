@@ -262,9 +262,6 @@ export default function KPIFormDialog({
     // (allow 0 and negative values too — the user may need to correct or reset a month)
     if (kpiId) {
       const periodDate = `${measurementMonth}-01`;
-      const [yyyy, mm] = measurementMonth.split("-");
-      const nextMonth =
-        parseInt(mm) === 12 ? `${parseInt(yyyy) + 1}-01` : `${yyyy}-${String(parseInt(mm) + 1).padStart(2, "0")}`;
       // Check if measurement already exists for this KPI and exact month. The
       // database also enforces uniqueness so saving one KPI cannot create or
       // overwrite rows from sibling KPIs.
