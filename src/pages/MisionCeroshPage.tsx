@@ -7,13 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, Sparkles, ShieldAlert, HeartPulse, Trash2, Paperclip, FileCheck2, Loader2 } from "lucide-react";
+import { Sparkles, ShieldAlert, HeartPulse, Trash2, Paperclip, FileCheck2, Loader2, Check, X } from "lucide-react";
 import misionLogo from "@/assets/mision-cerosh-logo.png.asset.json";
 
 type ReportType = "orden_aseo" | "accion_preventiva" | "accidente_trabajo";
@@ -29,6 +28,7 @@ interface Report {
   created_by: string | null;
   completed?: boolean | null;
   evidence_url?: string | null;
+  evidence_status?: string | null;
 }
 
 const REPORT_META: Record<ReportType, { label: string; short: string; icon: any; color: string }> = {
@@ -60,22 +60,12 @@ function useReports(reportType: ReportType, year: number, month: number) {
 }
 
 function ReportSection({ reportType, year, month }: { reportType: ReportType; year: number; month: number }) {
-  const { user } = useAuth();
+  const { user, isSuperAdmin } = useAuth();
   const meta = REPORT_META[reportType];
   const qc = useQueryClient();
   const { data: areas = [] } = useAreas();
   const { data: subareas = [] } = useSubareas();
   const { data: reports = [], isLoading } = useReports(reportType, year, month);
-
-  const [open, setOpen] = useState(false);
-  const today = new Date().toISOString().slice(0, 10);
-  const [form, setForm] = useState({
-    area_id: "",
-    subarea_id: "__none__",
-    report_date: today,
-    count: 1,
-    notes: "",
-  });
 
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
@@ -91,8 +81,8 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
 
   // Per-day info for selected area/subarea
   const calDays = useMemo(() => {
-    const arr: { completed: boolean; evidenceUrl: string | null; recordId: string | null; hasReport: boolean }[] =
-      Array.from({ length: daysInMonth }, () => ({ completed: false, evidenceUrl: null, recordId: null, hasReport: false }));
+    const arr: { completed: boolean; evidenceUrl: string | null; recordId: string | null; hasReport: boolean; status: string }[] =
+      Array.from({ length: daysInMonth }, () => ({ completed: false, evidenceUrl: null, recordId: null, hasReport: false, status: "pendiente" }));
     if (!calArea) return arr;
     const subFilter = calSubarea === "__none__" ? null : calSubarea;
     for (const r of reports) {
@@ -106,6 +96,7 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
       if (r.evidence_url) {
         slot.evidenceUrl = r.evidence_url;
         slot.recordId = r.id;
+        slot.status = r.evidence_status ?? "pendiente";
       } else if (!slot.recordId) {
         slot.recordId = r.id;
       }
@@ -160,7 +151,7 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
       if (existing) {
         const { error } = await supabase
           .from("mision_cerosh_reports" as any)
-          .update({ evidence_url: path, completed: true })
+          .update({ evidence_url: path, completed: true, evidence_status: "pendiente", approved_by: null, approved_at: null })
           .eq("id", existing);
         if (error) { toast.error("Error guardando: " + error.message); return; }
       } else {
@@ -172,11 +163,12 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
           count: 1,
           completed: true,
           evidence_url: path,
+          evidence_status: "pendiente",
           created_by: user?.id ?? null,
         });
         if (error) { toast.error("Error guardando: " + error.message); return; }
       }
-      toast.success("Evidencia adjuntada");
+      toast.success("Evidencia adjuntada. Pendiente de aprobación.");
       qc.invalidateQueries({ queryKey: ["mision_cerosh_reports", reportType] });
     } finally {
       setUploadingDay(null);
@@ -187,6 +179,20 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
     const { data, error } = await supabase.storage.from("evidencias").createSignedUrl(path, 300);
     if (error || !data?.signedUrl) { toast.error("No se pudo abrir la evidencia"); return; }
     window.open(data.signedUrl, "_blank");
+  };
+
+  const reviewEvidence = async (recordId: string, approve: boolean) => {
+    const { error } = await supabase
+      .from("mision_cerosh_reports" as any)
+      .update({
+        evidence_status: approve ? "aprobado" : "rechazado",
+        approved_by: user?.id ?? null,
+        approved_at: new Date().toISOString(),
+      })
+      .eq("id", recordId);
+    if (error) { toast.error("No se pudo actualizar: " + error.message); return; }
+    toast.success(approve ? "Evidencia aprobada" : "Evidencia rechazada");
+    qc.invalidateQueries({ queryKey: ["mision_cerosh_reports", reportType] });
   };
 
   // Group counts per (area,subarea) per day
@@ -224,31 +230,6 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
     () => subareas.filter((s) => s.area_id === form.area_id),
     [subareas, form.area_id],
   );
-
-  const handleSubmit = async () => {
-    if (!form.area_id) {
-      toast.error("Selecciona un área");
-      return;
-    }
-    const payload: any = {
-      report_type: reportType,
-      area_id: form.area_id,
-      subarea_id: form.subarea_id === "__none__" ? null : form.subarea_id,
-      report_date: form.report_date,
-      count: Number(form.count) || 1,
-      notes: form.notes || null,
-      created_by: user?.id ?? null,
-    };
-    const { error } = await supabase.from("mision_cerosh_reports" as any).insert(payload);
-    if (error) {
-      toast.error("No se pudo guardar el reporte: " + error.message);
-      return;
-    }
-    toast.success("Reporte registrado");
-    setOpen(false);
-    setForm({ area_id: "", subarea_id: "__none__", report_date: today, count: 1, notes: "" });
-    qc.invalidateQueries({ queryKey: ["mision_cerosh_reports", reportType] });
-  };
 
   const handleDelete = async (id: string) => {
     if (!confirm("¿Eliminar este reporte?")) return;
