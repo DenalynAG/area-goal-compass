@@ -35,8 +35,9 @@ function pctColor(p: number | null) {
 }
 
 export default function BpmInspectionTab() {
-  const { isSuperAdmin, hasRole } = useAuth();
-  const canManage = isSuperAdmin || hasRole("admin_area");
+  const { isSuperAdmin, hasRole, profile } = useAuth();
+  const hasCalidadGlobal = (profile as any)?.calidad_global_access === true;
+  const canManage = isSuperAdmin || hasRole("admin_area") || hasCalidadGlobal;
   const qc = useQueryClient();
 
   const currentYear = new Date().getFullYear();

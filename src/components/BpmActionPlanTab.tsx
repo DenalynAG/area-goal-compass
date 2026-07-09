@@ -58,8 +58,9 @@ const emptyForm = (): Omit<Row, "id"> => ({
 });
 
 export default function BpmActionPlanTab() {
-  const { user, isSuperAdmin, hasRole } = useAuth();
-  const canManage = isSuperAdmin || hasRole("admin_area");
+  const { user, isSuperAdmin, hasRole, profile } = useAuth();
+  const hasCalidadGlobal = (profile as any)?.calidad_global_access === true;
+  const canManage = isSuperAdmin || hasRole("admin_area") || hasCalidadGlobal;
   const qc = useQueryClient();
 
   const { data: rows = [], isLoading } = useQuery({
