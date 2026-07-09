@@ -7,13 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, Sparkles, ShieldAlert, HeartPulse, Trash2, Paperclip, FileCheck2, Loader2 } from "lucide-react";
+import { Sparkles, ShieldAlert, HeartPulse, Trash2, Paperclip, FileCheck2, Loader2, Check, X } from "lucide-react";
 import misionLogo from "@/assets/mision-cerosh-logo.png.asset.json";
 
 type ReportType = "orden_aseo" | "accion_preventiva" | "accidente_trabajo";
@@ -29,6 +28,7 @@ interface Report {
   created_by: string | null;
   completed?: boolean | null;
   evidence_url?: string | null;
+  evidence_status?: string | null;
 }
 
 const REPORT_META: Record<ReportType, { label: string; short: string; icon: any; color: string }> = {
@@ -60,22 +60,12 @@ function useReports(reportType: ReportType, year: number, month: number) {
 }
 
 function ReportSection({ reportType, year, month }: { reportType: ReportType; year: number; month: number }) {
-  const { user } = useAuth();
+  const { user, isSuperAdmin } = useAuth();
   const meta = REPORT_META[reportType];
   const qc = useQueryClient();
   const { data: areas = [] } = useAreas();
   const { data: subareas = [] } = useSubareas();
   const { data: reports = [], isLoading } = useReports(reportType, year, month);
-
-  const [open, setOpen] = useState(false);
-  const today = new Date().toISOString().slice(0, 10);
-  const [form, setForm] = useState({
-    area_id: "",
-    subarea_id: "__none__",
-    report_date: today,
-    count: 1,
-    notes: "",
-  });
 
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
@@ -91,8 +81,8 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
 
   // Per-day info for selected area/subarea
   const calDays = useMemo(() => {
-    const arr: { completed: boolean; evidenceUrl: string | null; recordId: string | null; hasReport: boolean }[] =
-      Array.from({ length: daysInMonth }, () => ({ completed: false, evidenceUrl: null, recordId: null, hasReport: false }));
+    const arr: { completed: boolean; evidenceUrl: string | null; recordId: string | null; hasReport: boolean; status: string }[] =
+      Array.from({ length: daysInMonth }, () => ({ completed: false, evidenceUrl: null, recordId: null, hasReport: false, status: "pendiente" }));
     if (!calArea) return arr;
     const subFilter = calSubarea === "__none__" ? null : calSubarea;
     for (const r of reports) {
@@ -106,6 +96,7 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
       if (r.evidence_url) {
         slot.evidenceUrl = r.evidence_url;
         slot.recordId = r.id;
+        slot.status = r.evidence_status ?? "pendiente";
       } else if (!slot.recordId) {
         slot.recordId = r.id;
       }
@@ -160,7 +151,7 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
       if (existing) {
         const { error } = await supabase
           .from("mision_cerosh_reports" as any)
-          .update({ evidence_url: path, completed: true })
+          .update({ evidence_url: path, completed: true, evidence_status: "pendiente", approved_by: null, approved_at: null })
           .eq("id", existing);
         if (error) { toast.error("Error guardando: " + error.message); return; }
       } else {
@@ -172,11 +163,12 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
           count: 1,
           completed: true,
           evidence_url: path,
+          evidence_status: "pendiente",
           created_by: user?.id ?? null,
         });
         if (error) { toast.error("Error guardando: " + error.message); return; }
       }
-      toast.success("Evidencia adjuntada");
+      toast.success("Evidencia adjuntada. Pendiente de aprobación.");
       qc.invalidateQueries({ queryKey: ["mision_cerosh_reports", reportType] });
     } finally {
       setUploadingDay(null);
@@ -187,6 +179,20 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
     const { data, error } = await supabase.storage.from("evidencias").createSignedUrl(path, 300);
     if (error || !data?.signedUrl) { toast.error("No se pudo abrir la evidencia"); return; }
     window.open(data.signedUrl, "_blank");
+  };
+
+  const reviewEvidence = async (recordId: string, approve: boolean) => {
+    const { error } = await supabase
+      .from("mision_cerosh_reports" as any)
+      .update({
+        evidence_status: approve ? "aprobado" : "rechazado",
+        approved_by: user?.id ?? null,
+        approved_at: new Date().toISOString(),
+      })
+      .eq("id", recordId);
+    if (error) { toast.error("No se pudo actualizar: " + error.message); return; }
+    toast.success(approve ? "Evidencia aprobada" : "Evidencia rechazada");
+    qc.invalidateQueries({ queryKey: ["mision_cerosh_reports", reportType] });
   };
 
   // Group counts per (area,subarea) per day
@@ -220,36 +226,6 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
     return [...byArea.entries()].filter(([_, v]) => v.subareas.size > 0);
   }, [byArea]);
 
-  const areaSubareas = useMemo(
-    () => subareas.filter((s) => s.area_id === form.area_id),
-    [subareas, form.area_id],
-  );
-
-  const handleSubmit = async () => {
-    if (!form.area_id) {
-      toast.error("Selecciona un área");
-      return;
-    }
-    const payload: any = {
-      report_type: reportType,
-      area_id: form.area_id,
-      subarea_id: form.subarea_id === "__none__" ? null : form.subarea_id,
-      report_date: form.report_date,
-      count: Number(form.count) || 1,
-      notes: form.notes || null,
-      created_by: user?.id ?? null,
-    };
-    const { error } = await supabase.from("mision_cerosh_reports" as any).insert(payload);
-    if (error) {
-      toast.error("No se pudo guardar el reporte: " + error.message);
-      return;
-    }
-    toast.success("Reporte registrado");
-    setOpen(false);
-    setForm({ area_id: "", subarea_id: "__none__", report_date: today, count: 1, notes: "" });
-    qc.invalidateQueries({ queryKey: ["mision_cerosh_reports", reportType] });
-  };
-
   const handleDelete = async (id: string) => {
     if (!confirm("¿Eliminar este reporte?")) return;
     const { error } = await supabase.from("mision_cerosh_reports" as any).delete().eq("id", id);
@@ -281,58 +257,6 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
             </p>
           </div>
         </div>
-
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm">
-              <Plus className="w-4 h-4 mr-1" /> Registrar reporte
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Nuevo {meta.short.toLowerCase()}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3">
-              <div>
-                <Label>Área</Label>
-                <Select value={form.area_id} onValueChange={(v) => setForm({ ...form, area_id: v, subarea_id: "__none__" })}>
-                  <SelectTrigger><SelectValue placeholder="Selecciona área" /></SelectTrigger>
-                  <SelectContent>
-                    {areas.map((a) => (<SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Subárea</Label>
-                <Select value={form.subarea_id} onValueChange={(v) => setForm({ ...form, subarea_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Selecciona subárea" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">— General —</SelectItem>
-                    {areaSubareas.map((s) => (<SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>Fecha</Label>
-                  <Input type="date" value={form.report_date} onChange={(e) => setForm({ ...form, report_date: e.target.value })} />
-                </div>
-                <div>
-                  <Label>Cantidad</Label>
-                  <Input type="number" min={1} value={form.count} onChange={(e) => setForm({ ...form, count: Number(e.target.value) })} />
-                </div>
-              </div>
-              <div>
-                <Label>Observaciones</Label>
-                <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-              <Button onClick={handleSubmit}>Guardar</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
 
       {/* Calendario diario: cumplimiento + evidencia */}
@@ -369,12 +293,23 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
               <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 gap-2">
                 {calDays.map((d, i) => {
                   const isUploading = uploadingDay === i;
+                  const hasEvidence = !!d.evidenceUrl;
+                  const isApproved = hasEvidence && d.status === "aprobado";
+                  const isPending = hasEvidence && d.status === "pendiente";
+                  const isRejected = hasEvidence && d.status === "rechazado";
+                  const cardTone = isApproved
+                    ? "border-emerald-400 bg-emerald-50"
+                    : isPending
+                    ? "border-amber-400 bg-amber-50"
+                    : isRejected
+                    ? "border-rose-300 bg-rose-50"
+                    : d.completed
+                    ? "border-emerald-400 bg-emerald-50"
+                    : "bg-background";
                   return (
                     <div
                       key={i}
-                      className={`rounded-md border p-2 flex flex-col gap-1.5 text-xs transition-colors ${
-                        d.completed ? "border-emerald-400 bg-emerald-50" : "bg-background"
-                      }`}
+                      className={`rounded-md border p-2 flex flex-col gap-1.5 text-xs transition-colors ${cardTone}`}
                     >
                       <div className="flex items-center justify-between">
                         <span className="font-bold text-sm">Día {i + 1}</span>
@@ -389,7 +324,9 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
                           <button
                             type="button"
                             onClick={() => viewEvidence(d.evidenceUrl!)}
-                            className="flex items-center gap-1 text-emerald-700 hover:underline"
+                            className={`flex items-center gap-1 hover:underline ${
+                              isApproved ? "text-emerald-700" : isRejected ? "text-rose-700" : "text-amber-700"
+                            }`}
                             title="Ver evidencia"
                           >
                             <FileCheck2 className="w-3.5 h-3.5" />
@@ -417,6 +354,43 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
                           </label>
                         )}
                       </div>
+                      {hasEvidence && (
+                        <div className="flex items-center justify-between gap-1">
+                          <span
+                            className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                              isApproved
+                                ? "bg-emerald-600 text-white"
+                                : isRejected
+                                ? "bg-rose-600 text-white"
+                                : "bg-amber-500 text-white"
+                            }`}
+                          >
+                            {isApproved ? "Aprobada" : isRejected ? "Rechazada" : "Pendiente"}
+                          </span>
+                          {isSuperAdmin && !isApproved && d.recordId && (
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                title="Aprobar"
+                                onClick={() => reviewEvidence(d.recordId!, true)}
+                                className="p-0.5 rounded hover:bg-emerald-100 text-emerald-700"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                              </button>
+                              {!isRejected && (
+                                <button
+                                  type="button"
+                                  title="Rechazar"
+                                  onClick={() => reviewEvidence(d.recordId!, false)}
+                                  className="p-0.5 rounded hover:bg-rose-100 text-rose-700"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
