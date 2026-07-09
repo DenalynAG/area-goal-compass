@@ -32,6 +32,7 @@ import {
   DoorOpen,
   Package,
   Map,
+  Rocket,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -169,6 +170,7 @@ const navItems: NavItem[] = [
       { to: "/calidad/auditorias", label: "Calidad", icon: ShieldCheck },
       { to: "/evaluaciones", label: "Evaluaciones", icon: ClipboardCheck },
       { to: "/osh-people", label: "OSH People", icon: Sparkles },
+      { to: "/mision-cerosh", label: "Misión CerOSH", icon: Rocket },
     ],
   },
   {

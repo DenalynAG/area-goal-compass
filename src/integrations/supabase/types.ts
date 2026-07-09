@@ -1219,6 +1219,60 @@ export type Database = {
         }
         Relationships: []
       }
+      mision_cerosh_reports: {
+        Row: {
+          area_id: string
+          count: number
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          report_date: string
+          report_type: Database["public"]["Enums"]["mision_cerosh_report_type"]
+          subarea_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          area_id: string
+          count?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          report_date?: string
+          report_type: Database["public"]["Enums"]["mision_cerosh_report_type"]
+          subarea_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          area_id?: string
+          count?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          report_date?: string
+          report_type?: Database["public"]["Enums"]["mision_cerosh_report_type"]
+          subarea_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mision_cerosh_reports_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mision_cerosh_reports_subarea_id_fkey"
+            columns: ["subarea_id"]
+            isOneToOne: false
+            referencedRelation: "subareas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       newsletter_comments: {
         Row: {
           avatar: string | null
@@ -1919,6 +1973,10 @@ export type Database = {
       finding_severity: "critico" | "leve" | "bajo"
       finding_status: "abierta" | "cerrada"
       kpi_frequency: "semanal" | "mensual" | "trimestral"
+      mision_cerosh_report_type:
+        | "orden_aseo"
+        | "accion_preventiva"
+        | "accidente_trabajo"
       objective_status:
         | "borrador"
         | "activo"
@@ -2074,6 +2132,11 @@ export const Constants = {
       finding_severity: ["critico", "leve", "bajo"],
       finding_status: ["abierta", "cerrada"],
       kpi_frequency: ["semanal", "mensual", "trimestral"],
+      mision_cerosh_report_type: [
+        "orden_aseo",
+        "accion_preventiva",
+        "accidente_trabajo",
+      ],
       objective_status: [
         "borrador",
         "activo",
