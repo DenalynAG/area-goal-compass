@@ -81,7 +81,8 @@ function useYearReports(reportType: ReportType, year: number) {
 }
 
 function ReportSection({ reportType, year, month }: { reportType: ReportType; year: number; month: number }) {
-  const { user, isSuperAdmin } = useAuth();
+  const { user, isSuperAdmin, profile } = useAuth();
+  const canManage = isSuperAdmin || Boolean((profile as any)?.mision_cerosh_admin);
   const meta = REPORT_META[reportType];
   const qc = useQueryClient();
   const { data: areas = [] } = useAreas();
@@ -405,7 +406,7 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
                           >
                             {isApproved ? "Aprobada" : isRejected ? "Rechazada" : "Pendiente"}
                           </span>
-                          {isSuperAdmin && !isApproved && d.recordId && (
+                          {canManage && !isApproved && d.recordId && (
                             <div className="flex items-center gap-1">
                               <button
                                 type="button"
@@ -432,7 +433,7 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
                           )}
                         </div>
                       )}
-                      {isSuperAdmin && d.recordId && rejectingId === d.recordId && (
+                      {canManage && d.recordId && rejectingId === d.recordId && (
                         <div className="mt-1 space-y-1 rounded border border-rose-200 bg-rose-50/60 p-1.5">
                           <Textarea
                             value={rejectionNote}
