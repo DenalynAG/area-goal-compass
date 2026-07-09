@@ -226,7 +226,7 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
 
   // Group counts per (area,subarea) per day
   const byArea = useMemo(() => {
-    const map = new Map<string, { areaName: string; subareas: Map<string, { subName: string; days: number[]; total: number }> }>();
+    const map = new Map<string, { areaName: string; subareas: Map<string, { subName: string; days: number[]; rejected: boolean[]; total: number }> }>();
     for (const a of areas) {
       map.set(a.id, { areaName: a.name, subareas: new Map() });
     }
@@ -241,11 +241,12 @@ function ReportSection({ reportType, year, month }: { reportType: ReportType; ye
         : "General";
       let subEnt = ent.subareas.get(subKey);
       if (!subEnt) {
-        subEnt = { subName, days: Array(daysInMonth).fill(0), total: 0 };
+        subEnt = { subName, days: Array(daysInMonth).fill(0), rejected: Array(daysInMonth).fill(false), total: 0 };
         ent.subareas.set(subKey, subEnt);
       }
       subEnt.days[dayIdx] += r.count;
       subEnt.total += r.count;
+      if (r.evidence_status === "rechazado") subEnt.rejected[dayIdx] = true;
     }
     return map;
   }, [reports, areas, subareas, daysInMonth]);
