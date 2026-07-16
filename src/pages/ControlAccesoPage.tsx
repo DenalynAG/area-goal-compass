@@ -36,9 +36,10 @@ const PAGE_SIZE = 10;
 
 interface ControlAccesoPageProps {
   areaFilterName?: string;
+  subareaFilterName?: string;
 }
 
-export default function ControlAccesoPage({ areaFilterName }: ControlAccesoPageProps = {}) {
+export default function ControlAccesoPage({ areaFilterName, subareaFilterName }: ControlAccesoPageProps = {}) {
   const { user, roles } = useAuth();
   const qc = useQueryClient();
   const { data: areas = [] } = useAreas();
@@ -58,8 +59,12 @@ export default function ControlAccesoPage({ areaFilterName }: ControlAccesoPageP
   const routeAreaId = areaFilterName
     ? areas.find((a) => a.name === areaFilterName)?.id ?? null
     : null;
+  const routeSubareaId = subareaFilterName
+    ? subareas.find((s) => s.name === subareaFilterName)?.id ?? null
+    : null;
   const scopedAreaId = routeAreaId ?? (!isSuperAdmin ? userAreaId : null);
-  const scopedSubareaId = isLiderSubarea && !isSuperAdmin && !isAdminArea ? userSubareaId : null;
+  const scopedSubareaId =
+    routeSubareaId ?? (isLiderSubarea && !isSuperAdmin && !isAdminArea ? userSubareaId : null);
 
   const lockArea = !isSuperAdmin && !!scopedAreaId;
   const lockSubarea = !!scopedSubareaId;
@@ -272,10 +277,10 @@ export default function ControlAccesoPage({ areaFilterName }: ControlAccesoPageP
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">
-          Control de Acceso{areaFilterName ? ` — ${areaFilterName}` : " Interno"}
+          Control de Acceso Interno{subareaFilterName ? ` — ${subareaFilterName}` : areaFilterName ? ` — ${areaFilterName}` : ""}
         </h1>
         <p className="text-muted-foreground text-sm">
-          Registro de ingreso y salida de visitantes{areaFilterName ? ` del área de ${areaFilterName}` : ""}
+          Registro de ingreso y salida de visitantes{subareaFilterName ? ` de ${subareaFilterName}` : areaFilterName ? ` del área de ${areaFilterName}` : ""}
         </p>
       </div>
 

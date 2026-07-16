@@ -76,6 +76,30 @@ const navItems: NavItem[] = [
     icon: UtensilsCrossed,
     label: "Alimentos y Bebidas",
     children: [
+      {
+        to: "/ayb/bar",
+        label: "Bar",
+        icon: UtensilsCrossed,
+        children: [
+          { to: "/ayb/bar/control-acceso", label: "Control de Acceso", icon: DoorOpen },
+        ],
+      },
+      {
+        to: "/ayb/cocina",
+        label: "Cocina",
+        icon: UtensilsCrossed,
+        children: [
+          { to: "/ayb/cocina/control-acceso", label: "Control de Acceso", icon: DoorOpen },
+        ],
+      },
+      {
+        to: "/ayb/mesa",
+        label: "Mesa",
+        icon: UtensilsCrossed,
+        children: [
+          { to: "/ayb/mesa/control-acceso", label: "Control de Acceso", icon: DoorOpen },
+        ],
+      },
       { to: "/ayb/objetivos", label: "Objetivos", icon: Target },
       { to: "/ayb/leader-pass", label: "Leader Pass", icon: ClipboardList },
       { to: "/ayb/calidad", label: "Calidad", icon: ShieldCheck },
@@ -88,9 +112,30 @@ const navItems: NavItem[] = [
     icon: Briefcase,
     label: "Comercial",
     children: [
-      { to: "/comercial/comercial", label: "Comercial", icon: Handshake },
-      { to: "/comercial/hospitalidad", label: "Hospitalidad", icon: Hotel },
-      { to: "/comercial/reservas", label: "Reservas", icon: CalendarCheck },
+      {
+        to: "/comercial/comercial",
+        label: "Comercial",
+        icon: Handshake,
+        children: [
+          { to: "/comercial/comercial/control-acceso", label: "Control de Acceso", icon: DoorOpen },
+        ],
+      },
+      {
+        to: "/comercial/hospitalidad",
+        label: "Hospitalidad",
+        icon: Hotel,
+        children: [
+          { to: "/comercial/hospitalidad/control-acceso", label: "Control de Acceso", icon: DoorOpen },
+        ],
+      },
+      {
+        to: "/comercial/reservas",
+        label: "Reservas",
+        icon: CalendarCheck,
+        children: [
+          { to: "/comercial/reservas/control-acceso", label: "Control de Acceso", icon: DoorOpen },
+        ],
+      },
       { to: "/comercial/objetivos", label: "Objetivos", icon: Target },
       { to: "/comercial/leader-pass", label: "Leader Pass", icon: ClipboardList },
       { to: "/comercial/calidad", label: "Calidad", icon: ShieldCheck },
@@ -139,9 +184,30 @@ const navItems: NavItem[] = [
     icon: Wrench,
     label: "Operaciones",
     children: [
-      { to: "/operaciones/glowingdesk", label: "GlowingDesk", icon: Lamp },
-      { to: "/operaciones/housekeeping", label: "Comfort & Housekeeping", icon: Sparkles },
-      { to: "/operaciones/mantenimiento", label: "Mantenimiento", icon: Hammer },
+      {
+        to: "/operaciones/glowingdesk",
+        label: "GlowingDesk",
+        icon: Lamp,
+        children: [
+          { to: "/operaciones/glowingdesk/control-acceso", label: "Control de Acceso", icon: DoorOpen },
+        ],
+      },
+      {
+        to: "/operaciones/housekeeping",
+        label: "Comfort & Housekeeping",
+        icon: Sparkles,
+        children: [
+          { to: "/operaciones/housekeeping/control-acceso", label: "Control de Acceso", icon: DoorOpen },
+        ],
+      },
+      {
+        to: "/operaciones/mantenimiento",
+        label: "Mantenimiento",
+        icon: Hammer,
+        children: [
+          { to: "/operaciones/mantenimiento/control-acceso", label: "Control de Acceso", icon: DoorOpen },
+        ],
+      },
       {
         to: "/operaciones/seguridad",
         label: "Seguridad",

@@ -14,6 +14,22 @@ const AREA_ROUTE_MAP: Record<string, string> = {
   tecnologia: 'Tecnología',
 };
 
+// URL subarea key -> DB subarea name
+export const SUBAREA_ROUTE_MAP: Record<string, string> = {
+  // Comercial
+  'comercial/comercial': 'Comercial',
+  'comercial/hospitalidad': 'Oshpitalidad',
+  'comercial/reservas': 'Reservas',
+  // Operaciones
+  'operaciones/glowingdesk': 'Glowing Desk',
+  'operaciones/housekeeping': 'Comfort & Housekeeping',
+  'operaciones/mantenimiento': 'Mantenimiento',
+  // AyB
+  'ayb/bar': 'Bar',
+  'ayb/cocina': 'Cocina',
+  'ayb/mesa': 'Mesa',
+};
+
 type ModuleType = 'leader-pass' | 'calidad' | 'evaluaciones' | 'colaboradores' | 'control-acceso';
 
 interface Props {
@@ -36,4 +52,15 @@ export default function AreaModulePage({ areaKey, module }: Props) {
     case 'control-acceso':
       return <ControlAccesoPage areaFilterName={areaName} />;
   }
+}
+
+interface SubareaProps {
+  subareaKey: string; // e.g. "operaciones/housekeeping"
+}
+
+export function SubareaControlAccesoPage({ subareaKey }: SubareaProps) {
+  const areaKey = subareaKey.split('/')[0];
+  const areaName = AREA_ROUTE_MAP[areaKey] || areaKey;
+  const subareaName = SUBAREA_ROUTE_MAP[subareaKey];
+  return <ControlAccesoPage areaFilterName={areaName} subareaFilterName={subareaName} />;
 }

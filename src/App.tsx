@@ -26,7 +26,7 @@ import ControlAccesoPage from "@/pages/ControlAccesoPage";
 import ControlActivosPage from "@/pages/ControlActivosPage";
 import ComfortMapPage from "@/pages/ComfortMapPage";
 import AreaObjetivosPage from "@/pages/AreaObjetivosPage";
-import AreaModulePage from "@/pages/AreaModulePage";
+import AreaModulePage, { SubareaControlAccesoPage } from "@/pages/AreaModulePage";
 import OshPeoplePage from "@/pages/OshPeoplePage";
 import MisionCeroshPage from "@/pages/MisionCeroshPage";
 import NotFound from "./pages/NotFound";
@@ -76,6 +76,25 @@ function ProtectedRoutes() {
             <Route path={`/${key}/evaluaciones`} element={<AreaModulePage areaKey={key} module="evaluaciones" />} />
             <Route path={`/${key}/control-acceso`} element={<AreaModulePage areaKey={key} module="control-acceso" />} />
           </React.Fragment>
+        ))}
+
+        {/* Subarea-specific Control de Acceso */}
+        {[
+          'comercial/comercial',
+          'comercial/hospitalidad',
+          'comercial/reservas',
+          'operaciones/glowingdesk',
+          'operaciones/housekeeping',
+          'operaciones/mantenimiento',
+          'ayb/bar',
+          'ayb/cocina',
+          'ayb/mesa',
+        ].map((sub) => (
+          <Route
+            key={`${sub}-ca`}
+            path={`/${sub}/control-acceso`}
+            element={<SubareaControlAccesoPage subareaKey={sub} />}
+          />
         ))}
         
         <Route path="*" element={<NotFound />} />
