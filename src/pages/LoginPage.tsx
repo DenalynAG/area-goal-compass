@@ -106,6 +106,11 @@ export default function LoginPage() {
                 ¿Olvidaste tu contraseña?
               </button>
             </div>
+            <div className="text-center pt-2 border-t border-border/50">
+              <a href="/status" className="text-xs text-muted-foreground hover:text-foreground hover:underline">
+                Ver estado del sistema
+              </a>
+            </div>
           </form>
         </div>
       </div>
