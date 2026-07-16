@@ -547,6 +547,22 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
               <DetailRow label="Responsable Solicitante" value={getProfileName(detailRecord.requester_user_id)} />
               <DetailRow label="Zona / Requerimiento" value={detailRecord.zone_requirement || "—"} />
               <DetailRow label="Bloque" value={detailRecord.bloque ? `Bloque ${detailRecord.bloque}` : "—"} />
+              <div className="flex justify-between border-b border-border pb-2">
+                <span className="text-muted-foreground font-medium">Estado de Revisión</span>
+                <span>{renderReviewBadge(detailRecord)}</span>
+              </div>
+              {detailRecord.reviewed_by && (
+                <>
+                  <DetailRow label="Revisado por" value={getProfileName(detailRecord.reviewed_by)} />
+                  <DetailRow
+                    label="Fecha de revisión"
+                    value={detailRecord.reviewed_at ? format(new Date(detailRecord.reviewed_at), "dd/MM/yyyy HH:mm", { locale: es }) : "—"}
+                  />
+                </>
+              )}
+              {detailRecord.review_notes && (
+                <DetailRow label="Notas de revisión" value={detailRecord.review_notes} />
+              )}
               {detailRecord.arl_document_url && (
                 <div className="flex justify-between border-b border-border pb-2">
                   <span className="text-muted-foreground font-medium">Soporte ARL</span>
