@@ -68,7 +68,7 @@ function ProtectedRoutes() {
         ))}
 
         {/* Area-specific modules: colaboradores, leader-pass, calidad, evaluaciones */}
-        {['ayb', 'comercial', 'compras', 'contraloria', 'mercadeo', 'operaciones', 'tecnologia'].map(key => (
+        {['ayb', 'comercial', 'compras', 'contraloria', 'mercadeo', 'operaciones', 'tecnologia', 'rrhh'].map(key => (
           <React.Fragment key={key}>
             <Route path={`/${key}/colaboradores`} element={<AreaModulePage areaKey={key} module="colaboradores" />} />
             <Route path={`/${key}/leader-pass`} element={<AreaModulePage areaKey={key} module="leader-pass" />} />
