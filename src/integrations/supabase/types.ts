@@ -32,6 +32,10 @@ export type Database = {
           id: string
           photo_url: string | null
           requester_user_id: string | null
+          review_notes: string | null
+          review_status: string
+          reviewed_at: string | null
+          reviewed_by: string | null
           subarea_id: string | null
           visitor_name: string
           zone_requirement: string
@@ -53,6 +57,10 @@ export type Database = {
           id?: string
           photo_url?: string | null
           requester_user_id?: string | null
+          review_notes?: string | null
+          review_status?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           subarea_id?: string | null
           visitor_name: string
           zone_requirement?: string
@@ -74,6 +82,10 @@ export type Database = {
           id?: string
           photo_url?: string | null
           requester_user_id?: string | null
+          review_notes?: string | null
+          review_status?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           subarea_id?: string | null
           visitor_name?: string
           zone_requirement?: string
@@ -110,6 +122,20 @@ export type Database = {
           {
             foreignKeyName: "access_control_created_by_fkey"
             columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "access_control_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "access_control_reviewed_by_fkey"
+            columns: ["reviewed_by"]
             isOneToOne: false
             referencedRelation: "profiles_directory"
             referencedColumns: ["id"]
@@ -1958,6 +1984,7 @@ export type Database = {
         Returns: boolean
       }
       is_hr: { Args: { _user_id: string }; Returns: boolean }
+      is_seguridad_fisica: { Args: { _user_id: string }; Returns: boolean }
       move_to_dlq: {
         Args: {
           dlq_name: string
