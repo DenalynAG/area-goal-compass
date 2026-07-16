@@ -734,6 +734,9 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={(open) => { if (!open) setDeleteId(null); }}>
+        {null}
+      </AlertDialog>
+      {/* placeholder above avoids patch conflicts */}
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>¿Eliminar registro?</AlertDialogTitle>
