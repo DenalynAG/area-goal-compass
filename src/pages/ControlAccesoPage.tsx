@@ -350,6 +350,25 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
           <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
             <CardTitle className="text-lg">Registros de Acceso ({filtered.length})</CardTitle>
             <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1 border rounded-md p-1 bg-muted/30">
+                {([
+                  { v: "all", l: "Todos" },
+                  { v: "pendiente", l: "Pendientes" },
+                  { v: "revisado", l: "Revisados" },
+                  { v: "observado", l: "Observados" },
+                ] as const).map((opt) => (
+                  <Button
+                    key={opt.v}
+                    type="button"
+                    size="sm"
+                    variant={statusFilter === opt.v ? "default" : "ghost"}
+                    className="h-7 px-2 text-xs"
+                    onClick={() => { setStatusFilter(opt.v); setPage(1); }}
+                  >
+                    {opt.l}
+                  </Button>
+                ))}
+              </div>
               <Input
                 placeholder="Buscar visitante, empresa, documento..."
                 value={search}
@@ -383,6 +402,7 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
                       <TableHead>Bloque</TableHead>
                       <TableHead>Actividad</TableHead>
                       <TableHead>ARL Doc.</TableHead>
+                      <TableHead>Revisión</TableHead>
                       <TableHead>Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -442,6 +462,22 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
                           ) : (
                             <span className="text-muted-foreground text-xs">—</span>
                           )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            {renderReviewBadge(r)}
+                            {canReview && (
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7"
+                                title="Revisar registro"
+                                onClick={() => openReview(r)}
+                              >
+                                <ShieldCheck className="h-4 w-4 text-primary" />
+                              </Button>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
