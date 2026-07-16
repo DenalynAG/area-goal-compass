@@ -734,9 +734,6 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={(open) => { if (!open) setDeleteId(null); }}>
-        {null}
-      </AlertDialog>
-      {/* placeholder above avoids patch conflicts */}
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>¿Eliminar registro?</AlertDialogTitle>
@@ -748,6 +745,77 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Review Dialog (Seguridad Física) */}
+      <Dialog open={!!reviewRecord} onOpenChange={(open) => { if (!open) setReviewRecord(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-primary" /> Revisar Registro
+            </DialogTitle>
+            <DialogDescription>
+              Valida el ingreso registrado por el líder del área o subárea.
+            </DialogDescription>
+          </DialogHeader>
+          {reviewRecord && (
+            <div className="space-y-4">
+              <div className="text-sm p-3 rounded-md bg-muted/40 border">
+                <div><span className="text-muted-foreground">Visitante:</span> <span className="font-medium">{reviewRecord.visitor_name}</span></div>
+                <div><span className="text-muted-foreground">Empresa:</span> {reviewRecord.company_name}</div>
+                <div><span className="text-muted-foreground">Área:</span> {getAreaName(reviewRecord.area_id)}{reviewRecord.subarea_id ? ` / ${getSubareaName(reviewRecord.subarea_id)}` : ""}</div>
+                <div><span className="text-muted-foreground">Registrado por:</span> {getProfileName(reviewRecord.created_by)}</div>
+              </div>
+              <div className="space-y-2">
+                <Label>Decisión</Label>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    className={reviewStatus === "revisado" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "bg-muted text-muted-foreground hover:bg-muted/80"}
+                    onClick={() => setReviewStatus("revisado")}
+                  >
+                    <ShieldCheck className="h-4 w-4 mr-1" /> Marcar Revisado
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    className={reviewStatus === "observado" ? "bg-amber-500 hover:bg-amber-600 text-white" : "bg-muted text-muted-foreground hover:bg-muted/80"}
+                    onClick={() => setReviewStatus("observado")}
+                  >
+                    <AlertTriangle className="h-4 w-4 mr-1" /> Con Observación
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Notas {reviewStatus === "observado" && <span className="text-destructive">*</span>}</Label>
+                <Textarea
+                  value={reviewNotes}
+                  onChange={(e) => setReviewNotes(e.target.value)}
+                  placeholder="Comentarios de la revisión (opcional si es revisado)"
+                  rows={3}
+                />
+              </div>
+              <div className="flex justify-between items-center pt-2">
+                {(reviewRecord.review_status && reviewRecord.review_status !== "pendiente") ? (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => { clearReview(reviewRecord); setReviewRecord(null); }}>
+                    Reabrir revisión
+                  </Button>
+                ) : <span />}
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" onClick={() => setReviewRecord(null)}>Cancelar</Button>
+                  <Button
+                    type="button"
+                    onClick={submitReview}
+                    disabled={reviewSaving || (reviewStatus === "observado" && !reviewNotes.trim())}
+                  >
+                    {reviewSaving ? "Guardando..." : "Guardar Revisión"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
