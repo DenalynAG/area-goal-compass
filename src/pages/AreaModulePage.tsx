@@ -12,6 +12,7 @@ const AREA_ROUTE_MAP: Record<string, string> = {
   mercadeo: 'Mercadeo',
   operaciones: 'Operaciones',
   tecnologia: 'Tecnología',
+  rrhh: 'Recursos Humanos',
 };
 
 // URL subarea key -> DB subarea name
