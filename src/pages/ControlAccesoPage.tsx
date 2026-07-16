@@ -15,8 +15,9 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, DoorOpen, LogOut as LogOutIcon, Camera, X, Image as ImageIcon, Eye, Pencil, Trash2, ChevronLeft, ChevronRight, FileText, Upload } from "lucide-react";
+import { Plus, DoorOpen, LogOut as LogOutIcon, Camera, X, Image as ImageIcon, Eye, Pencil, Trash2, ChevronLeft, ChevronRight, FileText, Upload, ShieldCheck, AlertTriangle, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 
 function useAccessControl() {
   return useQuery({
@@ -55,6 +56,11 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
   const userAreaId = userMembership?.area_id ?? null;
   const userSubareaId = userMembership?.subarea_id ?? null;
 
+  // Seguridad Física supervisa y aprueba todos los registros
+  const seguridadFisicaSubareaId = subareas.find((s) => s.name === "Seguridad Física")?.id ?? null;
+  const isSeguridadFisica = !!seguridadFisicaSubareaId && userSubareaId === seguridadFisicaSubareaId;
+  const canReview = isSuperAdmin || isSeguridadFisica;
+
   // Effective scope: URL param → user's own area (for non-privileged roles)
   const routeAreaId = areaFilterName
     ? areas.find((a) => a.name === areaFilterName)?.id ?? null
@@ -83,6 +89,13 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
   const [detailOpen, setDetailOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<any>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  // Review flow
+  const [reviewRecord, setReviewRecord] = useState<any>(null);
+  const [reviewStatus, setReviewStatus] = useState<"revisado" | "observado">("revisado");
+  const [reviewNotes, setReviewNotes] = useState("");
+  const [reviewSaving, setReviewSaving] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<"all" | "pendiente" | "revisado" | "observado">("all");
 
   // Form state
   const [companyName, setCompanyName] = useState("");
@@ -260,6 +273,7 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
   const filtered = records
     .filter((r: any) => !scopedAreaId || r.area_id === scopedAreaId)
     .filter((r: any) => !scopedSubareaId || r.subarea_id === scopedSubareaId)
+    .filter((r: any) => statusFilter === "all" || (r.review_status || "pendiente") === statusFilter)
     .filter((r: any) =>
       [r.visitor_name, r.company_name, r.document_id]
         .join(" ").toLowerCase().includes(search.toLowerCase())
@@ -272,6 +286,53 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
   const getProfileName = (id: string | null) => profiles.find((p) => p.id === id)?.name || "—";
   const getAreaName = (id: string | null) => areas.find((a) => a.id === id)?.name || "—";
   const getSubareaName = (id: string | null) => subareas.find((s) => s.id === id)?.name || "";
+
+  const openReview = (r: any) => {
+    setReviewRecord(r);
+    setReviewStatus((r.review_status === "observado" ? "observado" : "revisado"));
+    setReviewNotes(r.review_notes || "");
+  };
+
+  const submitReview = async () => {
+    if (!reviewRecord) return;
+    setReviewSaving(true);
+    const { error } = await supabase
+      .from("access_control" as any)
+      .update({
+        review_status: reviewStatus,
+        review_notes: reviewNotes.trim() || null,
+        reviewed_by: user?.id,
+        reviewed_at: new Date().toISOString(),
+      } as any)
+      .eq("id", reviewRecord.id);
+    setReviewSaving(false);
+    if (error) { toast.error("No se pudo guardar la revisión"); return; }
+    toast.success(reviewStatus === "revisado" ? "Registro marcado como revisado" : "Observación registrada");
+    qc.invalidateQueries({ queryKey: ["access_control"] });
+    setReviewRecord(null);
+  };
+
+  const clearReview = async (r: any) => {
+    const { error } = await supabase
+      .from("access_control" as any)
+      .update({
+        review_status: "pendiente",
+        review_notes: null,
+        reviewed_by: null,
+        reviewed_at: null,
+      } as any)
+      .eq("id", r.id);
+    if (error) { toast.error("No se pudo reabrir la revisión"); return; }
+    toast.success("Registro devuelto a pendiente");
+    qc.invalidateQueries({ queryKey: ["access_control"] });
+  };
+
+  const renderReviewBadge = (r: any) => {
+    const s = (r.review_status || "pendiente") as string;
+    if (s === "revisado") return <Badge className="bg-emerald-600 hover:bg-emerald-700 text-white whitespace-nowrap"><ShieldCheck className="h-3 w-3 mr-1" />Revisado</Badge>;
+    if (s === "observado") return <Badge className="bg-amber-500 hover:bg-amber-600 text-white whitespace-nowrap"><AlertTriangle className="h-3 w-3 mr-1" />Observado</Badge>;
+    return <Badge variant="outline" className="whitespace-nowrap"><Clock className="h-3 w-3 mr-1" />Pendiente</Badge>;
+  };
 
   return (
     <div className="space-y-6">
