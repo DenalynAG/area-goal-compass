@@ -606,7 +606,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
           </div>
           <div className="shrink-0 text-right">
             <div className="flex items-center gap-2">
-              <ProgressBar value={areaProgress} className="w-24" />
+              <ProgressBar value={areaProgress} className="w-24" highThreshold={100} midThreshold={80} />
               <span className="text-xs font-semibold text-muted-foreground">{areaProgress}%</span>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">{areaObjs.length} obj · {areaKpisList.length} ind</p>
@@ -686,7 +686,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                       </p>
                     </div>
                     <div className="shrink-0 flex items-center gap-2 mr-2">
-                      <ProgressBar value={subProgress} className="w-20" />
+                      <ProgressBar value={subProgress} className="w-20" highThreshold={100} midThreshold={80} />
                       <span className="text-xs font-semibold text-muted-foreground">{subProgress}%</span>
                     </div>
                   </button>
@@ -900,7 +900,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
               {globalObjectives.length} objetivo{globalObjectives.length !== 1 ? 's' : ''} estratégico{globalObjectives.length !== 1 ? 's' : ''} · {globalProgress}%
             </p>
             <div className="mt-2 flex items-center gap-2">
-              <ProgressBar value={globalProgress} className="flex-1" />
+              <ProgressBar value={globalProgress} className="flex-1" highThreshold={100} midThreshold={80} />
               <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">{globalProgress}%</span>
             </div>
           </div>
@@ -1057,7 +1057,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                       {progress}%
                     </p>
                     <div className="mt-2 flex items-center gap-2">
-                      <ProgressBar value={progress} className="flex-1" />
+                      <ProgressBar value={progress} className="flex-1" highThreshold={100} midThreshold={80} />
                       <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">{progress}%</span>
                     </div>
                   </div>
@@ -1144,7 +1144,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                               )}
                             </div>
                             <div className="shrink-0 flex items-center gap-2">
-                              <ProgressBar value={subProgress} className="w-20" />
+                              <ProgressBar value={subProgress} className="w-20" highThreshold={100} midThreshold={80} />
                               <span className="text-xs font-semibold text-muted-foreground">{subProgress}%</span>
                             </div>
                           </button>
