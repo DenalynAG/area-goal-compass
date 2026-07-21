@@ -41,9 +41,27 @@ const SCORE_OPTIONS = [
 ] as const;
 
 const COMPETENCIAS = [
-  { key: 'score_creatividad' as const, label: 'Creatividad', sub: 'Experiencia WOW' },
-  { key: 'score_trabajo_equipo' as const, label: 'Trabajo en equipo', sub: 'Empatía y colaboración' },
-  { key: 'score_pensamiento_analitico' as const, label: 'Pensamiento analítico', sub: 'Comunicación y análisis' },
+  {
+    key: 'score_creatividad' as const,
+    label: 'Creatividad',
+    sub: 'Experiencia WOW',
+    behavior:
+      'Capacidad de generar nuevas ideas y conceptos a partir de asociaciones entre ideas y conceptos conocidos con el objetivo de dar nuevas soluciones a los retos, problemas y situaciones a afrontar. También se conoce como pensamiento divergente, asociativo o lateral.',
+  },
+  {
+    key: 'score_trabajo_equipo' as const,
+    label: 'Trabajo en equipo y empatía',
+    sub: 'Empatía y colaboración',
+    behavior:
+      'Participar activa y receptivamente en el equipo para la consecución de objetivos comunes. Transmitir información, compartir conocimientos y experiencia. Actuar con respeto frente a los compañeros. Estar disponible para ayudar y pedir ayuda. Anteponer las decisiones del equipo a las propias.',
+  },
+  {
+    key: 'score_pensamiento_analitico' as const,
+    label: 'Comunicación',
+    sub: 'Comunicación y análisis',
+    behavior:
+      'Habilidad para comprender situaciones problema y plantear soluciones adecuadas. Compartir ideas, pensamientos, conocimientos e información de la forma que mejor se relaciona con el contexto.',
+  },
 ] as const;
 
 type ScoreKey = typeof COMPETENCIAS[number]['key'];
@@ -323,6 +341,9 @@ export default function SeleccionDesarrolloPage() {
                   <th className="sticky left-0 z-10 bg-muted/40 text-left px-3 py-2 w-[240px] min-w-[240px] border-r">
                     Competencia
                   </th>
+                  <th className="text-left px-3 py-2 w-[320px] min-w-[280px] border-r bg-muted/40">
+                    Comportamientos observables
+                  </th>
                   {filtered.map(row => (
                     <th key={row.id} className="text-left px-3 py-2 min-w-[190px] border-r align-top">
                       <div className="flex items-start justify-between gap-1">
@@ -353,6 +374,9 @@ export default function SeleccionDesarrolloPage() {
                       <p className="font-semibold text-sm">{c.label}</p>
                       <p className="text-[11px] text-muted-foreground">{c.sub}</p>
                     </td>
+                    <td className="px-3 py-2 border-r align-top text-xs text-muted-foreground leading-snug">
+                      {c.behavior}
+                    </td>
                     {filtered.map(row => (
                       <td key={row.id} className="px-2 py-2 border-r">
                         <ScoreCell row={row} k={c.key} />
@@ -364,6 +388,7 @@ export default function SeleccionDesarrolloPage() {
                   <td className="sticky left-0 z-10 bg-muted/30 px-3 py-2 border-r font-semibold">
                     Nota ponderada
                   </td>
+                  <td className="px-3 py-2 border-r bg-muted/30" />
                   {filtered.map(row => (
                     <td key={row.id} className="px-3 py-2 border-r text-center">
                       {scoreBadge(row.weighted_score !== null ? Number(row.weighted_score) : null)}
@@ -374,6 +399,7 @@ export default function SeleccionDesarrolloPage() {
                   <td className="sticky left-0 z-10 bg-background px-3 py-2 border-r text-xs text-muted-foreground">
                     Fecha
                   </td>
+                  <td className="px-3 py-2 border-r" />
                   {filtered.map(row => (
                     <td key={row.id} className="px-3 py-2 border-r text-xs text-muted-foreground">
                       {row.evaluation_date}
