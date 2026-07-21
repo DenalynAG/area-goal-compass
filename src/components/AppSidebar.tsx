@@ -237,6 +237,7 @@ const navItems: NavItem[] = [
       { to: "/evaluaciones", label: "Evaluaciones", icon: ClipboardCheck },
       { to: "/osh-people", label: "OSH People", icon: Sparkles },
       { to: "/mision-cerosh", label: "Misión CerOSH", icon: Rocket },
+      { to: "/seleccion-desarrollo", label: "Selección y Desarrollo", icon: Handshake },
       { to: "/rrhh/control-acceso", label: "Control de Acceso", icon: DoorOpen },
     ],
   },
