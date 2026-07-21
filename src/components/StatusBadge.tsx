@@ -40,8 +40,18 @@ export function TrafficLightBadge({ light }: { light: TrafficLight }) {
   return <span className={cn('status-badge', c.class)}>{c.label}</span>;
 }
 
-export function ProgressBar({ value, className }: { value: number; className?: string }) {
-  const color = value >= 70 ? 'bg-success' : value >= 40 ? 'bg-warning' : 'bg-danger';
+export function ProgressBar({
+  value,
+  className,
+  highThreshold = 70,
+  midThreshold = 40,
+}: {
+  value: number;
+  className?: string;
+  highThreshold?: number;
+  midThreshold?: number;
+}) {
+  const color = value >= highThreshold ? 'bg-success' : value >= midThreshold ? 'bg-warning' : 'bg-danger';
   return (
     <div className={cn('w-full bg-muted rounded-full h-2', className)}>
       <div className={cn('h-2 rounded-full transition-all', color)} style={{ width: `${Math.min(100, value)}%` }} />
