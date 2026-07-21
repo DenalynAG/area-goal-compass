@@ -227,6 +227,75 @@ export type Database = {
           },
         ]
       }
+      assessment_evaluations: {
+        Row: {
+          area_id: string | null
+          candidate_name: string
+          created_at: string
+          created_by: string | null
+          evaluation_date: string
+          evaluator_user_id: string | null
+          id: string
+          notes: string | null
+          position: string | null
+          score_creatividad: number | null
+          score_pensamiento_analitico: number | null
+          score_trabajo_equipo: number | null
+          subarea_id: string | null
+          updated_at: string
+          weighted_score: number | null
+        }
+        Insert: {
+          area_id?: string | null
+          candidate_name: string
+          created_at?: string
+          created_by?: string | null
+          evaluation_date?: string
+          evaluator_user_id?: string | null
+          id?: string
+          notes?: string | null
+          position?: string | null
+          score_creatividad?: number | null
+          score_pensamiento_analitico?: number | null
+          score_trabajo_equipo?: number | null
+          subarea_id?: string | null
+          updated_at?: string
+          weighted_score?: number | null
+        }
+        Update: {
+          area_id?: string | null
+          candidate_name?: string
+          created_at?: string
+          created_by?: string | null
+          evaluation_date?: string
+          evaluator_user_id?: string | null
+          id?: string
+          notes?: string | null
+          position?: string | null
+          score_creatividad?: number | null
+          score_pensamiento_analitico?: number | null
+          score_trabajo_equipo?: number | null
+          subarea_id?: string | null
+          updated_at?: string
+          weighted_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_evaluations_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_evaluations_subarea_id_fkey"
+            columns: ["subarea_id"]
+            isOneToOne: false
+            referencedRelation: "subareas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       asset_movements: {
         Row: {
           area_id: string | null
