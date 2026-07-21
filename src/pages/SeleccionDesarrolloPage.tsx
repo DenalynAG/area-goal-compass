@@ -14,8 +14,6 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { Users, Plus, Pencil, Trash2, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -36,17 +34,19 @@ type Assessment = {
 };
 
 const SCORE_OPTIONS = [
-  { value: 0, label: '0 · No tiene la competencia', color: 'bg-destructive/15 text-destructive border-destructive/40' },
-  { value: 1, label: '1 · Competencia deficiente', color: 'bg-orange-500/15 text-orange-700 border-orange-500/40' },
-  { value: 3, label: '3 · Cumple con la competencia', color: 'bg-yellow-500/15 text-yellow-700 border-yellow-500/40' },
-  { value: 5, label: '5 · Excede la competencia', color: 'bg-green-500/15 text-green-700 border-green-500/40' },
+  { value: 0, label: '0 · No tiene la competencia', short: '0', color: 'bg-destructive/15 text-destructive border-destructive/40' },
+  { value: 1, label: '1 · Competencia deficiente', short: '1', color: 'bg-orange-500/15 text-orange-700 border-orange-500/40' },
+  { value: 3, label: '3 · Cumple con la competencia', short: '3', color: 'bg-yellow-500/15 text-yellow-700 border-yellow-500/40' },
+  { value: 5, label: '5 · Excede la competencia', short: '5', color: 'bg-green-500/15 text-green-700 border-green-500/40' },
 ] as const;
 
 const COMPETENCIAS = [
-  { key: 'score_creatividad', label: 'Creatividad', sub: 'Experiencia WOW' },
-  { key: 'score_trabajo_equipo', label: 'Trabajo en equipo', sub: 'Empatía y colaboración' },
-  { key: 'score_pensamiento_analitico', label: 'Pensamiento analítico', sub: 'Comunicación y análisis' },
+  { key: 'score_creatividad' as const, label: 'Creatividad', sub: 'Experiencia WOW' },
+  { key: 'score_trabajo_equipo' as const, label: 'Trabajo en equipo', sub: 'Empatía y colaboración' },
+  { key: 'score_pensamiento_analitico' as const, label: 'Pensamiento analítico', sub: 'Comunicación y análisis' },
 ] as const;
+
+type ScoreKey = typeof COMPETENCIAS[number]['key'];
 
 function calcWeighted(a: number | null, b: number | null, c: number | null): number | null {
   const vals = [a, b, c].filter((v): v is number => v !== null && v !== undefined);
@@ -210,6 +210,52 @@ export default function SeleccionDesarrolloPage() {
     form.score_pensamiento_analitico,
   );
 
+  // Inline update of a single competency score for a given aspirant
+  const updateScore = async (row: Assessment, key: ScoreKey, value: number | null) => {
+    const next = { ...row, [key]: value } as Assessment;
+    const weighted = calcWeighted(
+      next.score_creatividad,
+      next.score_trabajo_equipo,
+      next.score_pensamiento_analitico,
+    );
+    // Optimistic update
+    qc.setQueryData<Assessment[]>(['assessment_evaluations'], (prev) =>
+      (prev ?? []).map(r => r.id === row.id ? { ...next, weighted_score: weighted } : r),
+    );
+    const { error } = await (supabase.from('assessment_evaluations' as any) as any)
+      .update({ [key]: value, weighted_score: weighted })
+      .eq('id', row.id);
+    if (error) {
+      toast.error(error.message);
+      qc.invalidateQueries({ queryKey: ['assessment_evaluations'] });
+    }
+  };
+
+  const ScoreCell = ({ row, k }: { row: Assessment; k: ScoreKey }) => {
+    const val = row[k];
+    const opt = SCORE_OPTIONS.find(o => o.value === val);
+    return (
+      <Select
+        value={val === null || val === undefined ? '__none__' : String(val)}
+        onValueChange={(v) => updateScore(row, k, v === '__none__' ? null : Number(v))}
+      >
+        <SelectTrigger
+          className={`h-9 w-full justify-center font-bold text-sm border ${
+            opt ? opt.color : 'bg-background text-muted-foreground'
+          }`}
+        >
+          <SelectValue placeholder="—" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="__none__">—</SelectItem>
+          {SCORE_OPTIONS.map(o => (
+            <SelectItem key={o.value} value={String(o.value)}>{o.label}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    );
+  };
+
   return (
     <div className="p-4 sm:p-6 space-y-4 max-w-7xl mx-auto">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -225,7 +271,7 @@ export default function SeleccionDesarrolloPage() {
           </div>
         </div>
         <Button onClick={openNew}>
-          <Plus className="w-4 h-4 mr-1" /> Nueva evaluación
+          <Plus className="w-4 h-4 mr-1" /> Nuevo aspirante
         </Button>
       </div>
 
@@ -262,47 +308,82 @@ export default function SeleccionDesarrolloPage() {
         </Select>
       </div>
 
-      <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Aspirante</TableHead>
-              <TableHead>Área / Subárea</TableHead>
-              <TableHead>Cargo</TableHead>
-              <TableHead className="text-center">Creatividad</TableHead>
-              <TableHead className="text-center">Trabajo equipo</TableHead>
-              <TableHead className="text-center">P. analítico</TableHead>
-              <TableHead className="text-center">Nota</TableHead>
-              <TableHead>Fecha</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Cargando...</TableCell></TableRow>
-            ) : filtered.length === 0 ? (
-              <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No hay evaluaciones registradas.</TableCell></TableRow>
-            ) : filtered.map(row => (
-              <TableRow key={row.id}>
-                <TableCell className="font-medium">{row.candidate_name}</TableCell>
-                <TableCell className="text-xs">
-                  <div>{areaName(row.area_id)}</div>
-                  {row.subarea_id && <div className="text-muted-foreground">{subareaName(row.subarea_id)}</div>}
-                </TableCell>
-                <TableCell className="text-sm">{row.position ?? '—'}</TableCell>
-                <TableCell className="text-center"><Badge variant="secondary">{row.score_creatividad ?? '—'}</Badge></TableCell>
-                <TableCell className="text-center"><Badge variant="secondary">{row.score_trabajo_equipo ?? '—'}</Badge></TableCell>
-                <TableCell className="text-center"><Badge variant="secondary">{row.score_pensamiento_analitico ?? '—'}</Badge></TableCell>
-                <TableCell className="text-center">{scoreBadge(row.weighted_score !== null ? Number(row.weighted_score) : null)}</TableCell>
-                <TableCell className="text-xs text-muted-foreground">{row.evaluation_date}</TableCell>
-                <TableCell className="text-right">
-                  <Button variant="ghost" size="icon" onClick={() => openEdit(row)}><Pencil className="w-4 h-4" /></Button>
-                  <Button variant="ghost" size="icon" onClick={() => setDeleteId(row.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      <Card className="p-0 overflow-hidden">
+        {isLoading ? (
+          <div className="py-10 text-center text-muted-foreground text-sm">Cargando...</div>
+        ) : filtered.length === 0 ? (
+          <div className="py-10 text-center text-muted-foreground text-sm">
+            No hay aspirantes. Crea el primero con "Nuevo aspirante".
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="bg-muted/40 border-b">
+                  <th className="sticky left-0 z-10 bg-muted/40 text-left px-3 py-2 w-[240px] min-w-[240px] border-r">
+                    Competencia
+                  </th>
+                  {filtered.map(row => (
+                    <th key={row.id} className="text-left px-3 py-2 min-w-[190px] border-r align-top">
+                      <div className="flex items-start justify-between gap-1">
+                        <div className="space-y-0.5">
+                          <p className="font-semibold text-sm leading-tight">{row.candidate_name}</p>
+                          <p className="text-[11px] text-muted-foreground leading-tight">
+                            {areaName(row.area_id)}{row.subarea_id ? ` · ${subareaName(row.subarea_id)}` : ''}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground leading-tight">{row.position ?? '—'}</p>
+                        </div>
+                        <div className="flex items-center gap-0.5 shrink-0">
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(row)}>
+                            <Pencil className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setDeleteId(row.id)}>
+                            <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {COMPETENCIAS.map(c => (
+                  <tr key={c.key} className="border-b">
+                    <td className="sticky left-0 z-10 bg-background px-3 py-2 border-r align-top">
+                      <p className="font-semibold text-sm">{c.label}</p>
+                      <p className="text-[11px] text-muted-foreground">{c.sub}</p>
+                    </td>
+                    {filtered.map(row => (
+                      <td key={row.id} className="px-2 py-2 border-r">
+                        <ScoreCell row={row} k={c.key} />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+                <tr className="bg-muted/30">
+                  <td className="sticky left-0 z-10 bg-muted/30 px-3 py-2 border-r font-semibold">
+                    Nota ponderada
+                  </td>
+                  {filtered.map(row => (
+                    <td key={row.id} className="px-3 py-2 border-r text-center">
+                      {scoreBadge(row.weighted_score !== null ? Number(row.weighted_score) : null)}
+                    </td>
+                  ))}
+                </tr>
+                <tr>
+                  <td className="sticky left-0 z-10 bg-background px-3 py-2 border-r text-xs text-muted-foreground">
+                    Fecha
+                  </td>
+                  {filtered.map(row => (
+                    <td key={row.id} className="px-3 py-2 border-r text-xs text-muted-foreground">
+                      {row.evaluation_date}
+                    </td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
       </Card>
 
       <Dialog open={open} onOpenChange={setOpen}>
