@@ -29,6 +29,7 @@ import AreaObjetivosPage from "@/pages/AreaObjetivosPage";
 import AreaModulePage, { SubareaControlAccesoPage } from "@/pages/AreaModulePage";
 import OshPeoplePage from "@/pages/OshPeoplePage";
 import MisionCeroshPage from "@/pages/MisionCeroshPage";
+import SeleccionDesarrolloPage from "@/pages/SeleccionDesarrolloPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -56,6 +57,7 @@ function ProtectedRoutes() {
         <Route path="/evaluaciones" element={<EvaluacionesPage />} />
         <Route path="/osh-people" element={<OshPeoplePage />} />
         <Route path="/mision-cerosh" element={<MisionCeroshPage />} />
+        <Route path="/seleccion-desarrollo" element={<SeleccionDesarrolloPage />} />
         <Route path="/organigrama" element={<OrganigramaPage />} />
         <Route path="/administracion" element={<AdministracionPage />} />
         <Route path="/operaciones/seguridad/control-acceso" element={<ControlAccesoPage />} />
