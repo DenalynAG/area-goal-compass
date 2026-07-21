@@ -16,7 +16,8 @@ export default function IndicadoresPage() {
   const { data: measurements = [] } = useKPIMeasurements();
   const { data: areas = [] } = useAreas();
   const { data: subareas = [] } = useSubareas();
-  const { isSuperAdmin } = useAuth();
+  const { isSuperAdmin, hasRole } = useAuth();
+  const canEditKpi = isSuperAdmin || hasRole('admin_area') || hasRole('gestor_area') || hasRole('lider_subarea');
   const navigate = useNavigate();
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -70,7 +71,7 @@ export default function IndicadoresPage() {
           <h1 className="page-title">Indicadores (KPIs)</h1>
           <p className="page-subtitle">{kpis.length} indicadores definidos</p>
         </div>
-        {isSuperAdmin && (
+        {canEditKpi && (
           <Button onClick={openNew}>
             <Plus className="w-4 h-4 mr-2" />
             Nuevo Indicador
@@ -99,7 +100,7 @@ export default function IndicadoresPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <TrafficLightBadge light={light} />
-                    {isSuperAdmin && (
+                    {canEditKpi && (
                       <Button variant="ghost" size="icon" onClick={() => openEdit(kpi)}>
                         <Edit className="w-4 h-4" />
                       </Button>
