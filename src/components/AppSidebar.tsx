@@ -354,7 +354,10 @@ export default function AppSidebar() {
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="ml-auto hidden lg:flex items-center justify-center w-7 h-7 rounded-md hover:bg-sidebar-accent text-sidebar-foreground/50 transition-colors"
+          className={cn(
+            "hidden lg:flex items-center justify-center w-7 h-7 rounded-md border border-sidebar-border bg-sidebar-accent/40 text-sidebar-foreground hover:bg-sidebar-accent transition-colors shrink-0",
+            collapsed ? "mx-auto" : "ml-auto",
+          )}
         >
           {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
         </button>
