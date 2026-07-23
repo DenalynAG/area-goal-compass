@@ -1,0 +1,2 @@
+CREATE POLICY "Mision cerosh admin read areas" ON public.areas FOR SELECT USING (public.has_mision_cerosh_admin(auth.uid()));
+CREATE POLICY "Mision cerosh admin read subareas" ON public.subareas FOR SELECT USING (public.has_mision_cerosh_admin(auth.uid()));
