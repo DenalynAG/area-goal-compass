@@ -77,6 +77,7 @@ function ProtectedRoutes() {
             <Route path={`/${key}/calidad`} element={<AreaModulePage areaKey={key} module="calidad" />} />
             <Route path={`/${key}/evaluaciones`} element={<AreaModulePage areaKey={key} module="evaluaciones" />} />
             <Route path={`/${key}/control-acceso`} element={<AreaModulePage areaKey={key} module="control-acceso" />} />
+            <Route path={`/${key}/mision-cerosh`} element={<MisionCeroshPage restrictAreaKey={key} />} />
           </React.Fragment>
         ))}
 
