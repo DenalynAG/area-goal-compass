@@ -2,14 +2,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getRoleLabel } from "@/types";
 import { LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 export default function UserMenu() {
@@ -22,35 +14,36 @@ export default function UserMenu() {
     .join("")
     .slice(0, 2);
 
+  const displayName = profile?.name ?? user.email;
+  const roleLabel = roles[0] ? getRoleLabel(roles[0] as any) : "Sin rol";
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative flex items-center gap-2 h-9 px-2" aria-label="Menú de usuario">
-          <div
-            className={cn(
-              "w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold",
-              "bg-primary/15 text-primary"
-            )}
-          >
-            {initials}
-          </div>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{profile?.name ?? user.email}</p>
-            <p className="text-xs text-muted-foreground leading-none">
-              {roles[0] ? getRoleLabel(roles[0] as any) : "Sin rol"}
-            </p>
-          </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={logout} className="cursor-pointer">
-          <LogOut className="mr-2 h-4 w-4" />
-          <span>Cerrar sesión</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className="flex items-center gap-2 pl-2 border-l border-border/60">
+      <div
+        className={cn(
+          "w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold shrink-0",
+          "bg-primary/15 text-primary"
+        )}
+      >
+        {initials}
+      </div>
+      <div className="hidden sm:flex flex-col leading-tight min-w-0">
+        <span className="text-sm font-semibold text-foreground truncate max-w-[160px]">
+          {displayName}
+        </span>
+        <span className="text-[11px] text-muted-foreground truncate max-w-[160px]">
+          {roleLabel}
+        </span>
+      </div>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={logout}
+        aria-label="Cerrar sesión"
+        className="h-8 w-8 text-muted-foreground hover:text-foreground"
+      >
+        <LogOut className="h-4 w-4" />
+      </Button>
+    </div>
   );
 }
