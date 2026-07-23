@@ -124,15 +124,23 @@
     @apply bg-muted text-muted-foreground;
   }
   .metric-card {
-    @apply bg-card rounded-xl border p-5 shadow-sm transition-all hover:shadow-md;
+    @apply bg-card border border-border p-6 transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-12px_hsl(0_0%_0%/0.15)];
   }
   .page-header {
-    @apply mb-6;
+    @apply mb-10 pb-6 border-b border-border;
   }
   .page-title {
-    @apply text-2xl font-display font-extrabold tracking-tight text-foreground;
+    @apply font-display text-4xl md:text-5xl leading-none tracking-tight text-foreground;
   }
   .page-subtitle {
-    @apply text-sm text-muted-foreground mt-1;
+    @apply text-sm text-muted-foreground mt-3 tracking-wide;
+  }
+  /* Editorial kicker — small uppercase tracked label */
+  .editorial-kicker {
+    @apply text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-medium;
+  }
+  /* Hairline horizontal rule for editorial section separators */
+  .editorial-rule {
+    @apply h-px w-full bg-border;
   }
 }
