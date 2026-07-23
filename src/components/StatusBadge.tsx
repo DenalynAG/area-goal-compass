@@ -32,9 +32,9 @@ export function PriorityBadge({ priority }: { priority: Priority }) {
 
 export function TrafficLightBadge({ light }: { light: TrafficLight }) {
   const config: Record<TrafficLight, { class: string; label: string }> = {
-    verde: { class: 'status-active', label: '● Verde' },
-    amarillo: { class: 'status-warning', label: '● Amarillo' },
-    rojo: { class: 'status-danger', label: '● Rojo' },
+    verde: { class: 'status-alto', label: '● Verde' },
+    amarillo: { class: 'status-medio', label: '● Amarillo' },
+    rojo: { class: 'status-bajo', label: '● Rojo' },
   };
   const c = config[light];
   return <span className={cn('status-badge', c.class)}>{c.label}</span>;
