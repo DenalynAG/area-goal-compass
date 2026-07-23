@@ -32,9 +32,9 @@ export function PriorityBadge({ priority }: { priority: Priority }) {
 
 export function TrafficLightBadge({ light }: { light: TrafficLight }) {
   const config: Record<TrafficLight, { class: string; label: string }> = {
-    verde: { class: 'status-active', label: '● Verde' },
-    amarillo: { class: 'status-warning', label: '● Amarillo' },
-    rojo: { class: 'status-danger', label: '● Rojo' },
+    verde: { class: 'status-alto', label: '● Verde' },
+    amarillo: { class: 'status-medio', label: '● Amarillo' },
+    rojo: { class: 'status-bajo', label: '● Rojo' },
   };
   const c = config[light];
   return <span className={cn('status-badge', c.class)}>{c.label}</span>;
@@ -51,7 +51,7 @@ export function ProgressBar({
   highThreshold?: number;
   midThreshold?: number;
 }) {
-  const color = value >= highThreshold ? 'bg-success' : value >= midThreshold ? 'bg-warning' : 'bg-danger';
+  const color = value >= highThreshold ? 'bg-success-bright' : value >= midThreshold ? 'bg-warning-bright' : 'bg-danger-bright';
   return (
     <div className={cn('w-full bg-muted rounded-full h-2', className)}>
       <div className={cn('h-2 rounded-full transition-all', color)} style={{ width: `${Math.min(100, value)}%` }} />

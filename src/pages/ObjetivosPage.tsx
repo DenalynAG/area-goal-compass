@@ -862,8 +862,8 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                     <Bar dataKey="Objetivos" radius={[0, 4, 4, 0]}>
                       {dashboardChartData.map((entry: any, index: number) => {
                         const v = Number(entry.Objetivos) || 0;
-                        // Regla de cumplimiento: Alto ≥ 100 (verde), Medio ≥ 80 (amarillo), Bajo < 80 (rojo).
-                        const color = v >= 100 ? '#16a34a' : v >= 80 ? '#eab308' : '#dc2626';
+                        // Regla de cumplimiento: Alto ≥ 100 (verde brillante), Medio ≥ 80 (ámbar brillante), Bajo < 80 (rojo brillante).
+                        const color = v >= 100 ? '#22c55e' : v >= 80 ? '#f59e0b' : '#ef4444';
                         return <Cell key={`cell-${index}`} fill={color} />;
                       })}
                       <LabelList
@@ -1609,9 +1609,9 @@ function ObjectiveCard({
 
   const circumference = 2 * Math.PI * 28;
   const strokeDashoffset = circumference - (Math.min(computedProgress, 100) / 100) * circumference;
-  const progressColor = computedProgress >= 100 ? 'hsl(var(--success))' : computedProgress >= 80 ? 'hsl(var(--warning))' : 'hsl(var(--destructive))';
+  const progressColor = computedProgress >= 100 ? 'hsl(var(--success-bright))' : computedProgress >= 80 ? 'hsl(var(--warning-bright))' : 'hsl(var(--danger-bright))';
   const progressLabel = computedProgress >= 100 ? 'Alto' : computedProgress >= 80 ? 'Medio' : 'Bajo';
-  const progressLabelClass = computedProgress >= 100 ? 'text-green-600' : computedProgress >= 80 ? 'text-yellow-600' : 'text-red-600';
+  const progressLabelClass = computedProgress >= 100 ? 'text-success-bright' : computedProgress >= 80 ? 'text-warning-bright' : 'text-danger-bright';
 
   return (
     <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
@@ -1923,7 +1923,7 @@ function ObjectiveCard({
                     }).filter((v): v is number => v !== null);
                     const avg = values.length > 0 ? Math.round(values.reduce((s, v) => s + v, 0) / values.length) : 0;
                     const label = avg >= 100 ? 'Alto' : avg >= 80 ? 'Medio' : 'Bajo';
-                    const color = avg >= 100 ? 'text-green-600 bg-green-50' : avg >= 80 ? 'text-yellow-600 bg-yellow-50' : 'text-red-600 bg-red-50';
+                    const color = avg >= 100 ? 'text-success-bright bg-success-bright/10' : avg >= 80 ? 'text-warning-bright bg-warning-bright/10' : 'text-danger-bright bg-danger-bright/10';
                     return <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${color}`}>{label} ({avg}%)</span>;
                   })()}
                 </td>

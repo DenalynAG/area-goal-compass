@@ -34,12 +34,15 @@
 
     --success: 145 35% 32%;            /* muted forest — sobrio */
     --success-foreground: 40 24% 95%;
+    --success-bright: 142 71% 45%;     /* brighter green for Alto */
 
     --warning: 35 55% 45%;             /* muted ochre */
     --warning-foreground: 40 24% 95%;
+    --warning-bright: 38 92% 50%;      /* brighter amber for Medio */
 
     --danger: 0 60% 40%;
     --danger-foreground: 40 24% 95%;
+    --danger-bright: 0 84% 60%;       /* brighter red for Bajo */
 
     --border: 39 20% 89%;              /* hairline on paper */
     --input: 39 20% 89%;
@@ -119,6 +122,15 @@
   }
   .status-danger {
     @apply bg-[hsl(var(--danger)/0.12)] text-[hsl(var(--danger))];
+  }
+  .status-alto {
+    @apply bg-success-bright/10 text-success-bright;
+  }
+  .status-medio {
+    @apply bg-warning-bright/10 text-warning-bright;
+  }
+  .status-bajo {
+    @apply bg-danger-bright/10 text-danger-bright;
   }
   .status-muted {
     @apply bg-muted text-muted-foreground;
