@@ -36,7 +36,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useMemo } from "react";
-import { getRoleLabel } from "@/types";
 import { Button } from "@/components/ui/button";
 import { useVisibleMenuKeys } from "@/hooks/useMenuPermissions";
 import { useAreas, useMemberships } from "@/hooks/useSupabaseData";
