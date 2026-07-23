@@ -699,7 +699,14 @@ export default function MisionCeroshPage() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
-  const [tab, setTab] = useState<ReportType>("orden_aseo");
+  const [tab, setTab] = useState<ReportType | "dashboard">("orden_aseo");
+  const { user, hasRole, isSuperAdmin, profile } = useAuth();
+  const ANDRES_ID = "d6dc750a-4192-46b8-b92f-e297a13f361e";
+  const canViewDashboard =
+    isSuperAdmin ||
+    hasRole("admin_area" as any) ||
+    Boolean((profile as any)?.mision_cerosh_admin) ||
+    user?.id === ANDRES_ID;
 
   const years = [now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1];
 
@@ -751,6 +758,14 @@ export default function MisionCeroshPage() {
           >
             Accidentes
           </TabsTrigger>
+          {canViewDashboard && (
+            <TabsTrigger
+              value="dashboard"
+              className="border border-indigo-300 bg-indigo-50 text-indigo-800 data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:border-indigo-600"
+            >
+              <BarChart3 className="w-4 h-4 mr-1" /> Dashboard
+            </TabsTrigger>
+          )}
         </TabsList>
         <TabsContent value="orden_aseo" className="mt-6">
           <ReportSection reportType="orden_aseo" year={year} month={month} />
@@ -761,7 +776,118 @@ export default function MisionCeroshPage() {
         <TabsContent value="accidente_trabajo" className="mt-6">
           <ReportSection reportType="accidente_trabajo" year={year} month={month} />
         </TabsContent>
+        {canViewDashboard && (
+          <TabsContent value="dashboard" className="mt-6">
+            <MisionCeroshDashboard year={year} />
+          </TabsContent>
+        )}
       </Tabs>
+    </div>
+  );
+}
+
+function DashboardChart({
+  title,
+  reportType,
+  year,
+  color,
+}: {
+  title: string;
+  reportType: ReportType;
+  year: number;
+  color: string;
+}) {
+  const { data: areas = [] } = useAreas();
+  const { data: yearReports = [] } = useYearReports(reportType, year);
+
+  const chartData = useMemo(() => {
+    // For each month, for each area, count valid (completed & not rejected) days
+    return Array.from({ length: 12 }, (_, m) => {
+      const row: Record<string, any> = { month: MONTH_NAMES[m].slice(0, 3) };
+      const daysInMonth = new Date(year, m + 1, 0).getDate();
+      for (const a of areas) {
+        // per-subarea distinct completed-not-rejected days
+        const bySub = new Map<string, { valid: Set<number>; rejected: Set<number> }>();
+        for (const r of yearReports) {
+          if (r.area_id !== a.id) continue;
+          const d = new Date(r.report_date + "T00:00:00");
+          if (d.getMonth() !== m) continue;
+          const key = r.subarea_id ?? "__none__";
+          let s = bySub.get(key);
+          if (!s) { s = { valid: new Set(), rejected: new Set() }; bySub.set(key, s); }
+          if (r.evidence_status === "rechazado") s.rejected.add(d.getDate());
+          else if (r.completed) s.valid.add(d.getDate());
+        }
+        if (bySub.size === 0) { row[a.name] = 0; continue; }
+        let totalPct = 0;
+        for (const s of bySub.values()) {
+          for (const day of s.rejected) s.valid.delete(day);
+          totalPct += (s.valid.size / daysInMonth) * 100;
+        }
+        row[a.name] = Math.round(totalPct / bySub.size);
+      }
+      return row;
+    });
+  }, [yearReports, areas, year]);
+
+  const palette = [
+    "#10b981", "#f59e0b", "#f43f5e", "#6366f1", "#0ea5e9",
+    "#a855f7", "#14b8a6", "#f97316", "#84cc16", "#ec4899",
+  ];
+
+  return (
+    <div className="rounded-lg border p-4 space-y-3 bg-card">
+      <div className="flex items-center gap-2">
+        <span className="w-3 h-3 rounded-full" style={{ background: color }} />
+        <h4 className="font-display font-extrabold text-base">{title}</h4>
+        <span className="text-xs text-muted-foreground ml-auto">
+          Cumplimiento mensual (%) por área · {year}
+        </span>
+      </div>
+      <div className="h-80 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={chartData} margin={{ top: 10, right: 20, left: -10, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis dataKey="month" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
+            <YAxis
+              domain={[0, 100]}
+              tickFormatter={(v) => `${v}%`}
+              tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+            />
+            <Tooltip
+              contentStyle={{
+                background: "hsl(var(--card))",
+                border: "1px solid hsl(var(--border))",
+                borderRadius: 8,
+                fontSize: 12,
+              }}
+              formatter={(v: any) => [`${v}%`, ""]}
+            />
+            <Legend wrapperStyle={{ fontSize: 11 }} />
+            {areas.map((a, i) => (
+              <Line
+                key={a.id}
+                type="monotone"
+                dataKey={a.name}
+                stroke={palette[i % palette.length]}
+                strokeWidth={2}
+                dot={{ r: 3 }}
+                activeDot={{ r: 5 }}
+              />
+            ))}
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+
+function MisionCeroshDashboard({ year }: { year: number }) {
+  return (
+    <div className="space-y-6">
+      <DashboardChart title="Orden y Aseo" reportType="orden_aseo" year={year} color="#10b981" />
+      <DashboardChart title="Acción Preventiva" reportType="accion_preventiva" year={year} color="#f59e0b" />
+      <DashboardChart title="Accidentes de Trabajo" reportType="accidente_trabajo" year={year} color="#f43f5e" />
     </div>
   );
 }
