@@ -34,12 +34,15 @@
 
     --success: 145 35% 32%;            /* muted forest — sobrio */
     --success-foreground: 40 24% 95%;
+    --success-bright: 142 71% 45%;     /* brighter green for Alto */
 
     --warning: 35 55% 45%;             /* muted ochre */
     --warning-foreground: 40 24% 95%;
+    --warning-bright: 38 92% 50%;      /* brighter amber for Medio */
 
     --danger: 0 60% 40%;
     --danger-foreground: 40 24% 95%;
+    --danger-bright: 0 84% 60%;       /* brighter red for Bajo */
 
     --border: 39 20% 89%;              /* hairline on paper */
     --input: 39 20% 89%;
