@@ -245,7 +245,7 @@ const navItems: NavItem[] = [
 ];
 
 export default function AppSidebar() {
-  const { user, profile, roles, logout } = useAuth();
+  const { user, roles } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(["/rrhh"]));
