@@ -80,25 +80,19 @@ const navItems: NavItem[] = [
         to: "/ayb/bar",
         label: "Bar",
         icon: UtensilsCrossed,
-        children: [
-          { to: "/ayb/bar/control-acceso", label: "Control de Acceso", icon: DoorOpen },
-        ],
+        children: [{ to: "/ayb/bar/control-acceso", label: "Control de Acceso", icon: DoorOpen }],
       },
       {
         to: "/ayb/cocina",
         label: "Cocina",
         icon: UtensilsCrossed,
-        children: [
-          { to: "/ayb/cocina/control-acceso", label: "Control de Acceso", icon: DoorOpen },
-        ],
+        children: [{ to: "/ayb/cocina/control-acceso", label: "Control de Acceso", icon: DoorOpen }],
       },
       {
         to: "/ayb/mesa",
         label: "Mesa",
         icon: UtensilsCrossed,
-        children: [
-          { to: "/ayb/mesa/control-acceso", label: "Control de Acceso", icon: DoorOpen },
-        ],
+        children: [{ to: "/ayb/mesa/control-acceso", label: "Control de Acceso", icon: DoorOpen }],
       },
       { to: "/ayb/objetivos", label: "Objetivos", icon: Target },
       { to: "/ayb/leader-pass", label: "Leader Pass", icon: ClipboardList },
@@ -117,25 +111,19 @@ const navItems: NavItem[] = [
         to: "/comercial/comercial",
         label: "Comercial",
         icon: Handshake,
-        children: [
-          { to: "/comercial/comercial/control-acceso", label: "Control de Acceso", icon: DoorOpen },
-        ],
+        children: [{ to: "/comercial/comercial/control-acceso", label: "Control de Acceso", icon: DoorOpen }],
       },
       {
         to: "/comercial/hospitalidad",
         label: "Hospitalidad",
         icon: Hotel,
-        children: [
-          { to: "/comercial/hospitalidad/control-acceso", label: "Control de Acceso", icon: DoorOpen },
-        ],
+        children: [{ to: "/comercial/hospitalidad/control-acceso", label: "Control de Acceso", icon: DoorOpen }],
       },
       {
         to: "/comercial/reservas",
         label: "Reservas",
         icon: CalendarCheck,
-        children: [
-          { to: "/comercial/reservas/control-acceso", label: "Control de Acceso", icon: DoorOpen },
-        ],
+        children: [{ to: "/comercial/reservas/control-acceso", label: "Control de Acceso", icon: DoorOpen }],
       },
       { to: "/comercial/objetivos", label: "Objetivos", icon: Target },
       { to: "/comercial/leader-pass", label: "Leader Pass", icon: ClipboardList },
@@ -193,25 +181,19 @@ const navItems: NavItem[] = [
         to: "/operaciones/glowingdesk",
         label: "GlowingDesk",
         icon: Lamp,
-        children: [
-          { to: "/operaciones/glowingdesk/control-acceso", label: "Control de Acceso", icon: DoorOpen },
-        ],
+        children: [{ to: "/operaciones/glowingdesk/control-acceso", label: "Control de Acceso", icon: DoorOpen }],
       },
       {
         to: "/operaciones/housekeeping",
         label: "Comfort & Housekeeping",
         icon: Sparkles,
-        children: [
-          { to: "/operaciones/housekeeping/control-acceso", label: "Control de Acceso", icon: DoorOpen },
-        ],
+        children: [{ to: "/operaciones/housekeeping/control-acceso", label: "Control de Acceso", icon: DoorOpen }],
       },
       {
         to: "/operaciones/mantenimiento",
         label: "Mantenimiento",
         icon: Hammer,
-        children: [
-          { to: "/operaciones/mantenimiento/control-acceso", label: "Control de Acceso", icon: DoorOpen },
-        ],
+        children: [{ to: "/operaciones/mantenimiento/control-acceso", label: "Control de Acceso", icon: DoorOpen }],
       },
       {
         to: "/operaciones/seguridad",
@@ -280,12 +262,8 @@ export default function AppSidebar() {
     if (roles.includes("super_admin" as any)) {
       return null; // null = no restriction
     }
-    const userAreaIds = memberships
-      .filter((m) => m.user_id === user?.id)
-      .map((m) => m.area_id);
-    const userAreaNames = areas
-      .filter((a) => userAreaIds.includes(a.id))
-      .map((a) => a.name);
+    const userAreaIds = memberships.filter((m) => m.user_id === user?.id).map((m) => m.area_id);
+    const userAreaNames = areas.filter((a) => userAreaIds.includes(a.id)).map((a) => a.name);
     const allowed = new Set<string>();
     for (const [route, name] of Object.entries(AREA_ROUTE_TO_NAME)) {
       if (userAreaNames.includes(name)) allowed.add(route);
@@ -340,7 +318,12 @@ export default function AppSidebar() {
   const sidebarContent = (
     <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
       {/* Header */}
-      <div className={cn("flex items-center gap-3 h-16 border-b border-sidebar-border shrink-0", collapsed ? "px-2 justify-center" : "px-4") }>
+      <div
+        className={cn(
+          "flex items-center gap-3 h-16 border-b border-sidebar-border shrink-0",
+          collapsed ? "px-2 justify-center" : "px-4",
+        )}
+      >
         {!collapsed && (
           <img
             src="https://dnifnjmiqbrtnmeqjizw.supabase.co/storage/v1/object/public/OSH-B/OSH-B.png"
@@ -350,7 +333,7 @@ export default function AppSidebar() {
         )}
         {!collapsed && (
           <div className="overflow-hidden">
-            <h1 className="text-sm font-display font-extrabold truncate text-sidebar-foreground">¡Bienvenidos! 🙌</h1>
+            <h1 className="text-sm font-display font-extrabold truncate text-sidebar-foreground">Work Plan</h1>
             {/*<p className="text-xs font-bold text-sidebar-primary tracking-wide">RH</p>*/}
           </div>
         )}
