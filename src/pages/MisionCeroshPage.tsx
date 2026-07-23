@@ -13,7 +13,7 @@ import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Sparkles, ShieldAlert, HeartPulse, Trash2, Paperclip, FileCheck2, Loader2, Check, X, BarChart3 } from "lucide-react";
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceLine, Legend } from "recharts";
+import { ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceLine, Legend } from "recharts";
 import misionLogo from "@/assets/mision-cerosh-logo.png.asset.json";
 
 type ReportType = "orden_aseo" | "accion_preventiva" | "accidente_trabajo";
@@ -846,7 +846,7 @@ function DashboardChart({
       </div>
       <div className="h-80 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData} margin={{ top: 10, right: 20, left: -10, bottom: 0 }}>
+          <BarChart data={chartData} margin={{ top: 10, right: 20, left: -10, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis dataKey="month" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
             <YAxis
@@ -865,17 +865,15 @@ function DashboardChart({
             />
             <Legend wrapperStyle={{ fontSize: 11 }} />
             {areas.map((a, i) => (
-              <Line
+              <Bar
                 key={a.id}
-                type="monotone"
                 dataKey={a.name}
-                stroke={palette[i % palette.length]}
-                strokeWidth={2}
-                dot={{ r: 3 }}
-                activeDot={{ r: 5 }}
+                fill={palette[i % palette.length]}
+                radius={[3, 3, 0, 0]}
+                maxBarSize={20}
               />
             ))}
-          </LineChart>
+          </BarChart>
         </ResponsiveContainer>
       </div>
     </div>
