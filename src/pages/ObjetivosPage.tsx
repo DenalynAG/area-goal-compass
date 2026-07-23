@@ -1647,7 +1647,7 @@ function ObjectiveCard({
 
           <div className="flex items-center gap-2">
             {!hideExtras && objKpis.length > 0 && (
-              <button onClick={onToggle} className="flex items-center gap-1 text-xs text-accent font-medium hover:underline">
+              <button onClick={onToggle} className="flex items-center gap-1 text-xs text-foreground font-semibold hover:underline">
                 {isOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                 {objKpis.length} indicadores
               </button>
@@ -1750,9 +1750,9 @@ function ObjectiveCard({
                 const weight = (k as any).weight_percent ?? 0;
                 return (
                   <tr key={k.id} className="border-t border-border/50">
-                    <td className="py-2 font-medium">{k.name}</td>
+                    <td className="py-2 font-semibold text-foreground">{k.name}</td>
                     <td className="py-2 text-center">
-                      {weight > 0 ? <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-accent/10 text-accent">{weight}%</span> : <span className="text-muted-foreground">—</span>}
+                      {weight > 0 ? <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-accent/20 text-foreground">{weight}%</span> : <span className="text-muted-foreground">—</span>}
                     </td>
                     <td className="py-2">
                       {isTotalView || !(canEdit || canEditKpi) ? (
