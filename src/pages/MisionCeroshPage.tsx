@@ -846,7 +846,7 @@ function DashboardChart({
       </div>
       <div className="h-80 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData} margin={{ top: 10, right: 20, left: -10, bottom: 0 }}>
+          <BarChart data={chartData} margin={{ top: 10, right: 20, left: -10, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis dataKey="month" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
             <YAxis
@@ -865,17 +865,15 @@ function DashboardChart({
             />
             <Legend wrapperStyle={{ fontSize: 11 }} />
             {areas.map((a, i) => (
-              <Line
+              <Bar
                 key={a.id}
-                type="monotone"
                 dataKey={a.name}
-                stroke={palette[i % palette.length]}
-                strokeWidth={2}
-                dot={{ r: 3 }}
-                activeDot={{ r: 5 }}
+                fill={palette[i % palette.length]}
+                radius={[3, 3, 0, 0]}
+                maxBarSize={20}
               />
             ))}
-          </LineChart>
+          </BarChart>
         </ResponsiveContainer>
       </div>
     </div>
