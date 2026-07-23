@@ -115,13 +115,13 @@
     @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium;
   }
   .status-active {
-    @apply bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))];
+    @apply bg-success-bright/10 text-success-bright;
   }
   .status-warning {
-    @apply bg-[hsl(var(--warning)/0.12)] text-[hsl(var(--warning))];
+    @apply bg-warning-bright/10 text-warning-bright;
   }
   .status-danger {
-    @apply bg-[hsl(var(--danger)/0.12)] text-[hsl(var(--danger))];
+    @apply bg-danger-bright/10 text-danger-bright;
   }
   .status-muted {
     @apply bg-muted text-muted-foreground;
