@@ -44,23 +44,23 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-sidebar p-4">
-      <div className="w-full max-w-md animate-fade-in">
-        <div className="text-center mb-8">
+    <div className="min-h-screen flex items-center justify-center bg-white p-4">
+      <div className="w-full max-w-[420px] animate-fade-in">
+        <div className="text-center mb-10">
           <img
             src="https://dnifnjmiqbrtnmeqjizw.supabase.co/storage/v1/object/public/OSH-B/OSH-B.png"
             alt="OSHOME logo"
-            className="w-20 h-20 rounded-2xl object-contain mx-auto mb-4"
+            className="w-24 h-24 object-contain mx-auto mb-6"
           />
-          <h1 className="text-2xl font-display font-extrabold text-sidebar-foreground">Work Plan</h1>
-          <p className="text-sidebar-foreground/70 mt-1 text-sm">Plataforma de Gestión Objetivos e Indicadores</p>
-          <p className="text-sidebar-foreground/50 mt-1 text-xs">Inicia sesión con tu cuenta</p>
+          <h1 className="text-3xl font-display font-bold text-foreground tracking-tight">Work Plan</h1>
+          <p className="text-muted-foreground mt-2 text-sm font-medium">Plataforma de Gestión Objetivos e Indicadores</p>
+          <p className="text-muted-foreground/60 mt-1 text-xs">Inicia sesión con tu cuenta</p>
         </div>
 
-        <div className="bg-card rounded-2xl shadow-2xl p-8">
+        <div className="bg-white border border-border/60 rounded-sm p-8 shadow-sm">
           <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="login-email">Correo electrónico</Label>
+              <Label htmlFor="login-email" className="text-foreground/90 text-sm font-medium">Correo electrónico</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
@@ -68,14 +68,14 @@ export default function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 bg-white border-border/60 focus:border-foreground/30 focus:ring-foreground/10"
                   placeholder="correo@empresa.com"
                   required
                 />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="login-password">Contraseña</Label>
+              <Label htmlFor="login-password" className="text-foreground/90 text-sm font-medium">Contraseña</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
@@ -83,7 +83,7 @@ export default function LoginPage() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 bg-white border-border/60 focus:border-foreground/30 focus:ring-foreground/10"
                   placeholder="••••••••"
                   required
                 />
@@ -91,23 +91,23 @@ export default function LoginPage() {
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
             {forgotMessage && (
-              <p className="text-sm text-accent-foreground bg-accent/20 p-2 rounded">{forgotMessage}</p>
+              <p className="text-sm text-foreground bg-secondary/40 p-3 rounded-sm">{forgotMessage}</p>
             )}
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full rounded-sm" disabled={isLoading}>
               {isLoading ? "Ingresando..." : "Iniciar Sesión"}
             </Button>
             <div className="text-center">
               <button
                 type="button"
                 onClick={handleForgotPassword}
-                className="text-sm text-primary hover:underline"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 disabled={isLoading}
               >
                 ¿Olvidaste tu contraseña?
               </button>
             </div>
-            <div className="text-center pt-2 border-t border-border/50">
-              <a href="/status" className="text-xs text-muted-foreground hover:text-foreground hover:underline">
+            <div className="text-center pt-4 border-t border-border/40">
+              <a href="/status" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
                 Ver estado del sistema
               </a>
             </div>
