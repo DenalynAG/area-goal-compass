@@ -115,12 +115,21 @@
     @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium;
   }
   .status-active {
-    @apply bg-success-bright/10 text-success-bright;
+    @apply bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))];
   }
   .status-warning {
-    @apply bg-warning-bright/10 text-warning-bright;
+    @apply bg-[hsl(var(--warning)/0.12)] text-[hsl(var(--warning))];
   }
   .status-danger {
+    @apply bg-[hsl(var(--danger)/0.12)] text-[hsl(var(--danger))];
+  }
+  .status-alto {
+    @apply bg-success-bright/10 text-success-bright;
+  }
+  .status-medio {
+    @apply bg-warning-bright/10 text-warning-bright;
+  }
+  .status-bajo {
     @apply bg-danger-bright/10 text-danger-bright;
   }
   .status-muted {
