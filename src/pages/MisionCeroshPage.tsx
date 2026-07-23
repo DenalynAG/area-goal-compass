@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useAreas, useSubareas } from "@/hooks/useSupabaseData";
+import { useAreas, useSubareas, useMemberships } from "@/hooks/useSupabaseData";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -721,12 +721,24 @@ export default function MisionCeroshPage({ restrictAreaKey }: { restrictAreaKey?
     !restrictAreaKey && (isSuperAdmin || user?.id === ANDRES_ID);
 
   const { data: allAreas = [] } = useAreas();
+  const { data: memberships = [] } = useMemberships();
+  const seesAll =
+    isSuperAdmin || user?.id === ANDRES_ID || Boolean((profile as any)?.mision_cerosh_admin);
   const restrictAreaId = useMemo(() => {
-    if (!restrictAreaKey) return null;
-    const name = AREA_KEY_TO_NAME[restrictAreaKey];
-    return allAreas.find((a) => a.name === name)?.id ?? null;
-  }, [restrictAreaKey, allAreas]);
-  const areaLabel = restrictAreaKey ? AREA_KEY_TO_NAME[restrictAreaKey] : null;
+    if (restrictAreaKey) {
+      const name = AREA_KEY_TO_NAME[restrictAreaKey];
+      return allAreas.find((a) => a.name === name)?.id ?? null;
+    }
+    // /mision-cerosh: privileged users see everything; others fall back to their area
+    if (seesAll) return null;
+    const myMembership = memberships.find((m) => m.user_id === user?.id);
+    return myMembership?.area_id ?? null;
+  }, [restrictAreaKey, allAreas, seesAll, memberships, user?.id]);
+  const areaLabel = restrictAreaKey
+    ? AREA_KEY_TO_NAME[restrictAreaKey]
+    : restrictAreaId
+    ? allAreas.find((a) => a.id === restrictAreaId)?.name ?? null
+    : null;
 
   const years = [now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1];
 
