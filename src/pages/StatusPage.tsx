@@ -47,13 +47,18 @@ export default function StatusPage() {
     try {
       const controller = new AbortController();
       const t = setTimeout(() => controller.abort(), 8000);
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/`, {
-        method: "GET",
-        headers: { apikey: ANON_KEY },
+      // HEAD a real table; PostgREST responds reachable even si RLS filtra filas.
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/areas?select=id&limit=1`, {
+        method: "HEAD",
+        headers: {
+          apikey: ANON_KEY,
+          Authorization: `Bearer ${ANON_KEY}`,
+        },
         signal: controller.signal,
       });
       clearTimeout(t);
-      setDbStatus(res.ok || res.status === 404 ? "operational" : "down");
+      // Cualquier respuesta HTTP < 500 significa que PostgREST está respondiendo.
+      setDbStatus(res.status < 500 ? "operational" : "down");
     } catch {
       setDbStatus("down");
     }
