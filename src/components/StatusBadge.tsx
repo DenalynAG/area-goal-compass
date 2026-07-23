@@ -51,7 +51,7 @@ export function ProgressBar({
   highThreshold?: number;
   midThreshold?: number;
 }) {
-  const color = value >= highThreshold ? 'bg-success' : value >= midThreshold ? 'bg-warning' : 'bg-danger';
+  const color = value >= highThreshold ? 'bg-success-bright' : value >= midThreshold ? 'bg-warning-bright' : 'bg-danger-bright';
   return (
     <div className={cn('w-full bg-muted rounded-full h-2', className)}>
       <div className={cn('h-2 rounded-full transition-all', color)} style={{ width: `${Math.min(100, value)}%` }} />
