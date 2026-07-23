@@ -7,7 +7,6 @@ import {
   ClipboardCheck,
   ClipboardList,
   Settings,
-  LogOut,
   ChevronLeft,
   ChevronRight,
   Menu,
