@@ -862,8 +862,8 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                     <Bar dataKey="Objetivos" radius={[0, 4, 4, 0]}>
                       {dashboardChartData.map((entry: any, index: number) => {
                         const v = Number(entry.Objetivos) || 0;
-                        // Regla de cumplimiento: Alto ≥ 100 (verde), Medio ≥ 80 (amarillo), Bajo < 80 (rojo).
-                        const color = v >= 100 ? '#16a34a' : v >= 80 ? '#eab308' : '#dc2626';
+                        // Regla de cumplimiento: Alto ≥ 100 (verde brillante), Medio ≥ 80 (ámbar brillante), Bajo < 80 (rojo brillante).
+                        const color = v >= 100 ? '#22c55e' : v >= 80 ? '#f59e0b' : '#ef4444';
                         return <Cell key={`cell-${index}`} fill={color} />;
                       })}
                       <LabelList
