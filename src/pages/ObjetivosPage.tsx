@@ -1923,7 +1923,7 @@ function ObjectiveCard({
                     }).filter((v): v is number => v !== null);
                     const avg = values.length > 0 ? Math.round(values.reduce((s, v) => s + v, 0) / values.length) : 0;
                     const label = avg >= 100 ? 'Alto' : avg >= 80 ? 'Medio' : 'Bajo';
-                    const color = avg >= 100 ? 'text-green-600 bg-green-50' : avg >= 80 ? 'text-yellow-600 bg-yellow-50' : 'text-red-600 bg-red-50';
+                    const color = avg >= 100 ? 'text-success-bright bg-success-bright/10' : avg >= 80 ? 'text-warning-bright bg-warning-bright/10' : 'text-danger-bright bg-danger-bright/10';
                     return <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${color}`}>{label} ({avg}%)</span>;
                   })()}
                 </td>
