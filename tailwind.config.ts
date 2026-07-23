@@ -15,7 +15,7 @@ export default {
   	extend: {
   		fontFamily: {
 			sans: [
-				'Agrandir',
+				'Fira Sans',
 				'ui-sans-serif',
 				'system-ui',
 				'sans-serif',
@@ -25,12 +25,13 @@ export default {
 				'Noto Color Emoji'
 			],
   			display: [
-  				'Migra',
+  				'DM Serif Display',
   				'ui-serif',
   				'Georgia',
   				'serif'
   			],
   			serif: [
+  				'DM Serif Display',
   				'ui-serif',
   				'Georgia',
   				'Cambria',
