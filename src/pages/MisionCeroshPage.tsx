@@ -710,7 +710,7 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
   );
 }
 
-export default function MisionCeroshPage() {
+export default function MisionCeroshPage({ restrictAreaKey }: { restrictAreaKey?: string } = {}) {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
@@ -718,10 +718,15 @@ export default function MisionCeroshPage() {
   const { user, hasRole, isSuperAdmin, profile } = useAuth();
   const ANDRES_ID = "d6dc750a-4192-46b8-b92f-e297a13f361e";
   const canViewDashboard =
-    isSuperAdmin ||
-    hasRole("admin_area" as any) ||
-    Boolean((profile as any)?.mision_cerosh_admin) ||
-    user?.id === ANDRES_ID;
+    !restrictAreaKey && (isSuperAdmin || user?.id === ANDRES_ID);
+
+  const { data: allAreas = [] } = useAreas();
+  const restrictAreaId = useMemo(() => {
+    if (!restrictAreaKey) return null;
+    const name = AREA_KEY_TO_NAME[restrictAreaKey];
+    return allAreas.find((a) => a.name === name)?.id ?? null;
+  }, [restrictAreaKey, allAreas]);
+  const areaLabel = restrictAreaKey ? AREA_KEY_TO_NAME[restrictAreaKey] : null;
 
   const years = [now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1];
 
@@ -731,7 +736,9 @@ export default function MisionCeroshPage() {
         <div className="flex items-center gap-4">
           <img src={misionLogo.url} alt="Misión CerOSH" className="w-16 h-16 object-contain" />
           <div>
-            <h1 className="font-display font-extrabold text-2xl">Misión CerOSH</h1>
+            <h1 className="font-display font-extrabold text-2xl">
+              Misión CerOSH{areaLabel ? ` · ${areaLabel}` : ""}
+            </h1>
             <p className="text-sm text-muted-foreground">
               Control diario de Orden y Aseo, Acciones Preventivas y Accidentes de Trabajo por área y subárea.
             </p>
@@ -783,13 +790,13 @@ export default function MisionCeroshPage() {
           )}
         </TabsList>
         <TabsContent value="orden_aseo" className="mt-6">
-          <ReportSection reportType="orden_aseo" year={year} month={month} />
+          <ReportSection reportType="orden_aseo" year={year} month={month} restrictAreaId={restrictAreaId} />
         </TabsContent>
         <TabsContent value="accion_preventiva" className="mt-6">
-          <ReportSection reportType="accion_preventiva" year={year} month={month} />
+          <ReportSection reportType="accion_preventiva" year={year} month={month} restrictAreaId={restrictAreaId} />
         </TabsContent>
         <TabsContent value="accidente_trabajo" className="mt-6">
-          <ReportSection reportType="accidente_trabajo" year={year} month={month} />
+          <ReportSection reportType="accidente_trabajo" year={year} month={month} restrictAreaId={restrictAreaId} />
         </TabsContent>
         {canViewDashboard && (
           <TabsContent value="dashboard" className="mt-6">
