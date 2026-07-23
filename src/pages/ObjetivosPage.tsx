@@ -1609,9 +1609,9 @@ function ObjectiveCard({
 
   const circumference = 2 * Math.PI * 28;
   const strokeDashoffset = circumference - (Math.min(computedProgress, 100) / 100) * circumference;
-  const progressColor = computedProgress >= 100 ? 'hsl(var(--success))' : computedProgress >= 80 ? 'hsl(var(--warning))' : 'hsl(var(--destructive))';
+  const progressColor = computedProgress >= 100 ? 'hsl(var(--success-bright))' : computedProgress >= 80 ? 'hsl(var(--warning-bright))' : 'hsl(var(--danger-bright))';
   const progressLabel = computedProgress >= 100 ? 'Alto' : computedProgress >= 80 ? 'Medio' : 'Bajo';
-  const progressLabelClass = computedProgress >= 100 ? 'text-green-600' : computedProgress >= 80 ? 'text-yellow-600' : 'text-red-600';
+  const progressLabelClass = computedProgress >= 100 ? 'text-success-bright' : computedProgress >= 80 ? 'text-warning-bright' : 'text-danger-bright';
 
   return (
     <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
