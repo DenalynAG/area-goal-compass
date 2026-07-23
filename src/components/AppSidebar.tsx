@@ -340,12 +340,14 @@ export default function AppSidebar() {
   const sidebarContent = (
     <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 h-16 border-b border-sidebar-border shrink-0">
-        <img
-          src="https://dnifnjmiqbrtnmeqjizw.supabase.co/storage/v1/object/public/OSH-B/OSH-B.png"
-          alt="EasyConnect logo"
-          className="w-9 h-9 rounded-lg object-contain shrink-0"
-        />
+      <div className={cn("flex items-center gap-3 h-16 border-b border-sidebar-border shrink-0", collapsed ? "px-2 justify-center" : "px-4") }>
+        {!collapsed && (
+          <img
+            src="https://dnifnjmiqbrtnmeqjizw.supabase.co/storage/v1/object/public/OSH-B/OSH-B.png"
+            alt="EasyConnect logo"
+            className="w-9 h-9 rounded-lg object-contain shrink-0"
+          />
+        )}
         {!collapsed && (
           <div className="overflow-hidden">
             <h1 className="text-sm font-display font-extrabold truncate text-sidebar-foreground">¡Bienvenidos! 🙌</h1>
