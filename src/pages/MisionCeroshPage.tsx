@@ -80,12 +80,27 @@ function useYearReports(reportType: ReportType, year: number) {
   });
 }
 
-function ReportSection({ reportType, year, month }: { reportType: ReportType; year: number; month: number }) {
+const AREA_KEY_TO_NAME: Record<string, string> = {
+  ayb: "Alimentos y Bebidas",
+  comercial: "Comercial",
+  compras: "Compras",
+  contraloria: "Contraloría",
+  mercadeo: "Mercadeo",
+  operaciones: "Operaciones",
+  tecnologia: "Tecnología",
+  rrhh: "Recursos Humanos",
+};
+
+function ReportSection({ reportType, year, month, restrictAreaId }: { reportType: ReportType; year: number; month: number; restrictAreaId?: string | null }) {
   const { user, isSuperAdmin, profile } = useAuth();
   const canManage = isSuperAdmin || Boolean((profile as any)?.mision_cerosh_admin);
   const meta = REPORT_META[reportType];
   const qc = useQueryClient();
-  const { data: areas = [] } = useAreas();
+  const { data: allAreas = [] } = useAreas();
+  const areas = useMemo(
+    () => (restrictAreaId ? allAreas.filter((a) => a.id === restrictAreaId) : allAreas),
+    [allAreas, restrictAreaId],
+  );
   const { data: subareas = [] } = useSubareas();
   const { data: reports = [], isLoading } = useReports(reportType, year, month);
   const { data: yearReports = [] } = useYearReports(reportType, year);
