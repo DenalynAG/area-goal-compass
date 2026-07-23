@@ -334,81 +334,127 @@ export default function SeleccionDesarrolloPage() {
             No hay aspirantes. Crea el primero con "Nuevo aspirante".
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-sm">
-              <thead>
-                <tr className="bg-muted/40 border-b">
-                  <th className="sticky left-0 z-10 bg-muted/40 text-left px-3 py-2 w-[240px] min-w-[240px] border-r">
-                    Competencia
-                  </th>
-                  <th className="text-left px-3 py-2 w-[320px] min-w-[280px] border-r bg-muted/40">
-                    Comportamientos observables
-                  </th>
-                  {filtered.map(row => (
-                    <th key={row.id} className="text-left px-3 py-2 min-w-[190px] border-r align-top">
-                      <div className="flex items-start justify-between gap-1">
-                        <div className="space-y-0.5">
-                          <p className="font-semibold text-sm leading-tight">{row.candidate_name}</p>
-                          <p className="text-[11px] text-muted-foreground leading-tight">
-                            {areaName(row.area_id)}{row.subarea_id ? ` · ${subareaName(row.subarea_id)}` : ''}
-                          </p>
-                          <p className="text-[11px] text-muted-foreground leading-tight">{row.position ?? '—'}</p>
-                        </div>
-                        <div className="flex items-center gap-0.5 shrink-0">
-                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(row)}>
-                            <Pencil className="w-3.5 h-3.5" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setDeleteId(row.id)}>
-                            <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                          </Button>
-                        </div>
-                      </div>
+          <>
+            {/* Desktop table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full border-collapse text-sm">
+                <thead>
+                  <tr className="bg-muted/40 border-b">
+                    <th className="sticky left-0 z-20 bg-muted/40 text-left px-3 py-2 w-[200px] min-w-[200px] border-r shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
+                      Competencia
                     </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {COMPETENCIAS.map(c => (
-                  <tr key={c.key} className="border-b">
-                    <td className="sticky left-0 z-10 bg-background px-3 py-2 border-r align-top">
-                      <p className="font-semibold text-sm">{c.label}</p>
-                      <p className="text-[11px] text-muted-foreground">{c.sub}</p>
-                    </td>
-                    <td className="px-3 py-2 border-r align-top text-xs text-muted-foreground leading-snug">
-                      {c.behavior}
-                    </td>
+                    <th className="text-left px-3 py-2 w-[280px] min-w-[260px] border-r bg-muted/40">
+                      Comportamientos observables
+                    </th>
                     {filtered.map(row => (
-                      <td key={row.id} className="px-2 py-2 border-r">
-                        <ScoreCell row={row} k={c.key} />
+                      <th key={row.id} className="text-left px-3 py-2 min-w-[180px] border-r align-top">
+                        <div className="flex items-start justify-between gap-1">
+                          <div className="space-y-0.5 min-w-0">
+                            <p className="font-semibold text-sm leading-tight truncate">{row.candidate_name}</p>
+                            <p className="text-[11px] text-muted-foreground leading-tight">
+                              {areaName(row.area_id)}{row.subarea_id ? ` · ${subareaName(row.subarea_id)}` : ''}
+                            </p>
+                            <p className="text-[11px] text-muted-foreground leading-tight">{row.position ?? '—'}</p>
+                          </div>
+                          <div className="flex items-center gap-0.5 shrink-0">
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(row)}>
+                              <Pencil className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setDeleteId(row.id)}>
+                              <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                            </Button>
+                          </div>
+                        </div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {COMPETENCIAS.map(c => (
+                    <tr key={c.key} className="border-b">
+                      <td className="sticky left-0 z-20 bg-background px-3 py-2 border-r align-top shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
+                        <p className="font-semibold text-sm">{c.label}</p>
+                        <p className="text-[11px] text-muted-foreground">{c.sub}</p>
+                      </td>
+                      <td className="px-3 py-2 border-r align-top text-xs text-muted-foreground leading-snug">
+                        {c.behavior}
+                      </td>
+                      {filtered.map(row => (
+                        <td key={row.id} className="px-2 py-2 border-r">
+                          <ScoreCell row={row} k={c.key} />
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                  <tr className="bg-muted/30">
+                    <td className="sticky left-0 z-20 bg-muted/30 px-3 py-2 border-r font-semibold shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
+                      Nota ponderada
+                    </td>
+                    <td className="px-3 py-2 border-r bg-muted/30" />
+                    {filtered.map(row => (
+                      <td key={row.id} className="px-3 py-2 border-r text-center">
+                        {scoreBadge(row.weighted_score !== null ? Number(row.weighted_score) : null)}
                       </td>
                     ))}
                   </tr>
-                ))}
-                <tr className="bg-muted/30">
-                  <td className="sticky left-0 z-10 bg-muted/30 px-3 py-2 border-r font-semibold">
-                    Nota ponderada
-                  </td>
-                  <td className="px-3 py-2 border-r bg-muted/30" />
-                  {filtered.map(row => (
-                    <td key={row.id} className="px-3 py-2 border-r text-center">
-                      {scoreBadge(row.weighted_score !== null ? Number(row.weighted_score) : null)}
+                  <tr>
+                    <td className="sticky left-0 z-20 bg-background px-3 py-2 border-r text-xs text-muted-foreground shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
+                      Fecha
                     </td>
-                  ))}
-                </tr>
-                <tr>
-                  <td className="sticky left-0 z-10 bg-background px-3 py-2 border-r text-xs text-muted-foreground">
-                    Fecha
-                  </td>
-                  <td className="px-3 py-2 border-r" />
-                  {filtered.map(row => (
-                    <td key={row.id} className="px-3 py-2 border-r text-xs text-muted-foreground">
-                      {row.evaluation_date}
-                    </td>
-                  ))}
-                </tr>
-              </tbody>
-            </table>
-          </div>
+                    <td className="px-3 py-2 border-r" />
+                    {filtered.map(row => (
+                      <td key={row.id} className="px-3 py-2 border-r text-xs text-muted-foreground">
+                        {row.evaluation_date}
+                      </td>
+                    ))}
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile card view */}
+            <div className="md:hidden divide-y">
+              {filtered.map(row => (
+                <div key={row.id} className="p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm truncate">{row.candidate_name}</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {areaName(row.area_id)}{row.subarea_id ? ` · ${subareaName(row.subarea_id)}` : ''}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">{row.position ?? '—'}</p>
+                    </div>
+                    <div className="flex items-center gap-0.5 shrink-0">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(row)}>
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteId(row.id)}>
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    {COMPETENCIAS.map(c => (
+                      <div key={c.key} className="border rounded-md p-2.5 space-y-1.5 bg-muted/20">
+                        <div>
+                          <p className="font-semibold text-xs">{c.label}</p>
+                          <p className="text-[10px] text-muted-foreground leading-snug line-clamp-3">{c.behavior}</p>
+                        </div>
+                        <ScoreCell row={row} k={c.key} />
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-xs text-muted-foreground">Nota ponderada</span>
+                    {scoreBadge(row.weighted_score !== null ? Number(row.weighted_score) : null)}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">Fecha: {row.evaluation_date}</p>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </Card>
 
