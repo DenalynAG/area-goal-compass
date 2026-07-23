@@ -27,11 +27,11 @@ export default function UserMenu() {
       >
         {initials}
       </div>
-      <div className="hidden sm:flex flex-col leading-tight min-w-0">
-        <span className="text-sm font-semibold text-foreground truncate max-w-[160px]">
+      <div className="hidden sm:flex flex-col leading-tight">
+        <span className="text-sm font-semibold text-foreground whitespace-normal break-words">
           {displayName}
         </span>
-        <span className="text-[11px] text-muted-foreground truncate max-w-[160px]">
+        <span className="text-[11px] text-muted-foreground whitespace-normal break-words">
           {roleLabel}
         </span>
       </div>
