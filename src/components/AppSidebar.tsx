@@ -105,6 +105,7 @@ const navItems: NavItem[] = [
       { to: "/ayb/calidad", label: "Calidad", icon: ShieldCheck },
       { to: "/ayb/evaluaciones", label: "Evaluaciones", icon: ClipboardCheck },
       { to: "/ayb/control-acceso", label: "Control de Acceso", icon: DoorOpen },
+      { to: "/ayb/mision-cerosh", label: "Misión CerOSH", icon: Rocket },
     ],
   },
   {
@@ -141,6 +142,7 @@ const navItems: NavItem[] = [
       { to: "/comercial/calidad", label: "Calidad", icon: ShieldCheck },
       { to: "/comercial/evaluaciones", label: "Evaluaciones", icon: ClipboardCheck },
       { to: "/comercial/control-acceso", label: "Control de Acceso", icon: DoorOpen },
+      { to: "/comercial/mision-cerosh", label: "Misión CerOSH", icon: Rocket },
     ],
   },
   {
@@ -153,6 +155,7 @@ const navItems: NavItem[] = [
       { to: "/compras/calidad", label: "Calidad", icon: ShieldCheck },
       { to: "/compras/evaluaciones", label: "Evaluaciones", icon: ClipboardCheck },
       { to: "/compras/control-acceso", label: "Control de Acceso", icon: DoorOpen },
+      { to: "/compras/mision-cerosh", label: "Misión CerOSH", icon: Rocket },
     ],
   },
   {
@@ -165,6 +168,7 @@ const navItems: NavItem[] = [
       { to: "/contraloria/calidad", label: "Calidad", icon: ShieldCheck },
       { to: "/contraloria/evaluaciones", label: "Evaluaciones", icon: ClipboardCheck },
       { to: "/contraloria/control-acceso", label: "Control de Acceso", icon: DoorOpen },
+      { to: "/contraloria/mision-cerosh", label: "Misión CerOSH", icon: Rocket },
     ],
   },
   {
@@ -177,6 +181,7 @@ const navItems: NavItem[] = [
       { to: "/mercadeo/calidad", label: "Calidad", icon: ShieldCheck },
       { to: "/mercadeo/evaluaciones", label: "Evaluaciones", icon: ClipboardCheck },
       { to: "/mercadeo/control-acceso", label: "Control de Acceso", icon: DoorOpen },
+      { to: "/mercadeo/mision-cerosh", label: "Misión CerOSH", icon: Rocket },
     ],
   },
   {
@@ -222,6 +227,7 @@ const navItems: NavItem[] = [
       { to: "/operaciones/calidad", label: "Calidad", icon: ShieldCheck },
       { to: "/operaciones/evaluaciones", label: "Evaluaciones", icon: ClipboardCheck },
       { to: "/operaciones/control-acceso", label: "Control de Acceso", icon: DoorOpen },
+      { to: "/operaciones/mision-cerosh", label: "Misión CerOSH", icon: Rocket },
     ],
   },
   {
@@ -251,6 +257,7 @@ const navItems: NavItem[] = [
       { to: "/tecnologia/calidad", label: "Calidad", icon: ShieldCheck },
       { to: "/tecnologia/evaluaciones", label: "Evaluaciones", icon: ClipboardCheck },
       { to: "/tecnologia/control-acceso", label: "Control de Acceso", icon: DoorOpen },
+      { to: "/tecnologia/mision-cerosh", label: "Misión CerOSH", icon: Rocket },
     ],
   },
   { to: "/organigrama", icon: Building2, label: "Organigrama" },
