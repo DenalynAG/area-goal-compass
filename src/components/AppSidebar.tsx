@@ -345,7 +345,7 @@ export default function AppSidebar() {
           <img
             src="https://dnifnjmiqbrtnmeqjizw.supabase.co/storage/v1/object/public/OSH-B/OSH-B.png"
             alt="EasyConnect logo"
-            className="w-9 h-9 rounded-lg object-contain shrink-0"
+            className="w-9 h-9 rounded-lg object-contain shrink-0 brightness-0 invert"
           />
         )}
         {!collapsed && (
