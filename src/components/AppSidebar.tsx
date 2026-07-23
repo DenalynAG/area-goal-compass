@@ -340,12 +340,14 @@ export default function AppSidebar() {
   const sidebarContent = (
     <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 h-16 border-b border-sidebar-border shrink-0">
-        <img
-          src="https://dnifnjmiqbrtnmeqjizw.supabase.co/storage/v1/object/public/OSH-B/OSH-B.png"
-          alt="EasyConnect logo"
-          className="w-9 h-9 rounded-lg object-contain shrink-0"
-        />
+      <div className={cn("flex items-center gap-3 h-16 border-b border-sidebar-border shrink-0", collapsed ? "px-2 justify-center" : "px-4") }>
+        {!collapsed && (
+          <img
+            src="https://dnifnjmiqbrtnmeqjizw.supabase.co/storage/v1/object/public/OSH-B/OSH-B.png"
+            alt="EasyConnect logo"
+            className="w-9 h-9 rounded-lg object-contain shrink-0"
+          />
+        )}
         {!collapsed && (
           <div className="overflow-hidden">
             <h1 className="text-sm font-display font-extrabold truncate text-sidebar-foreground">¡Bienvenidos! 🙌</h1>
@@ -354,7 +356,10 @@ export default function AppSidebar() {
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="ml-auto hidden lg:flex items-center justify-center w-7 h-7 rounded-md hover:bg-sidebar-accent text-sidebar-foreground/50 transition-colors"
+          className={cn(
+            "hidden lg:flex items-center justify-center w-7 h-7 rounded-md border border-sidebar-border bg-sidebar-accent/40 text-sidebar-foreground hover:bg-sidebar-accent transition-colors shrink-0",
+            collapsed ? "mx-auto" : "ml-auto",
+          )}
         >
           {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
         </button>
