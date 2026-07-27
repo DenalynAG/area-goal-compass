@@ -471,6 +471,45 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
                           </label>
                         )}
                       </div>
+                      <div className="flex items-center gap-1 flex-wrap">
+                        <button
+                          type="button"
+                          title={d.recordId ? "Editar registro" : "Crear registro"}
+                          onClick={() => openEditDay(i)}
+                          className="p-1 rounded border bg-background hover:bg-muted text-foreground"
+                        >
+                          {d.recordId ? <Pencil className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
+                        </button>
+                        {hasEvidence && (
+                          <label
+                            title="Reemplazar evidencia"
+                            className="p-1 rounded border bg-background hover:bg-muted text-foreground cursor-pointer"
+                          >
+                            {isUploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                            <input
+                              type="file"
+                              className="hidden"
+                              accept="image/*,application/pdf"
+                              disabled={isUploading}
+                              onChange={(e) => {
+                                const f = e.target.files?.[0];
+                                if (f) uploadEvidence(i, f);
+                                e.target.value = "";
+                              }}
+                            />
+                          </label>
+                        )}
+                        {d.recordId && (
+                          <button
+                            type="button"
+                            title="Eliminar registro"
+                            onClick={() => deleteDayRecord(i)}
+                            className="p-1 rounded border bg-background hover:bg-rose-100 text-rose-700"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
                       {hasEvidence && (
                         <div className="flex items-center justify-between gap-1">
                           <span
