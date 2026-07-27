@@ -596,6 +596,56 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
             )}
       </div>
 
+      {/* Diálogo de adjuntar evidencia */}
+      <Dialog open={attachDay !== null} onOpenChange={(o) => { if (!o && uploadingDay === null) setAttachDay(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              Adjuntar evidencia — Día {(attachDay ?? 0) + 1} de {MONTH_NAMES[month]}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label>Archivo (imagen o PDF, máx. {MAX_FILE_MB} MB) *</Label>
+              <Input
+                type="file"
+                accept="image/*,application/pdf"
+                onChange={(e) => {
+                  const f = e.target.files?.[0] ?? null;
+                  setAttachFile(f);
+                  setAttachError(validateFile(f));
+                }}
+              />
+              {attachFile && (
+                <p className="text-xs text-muted-foreground">
+                  {attachFile.name} — {(attachFile.size / 1024 / 1024).toFixed(2)} MB
+                </p>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label>Notas (opcional)</Label>
+              <Textarea
+                rows={3}
+                maxLength={500}
+                value={attachNotes}
+                onChange={(e) => setAttachNotes(e.target.value)}
+                placeholder="Observaciones sobre la evidencia…"
+              />
+              <p className="text-xs text-muted-foreground text-right">{attachNotes.length}/500</p>
+            </div>
+            {attachError && <p className="text-sm text-rose-600">{attachError}</p>}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAttachDay(null)} disabled={uploadingDay !== null}>
+              Cancelar
+            </Button>
+            <Button onClick={submitAttach} disabled={uploadingDay !== null || !attachFile || !!attachError}>
+              {uploadingDay !== null ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Subiendo…</>) : "Guardar evidencia"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Diálogo de edición / creación de registro diario */}
       <Dialog open={editDay !== null} onOpenChange={(o) => { if (!o) setEditDay(null); }}>
         <DialogContent className="sm:max-w-md">
