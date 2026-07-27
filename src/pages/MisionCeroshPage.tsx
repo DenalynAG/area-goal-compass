@@ -431,13 +431,15 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
                   const isPending = hasEvidence && d.status === "pendiente";
                   const isRejected = hasEvidence && d.status === "rechazado";
                   const cardTone = isApproved
-                    ? "border-emerald-400 bg-emerald-50"
+                    ? "border-emerald-500 bg-emerald-100 ring-1 ring-emerald-400"
                     : isPending
-                    ? "border-amber-400 bg-amber-50"
+                    ? "border-amber-500 bg-amber-100 ring-1 ring-amber-400"
                     : isRejected
-                    ? "border-rose-300 bg-rose-50"
+                    ? "border-rose-500 bg-rose-100 ring-1 ring-rose-400"
                     : d.completed
-                    ? "border-emerald-400 bg-emerald-50"
+                    ? "border-emerald-500 bg-emerald-100 ring-1 ring-emerald-400"
+                    : d.hasReport
+                    ? "border-sky-500 bg-sky-100 ring-1 ring-sky-400"
                     : "bg-background";
                   return (
                     <div
