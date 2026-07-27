@@ -138,6 +138,37 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
   const [savingEdit, setSavingEdit] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; label: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  // Attach evidence modal state
+  const [attachDay, setAttachDay] = useState<number | null>(null);
+  const [attachFile, setAttachFile] = useState<File | null>(null);
+  const [attachNotes, setAttachNotes] = useState("");
+  const [attachError, setAttachError] = useState<string | null>(null);
+
+  const MAX_FILE_MB = 10;
+  const openAttach = (dayIdx: number) => {
+    setAttachDay(dayIdx);
+    setAttachFile(null);
+    setAttachNotes(calDays[dayIdx]?.notes ?? "");
+    setAttachError(null);
+  };
+  const validateFile = (f: File | null): string | null => {
+    if (!f) return "Debes seleccionar un archivo (imagen o PDF).";
+    const okType = f.type.startsWith("image/") || f.type === "application/pdf";
+    if (!okType) return "Formato no válido. Solo se permiten imágenes o PDF.";
+    if (f.size > MAX_FILE_MB * 1024 * 1024) return `El archivo supera ${MAX_FILE_MB} MB.`;
+    return null;
+  };
+  const submitAttach = async () => {
+    if (attachDay === null) return;
+    const fileErr = validateFile(attachFile);
+    if (fileErr) { setAttachError(fileErr); return; }
+    if (attachNotes.trim().length > 500) { setAttachError("Las notas no pueden superar 500 caracteres."); return; }
+    setAttachError(null);
+    await uploadEvidence(attachDay, attachFile!, attachNotes.trim() || null);
+    setAttachDay(null);
+    setAttachFile(null);
+    setAttachNotes("");
+  };
 
   const calAreaSubareas = useMemo(
     () => subareas.filter((s) => s.area_id === calArea),
@@ -175,7 +206,7 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
   const dateStrFor = (dayIdx: number) =>
     `${year}-${String(month + 1).padStart(2, "0")}-${String(dayIdx + 1).padStart(2, "0")}`;
 
-  const uploadEvidence = async (dayIdx: number, file: File) => {
+  const uploadEvidence = async (dayIdx: number, file: File, notes: string | null = null) => {
     if (!calArea || !file) return;
     const subFilter = calSubarea === "__none__" ? null : calSubarea;
     const dateStr = dateStrFor(dayIdx);
@@ -189,7 +220,7 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
       if (existing) {
         const { error } = await supabase
           .from("mision_cerosh_reports" as any)
-          .update({ evidence_url: path, completed: true, evidence_status: "pendiente", approved_by: null, approved_at: null })
+          .update({ evidence_url: path, completed: true, evidence_status: "pendiente", approved_by: null, approved_at: null, ...(notes ? { notes } : {}) })
           .eq("id", existing);
         if (error) { toast.error("Error guardando: " + error.message); return; }
       } else {
@@ -202,6 +233,7 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
           completed: true,
           evidence_url: path,
           evidence_status: "pendiente",
+          notes,
           created_by: user?.id ?? null,
         });
         if (error) { toast.error("Error guardando: " + error.message); return; }
@@ -433,25 +465,19 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
                             <span>Evidencia</span>
                           </button>
                         ) : (
-                          <label className="flex items-center gap-1 cursor-pointer text-muted-foreground hover:text-foreground">
+                          <button
+                            type="button"
+                            disabled={isUploading}
+                            onClick={() => openAttach(i)}
+                            className="flex items-center gap-1 cursor-pointer text-muted-foreground hover:text-foreground disabled:opacity-50"
+                          >
                             {isUploading ? (
                               <Loader2 className="w-3.5 h-3.5 animate-spin" />
                             ) : (
                               <Paperclip className="w-3.5 h-3.5" />
                             )}
                             <span>{isUploading ? "Subiendo..." : "Adjuntar"}</span>
-                            <input
-                              type="file"
-                              className="hidden"
-                              accept="image/*,application/pdf"
-                              disabled={isUploading}
-                              onChange={(e) => {
-                                const f = e.target.files?.[0];
-                                if (f) uploadEvidence(i, f);
-                                e.target.value = "";
-                              }}
-                            />
-                          </label>
+                          </button>
                         )}
                       </div>
                       <div className="flex items-center gap-1 flex-wrap">
@@ -466,23 +492,15 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
                           </button>
                         )}
                         {hasEvidence && (
-                          <label
+                          <button
+                            type="button"
                             title="Reemplazar evidencia"
-                            className="p-1 rounded border bg-background hover:bg-muted text-foreground cursor-pointer"
+                            disabled={isUploading}
+                            onClick={() => openAttach(i)}
+                            className="p-1 rounded border bg-background hover:bg-muted text-foreground cursor-pointer disabled:opacity-50"
                           >
                             {isUploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-                            <input
-                              type="file"
-                              className="hidden"
-                              accept="image/*,application/pdf"
-                              disabled={isUploading}
-                              onChange={(e) => {
-                                const f = e.target.files?.[0];
-                                if (f) uploadEvidence(i, f);
-                                e.target.value = "";
-                              }}
-                            />
-                          </label>
+                          </button>
                         )}
                         {d.recordId && (
                           <button
@@ -577,6 +595,56 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
               </div>
             )}
       </div>
+
+      {/* Diálogo de adjuntar evidencia */}
+      <Dialog open={attachDay !== null} onOpenChange={(o) => { if (!o && uploadingDay === null) setAttachDay(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              Adjuntar evidencia — Día {(attachDay ?? 0) + 1} de {MONTH_NAMES[month]}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label>Archivo (imagen o PDF, máx. {MAX_FILE_MB} MB) *</Label>
+              <Input
+                type="file"
+                accept="image/*,application/pdf"
+                onChange={(e) => {
+                  const f = e.target.files?.[0] ?? null;
+                  setAttachFile(f);
+                  setAttachError(validateFile(f));
+                }}
+              />
+              {attachFile && (
+                <p className="text-xs text-muted-foreground">
+                  {attachFile.name} — {(attachFile.size / 1024 / 1024).toFixed(2)} MB
+                </p>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label>Notas (opcional)</Label>
+              <Textarea
+                rows={3}
+                maxLength={500}
+                value={attachNotes}
+                onChange={(e) => setAttachNotes(e.target.value)}
+                placeholder="Observaciones sobre la evidencia…"
+              />
+              <p className="text-xs text-muted-foreground text-right">{attachNotes.length}/500</p>
+            </div>
+            {attachError && <p className="text-sm text-rose-600">{attachError}</p>}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAttachDay(null)} disabled={uploadingDay !== null}>
+              Cancelar
+            </Button>
+            <Button onClick={submitAttach} disabled={uploadingDay !== null || !attachFile || !!attachError}>
+              {uploadingDay !== null ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Subiendo…</>) : "Guardar evidencia"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Diálogo de edición / creación de registro diario */}
       <Dialog open={editDay !== null} onOpenChange={(o) => { if (!o) setEditDay(null); }}>
