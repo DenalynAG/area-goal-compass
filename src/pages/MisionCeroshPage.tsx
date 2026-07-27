@@ -53,6 +53,44 @@ const REPORT_META: Record<ReportType, { label: string; short: string; icon: any;
 const MONTH_NAMES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const DAY_NAMES = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
 
+const isImagePath = (p: string) => /\.(png|jpe?g|gif|webp|bmp|heic)$/i.test(p);
+
+async function signedUrlFor(path: string, seconds = 300) {
+  const { data } = await supabase.storage.from("evidencias").createSignedUrl(path, seconds);
+  return data?.signedUrl ?? null;
+}
+
+async function downloadEvidence(path: string) {
+  const { data, error } = await supabase.storage.from("evidencias").download(path);
+  if (error || !data) { toast.error("No se pudo descargar la evidencia"); return; }
+  const url = URL.createObjectURL(data);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = path.split("/").pop() || "evidencia";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function EvidencePreview({ path, className = "" }: { path: string; className?: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    if (isImagePath(path)) signedUrlFor(path).then((u) => { if (active) setUrl(u); });
+    return () => { active = false; };
+  }, [path]);
+  if (!isImagePath(path)) {
+    return (
+      <div className={`flex items-center justify-center rounded border bg-muted/40 text-muted-foreground ${className}`}>
+        <FileCheck2 className="w-5 h-5" />
+      </div>
+    );
+  }
+  if (!url) return <div className={`rounded border bg-muted/40 animate-pulse ${className}`} />;
+  return <img src={url} alt="Vista previa de la evidencia" loading="lazy" className={`rounded border object-cover ${className}`} />;
+}
+
 function useReports(reportType: ReportType, year: number, month: number) {
   const start = `${year}-${String(month + 1).padStart(2, "0")}-01`;
   const endDate = new Date(year, month + 1, 1);
