@@ -448,11 +448,6 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
                     >
                       <div className="flex items-center justify-between">
                         <span className="font-bold text-sm">Día {i + 1} - {DAY_NAMES[new Date(year, month, i + 1).getDay()].toLowerCase()}</span>
-                        <Checkbox
-                          checked={d.completed}
-                          onCheckedChange={(v) => toggleCompleted(i, Boolean(v))}
-                          aria-label={`Cumplido día ${i + 1}`}
-                        />
                       </div>
                       <div className="flex items-center gap-1">
                         {d.evidenceUrl ? (
@@ -490,14 +485,16 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
                         )}
                       </div>
                       <div className="flex items-center gap-1 flex-wrap">
-                        <button
-                          type="button"
-                          title={d.recordId ? "Editar registro" : "Crear registro"}
-                          onClick={() => openEditDay(i)}
-                          className="p-1 rounded border bg-background hover:bg-muted text-foreground"
-                        >
-                          {d.recordId ? <Pencil className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
-                        </button>
+                        {d.recordId && (
+                          <button
+                            type="button"
+                            title="Editar registro"
+                            onClick={() => openEditDay(i)}
+                            className="p-1 rounded border bg-background hover:bg-muted text-foreground"
+                          >
+                            <Pencil className="w-3 h-3" />
+                          </button>
+                        )}
                         {hasEvidence && (
                           <label
                             title="Reemplazar evidencia"
