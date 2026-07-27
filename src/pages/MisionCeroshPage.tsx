@@ -814,7 +814,7 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
         </div>
       )}
 
-      {reports.length > 0 && (
+      {reports.length > 0 && canManageRecords && (
         <details className="rounded-lg border p-3">
           <summary className="cursor-pointer text-sm font-medium">Ver registros ({reports.length})</summary>
           <div className="mt-3 max-h-64 overflow-y-auto">
@@ -838,11 +838,23 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
                     <td className="py-1 pr-2">{r.count}</td>
                     <td className="py-1 pr-2 max-w-[200px] truncate">{r.notes ?? ""}</td>
                     <td>
-                      {(r.created_by === user?.id) && (
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => {
+                            setEditRecord(r);
+                            setRecCount(String(r.count ?? 1));
+                            setRecNotes(r.notes ?? "");
+                          }}
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleDelete(r.id)}>
                           <Trash2 className="w-3.5 h-3.5" />
                         </Button>
-                      )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -851,6 +863,52 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
           </div>
         </details>
       )}
+
+      <Dialog open={!!editRecord} onOpenChange={(o) => { if (!o) setEditRecord(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar registro {editRecord?.report_date ?? ""}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Cantidad</Label>
+              <Input type="number" min={0} value={recCount} onChange={(e) => setRecCount(e.target.value)} />
+            </div>
+            <div>
+              <Label>Notas</Label>
+              <Textarea value={recNotes} onChange={(e) => setRecNotes(e.target.value)} rows={3} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditRecord(null)}>Cancelar</Button>
+            <Button
+              disabled={savingRecord}
+              onClick={async () => {
+                if (!editRecord) return;
+                setSavingRecord(true);
+                try {
+                  const { error } = await supabase
+                    .from("mision_cerosh_reports" as any)
+                    .update({
+                      count: Math.max(0, parseInt(recCount, 10) || 0),
+                      notes: recNotes.trim() || null,
+                    })
+                    .eq("id", editRecord.id);
+                  if (error) { toast.error("No se pudo guardar: " + error.message); return; }
+                  toast.success("Registro actualizado");
+                  setEditRecord(null);
+                  qc.invalidateQueries({ queryKey: ["mision_cerosh_reports", reportType] });
+                  qc.invalidateQueries({ queryKey: ["mision_cerosh_reports_year", reportType] });
+                } finally {
+                  setSavingRecord(false);
+                }
+              }}
+            >
+              Guardar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
