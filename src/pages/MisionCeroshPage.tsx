@@ -93,8 +93,11 @@ const AREA_KEY_TO_NAME: Record<string, string> = {
 };
 
 function ReportSection({ reportType, year, month, restrictAreaId }: { reportType: ReportType; year: number; month: number; restrictAreaId?: string | null }) {
-  const { user, isSuperAdmin, profile } = useAuth();
+  const { user, isSuperAdmin, profile, hasRole } = useAuth();
   const canManage = isSuperAdmin || Boolean((profile as any)?.mision_cerosh_admin);
+  const ANDRES_ID = "d6dc750a-4192-46b8-b92f-e297a13f361e";
+  const canManageRecords =
+    isSuperAdmin || hasRole("admin_area") || user?.id === ANDRES_ID;
   const meta = REPORT_META[reportType];
   const qc = useQueryClient();
   const { data: allAreas = [] } = useAreas();
@@ -118,6 +121,10 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
   const [editCount, setEditCount] = useState("1");
   const [editNotes, setEditNotes] = useState("");
   const [editCompleted, setEditCompleted] = useState(true);
+  const [editRecord, setEditRecord] = useState<any | null>(null);
+  const [recCount, setRecCount] = useState("1");
+  const [recNotes, setRecNotes] = useState("");
+  const [savingRecord, setSavingRecord] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
 
   const calAreaSubareas = useMemo(
