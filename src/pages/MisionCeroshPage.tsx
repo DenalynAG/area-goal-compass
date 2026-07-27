@@ -664,6 +664,7 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
               <Input
                 type="file"
                 accept="image/*,application/pdf"
+                className="cursor-pointer border-sky-400 bg-sky-50 text-sky-900 file:mr-3 file:rounded file:border-0 file:bg-sky-600 file:px-3 file:py-1 file:text-white hover:file:bg-sky-700 focus-visible:ring-sky-400"
                 onChange={(e) => {
                   const f = e.target.files?.[0] ?? null;
                   setAttachFile(f);
@@ -671,11 +672,40 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
                 }}
               />
               {attachFile && (
-                <p className="text-xs text-muted-foreground">
-                  {attachFile.name} — {(attachFile.size / 1024 / 1024).toFixed(2)} MB
-                </p>
+                <div className="flex items-center gap-3 rounded border bg-muted/30 p-2">
+                  {attachFile.type.startsWith("image/") ? (
+                    <img
+                      src={URL.createObjectURL(attachFile)}
+                      alt="Vista previa del archivo seleccionado"
+                      className="w-16 h-16 rounded border object-cover"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded border bg-muted/40 flex items-center justify-center text-muted-foreground">
+                      <FileCheck2 className="w-6 h-6" />
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground break-all">
+                    {attachFile.name} — {(attachFile.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                </div>
               )}
             </div>
+            {attachDay !== null && calDays[attachDay]?.evidenceUrl && (
+              <div className="space-y-1.5">
+                <Label>Evidencia actual</Label>
+                <div className="flex items-center gap-3 rounded border bg-muted/30 p-2">
+                  <EvidencePreview path={calDays[attachDay]!.evidenceUrl!} className="w-16 h-16" />
+                  <div className="flex gap-2">
+                    <Button type="button" size="sm" variant="outline" onClick={() => viewEvidence(calDays[attachDay]!.evidenceUrl!)}>
+                      <FileCheck2 className="w-4 h-4 mr-1" /> Ver
+                    </Button>
+                    <Button type="button" size="sm" variant="outline" onClick={() => downloadEvidence(calDays[attachDay]!.evidenceUrl!)}>
+                      <Download className="w-4 h-4 mr-1" /> Descargar
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="space-y-1.5">
               <Label>Notas (opcional)</Label>
               <Textarea
