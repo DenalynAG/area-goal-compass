@@ -136,6 +136,8 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
   const [recNotes, setRecNotes] = useState("");
   const [savingRecord, setSavingRecord] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; label: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const calAreaSubareas = useMemo(
     () => subareas.filter((s) => s.area_id === calArea),
