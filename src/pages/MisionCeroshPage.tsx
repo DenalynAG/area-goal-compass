@@ -465,25 +465,19 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
                             <span>Evidencia</span>
                           </button>
                         ) : (
-                          <label className="flex items-center gap-1 cursor-pointer text-muted-foreground hover:text-foreground">
+                          <button
+                            type="button"
+                            disabled={isUploading}
+                            onClick={() => openAttach(i)}
+                            className="flex items-center gap-1 cursor-pointer text-muted-foreground hover:text-foreground disabled:opacity-50"
+                          >
                             {isUploading ? (
                               <Loader2 className="w-3.5 h-3.5 animate-spin" />
                             ) : (
                               <Paperclip className="w-3.5 h-3.5" />
                             )}
                             <span>{isUploading ? "Subiendo..." : "Adjuntar"}</span>
-                            <input
-                              type="file"
-                              className="hidden"
-                              accept="image/*,application/pdf"
-                              disabled={isUploading}
-                              onChange={(e) => {
-                                const f = e.target.files?.[0];
-                                if (f) uploadEvidence(i, f);
-                                e.target.value = "";
-                              }}
-                            />
-                          </label>
+                          </button>
                         )}
                       </div>
                       <div className="flex items-center gap-1 flex-wrap">
@@ -498,23 +492,15 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
                           </button>
                         )}
                         {hasEvidence && (
-                          <label
+                          <button
+                            type="button"
                             title="Reemplazar evidencia"
-                            className="p-1 rounded border bg-background hover:bg-muted text-foreground cursor-pointer"
+                            disabled={isUploading}
+                            onClick={() => openAttach(i)}
+                            className="p-1 rounded border bg-background hover:bg-muted text-foreground cursor-pointer disabled:opacity-50"
                           >
                             {isUploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-                            <input
-                              type="file"
-                              className="hidden"
-                              accept="image/*,application/pdf"
-                              disabled={isUploading}
-                              onChange={(e) => {
-                                const f = e.target.files?.[0];
-                                if (f) uploadEvidence(i, f);
-                                e.target.value = "";
-                              }}
-                            />
-                          </label>
+                          </button>
                         )}
                         {d.recordId && (
                           <button
