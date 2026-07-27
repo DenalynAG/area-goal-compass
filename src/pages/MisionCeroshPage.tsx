@@ -114,6 +114,11 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
   const [uploadingDay, setUploadingDay] = useState<number | null>(null);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectionNote, setRejectionNote] = useState("");
+  const [editDay, setEditDay] = useState<number | null>(null);
+  const [editCount, setEditCount] = useState("1");
+  const [editNotes, setEditNotes] = useState("");
+  const [editCompleted, setEditCompleted] = useState(true);
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const calAreaSubareas = useMemo(
     () => subareas.filter((s) => s.area_id === calArea),
@@ -122,8 +127,8 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
 
   // Per-day info for selected area/subarea
   const calDays = useMemo(() => {
-    const arr: { completed: boolean; evidenceUrl: string | null; recordId: string | null; hasReport: boolean; status: string; rejectionReason: string | null }[] =
-      Array.from({ length: daysInMonth }, () => ({ completed: false, evidenceUrl: null, recordId: null, hasReport: false, status: "pendiente", rejectionReason: null }));
+    const arr: { completed: boolean; evidenceUrl: string | null; recordId: string | null; hasReport: boolean; status: string; rejectionReason: string | null; count: number; notes: string | null }[] =
+      Array.from({ length: daysInMonth }, () => ({ completed: false, evidenceUrl: null, recordId: null, hasReport: false, status: "pendiente", rejectionReason: null, count: 0, notes: null }));
     if (!calArea) return arr;
     const subFilter = calSubarea === "__none__" ? null : calSubarea;
     for (const r of reports) {
@@ -133,6 +138,8 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
       const slot = arr[dayIdx];
       if (!slot) continue;
       slot.hasReport = true;
+      slot.count += r.count ?? 0;
+      if (r.notes) slot.notes = r.notes;
       if (r.completed) slot.completed = true;
       if (r.evidence_url) {
         slot.evidenceUrl = r.evidence_url;
