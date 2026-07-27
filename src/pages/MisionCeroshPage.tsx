@@ -23,7 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Sparkles, ShieldAlert, HeartPulse, Trash2, Paperclip, FileCheck2, Loader2, Check, X, BarChart3, Pencil, RefreshCw, Plus } from "lucide-react";
+import { Sparkles, ShieldAlert, HeartPulse, Trash2, Paperclip, FileCheck2, Loader2, Check, X, BarChart3, Pencil, RefreshCw } from "lucide-react";
 import { ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceLine, Legend } from "recharts";
 import misionLogo from "@/assets/mision-cerosh-logo.png.asset.json";
 
@@ -174,36 +174,6 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
 
   const dateStrFor = (dayIdx: number) =>
     `${year}-${String(month + 1).padStart(2, "0")}-${String(dayIdx + 1).padStart(2, "0")}`;
-
-  const toggleCompleted = async (dayIdx: number, next: boolean) => {
-    if (!calArea) return;
-    const subFilter = calSubarea === "__none__" ? null : calSubarea;
-    const dateStr = dateStrFor(dayIdx);
-    if (next) {
-      const { error } = await supabase.from("mision_cerosh_reports" as any).insert({
-        report_type: reportType,
-        area_id: calArea,
-        subarea_id: subFilter,
-        report_date: dateStr,
-        count: 1,
-        completed: true,
-        created_by: user?.id ?? null,
-      });
-      if (error) { toast.error("No se pudo marcar: " + error.message); return; }
-    } else {
-      const q = supabase
-        .from("mision_cerosh_reports" as any)
-        .update({ completed: false })
-        .eq("report_type", reportType)
-        .eq("area_id", calArea)
-        .eq("report_date", dateStr);
-      const { error } = subFilter
-        ? await q.eq("subarea_id", subFilter)
-        : await q.is("subarea_id", null);
-      if (error) { toast.error("No se pudo desmarcar: " + error.message); return; }
-    }
-    qc.invalidateQueries({ queryKey: ["mision_cerosh_reports", reportType] });
-  };
 
   const uploadEvidence = async (dayIdx: number, file: File) => {
     if (!calArea || !file) return;
