@@ -138,6 +138,37 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
   const [savingEdit, setSavingEdit] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; label: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  // Attach evidence modal state
+  const [attachDay, setAttachDay] = useState<number | null>(null);
+  const [attachFile, setAttachFile] = useState<File | null>(null);
+  const [attachNotes, setAttachNotes] = useState("");
+  const [attachError, setAttachError] = useState<string | null>(null);
+
+  const MAX_FILE_MB = 10;
+  const openAttach = (dayIdx: number) => {
+    setAttachDay(dayIdx);
+    setAttachFile(null);
+    setAttachNotes(calDays[dayIdx]?.notes ?? "");
+    setAttachError(null);
+  };
+  const validateFile = (f: File | null): string | null => {
+    if (!f) return "Debes seleccionar un archivo (imagen o PDF).";
+    const okType = f.type.startsWith("image/") || f.type === "application/pdf";
+    if (!okType) return "Formato no válido. Solo se permiten imágenes o PDF.";
+    if (f.size > MAX_FILE_MB * 1024 * 1024) return `El archivo supera ${MAX_FILE_MB} MB.`;
+    return null;
+  };
+  const submitAttach = async () => {
+    if (attachDay === null) return;
+    const fileErr = validateFile(attachFile);
+    if (fileErr) { setAttachError(fileErr); return; }
+    if (attachNotes.trim().length > 500) { setAttachError("Las notas no pueden superar 500 caracteres."); return; }
+    setAttachError(null);
+    await uploadEvidence(attachDay, attachFile!, attachNotes.trim() || null);
+    setAttachDay(null);
+    setAttachFile(null);
+    setAttachNotes("");
+  };
 
   const calAreaSubareas = useMemo(
     () => subareas.filter((s) => s.area_id === calArea),
@@ -175,7 +206,7 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
   const dateStrFor = (dayIdx: number) =>
     `${year}-${String(month + 1).padStart(2, "0")}-${String(dayIdx + 1).padStart(2, "0")}`;
 
-  const uploadEvidence = async (dayIdx: number, file: File) => {
+  const uploadEvidence = async (dayIdx: number, file: File, notes: string | null = null) => {
     if (!calArea || !file) return;
     const subFilter = calSubarea === "__none__" ? null : calSubarea;
     const dateStr = dateStrFor(dayIdx);
@@ -189,7 +220,7 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
       if (existing) {
         const { error } = await supabase
           .from("mision_cerosh_reports" as any)
-          .update({ evidence_url: path, completed: true, evidence_status: "pendiente", approved_by: null, approved_at: null })
+          .update({ evidence_url: path, completed: true, evidence_status: "pendiente", approved_by: null, approved_at: null, ...(notes ? { notes } : {}) })
           .eq("id", existing);
         if (error) { toast.error("Error guardando: " + error.message); return; }
       } else {
@@ -202,6 +233,7 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
           completed: true,
           evidence_url: path,
           evidence_status: "pendiente",
+          notes,
           created_by: user?.id ?? null,
         });
         if (error) { toast.error("Error guardando: " + error.message); return; }
