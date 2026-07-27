@@ -369,15 +369,6 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
   const handleDelete = async (id: string) => {
     setConfirmDelete({ id, label: "este reporte" });
   };
-  const _unusedDelete = async (id: string) => {
-    const { error } = await supabase.from("mision_cerosh_reports" as any).delete().eq("id", id);
-    if (error) {
-      toast.error("No se pudo eliminar: " + error.message);
-      return;
-    }
-    toast.success("Reporte eliminado");
-    qc.invalidateQueries({ queryKey: ["mision_cerosh_reports", reportType] });
-  };
 
   const totalMonth = reports.reduce((s, r) => s + r.count, 0);
   // Progress benchmark: assume daily target = 1 per active subarea/day
