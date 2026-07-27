@@ -593,6 +593,42 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
             )}
       </div>
 
+      {/* Diálogo de edición / creación de registro diario */}
+      <Dialog open={editDay !== null} onOpenChange={(o) => { if (!o) setEditDay(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {editDay !== null && calDays[editDay]?.recordId ? "Editar" : "Crear"} registro — Día {(editDay ?? 0) + 1} de {MONTH_NAMES[month]}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label>Cantidad</Label>
+              <Input type="number" min={0} value={editCount} onChange={(e) => setEditCount(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Observaciones</Label>
+              <Textarea rows={3} value={editNotes} onChange={(e) => setEditNotes(e.target.value)} placeholder="Detalle del reporte…" />
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox checked={editCompleted} onCheckedChange={(v) => setEditCompleted(Boolean(v))} />
+              Marcar como cumplido
+            </label>
+          </div>
+          <DialogFooter className="gap-2">
+            {editDay !== null && calDays[editDay]?.recordId && (
+              <Button variant="destructive" onClick={() => deleteDayRecord(editDay)}>
+                <Trash2 className="w-4 h-4 mr-1" /> Eliminar
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => setEditDay(null)}>Cancelar</Button>
+            <Button onClick={saveDayEdit} disabled={savingEdit}>
+              {savingEdit ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : null} Guardar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Tendencia mensual de cumplimiento */}
       {calArea && (() => {
         const subFilter = calSubarea === "__none__" ? null : calSubarea;
