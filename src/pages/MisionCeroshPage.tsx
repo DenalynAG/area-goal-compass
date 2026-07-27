@@ -491,17 +491,33 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
                       </div>
                       <div className="flex items-center gap-1">
                         {d.evidenceUrl ? (
-                          <button
-                            type="button"
-                            onClick={() => viewEvidence(d.evidenceUrl!)}
-                            className={`flex items-center gap-1 hover:underline ${
-                              isApproved ? "text-emerald-700" : isRejected ? "text-rose-700" : "text-amber-700"
-                            }`}
-                            title="Ver evidencia"
-                          >
-                            <FileCheck2 className="w-3.5 h-3.5" />
-                            <span>Evidencia</span>
-                          </button>
+                          <div className="flex flex-col gap-1 w-full">
+                            <button type="button" onClick={() => viewEvidence(d.evidenceUrl!)} title="Ver evidencia">
+                              <EvidencePreview path={d.evidenceUrl} className="w-full h-16" />
+                            </button>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => viewEvidence(d.evidenceUrl!)}
+                                className={`flex items-center gap-1 hover:underline ${
+                                  isApproved ? "text-emerald-700" : isRejected ? "text-rose-700" : "text-amber-700"
+                                }`}
+                                title="Ver evidencia"
+                              >
+                                <FileCheck2 className="w-3.5 h-3.5" />
+                                <span>Ver</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => downloadEvidence(d.evidenceUrl!)}
+                                className="flex items-center gap-1 text-foreground hover:underline"
+                                title="Descargar evidencia"
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                                <span>Descargar</span>
+                              </button>
+                            </div>
+                          </div>
                         ) : (
                           <button
                             type="button"
