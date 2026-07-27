@@ -368,7 +368,7 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
               <div>
                 <h4 className="font-display font-extrabold text-base">Calendario diario</h4>
                 <p className="text-xs text-muted-foreground">
-                  Marca cada día como cumplido y adjunta evidencia (foto o PDF).
+                  Adjunta evidencia (foto o PDF) para registrar el día py día.
                 </p>
               </div>
               <div className="flex items-center gap-2">
