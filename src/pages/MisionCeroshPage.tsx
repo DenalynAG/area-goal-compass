@@ -310,11 +310,15 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
   const deleteDayRecord = async (dayIdx: number) => {
     const d = calDays[dayIdx];
     if (!d.recordId) return;
-    if (!confirm(`¿Eliminar el registro del día ${dayIdx + 1}?`)) return;
-    const { error } = await supabase.from("mision_cerosh_reports" as any).delete().eq("id", d.recordId);
+    setConfirmDelete({ id: d.recordId, label: `el registro del día ${dayIdx + 1}` });
+  };
+
+  const performDelete = async (recordId: string) => {
+    const { error } = await supabase.from("mision_cerosh_reports" as any).delete().eq("id", recordId);
     if (error) { toast.error("No se pudo eliminar: " + error.message); return; }
     toast.success("Registro eliminado");
     setEditDay(null);
+    setEditRecord(null);
     qc.invalidateQueries({ queryKey: ["mision_cerosh_reports", reportType] });
     qc.invalidateQueries({ queryKey: ["mision_cerosh_reports_year", reportType] });
   };
@@ -361,7 +365,9 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
   }, [areas, populatedAreas, calArea]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm("¿Eliminar este reporte?")) return;
+    setConfirmDelete({ id, label: "este reporte" });
+  };
+  const _unusedDelete = async (id: string) => {
     const { error } = await supabase.from("mision_cerosh_reports" as any).delete().eq("id", id);
     if (error) {
       toast.error("No se pudo eliminar: " + error.message);
