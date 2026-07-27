@@ -12,7 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Sparkles, ShieldAlert, HeartPulse, Trash2, Paperclip, FileCheck2, Loader2, Check, X, BarChart3 } from "lucide-react";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sparkles, ShieldAlert, HeartPulse, Trash2, Paperclip, FileCheck2, Loader2, Check, X, BarChart3, Pencil, RefreshCw, Plus } from "lucide-react";
 import { ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceLine, Legend } from "recharts";
 import misionLogo from "@/assets/mision-cerosh-logo.png.asset.json";
 
@@ -113,6 +114,11 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
   const [uploadingDay, setUploadingDay] = useState<number | null>(null);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectionNote, setRejectionNote] = useState("");
+  const [editDay, setEditDay] = useState<number | null>(null);
+  const [editCount, setEditCount] = useState("1");
+  const [editNotes, setEditNotes] = useState("");
+  const [editCompleted, setEditCompleted] = useState(true);
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const calAreaSubareas = useMemo(
     () => subareas.filter((s) => s.area_id === calArea),
@@ -121,8 +127,8 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
 
   // Per-day info for selected area/subarea
   const calDays = useMemo(() => {
-    const arr: { completed: boolean; evidenceUrl: string | null; recordId: string | null; hasReport: boolean; status: string; rejectionReason: string | null }[] =
-      Array.from({ length: daysInMonth }, () => ({ completed: false, evidenceUrl: null, recordId: null, hasReport: false, status: "pendiente", rejectionReason: null }));
+    const arr: { completed: boolean; evidenceUrl: string | null; recordId: string | null; hasReport: boolean; status: string; rejectionReason: string | null; count: number; notes: string | null }[] =
+      Array.from({ length: daysInMonth }, () => ({ completed: false, evidenceUrl: null, recordId: null, hasReport: false, status: "pendiente", rejectionReason: null, count: 0, notes: null }));
     if (!calArea) return arr;
     const subFilter = calSubarea === "__none__" ? null : calSubarea;
     for (const r of reports) {
@@ -132,6 +138,8 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
       const slot = arr[dayIdx];
       if (!slot) continue;
       slot.hasReport = true;
+      slot.count += r.count ?? 0;
+      if (r.notes) slot.notes = r.notes;
       if (r.completed) slot.completed = true;
       if (r.evidence_url) {
         slot.evidenceUrl = r.evidence_url;
@@ -237,6 +245,61 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
     setRejectingId(null);
     setRejectionNote("");
     qc.invalidateQueries({ queryKey: ["mision_cerosh_reports", reportType] });
+  };
+
+  const openEditDay = (dayIdx: number) => {
+    const d = calDays[dayIdx];
+    setEditDay(dayIdx);
+    setEditCount(String(d.count || 1));
+    setEditNotes(d.notes ?? "");
+    setEditCompleted(d.completed);
+  };
+
+  const saveDayEdit = async () => {
+    if (editDay === null || !calArea) return;
+    const subFilter = calSubarea === "__none__" ? null : calSubarea;
+    const dateStr = dateStrFor(editDay);
+    const payload = {
+      count: Math.max(0, parseInt(editCount, 10) || 0),
+      notes: editNotes.trim() || null,
+      completed: editCompleted,
+    };
+    setSavingEdit(true);
+    try {
+      const existing = calDays[editDay].recordId;
+      if (existing) {
+        const { error } = await supabase.from("mision_cerosh_reports" as any).update(payload).eq("id", existing);
+        if (error) { toast.error("No se pudo guardar: " + error.message); return; }
+      } else {
+        const { error } = await supabase.from("mision_cerosh_reports" as any).insert({
+          report_type: reportType,
+          area_id: calArea,
+          subarea_id: subFilter,
+          report_date: dateStr,
+          created_by: user?.id ?? null,
+          ...payload,
+        });
+        if (error) { toast.error("No se pudo crear: " + error.message); return; }
+      }
+      toast.success("Registro guardado");
+      setEditDay(null);
+      qc.invalidateQueries({ queryKey: ["mision_cerosh_reports", reportType] });
+      qc.invalidateQueries({ queryKey: ["mision_cerosh_reports_year", reportType] });
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const deleteDayRecord = async (dayIdx: number) => {
+    const d = calDays[dayIdx];
+    if (!d.recordId) return;
+    if (!confirm(`¿Eliminar el registro del día ${dayIdx + 1}?`)) return;
+    const { error } = await supabase.from("mision_cerosh_reports" as any).delete().eq("id", d.recordId);
+    if (error) { toast.error("No se pudo eliminar: " + error.message); return; }
+    toast.success("Registro eliminado");
+    setEditDay(null);
+    qc.invalidateQueries({ queryKey: ["mision_cerosh_reports", reportType] });
+    qc.invalidateQueries({ queryKey: ["mision_cerosh_reports_year", reportType] });
   };
 
   // Group counts per (area,subarea) per day
@@ -408,6 +471,45 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
                           </label>
                         )}
                       </div>
+                      <div className="flex items-center gap-1 flex-wrap">
+                        <button
+                          type="button"
+                          title={d.recordId ? "Editar registro" : "Crear registro"}
+                          onClick={() => openEditDay(i)}
+                          className="p-1 rounded border bg-background hover:bg-muted text-foreground"
+                        >
+                          {d.recordId ? <Pencil className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
+                        </button>
+                        {hasEvidence && (
+                          <label
+                            title="Reemplazar evidencia"
+                            className="p-1 rounded border bg-background hover:bg-muted text-foreground cursor-pointer"
+                          >
+                            {isUploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                            <input
+                              type="file"
+                              className="hidden"
+                              accept="image/*,application/pdf"
+                              disabled={isUploading}
+                              onChange={(e) => {
+                                const f = e.target.files?.[0];
+                                if (f) uploadEvidence(i, f);
+                                e.target.value = "";
+                              }}
+                            />
+                          </label>
+                        )}
+                        {d.recordId && (
+                          <button
+                            type="button"
+                            title="Eliminar registro"
+                            onClick={() => deleteDayRecord(i)}
+                            className="p-1 rounded border bg-background hover:bg-rose-100 text-rose-700"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
                       {hasEvidence && (
                         <div className="flex items-center justify-between gap-1">
                           <span
@@ -490,6 +592,42 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
               </div>
             )}
       </div>
+
+      {/* Diálogo de edición / creación de registro diario */}
+      <Dialog open={editDay !== null} onOpenChange={(o) => { if (!o) setEditDay(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {editDay !== null && calDays[editDay]?.recordId ? "Editar" : "Crear"} registro — Día {(editDay ?? 0) + 1} de {MONTH_NAMES[month]}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label>Cantidad</Label>
+              <Input type="number" min={0} value={editCount} onChange={(e) => setEditCount(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Observaciones</Label>
+              <Textarea rows={3} value={editNotes} onChange={(e) => setEditNotes(e.target.value)} placeholder="Detalle del reporte…" />
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox checked={editCompleted} onCheckedChange={(v) => setEditCompleted(Boolean(v))} />
+              Marcar como cumplido
+            </label>
+          </div>
+          <DialogFooter className="gap-2">
+            {editDay !== null && calDays[editDay]?.recordId && (
+              <Button variant="destructive" onClick={() => deleteDayRecord(editDay)}>
+                <Trash2 className="w-4 h-4 mr-1" /> Eliminar
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => setEditDay(null)}>Cancelar</Button>
+            <Button onClick={saveDayEdit} disabled={savingEdit}>
+              {savingEdit ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : null} Guardar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Tendencia mensual de cumplimiento */}
       {calArea && (() => {
