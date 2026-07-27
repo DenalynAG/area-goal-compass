@@ -23,7 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Sparkles, ShieldAlert, HeartPulse, Trash2, Paperclip, FileCheck2, Loader2, Check, X, BarChart3, Pencil, RefreshCw } from "lucide-react";
+import { Sparkles, ShieldAlert, HeartPulse, Trash2, Paperclip, FileCheck2, Loader2, Check, X, BarChart3, Pencil, RefreshCw, Download } from "lucide-react";
 import { ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceLine, Legend } from "recharts";
 import misionLogo from "@/assets/mision-cerosh-logo.png.asset.json";
 
@@ -52,6 +52,44 @@ const REPORT_META: Record<ReportType, { label: string; short: string; icon: any;
 
 const MONTH_NAMES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const DAY_NAMES = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+
+const isImagePath = (p: string) => /\.(png|jpe?g|gif|webp|bmp|heic)$/i.test(p);
+
+async function signedUrlFor(path: string, seconds = 300) {
+  const { data } = await supabase.storage.from("evidencias").createSignedUrl(path, seconds);
+  return data?.signedUrl ?? null;
+}
+
+async function downloadEvidence(path: string) {
+  const { data, error } = await supabase.storage.from("evidencias").download(path);
+  if (error || !data) { toast.error("No se pudo descargar la evidencia"); return; }
+  const url = URL.createObjectURL(data);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = path.split("/").pop() || "evidencia";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function EvidencePreview({ path, className = "" }: { path: string; className?: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    if (isImagePath(path)) signedUrlFor(path).then((u) => { if (active) setUrl(u); });
+    return () => { active = false; };
+  }, [path]);
+  if (!isImagePath(path)) {
+    return (
+      <div className={`flex items-center justify-center rounded border bg-muted/40 text-muted-foreground ${className}`}>
+        <FileCheck2 className="w-5 h-5" />
+      </div>
+    );
+  }
+  if (!url) return <div className={`rounded border bg-muted/40 animate-pulse ${className}`} />;
+  return <img src={url} alt="Vista previa de la evidencia" loading="lazy" className={`rounded border object-cover ${className}`} />;
+}
 
 function useReports(reportType: ReportType, year: number, month: number) {
   const start = `${year}-${String(month + 1).padStart(2, "0")}-01`;
@@ -453,17 +491,33 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
                       </div>
                       <div className="flex items-center gap-1">
                         {d.evidenceUrl ? (
-                          <button
-                            type="button"
-                            onClick={() => viewEvidence(d.evidenceUrl!)}
-                            className={`flex items-center gap-1 hover:underline ${
-                              isApproved ? "text-emerald-700" : isRejected ? "text-rose-700" : "text-amber-700"
-                            }`}
-                            title="Ver evidencia"
-                          >
-                            <FileCheck2 className="w-3.5 h-3.5" />
-                            <span>Evidencia</span>
-                          </button>
+                          <div className="flex flex-col gap-1 w-full">
+                            <button type="button" onClick={() => viewEvidence(d.evidenceUrl!)} title="Ver evidencia">
+                              <EvidencePreview path={d.evidenceUrl} className="w-full h-16" />
+                            </button>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => viewEvidence(d.evidenceUrl!)}
+                                className={`flex items-center gap-1 hover:underline ${
+                                  isApproved ? "text-emerald-700" : isRejected ? "text-rose-700" : "text-amber-700"
+                                }`}
+                                title="Ver evidencia"
+                              >
+                                <FileCheck2 className="w-3.5 h-3.5" />
+                                <span>Ver</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => downloadEvidence(d.evidenceUrl!)}
+                                className="flex items-center gap-1 text-foreground hover:underline"
+                                title="Descargar evidencia"
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                                <span>Descargar</span>
+                              </button>
+                            </div>
+                          </div>
                         ) : (
                           <button
                             type="button"
@@ -610,6 +664,7 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
               <Input
                 type="file"
                 accept="image/*,application/pdf"
+                className="cursor-pointer border-sky-400 bg-sky-50 text-sky-900 file:mr-3 file:rounded file:border-0 file:bg-sky-600 file:px-3 file:py-1 file:text-white hover:file:bg-sky-700 focus-visible:ring-sky-400"
                 onChange={(e) => {
                   const f = e.target.files?.[0] ?? null;
                   setAttachFile(f);
@@ -617,11 +672,40 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
                 }}
               />
               {attachFile && (
-                <p className="text-xs text-muted-foreground">
-                  {attachFile.name} — {(attachFile.size / 1024 / 1024).toFixed(2)} MB
-                </p>
+                <div className="flex items-center gap-3 rounded border bg-muted/30 p-2">
+                  {attachFile.type.startsWith("image/") ? (
+                    <img
+                      src={URL.createObjectURL(attachFile)}
+                      alt="Vista previa del archivo seleccionado"
+                      className="w-16 h-16 rounded border object-cover"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded border bg-muted/40 flex items-center justify-center text-muted-foreground">
+                      <FileCheck2 className="w-6 h-6" />
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground break-all">
+                    {attachFile.name} — {(attachFile.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                </div>
               )}
             </div>
+            {attachDay !== null && calDays[attachDay]?.evidenceUrl && (
+              <div className="space-y-1.5">
+                <Label>Evidencia actual</Label>
+                <div className="flex items-center gap-3 rounded border bg-muted/30 p-2">
+                  <EvidencePreview path={calDays[attachDay]!.evidenceUrl!} className="w-16 h-16" />
+                  <div className="flex gap-2">
+                    <Button type="button" size="sm" variant="outline" onClick={() => viewEvidence(calDays[attachDay]!.evidenceUrl!)}>
+                      <FileCheck2 className="w-4 h-4 mr-1" /> Ver
+                    </Button>
+                    <Button type="button" size="sm" variant="outline" onClick={() => downloadEvidence(calDays[attachDay]!.evidenceUrl!)}>
+                      <Download className="w-4 h-4 mr-1" /> Descargar
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="space-y-1.5">
               <Label>Notas (opcional)</Label>
               <Textarea
