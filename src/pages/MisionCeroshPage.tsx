@@ -873,6 +873,40 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
         </details>
       )}
 
+      <AlertDialog open={!!confirmDelete} onOpenChange={(o) => { if (!o) setConfirmDelete(null); }}>
+        <AlertDialogContent className="sm:max-w-sm rounded-lg border-border/70">
+          <AlertDialogHeader className="items-center text-center">
+            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
+              <Trash2 className="h-5 w-5 text-destructive" />
+            </div>
+            <AlertDialogTitle className="text-lg">¿Eliminar registro?</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm">
+              Se eliminará {confirmDelete?.label ?? "este registro"} de forma permanente. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:justify-center gap-2">
+            <AlertDialogCancel className="mt-0">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleting}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!confirmDelete) return;
+                setDeleting(true);
+                try {
+                  await performDelete(confirmDelete.id);
+                  setConfirmDelete(null);
+                } finally {
+                  setDeleting(false);
+                }
+              }}
+            >
+              {deleting ? "Eliminando…" : "Eliminar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <Dialog open={!!editRecord} onOpenChange={(o) => { if (!o) setEditRecord(null); }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
