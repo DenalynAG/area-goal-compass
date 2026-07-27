@@ -247,6 +247,61 @@ function ReportSection({ reportType, year, month, restrictAreaId }: { reportType
     qc.invalidateQueries({ queryKey: ["mision_cerosh_reports", reportType] });
   };
 
+  const openEditDay = (dayIdx: number) => {
+    const d = calDays[dayIdx];
+    setEditDay(dayIdx);
+    setEditCount(String(d.count || 1));
+    setEditNotes(d.notes ?? "");
+    setEditCompleted(d.completed);
+  };
+
+  const saveDayEdit = async () => {
+    if (editDay === null || !calArea) return;
+    const subFilter = calSubarea === "__none__" ? null : calSubarea;
+    const dateStr = dateStrFor(editDay);
+    const payload = {
+      count: Math.max(0, parseInt(editCount, 10) || 0),
+      notes: editNotes.trim() || null,
+      completed: editCompleted,
+    };
+    setSavingEdit(true);
+    try {
+      const existing = calDays[editDay].recordId;
+      if (existing) {
+        const { error } = await supabase.from("mision_cerosh_reports" as any).update(payload).eq("id", existing);
+        if (error) { toast.error("No se pudo guardar: " + error.message); return; }
+      } else {
+        const { error } = await supabase.from("mision_cerosh_reports" as any).insert({
+          report_type: reportType,
+          area_id: calArea,
+          subarea_id: subFilter,
+          report_date: dateStr,
+          created_by: user?.id ?? null,
+          ...payload,
+        });
+        if (error) { toast.error("No se pudo crear: " + error.message); return; }
+      }
+      toast.success("Registro guardado");
+      setEditDay(null);
+      qc.invalidateQueries({ queryKey: ["mision_cerosh_reports", reportType] });
+      qc.invalidateQueries({ queryKey: ["mision_cerosh_reports_year", reportType] });
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const deleteDayRecord = async (dayIdx: number) => {
+    const d = calDays[dayIdx];
+    if (!d.recordId) return;
+    if (!confirm(`¿Eliminar el registro del día ${dayIdx + 1}?`)) return;
+    const { error } = await supabase.from("mision_cerosh_reports" as any).delete().eq("id", d.recordId);
+    if (error) { toast.error("No se pudo eliminar: " + error.message); return; }
+    toast.success("Registro eliminado");
+    setEditDay(null);
+    qc.invalidateQueries({ queryKey: ["mision_cerosh_reports", reportType] });
+    qc.invalidateQueries({ queryKey: ["mision_cerosh_reports_year", reportType] });
+  };
+
   // Group counts per (area,subarea) per day
   const byArea = useMemo(() => {
     const map = new Map<string, { areaName: string; subareas: Map<string, { subName: string; days: number[]; rejected: boolean[]; total: number }> }>();
