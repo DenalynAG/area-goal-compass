@@ -29,10 +29,8 @@ type Assessment = {
   subarea_id: string | null;
   position: string | null;
   profession: string | null;
-  university: string | null;
   weighted_score: number | null;
   evaluation_date: string;
-  notes: string | null;
   created_by: string | null;
 };
 
@@ -80,7 +78,6 @@ function scoreBadge(pct: number | null) {
 const emptyForm = {
   candidate_name: '',
   profession: '',
-  university: '',
   area_id: '' as string,
   subarea_id: '' as string,
   position: '',
@@ -291,7 +288,6 @@ export default function SeleccionDesarrolloPage() {
     setForm({
       candidate_name: row.candidate_name,
       profession: row.profession ?? '',
-      university: row.university ?? '',
       area_id: row.area_id ?? '',
       subarea_id: row.subarea_id ?? '',
       position: row.position ?? '',
@@ -332,7 +328,6 @@ export default function SeleccionDesarrolloPage() {
     const payload = {
       candidate_name: form.candidate_name.trim(),
       profession: form.profession || null,
-      university: form.university || null,
       area_id: form.area_id || null,
       subarea_id: form.subarea_id || null,
       position: form.position || null,
