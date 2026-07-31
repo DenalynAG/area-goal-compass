@@ -24,6 +24,7 @@ import AssessmentDashboardTab from '@/components/AssessmentDashboardTab';
 type Assessment = {
   id: string;
   candidate_name: string;
+  candidate_id?: string | null;
   area_id: string | null;
   subarea_id: string | null;
   position: string | null;
@@ -202,12 +203,46 @@ export default function SeleccionDesarrolloPage() {
     return r;
   }, [rows, filterArea, search]);
 
-  // Competencies shown as rows in the grid: union of those applicable to visible aspirants
-  const gridCompetencies = useMemo(() => {
+  // Competencies shown as rows in a grid: union of those applicable to its aspirants
+  const compsForRows = (rowsIn: Assessment[]) => {
     const ids = new Set<string>();
-    filtered.forEach(row => compsOfRow(row).forEach(c => ids.add(c.id)));
+    rowsIn.forEach(row => compsOfRow(row).forEach(c => ids.add(c.id)));
     return activeCompetencies.filter(c => ids.has(c.id));
-  }, [filtered, activeCompetencies, compScores]);
+  };
+
+  // Agrupar por convocatoria: cargo + área (+ subárea)
+  const groups = useMemo(() => {
+    const map = new Map<string, { key: string; position: string | null; area_id: string | null; subarea_id: string | null; rows: Assessment[] }>();
+    filtered.forEach(row => {
+      const key = `${row.position ?? '—'}|${row.area_id ?? '—'}|${row.subarea_id ?? '—'}`;
+      if (!map.has(key)) {
+        map.set(key, { key, position: row.position, area_id: row.area_id, subarea_id: row.subarea_id, rows: [] });
+      }
+      map.get(key)!.rows.push(row);
+    });
+    return Array.from(map.values());
+  }, [filtered]);
+
+  const [completing, setCompleting] = useState<string | null>(null);
+
+  const completeGroup = async (rowsIn: Assessment[], key: string) => {
+    const names = rowsIn.map(r => r.candidate_name);
+    const ids = rowsIn.map(r => r.candidate_id).filter(Boolean) as string[];
+    setCompleting(key);
+    let error: any = null;
+    if (ids.length) {
+      ({ error } = await (supabase.from('assessment_candidates' as any) as any)
+        .update({ status: 'evaluado' }).in('id', ids));
+    } else {
+      ({ error } = await (supabase.from('assessment_candidates' as any) as any)
+        .update({ status: 'evaluado' }).in('full_name', names));
+    }
+    setCompleting(null);
+    if (error) return toast.error(error.message);
+    toast.success('Evaluación completada');
+    qc.invalidateQueries({ queryKey: ['assessment_candidates'] });
+    qc.invalidateQueries({ queryKey: ['assessment_evaluations'] });
+  };
 
   const openNew = () => {
     setEditing(null);
@@ -494,15 +529,40 @@ export default function SeleccionDesarrolloPage() {
         </Select>
       </div>
 
-      <Card className="p-0 overflow-hidden">
-        {isLoading ? (
+      {isLoading ? (
+        <Card className="p-0 overflow-hidden">
           <div className="py-10 text-center text-muted-foreground text-sm">Cargando...</div>
-        ) : filtered.length === 0 ? (
+        </Card>
+      ) : filtered.length === 0 ? (
+        <Card className="p-0 overflow-hidden">
           <div className="py-10 text-center text-muted-foreground text-sm">
             No hay aspirantes. Crea el primero con "Nuevo aspirante".
           </div>
-        ) : (
-          <>
+        </Card>
+      ) : (
+        groups.map(group => {
+          const gridCompetencies = compsForRows(group.rows);
+          const filtered = group.rows;
+          return (
+          <Card key={group.key} className="p-0 overflow-hidden">
+            {/* Título de la convocatoria */}
+            <div className="flex items-start justify-between gap-3 flex-wrap px-4 py-3 border-b bg-muted/20">
+              <div>
+                <h3 className="text-base font-bold leading-tight">
+                  Convocatoria: {group.position ?? 'Sin cargo definido'}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Área: {areaName(group.area_id)}{group.subarea_id ? ` · Subárea: ${subareaName(group.subarea_id)}` : ''} · {group.rows.length} aspirante(s)
+                </p>
+              </div>
+              <Button
+                size="sm"
+                onClick={() => completeGroup(group.rows, group.key)}
+                disabled={completing === group.key}
+              >
+                {completing === group.key ? 'Completando...' : 'Completar Evaluación'}
+              </Button>
+            </div>
             {/* Desktop table */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full border-collapse text-sm">
@@ -664,9 +724,10 @@ export default function SeleccionDesarrolloPage() {
                 </div>
               ))}
             </div>
-          </>
-        )}
-      </Card>
+          </Card>
+          );
+        })
+      )}
         </TabsContent>
       </Tabs>
 
