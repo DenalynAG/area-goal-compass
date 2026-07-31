@@ -28,6 +28,8 @@ type Candidate = {
   phone: string | null;
   email: string | null;
   position: string | null;
+  profession?: string | null;
+  university?: string | null;
   area_id: string | null;
   subarea_id: string | null;
   evaluator_user_id: string | null;
@@ -54,6 +56,8 @@ const emptyForm = {
   document_id: '',
   phone: '',
   email: '',
+  profession: '',
+  university: '',
   position: NONE,
   area_id: NONE,
   subarea_id: NONE,
@@ -184,6 +188,8 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
       document_id: c.document_id ?? '',
       phone: c.phone ?? '',
       email: c.email ?? '',
+      profession: (c as any).profession ?? '',
+      university: (c as any).university ?? '',
       position: c.position ?? NONE,
       area_id: c.area_id ?? NONE,
       subarea_id: c.subarea_id ?? NONE,
@@ -210,6 +216,8 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
         document_id: form.document_id.trim() || null,
         phone: form.phone.trim() || null,
         email: form.email.trim() || null,
+        profession: form.profession.trim() || null,
+        university: form.university.trim() || null,
         position: form.position === NONE ? null : form.position,
         area_id: form.area_id === NONE ? null : form.area_id,
         subarea_id: form.subarea_id === NONE ? null : form.subarea_id,
@@ -585,6 +593,14 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
               <div className="space-y-1.5 sm:col-span-2">
                 <label className="text-sm font-medium">Correo</label>
                 <Input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Profesión</label>
+                <Input value={form.profession} onChange={e => setForm(f => ({ ...f, profession: e.target.value }))} placeholder="Ej. Ingeniero Industrial" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Universidad de estudio</label>
+                <Input value={form.university} onChange={e => setForm(f => ({ ...f, university: e.target.value }))} placeholder="Ej. Universidad Nacional" />
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Área</label>
