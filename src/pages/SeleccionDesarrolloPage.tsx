@@ -17,6 +17,8 @@ import {
 import { Users, Plus, Pencil, Trash2, Search, SlidersHorizontal, ArrowUp, ArrowDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import AspirantesTab from '@/components/AspirantesTab';
 
 type Assessment = {
   id: string;
@@ -429,6 +431,17 @@ export default function SeleccionDesarrolloPage() {
         </div>
       </div>
 
+      <Tabs defaultValue="aspirantes" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="aspirantes">Aspirantes</TabsTrigger>
+          <TabsTrigger value="planilla">Planilla Assessment</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="aspirantes">
+          <AspirantesTab />
+        </TabsContent>
+
+        <TabsContent value="planilla" className="space-y-4">
       <Card className="p-4 bg-muted/30 space-y-2">
         <h2 className="text-sm font-semibold">Método de evaluación</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
@@ -606,6 +619,8 @@ export default function SeleccionDesarrolloPage() {
           </>
         )}
       </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Aspirant dialog */}
       <Dialog open={open} onOpenChange={setOpen}>

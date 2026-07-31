@@ -1,0 +1,553 @@
+import { useMemo, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAreas, useSubareas, usePositions, useProfiles, useUserRoles } from '@/hooks/useSupabaseData';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Card } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { SearchableSelect } from '@/components/ui/searchable-select';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, Pencil, Trash2, Search, UserCheck } from 'lucide-react';
+import { toast } from 'sonner';
+
+const NONE = '__none__';
+
+type Candidate = {
+  id: string;
+  full_name: string;
+  document_id: string | null;
+  phone: string | null;
+  email: string | null;
+  position: string | null;
+  area_id: string | null;
+  subarea_id: string | null;
+  evaluator_user_id: string | null;
+  application_date: string;
+  status: string;
+  notes: string | null;
+};
+
+type CandidateComp = { id: string; candidate_id: string; competency_id: string };
+
+type Competency = {
+  id: string; name: string; subtitle: string | null; position_name: string | null; is_active: boolean;
+};
+
+const STATUSES = [
+  { value: 'pendiente', label: 'Pendiente', cls: 'bg-muted text-foreground' },
+  { value: 'en_evaluacion', label: 'En evaluación', cls: 'bg-yellow-500/15 text-yellow-700' },
+  { value: 'evaluado', label: 'Evaluado', cls: 'bg-green-500/15 text-green-700' },
+  { value: 'descartado', label: 'Descartado', cls: 'bg-destructive/15 text-destructive' },
+];
+
+const emptyForm = {
+  full_name: '',
+  document_id: '',
+  phone: '',
+  email: '',
+  position: NONE,
+  area_id: NONE,
+  subarea_id: NONE,
+  evaluator_user_id: NONE,
+  application_date: new Date().toISOString().split('T')[0],
+  status: 'pendiente',
+  notes: '',
+};
+
+export default function AspirantesTab() {
+  const qc = useQueryClient();
+  const { data: areas = [] } = useAreas();
+  const { data: subareas = [] } = useSubareas();
+  const { data: positions = [] } = usePositions();
+  const { data: profiles = [] } = useProfiles();
+  const { data: userRoles = [] } = useUserRoles();
+
+  const [search, setSearch] = useState('');
+  const [filterArea, setFilterArea] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Candidate | null>(null);
+  const [form, setForm] = useState({ ...emptyForm });
+  const [selectedComps, setSelectedComps] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const { data: candidates = [], isLoading } = useQuery({
+    queryKey: ['assessment_candidates'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('assessment_candidates' as any)
+        .select('*')
+        .order('application_date', { ascending: false });
+      if (error) throw error;
+      return (data as unknown) as Candidate[];
+    },
+  });
+
+  const { data: candidateComps = [] } = useQuery({
+    queryKey: ['assessment_candidate_competencies'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('assessment_candidate_competencies' as any)
+        .select('*');
+      if (error) throw error;
+      return (data as unknown) as CandidateComp[];
+    },
+  });
+
+  const { data: competencies = [] } = useQuery({
+    queryKey: ['assessment_competencies'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('assessment_competencies' as any)
+        .select('*')
+        .order('sort_order', { ascending: true });
+      if (error) throw error;
+      return (data as unknown) as Competency[];
+    },
+  });
+
+  const activeComps = useMemo(() => competencies.filter(c => c.is_active), [competencies]);
+
+  // Evaluators: leaders / area managers / area admins
+  const evaluatorOptions = useMemo(() => {
+    const allowed = new Set(['admin_area', 'gestor_area', 'lider_subarea', 'super_admin']);
+    const ids = new Set(userRoles.filter((r: any) => allowed.has(r.role)).map((r: any) => r.user_id));
+    return profiles
+      .filter((p: any) => ids.has(p.id))
+      .map((p: any) => ({ value: p.id, label: `${p.name}${p.position ? ` · ${p.position}` : ''}` }));
+  }, [profiles, userRoles]);
+
+  const areaName = (id: string | null) => areas.find(a => a.id === id)?.name ?? '—';
+  const subareaName = (id: string | null) => subareas.find(s => s.id === id)?.name ?? '';
+  const profileName = (id: string | null) => (id ? (profiles.find((p: any) => p.id === id)?.name ?? '—') : '—');
+
+  const filteredSubareas = useMemo(
+    () => (form.area_id !== NONE ? subareas.filter(s => s.area_id === form.area_id) : []),
+    [subareas, form.area_id],
+  );
+
+  const filteredPositions = useMemo(() => {
+    if (form.area_id === NONE) return positions;
+    return positions.filter((p: any) =>
+      p.area_id === form.area_id && (form.subarea_id === NONE || !p.subarea_id || p.subarea_id === form.subarea_id));
+  }, [positions, form.area_id, form.subarea_id]);
+
+  const filtered = useMemo(() => {
+    let r = candidates;
+    if (filterArea !== 'all') r = r.filter(c => c.area_id === filterArea);
+    if (filterStatus !== 'all') r = r.filter(c => c.status === filterStatus);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      r = r.filter(c =>
+        c.full_name.toLowerCase().includes(q) ||
+        (c.position ?? '').toLowerCase().includes(q) ||
+        (c.document_id ?? '').toLowerCase().includes(q));
+    }
+    return r;
+  }, [candidates, filterArea, filterStatus, search]);
+
+  const compsOf = (candidateId: string) =>
+    candidateComps
+      .filter(cc => cc.candidate_id === candidateId)
+      .map(cc => competencies.find(c => c.id === cc.competency_id))
+      .filter(Boolean) as Competency[];
+
+  const openNew = () => {
+    setEditing(null);
+    setForm({ ...emptyForm });
+    setSelectedComps([]);
+    setOpen(true);
+  };
+
+  const openEdit = (c: Candidate) => {
+    setEditing(c);
+    setForm({
+      full_name: c.full_name,
+      document_id: c.document_id ?? '',
+      phone: c.phone ?? '',
+      email: c.email ?? '',
+      position: c.position ?? NONE,
+      area_id: c.area_id ?? NONE,
+      subarea_id: c.subarea_id ?? NONE,
+      evaluator_user_id: c.evaluator_user_id ?? NONE,
+      application_date: c.application_date,
+      status: c.status,
+      notes: c.notes ?? '',
+    });
+    setSelectedComps(candidateComps.filter(cc => cc.candidate_id === c.id).map(cc => cc.competency_id));
+    setOpen(true);
+  };
+
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ['assessment_candidates'] });
+    qc.invalidateQueries({ queryKey: ['assessment_candidate_competencies'] });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.full_name.trim()) return;
+    setSaving(true);
+    try {
+      const payload = {
+        full_name: form.full_name.trim(),
+        document_id: form.document_id.trim() || null,
+        phone: form.phone.trim() || null,
+        email: form.email.trim() || null,
+        position: form.position === NONE ? null : form.position,
+        area_id: form.area_id === NONE ? null : form.area_id,
+        subarea_id: form.subarea_id === NONE ? null : form.subarea_id,
+        evaluator_user_id: form.evaluator_user_id === NONE ? null : form.evaluator_user_id,
+        application_date: form.application_date,
+        status: form.status,
+        notes: form.notes.trim() || null,
+      };
+
+      let candidateId = editing?.id ?? '';
+      if (editing) {
+        const { error } = await supabase.from('assessment_candidates' as any).update(payload).eq('id', editing.id);
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase
+          .from('assessment_candidates' as any)
+          .insert(payload as any)
+          .select('id')
+          .single();
+        if (error) throw error;
+        candidateId = (data as any).id;
+      }
+
+      // Sync selected competencies
+      const current = candidateComps.filter(cc => cc.candidate_id === candidateId).map(cc => cc.competency_id);
+      const toAdd = selectedComps.filter(id => !current.includes(id));
+      const toRemove = current.filter(id => !selectedComps.includes(id));
+      if (toAdd.length) {
+        const { error } = await supabase
+          .from('assessment_candidate_competencies' as any)
+          .insert(toAdd.map(id => ({ candidate_id: candidateId, competency_id: id })) as any);
+        if (error) throw error;
+      }
+      if (toRemove.length) {
+        const { error } = await supabase
+          .from('assessment_candidate_competencies' as any)
+          .delete()
+          .eq('candidate_id', candidateId)
+          .in('competency_id', toRemove);
+        if (error) throw error;
+      }
+
+      toast.success(editing ? 'Aspirante actualizado' : 'Aspirante registrado');
+      invalidate();
+      setOpen(false);
+    } catch (err: any) {
+      toast.error(err.message ?? 'Error al guardar');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    const { error } = await supabase.from('assessment_candidates' as any).delete().eq('id', deleteId);
+    if (error) toast.error(error.message);
+    else { toast.success('Aspirante eliminado'); invalidate(); }
+    setDeleteId(null);
+  };
+
+  const statusBadge = (s: string) => {
+    const st = STATUSES.find(x => x.value === s) ?? STATUSES[0];
+    return <span className={`inline-flex px-2 py-0.5 rounded-md text-[11px] font-semibold ${st.cls}`}>{st.label}</span>;
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <p className="text-sm text-muted-foreground">
+          Recursos Humanos registra los aspirantes, asigna el líder o gestor de área evaluador y selecciona las competencias a evaluar.
+        </p>
+        <Button onClick={openNew}><Plus className="w-4 h-4 mr-1" /> Registrar aspirante</Button>
+      </div>
+
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="relative flex-1 min-w-[220px]">
+          <Search className="w-4 h-4 absolute left-2.5 top-2.5 text-muted-foreground" />
+          <Input placeholder="Buscar aspirante, cargo o documento..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8" />
+        </div>
+        <Select value={filterArea} onValueChange={setFilterArea}>
+          <SelectTrigger className="w-[200px]"><SelectValue placeholder="Área" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas las áreas</SelectItem>
+            {areas.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Estado" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos los estados</SelectItem>
+            {STATUSES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <Card className="p-0 overflow-hidden">
+        {isLoading ? (
+          <div className="py-10 text-center text-sm text-muted-foreground">Cargando...</div>
+        ) : filtered.length === 0 ? (
+          <div className="py-10 text-center text-sm text-muted-foreground">
+            No hay aspirantes registrados.
+          </div>
+        ) : (
+          <>
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="bg-muted/40 border-b text-left">
+                    <th className="px-3 py-2">Aspirante</th>
+                    <th className="px-3 py-2">Cargo / Área</th>
+                    <th className="px-3 py-2">Evaluador asignado</th>
+                    <th className="px-3 py-2">Competencias a evaluar</th>
+                    <th className="px-3 py-2">Fecha</th>
+                    <th className="px-3 py-2">Estado</th>
+                    <th className="px-3 py-2 w-[90px]"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map(c => (
+                    <tr key={c.id} className="border-b align-top">
+                      <td className="px-3 py-2">
+                        <p className="font-semibold">{c.full_name}</p>
+                        <p className="text-[11px] text-muted-foreground">{c.document_id ?? '—'}</p>
+                        {c.email && <p className="text-[11px] text-muted-foreground">{c.email}</p>}
+                      </td>
+                      <td className="px-3 py-2">
+                        <p>{c.position ?? '—'}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {areaName(c.area_id)}{c.subarea_id ? ` · ${subareaName(c.subarea_id)}` : ''}
+                        </p>
+                      </td>
+                      <td className="px-3 py-2">
+                        <span className="inline-flex items-center gap-1">
+                          <UserCheck className="w-3.5 h-3.5 text-muted-foreground" />
+                          {profileName(c.evaluator_user_id)}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2">
+                        <div className="flex flex-wrap gap-1 max-w-[280px]">
+                          {compsOf(c.id).length === 0 && <span className="text-xs text-muted-foreground">Sin asignar</span>}
+                          {compsOf(c.id).map(k => (
+                            <span key={k.id} className="text-[10px] border rounded px-1.5 py-0.5 bg-muted/40">{k.name}</span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-3 py-2 text-xs text-muted-foreground">{c.application_date}</td>
+                      <td className="px-3 py-2">{statusBadge(c.status)}</td>
+                      <td className="px-3 py-2">
+                        <div className="flex items-center gap-0.5">
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(c)}>
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteId(c.id)}>
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile */}
+            <div className="md:hidden divide-y">
+              {filtered.map(c => (
+                <div key={c.id} className="p-4 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm">{c.full_name}</p>
+                      <p className="text-[11px] text-muted-foreground">{c.position ?? '—'} · {areaName(c.area_id)}</p>
+                    </div>
+                    <div className="flex items-center gap-0.5 shrink-0">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(c)}>
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteId(c.id)}>
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </div>
+                  <p className="text-xs">Evaluador: <b>{profileName(c.evaluator_user_id)}</b></p>
+                  <div className="flex flex-wrap gap-1">
+                    {compsOf(c.id).map(k => (
+                      <span key={k.id} className="text-[10px] border rounded px-1.5 py-0.5 bg-muted/40">{k.name}</span>
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-muted-foreground">{c.application_date}</span>
+                    {statusBadge(c.status)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </Card>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editing ? 'Editar aspirante' : 'Registrar aspirante'}</DialogTitle>
+            <DialogDescription>
+              Datos del aspirante, evaluador asignado y competencias que se le evaluarán.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5 sm:col-span-2">
+                <label className="text-sm font-medium">Nombre completo *</label>
+                <Input value={form.full_name} onChange={e => setForm(f => ({ ...f, full_name: e.target.value }))} required />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Documento</label>
+                <Input value={form.document_id} onChange={e => setForm(f => ({ ...f, document_id: e.target.value }))} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Teléfono</label>
+                <Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
+              </div>
+              <div className="space-y-1.5 sm:col-span-2">
+                <label className="text-sm font-medium">Correo</label>
+                <Input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Área</label>
+                <SearchableSelect
+                  className="w-full"
+                  options={[{ value: NONE, label: 'Sin área' }, ...areas.map(a => ({ value: a.id, label: a.name }))]}
+                  value={form.area_id}
+                  onValueChange={v => setForm(f => ({ ...f, area_id: v, subarea_id: NONE, position: NONE }))}
+                  placeholder="Selecciona un área"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Subárea</label>
+                <SearchableSelect
+                  className="w-full"
+                  disabled={form.area_id === NONE}
+                  options={[{ value: NONE, label: 'Sin subárea' }, ...filteredSubareas.map(s => ({ value: s.id, label: s.name }))]}
+                  value={form.subarea_id}
+                  onValueChange={v => setForm(f => ({ ...f, subarea_id: v }))}
+                  placeholder="Selecciona una subárea"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Cargo al que aplica</label>
+                <SearchableSelect
+                  className="w-full"
+                  options={[{ value: NONE, label: 'Sin cargo' }, ...filteredPositions.map((p: any) => ({ value: p.name, label: p.name }))]}
+                  value={form.position}
+                  onValueChange={v => setForm(f => ({ ...f, position: v }))}
+                  placeholder="Selecciona un cargo"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Evaluador (líder / gestor de área)</label>
+                <SearchableSelect
+                  className="w-full"
+                  options={[{ value: NONE, label: 'Sin asignar' }, ...evaluatorOptions]}
+                  value={form.evaluator_user_id}
+                  onValueChange={v => setForm(f => ({ ...f, evaluator_user_id: v }))}
+                  placeholder="Asignar evaluador"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Fecha de postulación</label>
+                <Input type="date" value={form.application_date} onChange={e => setForm(f => ({ ...f, application_date: e.target.value }))} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Estado</label>
+                <Select value={form.status} onValueChange={v => setForm(f => ({ ...f, status: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {STATUSES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2 border rounded-md p-3 bg-muted/20">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold">Competencias a evaluar</h3>
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" size="sm" className="h-7 text-xs"
+                    onClick={() => setSelectedComps(activeComps
+                      .filter(c => !c.position_name || c.position_name === (form.position === NONE ? null : form.position))
+                      .map(c => c.id))}>
+                    Sugeridas por cargo
+                  </Button>
+                  <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setSelectedComps([])}>
+                    Limpiar
+                  </Button>
+                </div>
+              </div>
+              {activeComps.length === 0 && (
+                <p className="text-xs text-muted-foreground">No hay competencias activas. Créalas desde el botón "Competencias".</p>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {activeComps.map(c => {
+                  const checked = selectedComps.includes(c.id);
+                  return (
+                    <label key={c.id} className="flex items-start gap-2 border rounded-md p-2 bg-background cursor-pointer">
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={v => setSelectedComps(prev => v ? [...prev, c.id] : prev.filter(x => x !== c.id))}
+                      />
+                      <span className="min-w-0">
+                        <span className="block text-xs font-semibold">{c.name}</span>
+                        {c.subtitle && <span className="block text-[10px] text-muted-foreground">{c.subtitle}</span>}
+                        <span className="block text-[10px] text-muted-foreground italic">Cargo: {c.position_name ?? 'Todos'}</span>
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Observaciones</label>
+              <Textarea rows={2} value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
+            </div>
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+              <Button type="submit" disabled={saving}>{saving ? 'Guardando...' : 'Guardar'}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!deleteId} onOpenChange={o => !o && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar aspirante?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminará el registro y las competencias asignadas. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Eliminar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
