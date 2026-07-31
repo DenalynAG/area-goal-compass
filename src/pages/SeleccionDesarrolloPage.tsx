@@ -24,6 +24,7 @@ import AssessmentDashboardTab from '@/components/AssessmentDashboardTab';
 type Assessment = {
   id: string;
   candidate_name: string;
+  candidate_id?: string | null;
   area_id: string | null;
   subarea_id: string | null;
   position: string | null;
