@@ -805,11 +805,11 @@ export default function SeleccionDesarrolloPage() {
               <table className="w-full border-collapse text-sm">
                 <thead>
                   <tr className="bg-muted/40 border-b">
-                    <th className="text-left px-3 py-2 border-r min-w-[200px]">Competencia</th>
+                    <th className="text-left px-2 py-1.5 md:px-3 md:py-2 border-r min-w-[160px] md:min-w-[200px]">Competencia</th>
                     {detailGroup.rows.map(row => (
-                      <th key={row.id} className="text-left px-3 py-2 border-r min-w-[160px]">
-                        <p className="font-semibold">{row.candidate_name}</p>
-                        <p className="text-[11px] font-normal text-muted-foreground">{row.profession ?? '—'}</p>
+                      <th key={row.id} className="text-left px-2 py-1.5 md:px-3 md:py-2 border-r min-w-[130px] md:min-w-[160px]">
+                        <p className="font-semibold text-xs md:text-sm">{row.candidate_name}</p>
+                        <p className="text-[10px] md:text-[11px] font-normal text-muted-foreground">{row.profession ?? '—'}</p>
                       </th>
                     ))}
                   </tr>
@@ -817,9 +817,9 @@ export default function SeleccionDesarrolloPage() {
                 <tbody>
                   {compsForRows(detailGroup.rows).map(c => (
                     <tr key={c.id} className="border-b">
-                      <td className="px-3 py-2 border-r align-top">
-                        <p className="font-semibold text-sm">{c.name}</p>
-                        {c.subtitle && <p className="text-[11px] text-muted-foreground">{c.subtitle}</p>}
+                      <td className="px-2 py-1.5 md:px-3 md:py-2 border-r align-top">
+                        <p className="font-semibold text-xs md:text-sm">{c.name}</p>
+                        {c.subtitle && <p className="text-[10px] md:text-[11px] text-muted-foreground">{c.subtitle}</p>}
                       </td>
                       {detailGroup.rows.map(row => {
                         const s = scoreOf(row.id, c.id);
@@ -835,17 +835,17 @@ export default function SeleccionDesarrolloPage() {
                     </tr>
                   ))}
                   <tr className="bg-muted/30">
-                    <td className="px-3 py-2 border-r font-semibold">Nota ponderada</td>
+                    <td className="px-2 py-1.5 md:px-3 md:py-2 border-r font-semibold">Nota ponderada</td>
                     {detailGroup.rows.map(row => (
-                      <td key={row.id} className="px-3 py-2 border-r">
+                      <td key={row.id} className="px-2 py-1.5 md:px-3 md:py-2 border-r">
                         {scoreBadge(row.weighted_score !== null ? Number(row.weighted_score) : null)}
                       </td>
                     ))}
                   </tr>
                   <tr>
-                    <td className="px-3 py-2 border-r text-xs text-muted-foreground">Fecha</td>
+                    <td className="px-2 py-1.5 md:px-3 md:py-2 border-r text-xs text-muted-foreground">Fecha</td>
                     {detailGroup.rows.map(row => (
-                      <td key={row.id} className="px-3 py-2 border-r text-xs text-muted-foreground">
+                      <td key={row.id} className="px-2 py-1.5 md:px-3 md:py-2 border-r text-xs text-muted-foreground">
                         {row.evaluation_date}
                       </td>
                     ))}
