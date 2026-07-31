@@ -331,12 +331,13 @@ export default function SeleccionDesarrolloPage() {
 
     const payload = {
       candidate_name: form.candidate_name.trim(),
+      profession: form.profession || null,
+      university: form.university || null,
       area_id: form.area_id || null,
       subarea_id: form.subarea_id || null,
       position: form.position || null,
       weighted_score: livePct,
       evaluation_date: form.evaluation_date,
-      notes: form.notes || null,
       evaluator_user_id: user?.id ?? null,
     };
 
