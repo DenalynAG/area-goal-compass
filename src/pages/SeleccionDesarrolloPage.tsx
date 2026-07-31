@@ -501,16 +501,16 @@ export default function SeleccionDesarrolloPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => { setCompOpen(true); openCompNew(); }}>
+          <Button variant="default" onClick={() => { setCompOpen(true); openCompNew(); }}>
             <SlidersHorizontal className="w-4 h-4 mr-1" /> Competencias
           </Button>
-          <Button variant="outline" onClick={() => setActiveTab('planilla')}>
+          <Button variant="success" onClick={() => setActiveTab('planilla')}>
             <Table className="w-4 h-4 mr-1" /> Planilla Assessment
           </Button>
-          <Button variant="outline" onClick={() => setActiveTab('dashboard')}>
+          <Button variant="warning" onClick={() => setActiveTab('dashboard')}>
             <BarChart3 className="w-4 h-4 mr-1" /> Dashboard
           </Button>
-          <Button variant="outline" onClick={() => setActiveTab('historico')}>
+          <Button variant="info" onClick={() => setActiveTab('historico')}>
             <History className="w-4 h-4 mr-1" /> Histórico
           </Button>
         </div>

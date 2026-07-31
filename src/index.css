@@ -40,6 +40,9 @@
     --warning-foreground: 40 24% 95%;
     --warning-bright: 38 92% 50%;      /* brighter amber for Medio */
 
+    --info: 205 55% 45%;                /* muted ocean — distintivo */
+    --info-foreground: 40 24% 95%;
+
     --danger: 0 60% 40%;
     --danger-foreground: 40 24% 95%;
     --danger-bright: 0 84% 60%;       /* brighter red for Bajo */
@@ -84,6 +87,8 @@
     --muted-foreground: 215 15% 55%;
     --accent: 185 72% 40%;
     --accent-foreground: 0 0% 100%;
+    --info: 200 70% 55%;
+    --info-foreground: 220 25% 10%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
     --border: 220 20% 20%;
