@@ -416,7 +416,6 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
                     <th className="px-3 py-2">Aspirante</th>
                     <th className="px-3 py-2">Cargo / Área</th>
                     <th className="px-3 py-2">Evaluador asignado</th>
-                    <th className="px-3 py-2">Competencias a evaluar</th>
                     <th className="px-3 py-2">Fecha</th>
                     <th className="px-3 py-2">Estado</th>
                     <th className="px-3 py-2 w-[230px]"></th>
