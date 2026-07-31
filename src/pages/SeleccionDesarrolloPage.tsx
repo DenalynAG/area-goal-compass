@@ -470,7 +470,7 @@ export default function SeleccionDesarrolloPage() {
         onValueChange={(v) => updateScore(row, competencyId, v === '__none__' ? null : Number(v))}
       >
         <SelectTrigger
-          className={`h-9 w-full justify-center font-bold text-sm border ${
+          className={`h-8 w-full justify-center font-bold text-xs md:h-9 md:text-sm border ${
             opt ? opt.color : 'bg-background text-muted-foreground'
           }`}
         >
@@ -487,14 +487,14 @@ export default function SeleccionDesarrolloPage() {
   };
 
   return (
-    <div className="p-4 sm:p-6 space-y-4 max-w-7xl mx-auto">
+    <div className="p-3 sm:p-4 md:p-6 space-y-3 md:space-y-4 max-w-7xl mx-auto">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-primary/10">
             <Users className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Selección y Desarrollo</h1>
+            <h1 className="text-xl md:text-2xl font-bold">Selección y Desarrollo</h1>
             <p className="text-sm text-muted-foreground">
               Planilla de Evaluación Assessment Center — Aspirantes por área y cargo
             </p>
@@ -558,7 +558,7 @@ export default function SeleccionDesarrolloPage() {
         </TabsContent>
 
         <TabsContent value="planilla" className="space-y-4">
-      <Card className="p-4 bg-muted/30 space-y-2">
+      <Card className="p-3 md:p-4 bg-muted/30 space-y-2">
         <h2 className="text-sm font-semibold">Método de evaluación</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
           {SCORE_OPTIONS.map(o => (
