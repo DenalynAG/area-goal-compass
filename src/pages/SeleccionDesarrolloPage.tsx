@@ -885,6 +885,22 @@ export default function SeleccionDesarrolloPage() {
                 />
               </div>
               <div className="space-y-1.5">
+                <label className="text-sm font-medium">Profesión</label>
+                <Input
+                  value={form.profession}
+                  onChange={e => setForm(f => ({ ...f, profession: e.target.value }))}
+                  placeholder="Ej. Ingeniero Industrial"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Universidad de estudio</label>
+                <Input
+                  value={form.university}
+                  onChange={e => setForm(f => ({ ...f, university: e.target.value }))}
+                  placeholder="Ej. Universidad Nacional"
+                />
+              </div>
+              <div className="space-y-1.5">
                 <label className="text-sm font-medium">Área</label>
                 <Select
                   value={form.area_id || undefined}
@@ -975,15 +991,6 @@ export default function SeleccionDesarrolloPage() {
                 <span className="text-sm text-muted-foreground">Nota ponderada</span>
                 <span className="text-lg font-bold">{scoreBadge(livePct)}</span>
               </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">Notas</label>
-              <Textarea
-                value={form.notes}
-                onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-                rows={2}
-              />
             </div>
 
             <DialogFooter>
