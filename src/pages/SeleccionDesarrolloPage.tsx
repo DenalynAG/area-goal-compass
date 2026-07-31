@@ -630,7 +630,7 @@ export default function SeleccionDesarrolloPage() {
               <table className="w-full border-collapse text-sm">
                 <thead>
                   <tr className="bg-muted/40 border-b">
-                    <th className="sticky left-0 z-20 bg-muted/40 text-left px-3 py-2 w-[280px] min-w-[260px] border-r shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
+                    <th className="sticky left-0 z-20 bg-muted/40 text-left px-4 py-3 w-[280px] min-w-[260px] border-r shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
                       Competencia
                     </th>
                     {filtered.map(row => (
@@ -665,7 +665,7 @@ export default function SeleccionDesarrolloPage() {
                     const isExpanded = !!expandedBehaviors[c.id];
                     return (
                       <tr key={c.id} className="border-b">
-                        <td className="sticky left-0 z-20 bg-background px-3 py-2 border-r align-top shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
+                        <td className="sticky left-0 z-20 bg-background px-4 py-3 border-r align-top shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
                               <p className="font-semibold text-sm">{c.name}</p>
@@ -703,7 +703,7 @@ export default function SeleccionDesarrolloPage() {
                     );
                   })}
                   <tr className="bg-muted/30">
-                    <td className="sticky left-0 z-20 bg-muted/30 px-3 py-2 border-r font-semibold shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
+                    <td className="sticky left-0 z-20 bg-muted/30 px-4 py-3 border-r font-semibold shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
                       Nota ponderada
                     </td>
                     {filtered.map(row => (
@@ -713,7 +713,7 @@ export default function SeleccionDesarrolloPage() {
                     ))}
                   </tr>
                   <tr>
-                    <td className="sticky left-0 z-20 bg-background px-3 py-2 border-r text-xs text-muted-foreground shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
+                    <td className="sticky left-0 z-20 bg-background px-4 py-3 border-r text-xs text-muted-foreground shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
                       Fecha
                     </td>
                     {filtered.map(row => (
