@@ -638,10 +638,7 @@ export default function SeleccionDesarrolloPage() {
                         <div className="flex items-start justify-between gap-1">
                           <div className="space-y-0.5 min-w-0">
                             <p className="font-semibold text-sm leading-tight truncate">{row.candidate_name}</p>
-                            <p className="text-[11px] text-muted-foreground leading-tight">
-                              {areaName(row.area_id)}{row.subarea_id ? ` · ${subareaName(row.subarea_id)}` : ''}
-                            </p>
-                            <p className="text-[11px] text-muted-foreground leading-tight">{row.position ?? '—'}</p>
+                            <p className="text-[11px] text-muted-foreground leading-tight">{row.profession ?? '—'}</p>
                           </div>
                           <div className="flex items-center gap-0.5 shrink-0">
                             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(row)}>
@@ -736,10 +733,7 @@ export default function SeleccionDesarrolloPage() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="font-semibold text-sm truncate">{row.candidate_name}</p>
-                      <p className="text-[11px] text-muted-foreground">
-                        {areaName(row.area_id)}{row.subarea_id ? ` · ${subareaName(row.subarea_id)}` : ''}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground">{row.position ?? '—'}</p>
+                      <p className="text-[11px] text-muted-foreground">{row.profession ?? '—'}</p>
                     </div>
                     <div className="flex items-center gap-0.5 shrink-0">
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(row)}>
@@ -814,7 +808,8 @@ export default function SeleccionDesarrolloPage() {
                     <th className="text-left px-3 py-2 border-r min-w-[200px]">Competencia</th>
                     {detailGroup.rows.map(row => (
                       <th key={row.id} className="text-left px-3 py-2 border-r min-w-[160px]">
-                        {row.candidate_name}
+                        <p className="font-semibold">{row.candidate_name}</p>
+                        <p className="text-[11px] font-normal text-muted-foreground">{row.profession ?? '—'}</p>
                       </th>
                     ))}
                   </tr>
