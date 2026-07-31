@@ -163,6 +163,14 @@ export default function SeleccionDesarrolloPage() {
   const compsForPosition = (position: string | null) =>
     activeCompetencies.filter(c => !c.position_name || c.position_name === position);
 
+  // Competencias efectivas de una evaluación: las seleccionadas al iniciar el assessment
+  // (filas existentes en scores), o por defecto las del cargo.
+  const compsOfRow = (row: Assessment) => {
+    const ids = compScores.filter(s => s.evaluation_id === row.id).map(s => s.competency_id);
+    if (ids.length) return activeCompetencies.filter(c => ids.includes(c.id));
+    return compsForPosition(row.position);
+  };
+
   const scoreOf = (evaluationId: string, competencyId: string) =>
     compScores.find(s => s.evaluation_id === evaluationId && s.competency_id === competencyId)?.score ?? null;
 
@@ -194,9 +202,9 @@ export default function SeleccionDesarrolloPage() {
   // Competencies shown as rows in the grid: union of those applicable to visible aspirants
   const gridCompetencies = useMemo(() => {
     const ids = new Set<string>();
-    filtered.forEach(row => compsForPosition(row.position).forEach(c => ids.add(c.id)));
+    filtered.forEach(row => compsOfRow(row).forEach(c => ids.add(c.id)));
     return activeCompetencies.filter(c => ids.has(c.id));
-  }, [filtered, activeCompetencies]);
+  }, [filtered, activeCompetencies, compScores]);
 
   const openNew = () => {
     setEditing(null);
