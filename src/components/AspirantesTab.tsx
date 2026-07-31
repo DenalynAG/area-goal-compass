@@ -419,7 +419,7 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
                     <th className="px-3 py-2">Competencias a evaluar</th>
                     <th className="px-3 py-2">Fecha</th>
                     <th className="px-3 py-2">Estado</th>
-                    <th className="px-3 py-2 w-[90px]"></th>
+                    <th className="px-3 py-2 w-[230px]"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -454,6 +454,9 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
                       <td className="px-3 py-2">{statusBadge(c.status)}</td>
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-0.5">
+                          <Button variant="outline" size="sm" className="h-7 text-[11px] mr-1" onClick={() => openStart(c)}>
+                            <PlayCircle className="w-3.5 h-3.5 mr-1" /> Iniciar Assessment
+                          </Button>
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(c)}>
                             <Pencil className="w-4 h-4" />
                           </Button>
@@ -496,6 +499,9 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
                     <span className="text-[11px] text-muted-foreground">{c.application_date}</span>
                     {statusBadge(c.status)}
                   </div>
+                  <Button variant="outline" size="sm" className="w-full h-8 text-xs" onClick={() => openStart(c)}>
+                    <PlayCircle className="w-4 h-4 mr-1" /> Iniciar Assessment
+                  </Button>
                 </div>
               ))}
             </div>
