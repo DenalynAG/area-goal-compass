@@ -724,9 +724,10 @@ export default function SeleccionDesarrolloPage() {
                 </div>
               ))}
             </div>
-          </>
-        )}
-      </Card>
+          </Card>
+          );
+        })
+      )}
         </TabsContent>
       </Tabs>
 
