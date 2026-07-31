@@ -470,7 +470,7 @@ export default function SeleccionDesarrolloPage() {
         onValueChange={(v) => updateScore(row, competencyId, v === '__none__' ? null : Number(v))}
       >
         <SelectTrigger
-          className={`h-9 w-full justify-center font-bold text-sm border ${
+          className={`h-8 w-full justify-center font-bold text-xs md:h-9 md:text-sm border ${
             opt ? opt.color : 'bg-background text-muted-foreground'
           }`}
         >
@@ -487,14 +487,14 @@ export default function SeleccionDesarrolloPage() {
   };
 
   return (
-    <div className="p-4 sm:p-6 space-y-4 max-w-7xl mx-auto">
+    <div className="p-3 sm:p-4 md:p-6 space-y-3 md:space-y-4 max-w-7xl mx-auto">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-primary/10">
             <Users className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Selección y Desarrollo</h1>
+            <h1 className="text-xl md:text-2xl font-bold">Selección y Desarrollo</h1>
             <p className="text-sm text-muted-foreground">
               Planilla de Evaluación Assessment Center — Aspirantes por área y cargo
             </p>
@@ -558,7 +558,7 @@ export default function SeleccionDesarrolloPage() {
         </TabsContent>
 
         <TabsContent value="planilla" className="space-y-4">
-      <Card className="p-4 bg-muted/30 space-y-2">
+      <Card className="p-3 md:p-4 bg-muted/30 space-y-2">
         <h2 className="text-sm font-semibold">Método de evaluación</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
           {SCORE_OPTIONS.map(o => (
@@ -630,14 +630,14 @@ export default function SeleccionDesarrolloPage() {
               <table className="w-full border-collapse text-sm">
                 <thead>
                   <tr className="bg-muted/40 border-b">
-                    <th className="sticky left-0 z-20 bg-muted/40 text-left px-4 py-3 w-[280px] min-w-[260px] border-r shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
+                    <th className="sticky left-0 z-20 bg-muted/40 text-left px-3 py-2 md:px-4 md:py-3 w-[200px] min-w-[180px] md:w-[260px] md:min-w-[240px] lg:w-[280px] lg:min-w-[260px] border-r shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
                       Competencia
                     </th>
                     {filtered.map(row => (
-                      <th key={row.id} className="text-left px-3 py-2 min-w-[180px] border-r align-top">
+                      <th key={row.id} className="text-left px-2 py-1.5 md:px-3 md:py-2 min-w-[140px] md:min-w-[160px] lg:min-w-[180px] border-r align-top">
                         <div className="flex items-start justify-between gap-1">
                           <div className="space-y-0.5 min-w-0">
-                            <p className="font-semibold text-sm leading-tight truncate">{row.candidate_name}</p>
+                            <p className="font-semibold text-xs md:text-sm leading-tight truncate">{row.candidate_name}</p>
                             <p className="text-[11px] text-muted-foreground leading-tight">{row.profession ?? '—'}</p>
                           </div>
                           <div className="flex items-center gap-0.5 shrink-0">
@@ -656,7 +656,7 @@ export default function SeleccionDesarrolloPage() {
                 <tbody>
                   {gridCompetencies.length === 0 && (
                     <tr className="border-b">
-                      <td colSpan={1 + filtered.length} className="px-3 py-6 text-center text-sm text-muted-foreground">
+                      <td colSpan={1 + filtered.length} className="px-2 py-4 md:px-3 md:py-6 text-center text-sm text-muted-foreground">
                         No hay competencias configuradas. Créalas desde el botón "Competencias".
                       </td>
                     </tr>
@@ -665,11 +665,11 @@ export default function SeleccionDesarrolloPage() {
                     const isExpanded = !!expandedBehaviors[c.id];
                     return (
                       <tr key={c.id} className="border-b">
-                        <td className="sticky left-0 z-20 bg-background px-4 py-3 border-r align-top shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
+                        <td className="sticky left-0 z-20 bg-background px-3 py-2 md:px-4 md:py-3 border-r align-top shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
-                              <p className="font-semibold text-sm">{c.name}</p>
-                              {c.subtitle && <p className="text-[11px] text-muted-foreground">{c.subtitle}</p>}
+                              <p className="font-semibold text-xs md:text-sm">{c.name}</p>
+                              {c.subtitle && <p className="text-[10px] md:text-[11px] text-muted-foreground">{c.subtitle}</p>}
                               {c.position_name && (
                                 <p className="text-[10px] text-muted-foreground italic mt-0.5">Cargo: {c.position_name}</p>
                               )}
@@ -681,12 +681,12 @@ export default function SeleccionDesarrolloPage() {
                                 className="shrink-0 p-1 rounded hover:bg-muted text-muted-foreground"
                                 title={isExpanded ? 'Ocultar comportamientos' : 'Ver comportamientos observables'}
                               >
-                                {isExpanded ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                {isExpanded ? <EyeOff className="w-3.5 h-3.5 md:w-4 md:h-4" /> : <Eye className="w-3.5 h-3.5 md:w-4 md:h-4" />}
                               </button>
                             )}
                           </div>
                           {isExpanded && c.behavior && (
-                            <div className="mt-2 text-xs text-muted-foreground leading-snug border-t pt-2">
+                            <div className="mt-2 text-[11px] md:text-xs text-muted-foreground leading-snug border-t pt-2">
                               {c.behavior}
                             </div>
                           )}
@@ -694,7 +694,7 @@ export default function SeleccionDesarrolloPage() {
                         {filtered.map(row => {
                           const applies = compsOfRow(row).some(x => x.id === c.id);
                           return (
-                            <td key={row.id} className="px-2 py-2 border-r">
+                            <td key={row.id} className="px-1.5 py-1.5 md:px-2 md:py-2 border-r">
                               <ScoreCell row={row} competencyId={c.id} disabled={!applies} />
                             </td>
                           );
@@ -703,21 +703,21 @@ export default function SeleccionDesarrolloPage() {
                     );
                   })}
                   <tr className="bg-muted/30">
-                    <td className="sticky left-0 z-20 bg-muted/30 px-4 py-3 border-r font-semibold shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
+                    <td className="sticky left-0 z-20 bg-muted/30 px-3 py-2 md:px-4 md:py-3 border-r font-semibold shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
                       Nota ponderada
                     </td>
                     {filtered.map(row => (
-                      <td key={row.id} className="px-3 py-2 border-r text-center">
+                      <td key={row.id} className="px-2 py-1.5 md:px-3 md:py-2 border-r text-center">
                         {scoreBadge(row.weighted_score !== null ? Number(row.weighted_score) : null)}
                       </td>
                     ))}
                   </tr>
                   <tr>
-                    <td className="sticky left-0 z-20 bg-background px-4 py-3 border-r text-xs text-muted-foreground shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
+                    <td className="sticky left-0 z-20 bg-background px-3 py-2 md:px-4 md:py-3 border-r text-xs text-muted-foreground shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
                       Fecha
                     </td>
                     {filtered.map(row => (
-                      <td key={row.id} className="px-3 py-2 border-r text-xs text-muted-foreground">
+                      <td key={row.id} className="px-2 py-1.5 md:px-3 md:py-2 border-r text-xs text-muted-foreground">
                         {row.evaluation_date}
                       </td>
                     ))}
@@ -729,18 +729,18 @@ export default function SeleccionDesarrolloPage() {
             {/* Mobile card view */}
             <div className="md:hidden divide-y">
               {filtered.map(row => (
-                <div key={row.id} className="p-4 space-y-3">
+                <div key={row.id} className="p-3 md:p-4 space-y-2 md:space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="font-semibold text-sm truncate">{row.candidate_name}</p>
                       <p className="text-[11px] text-muted-foreground">{row.profession ?? '—'}</p>
                     </div>
                     <div className="flex items-center gap-0.5 shrink-0">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(row)}>
-                        <Pencil className="w-4 h-4" />
+                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(row)}>
+                        <Pencil className="w-3.5 h-3.5" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteId(row.id)}>
-                        <Trash2 className="w-4 h-4 text-destructive" />
+                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setDeleteId(row.id)}>
+                        <Trash2 className="w-3.5 h-3.5 text-destructive" />
                       </Button>
                     </div>
                   </div>
@@ -749,9 +749,9 @@ export default function SeleccionDesarrolloPage() {
                     {compsOfRow(row).map(c => {
                       const isExpanded = !!expandedBehaviors[c.id];
                       return (
-                        <div key={c.id} className="border rounded-md p-2.5 space-y-1.5 bg-muted/20">
+                        <div key={c.id} className="border rounded-md p-2 space-y-1 md:p-2.5 md:space-y-1.5 bg-muted/20">
                           <div className="flex items-start justify-between gap-2">
-                            <p className="font-semibold text-xs min-w-0">{c.name}</p>
+                            <p className="font-semibold text-[11px] md:text-xs min-w-0">{c.name}</p>
                             {c.behavior && (
                               <button
                                 type="button"
@@ -764,7 +764,7 @@ export default function SeleccionDesarrolloPage() {
                             )}
                           </div>
                           {isExpanded && c.behavior && (
-                            <p className="text-[10px] text-muted-foreground leading-snug">{c.behavior}</p>
+                            <p className="text-[10px] md:text-xs text-muted-foreground leading-snug">{c.behavior}</p>
                           )}
                           <ScoreCell row={row} competencyId={c.id} />
                         </div>
@@ -776,7 +776,7 @@ export default function SeleccionDesarrolloPage() {
                     <span className="text-xs text-muted-foreground">Nota ponderada</span>
                     {scoreBadge(row.weighted_score !== null ? Number(row.weighted_score) : null)}
                   </div>
-                  <p className="text-[11px] text-muted-foreground">Fecha: {row.evaluation_date}</p>
+                  <p className="text-[10px] md:text-[11px] text-muted-foreground">Fecha: {row.evaluation_date}</p>
                 </div>
               ))}
             </div>
@@ -805,11 +805,11 @@ export default function SeleccionDesarrolloPage() {
               <table className="w-full border-collapse text-sm">
                 <thead>
                   <tr className="bg-muted/40 border-b">
-                    <th className="text-left px-3 py-2 border-r min-w-[200px]">Competencia</th>
+                    <th className="text-left px-2 py-1.5 md:px-3 md:py-2 border-r min-w-[160px] md:min-w-[200px]">Competencia</th>
                     {detailGroup.rows.map(row => (
-                      <th key={row.id} className="text-left px-3 py-2 border-r min-w-[160px]">
-                        <p className="font-semibold">{row.candidate_name}</p>
-                        <p className="text-[11px] font-normal text-muted-foreground">{row.profession ?? '—'}</p>
+                      <th key={row.id} className="text-left px-2 py-1.5 md:px-3 md:py-2 border-r min-w-[130px] md:min-w-[160px]">
+                        <p className="font-semibold text-xs md:text-sm">{row.candidate_name}</p>
+                        <p className="text-[10px] md:text-[11px] font-normal text-muted-foreground">{row.profession ?? '—'}</p>
                       </th>
                     ))}
                   </tr>
@@ -817,9 +817,9 @@ export default function SeleccionDesarrolloPage() {
                 <tbody>
                   {compsForRows(detailGroup.rows).map(c => (
                     <tr key={c.id} className="border-b">
-                      <td className="px-3 py-2 border-r align-top">
-                        <p className="font-semibold text-sm">{c.name}</p>
-                        {c.subtitle && <p className="text-[11px] text-muted-foreground">{c.subtitle}</p>}
+                      <td className="px-2 py-1.5 md:px-3 md:py-2 border-r align-top">
+                        <p className="font-semibold text-xs md:text-sm">{c.name}</p>
+                        {c.subtitle && <p className="text-[10px] md:text-[11px] text-muted-foreground">{c.subtitle}</p>}
                       </td>
                       {detailGroup.rows.map(row => {
                         const s = scoreOf(row.id, c.id);
@@ -835,17 +835,17 @@ export default function SeleccionDesarrolloPage() {
                     </tr>
                   ))}
                   <tr className="bg-muted/30">
-                    <td className="px-3 py-2 border-r font-semibold">Nota ponderada</td>
+                    <td className="px-2 py-1.5 md:px-3 md:py-2 border-r font-semibold">Nota ponderada</td>
                     {detailGroup.rows.map(row => (
-                      <td key={row.id} className="px-3 py-2 border-r">
+                      <td key={row.id} className="px-2 py-1.5 md:px-3 md:py-2 border-r">
                         {scoreBadge(row.weighted_score !== null ? Number(row.weighted_score) : null)}
                       </td>
                     ))}
                   </tr>
                   <tr>
-                    <td className="px-3 py-2 border-r text-xs text-muted-foreground">Fecha</td>
+                    <td className="px-2 py-1.5 md:px-3 md:py-2 border-r text-xs text-muted-foreground">Fecha</td>
                     {detailGroup.rows.map(row => (
-                      <td key={row.id} className="px-3 py-2 border-r text-xs text-muted-foreground">
+                      <td key={row.id} className="px-2 py-1.5 md:px-3 md:py-2 border-r text-xs text-muted-foreground">
                         {row.evaluation_date}
                       </td>
                     ))}
