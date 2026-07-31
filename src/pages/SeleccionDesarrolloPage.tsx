@@ -595,14 +595,14 @@ export default function SeleccionDesarrolloPage() {
         <Card className="p-0 overflow-hidden">
           <div className="py-10 text-center text-muted-foreground text-sm">Cargando...</div>
         </Card>
-      ) : filtered.length === 0 ? (
+      ) : activeGroups.length === 0 ? (
         <Card className="p-0 overflow-hidden">
           <div className="py-10 text-center text-muted-foreground text-sm">
-            No hay aspirantes. Crea el primero con "Nuevo aspirante".
+            No hay convocatorias en evaluación. Las completadas están en el botón "Histórico".
           </div>
         </Card>
       ) : (
-        groups.map(group => {
+        activeGroups.map(group => {
           const gridCompetencies = compsForRows(group.rows);
           const filtered = group.rows;
           return (
