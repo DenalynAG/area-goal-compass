@@ -79,11 +79,12 @@ function scoreBadge(pct: number | null) {
 
 const emptyForm = {
   candidate_name: '',
+  profession: '',
+  university: '',
   area_id: '' as string,
   subarea_id: '' as string,
   position: '',
   evaluation_date: new Date().toISOString().split('T')[0],
-  notes: '',
 };
 
 const emptyComp = {
