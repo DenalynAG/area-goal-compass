@@ -4,7 +4,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAreas, useSubareas, usePositions, useProfiles, useUserRoles } from '@/hooks/useSupabaseData';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { SearchableSelect } from '@/components/ui/searchable-select';
@@ -60,7 +59,6 @@ const emptyForm = {
   evaluator_user_id: NONE,
   application_date: new Date().toISOString().split('T')[0],
   status: 'pendiente',
-  notes: '',
 };
 
 export default function AspirantesTab() {
@@ -182,7 +180,6 @@ export default function AspirantesTab() {
       evaluator_user_id: c.evaluator_user_id ?? NONE,
       application_date: c.application_date,
       status: c.status,
-      notes: c.notes ?? '',
     });
     setSelectedComps(candidateComps.filter(cc => cc.candidate_id === c.id).map(cc => cc.competency_id));
     setOpen(true);
@@ -209,7 +206,6 @@ export default function AspirantesTab() {
         evaluator_user_id: form.evaluator_user_id === NONE ? null : form.evaluator_user_id,
         application_date: form.application_date,
         status: form.status,
-        notes: form.notes.trim() || null,
       };
 
       let candidateId = editing?.id ?? '';
@@ -519,11 +515,6 @@ export default function AspirantesTab() {
                   );
                 })}
               </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">Observaciones</label>
-              <Textarea rows={2} value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
             </div>
 
             <DialogFooter>
