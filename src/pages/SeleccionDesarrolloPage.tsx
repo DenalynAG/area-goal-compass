@@ -114,6 +114,8 @@ export default function SeleccionDesarrolloPage() {
   const [compForm, setCompForm] = useState({ ...emptyComp });
   const [compSaving, setCompSaving] = useState(false);
   const [compDeleteId, setCompDeleteId] = useState<string | null>(null);
+  const [expandedBehaviors, setExpandedBehaviors] = useState<Record<string, boolean>>({});
+
 
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ['assessment_evaluations'],
