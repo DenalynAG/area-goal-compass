@@ -4,7 +4,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAreas, useSubareas, usePositions, useProfiles, useUserRoles } from '@/hooks/useSupabaseData';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { SearchableSelect } from '@/components/ui/searchable-select';
@@ -60,7 +59,6 @@ const emptyForm = {
   evaluator_user_id: NONE,
   application_date: new Date().toISOString().split('T')[0],
   status: 'pendiente',
-  notes: '',
 };
 
 export default function AspirantesTab() {
