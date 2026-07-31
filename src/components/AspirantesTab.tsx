@@ -279,13 +279,30 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
     [candidates, selectedIds],
   );
 
-  const toggleSelected = (id: string, checked: boolean) =>
-    setSelectedIds(prev => (checked ? [...new Set([...prev, id])] : prev.filter(x => x !== id)));
+  const isEvaluated = (c: Candidate) => c.status === 'evaluado';
 
-  const allFilteredSelected = filtered.length > 0 && filtered.every(c => selectedIds.includes(c.id));
+  const toggleSelected = (id: string, checked: boolean) => {
+    const cand = candidates.find(c => c.id === id);
+    if (checked && cand && isEvaluated(cand)) {
+      toast.error(`${cand.full_name} ya fue evaluado. No es posible realizar una nueva evaluación.`);
+      return;
+    }
+    setSelectedIds(prev => (checked ? [...new Set([...prev, id])] : prev.filter(x => x !== id)));
+  };
+
+  const selectableFiltered = useMemo(() => filtered.filter(c => !isEvaluated(c)), [filtered]);
+  const allFilteredSelected =
+    selectableFiltered.length > 0 && selectableFiltered.every(c => selectedIds.includes(c.id));
 
   const openStart = () => {
     if (selectedCands.length === 0) return;
+    const already = selectedCands.filter(isEvaluated);
+    if (already.length) {
+      toast.error(
+        `${already.map(c => c.full_name).join(', ')} ya ${already.length > 1 ? 'fueron evaluados' : 'fue evaluado'}. No se permite una nueva evaluación.`,
+      );
+      return;
+    }
     const base = selectedCands[0];
     const assigned = candidateComps.filter(cc => cc.candidate_id === base.id).map(cc => cc.competency_id);
     setStartComps(assigned.length
@@ -364,6 +381,12 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
 
   const handleStartAssessment = async () => {
     if (selectedCands.length === 0) return toast.error('Selecciona al menos un aspirante');
+    const yaEvaluados = selectedCands.filter(isEvaluated);
+    if (yaEvaluados.length) {
+      return toast.error(
+        `${yaEvaluados.map(c => c.full_name).join(', ')} ya ${yaEvaluados.length > 1 ? 'fueron evaluados' : 'fue evaluado'}. No se permite una nueva evaluación.`,
+      );
+    }
     if (startComps.length === 0) return toast.error('Selecciona al menos una competencia');
     if (startEvaluator === NONE) return toast.error('Asigna el líder que evaluará las competencias');
     setStarting(true);
@@ -438,7 +461,7 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
                     <th className="px-3 py-2 w-[40px]">
                       <Checkbox
                         checked={allFilteredSelected}
-                        onCheckedChange={v => setSelectedIds(v ? filtered.map(c => c.id) : [])}
+                        onCheckedChange={v => setSelectedIds(v ? selectableFiltered.map(c => c.id) : [])}
                         aria-label="Seleccionar todos"
                       />
                     </th>
@@ -456,8 +479,10 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
                       <td className="px-3 py-3">
                         <Checkbox
                           checked={selectedIds.includes(c.id)}
+                          disabled={isEvaluated(c)}
                           onCheckedChange={v => toggleSelected(c.id, !!v)}
-                          aria-label={`Seleccionar ${c.full_name}`}
+                          aria-label={isEvaluated(c) ? `${c.full_name} ya fue evaluado` : `Seleccionar ${c.full_name}`}
+                          title={isEvaluated(c) ? 'Este aspirante ya fue evaluado' : undefined}
                         />
                       </td>
                       <td className="px-3 py-2">
@@ -504,8 +529,10 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
                       <Checkbox
                         className="mt-0.5"
                         checked={selectedIds.includes(c.id)}
+                        disabled={isEvaluated(c)}
                         onCheckedChange={v => toggleSelected(c.id, !!v)}
-                        aria-label={`Seleccionar ${c.full_name}`}
+                        aria-label={isEvaluated(c) ? `${c.full_name} ya fue evaluado` : `Seleccionar ${c.full_name}`}
+                        title={isEvaluated(c) ? 'Este aspirante ya fue evaluado' : undefined}
                       />
                       <div className="min-w-0">
                         <p className="font-semibold text-sm">{c.full_name}</p>
