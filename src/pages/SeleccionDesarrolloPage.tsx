@@ -426,16 +426,15 @@ export default function SeleccionDesarrolloPage() {
           <Button variant="outline" onClick={() => { setCompOpen(true); openCompNew(); }}>
             <SlidersHorizontal className="w-4 h-4 mr-1" /> Competencias
           </Button>
-          <Button onClick={openNew}>
-            <Plus className="w-4 h-4 mr-1" /> Nuevo aspirante
+          <Button variant="outline" onClick={() => setActiveTab('planilla')}>
+            <Table className="w-4 h-4 mr-1" /> Planilla Assessment
           </Button>
         </div>
       </div>
 
-      <Tabs defaultValue="aspirantes" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="aspirantes">Aspirantes</TabsTrigger>
-          <TabsTrigger value="planilla">Planilla Assessment</TabsTrigger>
         </TabsList>
 
         <TabsContent value="aspirantes">
