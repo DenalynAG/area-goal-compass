@@ -630,7 +630,7 @@ export default function SeleccionDesarrolloPage() {
               <table className="w-full border-collapse text-sm">
                 <thead>
                   <tr className="bg-muted/40 border-b">
-                    <th className="sticky left-0 z-20 bg-muted/40 text-left px-3 py-2 w-[280px] min-w-[260px] border-r shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
+                    <th className="sticky left-0 z-20 bg-muted/40 text-left px-4 py-3 w-[280px] min-w-[260px] border-r shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
                       Competencia
                     </th>
                     {filtered.map(row => (
