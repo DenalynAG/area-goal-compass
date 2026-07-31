@@ -14,7 +14,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Users, Plus, Pencil, Trash2, Search, SlidersHorizontal, ArrowUp, ArrowDown } from 'lucide-react';
+import { Users, Pencil, Trash2, Search, SlidersHorizontal, ArrowUp, ArrowDown, Table } from 'lucide-react';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -105,6 +105,7 @@ export default function SeleccionDesarrolloPage() {
   const [form, setForm] = useState({ ...emptyForm });
   const [formScores, setFormScores] = useState<Record<string, number | null>>({});
   const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState('aspirantes');
 
   // Competency manager state
   const [compOpen, setCompOpen] = useState(false);
@@ -425,16 +426,15 @@ export default function SeleccionDesarrolloPage() {
           <Button variant="outline" onClick={() => { setCompOpen(true); openCompNew(); }}>
             <SlidersHorizontal className="w-4 h-4 mr-1" /> Competencias
           </Button>
-          <Button onClick={openNew}>
-            <Plus className="w-4 h-4 mr-1" /> Nuevo aspirante
+          <Button variant="outline" onClick={() => setActiveTab('planilla')}>
+            <Table className="w-4 h-4 mr-1" /> Planilla Assessment
           </Button>
         </div>
       </div>
 
-      <Tabs defaultValue="aspirantes" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="aspirantes">Aspirantes</TabsTrigger>
-          <TabsTrigger value="planilla">Planilla Assessment</TabsTrigger>
         </TabsList>
 
         <TabsContent value="aspirantes">
