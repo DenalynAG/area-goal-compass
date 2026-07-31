@@ -703,7 +703,7 @@ export default function SeleccionDesarrolloPage() {
                     );
                   })}
                   <tr className="bg-muted/30">
-                    <td className="sticky left-0 z-20 bg-muted/30 px-3 py-2 border-r font-semibold shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
+                    <td className="sticky left-0 z-20 bg-muted/30 px-4 py-3 border-r font-semibold shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
                       Nota ponderada
                     </td>
                     {filtered.map(row => (
