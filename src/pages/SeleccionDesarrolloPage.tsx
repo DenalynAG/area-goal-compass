@@ -14,11 +14,12 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Users, Pencil, Trash2, Search, SlidersHorizontal, ArrowUp, ArrowDown, Table } from 'lucide-react';
+import { Users, Pencil, Trash2, Search, SlidersHorizontal, ArrowUp, ArrowDown, Table, BarChart3 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AspirantesTab from '@/components/AspirantesTab';
+import AssessmentDashboardTab from '@/components/AssessmentDashboardTab';
 
 type Assessment = {
   id: string;
@@ -437,16 +438,24 @@ export default function SeleccionDesarrolloPage() {
           <Button variant="outline" onClick={() => setActiveTab('planilla')}>
             <Table className="w-4 h-4 mr-1" /> Planilla Assessment
           </Button>
+          <Button variant="outline" onClick={() => setActiveTab('dashboard')}>
+            <BarChart3 className="w-4 h-4 mr-1" /> Dashboard
+          </Button>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="aspirantes">Aspirantes</TabsTrigger>
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
         </TabsList>
 
         <TabsContent value="aspirantes">
           <AspirantesTab onAssessmentStarted={() => setActiveTab('planilla')} />
+        </TabsContent>
+
+        <TabsContent value="dashboard">
+          <AssessmentDashboardTab />
         </TabsContent>
 
         <TabsContent value="planilla" className="space-y-4">

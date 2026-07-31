@@ -43,10 +43,10 @@ type Competency = {
 };
 
 const STATUSES = [
-  { value: 'pendiente', label: 'Pendiente', cls: 'bg-muted text-foreground' },
-  { value: 'en_evaluacion', label: 'En evaluación', cls: 'bg-yellow-500/15 text-yellow-700' },
-  { value: 'evaluado', label: 'Evaluado', cls: 'bg-green-500/15 text-green-700' },
-  { value: 'descartado', label: 'Descartado', cls: 'bg-destructive/15 text-destructive' },
+  { value: 'pendiente', label: 'Pendiente', cls: 'bg-sky-500 text-white border border-sky-600' },
+  { value: 'en_evaluacion', label: 'En evaluación', cls: 'bg-amber-400 text-amber-950 border border-amber-500' },
+  { value: 'evaluado', label: 'Evaluado', cls: 'bg-emerald-500 text-white border border-emerald-600' },
+  { value: 'descartado', label: 'Descartado', cls: 'bg-red-500 text-white border border-red-600' },
 ];
 
 const emptyForm = {
