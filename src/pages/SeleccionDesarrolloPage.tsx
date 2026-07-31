@@ -542,28 +542,47 @@ export default function SeleccionDesarrolloPage() {
                       </td>
                     </tr>
                   )}
-                  {gridCompetencies.map(c => (
-                    <tr key={c.id} className="border-b">
-                      <td className="sticky left-0 z-20 bg-background px-3 py-2 border-r align-top shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
-                        <p className="font-semibold text-sm">{c.name}</p>
-                        {c.subtitle && <p className="text-[11px] text-muted-foreground">{c.subtitle}</p>}
-                        {c.position_name && (
-                          <p className="text-[10px] text-muted-foreground italic mt-0.5">Cargo: {c.position_name}</p>
-                        )}
-                      </td>
-                      <td className="px-3 py-2 border-r align-top text-xs text-muted-foreground leading-snug">
-                        {c.behavior}
-                      </td>
-                      {filtered.map(row => {
-                        const applies = compsOfRow(row).some(x => x.id === c.id);
-                        return (
-                          <td key={row.id} className="px-2 py-2 border-r">
-                            <ScoreCell row={row} competencyId={c.id} disabled={!applies} />
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
+                  {gridCompetencies.map(c => {
+                    const isExpanded = !!expandedBehaviors[c.id];
+                    return (
+                      <tr key={c.id} className="border-b">
+                        <td className="sticky left-0 z-20 bg-background px-3 py-2 border-r align-top shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="font-semibold text-sm">{c.name}</p>
+                              {c.subtitle && <p className="text-[11px] text-muted-foreground">{c.subtitle}</p>}
+                              {c.position_name && (
+                                <p className="text-[10px] text-muted-foreground italic mt-0.5">Cargo: {c.position_name}</p>
+                              )}
+                            </div>
+                            {c.behavior && (
+                              <button
+                                type="button"
+                                onClick={() => setExpandedBehaviors(prev => ({ ...prev, [c.id]: !isExpanded }))}
+                                className="shrink-0 p-1 rounded hover:bg-muted text-muted-foreground"
+                                title={isExpanded ? 'Ocultar comportamientos' : 'Ver comportamientos observables'}
+                              >
+                                {isExpanded ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                              </button>
+                            )}
+                          </div>
+                          {isExpanded && c.behavior && (
+                            <div className="mt-2 text-xs text-muted-foreground leading-snug border-t pt-2">
+                              {c.behavior}
+                            </div>
+                          )}
+                        </td>
+                        {filtered.map(row => {
+                          const applies = compsOfRow(row).some(x => x.id === c.id);
+                          return (
+                            <td key={row.id} className="px-2 py-2 border-r">
+                              <ScoreCell row={row} competencyId={c.id} disabled={!applies} />
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
                   <tr className="bg-muted/30">
                     <td className="sticky left-0 z-20 bg-muted/30 px-3 py-2 border-r font-semibold shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
                       Nota ponderada
