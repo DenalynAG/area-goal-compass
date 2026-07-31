@@ -435,17 +435,31 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
               <table className="w-full text-sm border-collapse">
                 <thead>
                   <tr className="bg-muted/40 border-b text-left">
+                    <th className="px-3 py-2 w-[40px]">
+                      <Checkbox
+                        checked={allFilteredSelected}
+                        onCheckedChange={v => setSelectedIds(v ? filtered.map(c => c.id) : [])}
+                        aria-label="Seleccionar todos"
+                      />
+                    </th>
                     <th className="px-3 py-2">Aspirante</th>
                     <th className="px-3 py-2">Cargo / Área</th>
                     <th className="px-3 py-2">Evaluador asignado</th>
                     <th className="px-3 py-2">Fecha</th>
                     <th className="px-3 py-2">Estado</th>
-                    <th className="px-3 py-2 w-[230px]"></th>
+                    <th className="px-3 py-2 w-[90px]"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.map(c => (
                     <tr key={c.id} className="border-b align-top">
+                      <td className="px-3 py-3">
+                        <Checkbox
+                          checked={selectedIds.includes(c.id)}
+                          onCheckedChange={v => toggleSelected(c.id, !!v)}
+                          aria-label={`Seleccionar ${c.full_name}`}
+                        />
+                      </td>
                       <td className="px-3 py-2">
                         <p className="font-semibold">{c.full_name}</p>
                         <p className="text-[11px] text-muted-foreground">{c.document_id ?? '—'}</p>
@@ -467,9 +481,6 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
                       <td className="px-3 py-2">{statusBadge(c.status)}</td>
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-0.5">
-                          <Button variant="outline" size="sm" className="h-7 text-[11px] mr-1" onClick={() => openStart(c)}>
-                            <PlayCircle className="w-3.5 h-3.5 mr-1" /> Iniciar Assessment
-                          </Button>
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(c)}>
                             <Pencil className="w-4 h-4" />
                           </Button>
