@@ -669,7 +669,7 @@ export default function SeleccionDesarrolloPage() {
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
                               <p className="font-semibold text-xs md:text-sm">{c.name}</p>
-                              {c.subtitle && <p className="text-[11px] text-muted-foreground">{c.subtitle}</p>}
+                              {c.subtitle && <p className="text-[10px] md:text-[11px] text-muted-foreground">{c.subtitle}</p>}
                               {c.position_name && (
                                 <p className="text-[10px] text-muted-foreground italic mt-0.5">Cargo: {c.position_name}</p>
                               )}
@@ -681,12 +681,12 @@ export default function SeleccionDesarrolloPage() {
                                 className="shrink-0 p-1 rounded hover:bg-muted text-muted-foreground"
                                 title={isExpanded ? 'Ocultar comportamientos' : 'Ver comportamientos observables'}
                               >
-                                {isExpanded ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                {isExpanded ? <EyeOff className="w-3.5 h-3.5 md:w-4 md:h-4" /> : <Eye className="w-3.5 h-3.5 md:w-4 md:h-4" />}
                               </button>
                             )}
                           </div>
                           {isExpanded && c.behavior && (
-                            <div className="mt-2 text-xs text-muted-foreground leading-snug border-t pt-2">
+                            <div className="mt-2 text-[11px] md:text-xs text-muted-foreground leading-snug border-t pt-2">
                               {c.behavior}
                             </div>
                           )}
@@ -729,18 +729,18 @@ export default function SeleccionDesarrolloPage() {
             {/* Mobile card view */}
             <div className="md:hidden divide-y">
               {filtered.map(row => (
-                <div key={row.id} className="p-4 space-y-3">
+                <div key={row.id} className="p-3 md:p-4 space-y-2 md:space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="font-semibold text-sm truncate">{row.candidate_name}</p>
                       <p className="text-[11px] text-muted-foreground">{row.profession ?? '—'}</p>
                     </div>
                     <div className="flex items-center gap-0.5 shrink-0">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(row)}>
-                        <Pencil className="w-4 h-4" />
+                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(row)}>
+                        <Pencil className="w-3.5 h-3.5" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteId(row.id)}>
-                        <Trash2 className="w-4 h-4 text-destructive" />
+                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setDeleteId(row.id)}>
+                        <Trash2 className="w-3.5 h-3.5 text-destructive" />
                       </Button>
                     </div>
                   </div>
@@ -749,9 +749,9 @@ export default function SeleccionDesarrolloPage() {
                     {compsOfRow(row).map(c => {
                       const isExpanded = !!expandedBehaviors[c.id];
                       return (
-                        <div key={c.id} className="border rounded-md p-2.5 space-y-1.5 bg-muted/20">
+                        <div key={c.id} className="border rounded-md p-2 space-y-1 md:p-2.5 md:space-y-1.5 bg-muted/20">
                           <div className="flex items-start justify-between gap-2">
-                            <p className="font-semibold text-xs min-w-0">{c.name}</p>
+                            <p className="font-semibold text-[11px] md:text-xs min-w-0">{c.name}</p>
                             {c.behavior && (
                               <button
                                 type="button"
@@ -764,7 +764,7 @@ export default function SeleccionDesarrolloPage() {
                             )}
                           </div>
                           {isExpanded && c.behavior && (
-                            <p className="text-[10px] text-muted-foreground leading-snug">{c.behavior}</p>
+                            <p className="text-[10px] md:text-xs text-muted-foreground leading-snug">{c.behavior}</p>
                           )}
                           <ScoreCell row={row} competencyId={c.id} />
                         </div>
@@ -776,7 +776,7 @@ export default function SeleccionDesarrolloPage() {
                     <span className="text-xs text-muted-foreground">Nota ponderada</span>
                     {scoreBadge(row.weighted_score !== null ? Number(row.weighted_score) : null)}
                   </div>
-                  <p className="text-[11px] text-muted-foreground">Fecha: {row.evaluation_date}</p>
+                  <p className="text-[10px] md:text-[11px] text-muted-foreground">Fecha: {row.evaluation_date}</p>
                 </div>
               ))}
             </div>
