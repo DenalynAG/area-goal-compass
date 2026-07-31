@@ -517,10 +517,25 @@ export default function SeleccionDesarrolloPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="aspirantes">Aspirantes</TabsTrigger>
-          <TabsTrigger value="historico">Histórico</TabsTrigger>
-          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+        <TabsList className="gap-1">
+          <TabsTrigger
+            value="aspirantes"
+            className="bg-primary/10 text-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+          >
+            Aspirantes
+          </TabsTrigger>
+          <TabsTrigger
+            value="historico"
+            className="bg-info/10 text-info data-[state=active]:bg-info data-[state=active]:text-info-foreground"
+          >
+            Histórico
+          </TabsTrigger>
+          <TabsTrigger
+            value="dashboard"
+            className="bg-warning/10 text-warning data-[state=active]:bg-warning data-[state=active]:text-warning-foreground"
+          >
+            Dashboard
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="aspirantes">
