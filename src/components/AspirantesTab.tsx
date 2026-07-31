@@ -15,8 +15,9 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Pencil, Trash2, Search, UserCheck } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, UserCheck, PlayCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 const NONE = '__none__';
 
@@ -61,8 +62,9 @@ const emptyForm = {
   status: 'pendiente',
 };
 
-export default function AspirantesTab() {
+export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentStarted?: () => void } = {}) {
   const qc = useQueryClient();
+  const { user } = useAuth();
   const { data: areas = [] } = useAreas();
   const { data: subareas = [] } = useSubareas();
   const { data: positions = [] } = usePositions();
@@ -78,6 +80,13 @@ export default function AspirantesTab() {
   const [selectedComps, setSelectedComps] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  // Iniciar Assessment
+  const [startCand, setStartCand] = useState<Candidate | null>(null);
+  const [startComps, setStartComps] = useState<string[]>([]);
+  const [startEvaluator, setStartEvaluator] = useState<string>(NONE);
+  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [starting, setStarting] = useState(false);
 
   const { data: candidates = [], isLoading } = useQuery({
     queryKey: ['assessment_candidates'],
@@ -264,6 +273,103 @@ export default function AspirantesTab() {
     return <span className={`inline-flex px-2 py-0.5 rounded-md text-[11px] font-semibold ${st.cls}`}>{st.label}</span>;
   };
 
+  const openStart = (c: Candidate) => {
+    setStartCand(c);
+    const assigned = candidateComps.filter(cc => cc.candidate_id === c.id).map(cc => cc.competency_id);
+    setStartComps(assigned.length
+      ? assigned
+      : activeComps.filter(k => !k.position_name || k.position_name === c.position).map(k => k.id));
+    setStartEvaluator(c.evaluator_user_id ?? NONE);
+    setStartDate(new Date().toISOString().split('T')[0]);
+  };
+
+  const handleStartAssessment = async () => {
+    if (!startCand) return;
+    if (startComps.length === 0) return toast.error('Selecciona al menos una competencia');
+    if (startEvaluator === NONE) return toast.error('Asigna el líder que evaluará las competencias');
+    setStarting(true);
+    try {
+      // 1. Guardar evaluador y competencias en el aspirante
+      const { error: upErr } = await supabase
+        .from('assessment_candidates' as any)
+        .update({ evaluator_user_id: startEvaluator, status: 'en_evaluacion' })
+        .eq('id', startCand.id);
+      if (upErr) throw upErr;
+
+      const current = candidateComps.filter(cc => cc.candidate_id === startCand.id).map(cc => cc.competency_id);
+      const toAdd = startComps.filter(id => !current.includes(id));
+      const toRemove = current.filter(id => !startComps.includes(id));
+      if (toAdd.length) {
+        const { error } = await supabase
+          .from('assessment_candidate_competencies' as any)
+          .insert(toAdd.map(id => ({ candidate_id: startCand.id, competency_id: id })) as any);
+        if (error) throw error;
+      }
+      if (toRemove.length) {
+        const { error } = await supabase
+          .from('assessment_candidate_competencies' as any)
+          .delete()
+          .eq('candidate_id', startCand.id)
+          .in('competency_id', toRemove);
+        if (error) throw error;
+      }
+
+      // 2. Crear (o reutilizar) la planilla de assessment con los datos del aspirante
+      const { data: existing } = await supabase
+        .from('assessment_evaluations' as any)
+        .select('id')
+        .eq('candidate_id', startCand.id)
+        .maybeSingle();
+
+      const payload = {
+        candidate_id: startCand.id,
+        candidate_name: startCand.full_name,
+        area_id: startCand.area_id,
+        subarea_id: startCand.subarea_id,
+        position: startCand.position,
+        evaluation_date: startDate,
+        evaluator_user_id: startEvaluator,
+      };
+
+      let evaluationId = (existing as any)?.id as string | undefined;
+      if (evaluationId) {
+        const { error } = await supabase.from('assessment_evaluations' as any).update(payload as any).eq('id', evaluationId);
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase
+          .from('assessment_evaluations' as any)
+          .insert({ ...payload, created_by: user?.id ?? null } as any)
+          .select('id')
+          .single();
+        if (error) throw error;
+        evaluationId = (data as any).id;
+      }
+
+      // 3. Generar las filas de competencias seleccionadas (sin calificar)
+      const { error: scErr } = await (supabase.from('assessment_competency_scores' as any) as any)
+        .upsert(startComps.map(id => ({ evaluation_id: evaluationId, competency_id: id })),
+          { onConflict: 'evaluation_id,competency_id', ignoreDuplicates: true });
+      if (scErr) throw scErr;
+
+      // Quitar competencias deseleccionadas de la planilla
+      if (toRemove.length) {
+        await supabase.from('assessment_competency_scores' as any)
+          .delete().eq('evaluation_id', evaluationId).in('competency_id', toRemove);
+      }
+
+      toast.success('Assessment iniciado: planilla generada');
+      invalidate();
+      qc.invalidateQueries({ queryKey: ['assessment_evaluations'] });
+      qc.invalidateQueries({ queryKey: ['assessment_competency_scores'] });
+      setStartCand(null);
+      onAssessmentStarted?.();
+    } catch (err: any) {
+      toast.error(err.message ?? 'No se pudo iniciar el assessment');
+    } finally {
+      setStarting(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
@@ -313,7 +419,7 @@ export default function AspirantesTab() {
                     <th className="px-3 py-2">Competencias a evaluar</th>
                     <th className="px-3 py-2">Fecha</th>
                     <th className="px-3 py-2">Estado</th>
-                    <th className="px-3 py-2 w-[90px]"></th>
+                    <th className="px-3 py-2 w-[230px]"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -348,6 +454,9 @@ export default function AspirantesTab() {
                       <td className="px-3 py-2">{statusBadge(c.status)}</td>
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-0.5">
+                          <Button variant="outline" size="sm" className="h-7 text-[11px] mr-1" onClick={() => openStart(c)}>
+                            <PlayCircle className="w-3.5 h-3.5 mr-1" /> Iniciar Assessment
+                          </Button>
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(c)}>
                             <Pencil className="w-4 h-4" />
                           </Button>
@@ -390,6 +499,9 @@ export default function AspirantesTab() {
                     <span className="text-[11px] text-muted-foreground">{c.application_date}</span>
                     {statusBadge(c.status)}
                   </div>
+                  <Button variant="outline" size="sm" className="w-full h-8 text-xs" onClick={() => openStart(c)}>
+                    <PlayCircle className="w-4 h-4 mr-1" /> Iniciar Assessment
+                  </Button>
                 </div>
               ))}
             </div>
@@ -539,6 +651,95 @@ export default function AspirantesTab() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Iniciar Assessment */}
+      <Dialog open={!!startCand} onOpenChange={o => !o && setStartCand(null)}>
+        <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Iniciar Assessment</DialogTitle>
+            <DialogDescription>
+              Se generará la planilla de Assessment con los datos de <b>{startCand?.full_name}</b>. Selecciona las competencias a evaluar y el líder que las califica.
+            </DialogDescription>
+          </DialogHeader>
+
+          {startCand && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm border rounded-md p-3 bg-muted/20">
+                <div>
+                  <p className="text-[11px] text-muted-foreground">Aspirante</p>
+                  <p className="font-semibold">{startCand.full_name}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-muted-foreground">Cargo</p>
+                  <p className="font-semibold">{startCand.position ?? '—'}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-muted-foreground">Área / Subárea</p>
+                  <p className="font-semibold">
+                    {areaName(startCand.area_id)}{startCand.subarea_id ? ` · ${subareaName(startCand.subarea_id)}` : ''}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Líder que evalúa *</label>
+                  <SearchableSelect
+                    className="w-full"
+                    options={[{ value: NONE, label: 'Sin asignar' }, ...evaluatorOptions]}
+                    value={startEvaluator}
+                    onValueChange={setStartEvaluator}
+                    placeholder="Asignar evaluador"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Fecha de evaluación</label>
+                  <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
+                </div>
+              </div>
+
+              <div className="space-y-2 border rounded-md p-3 bg-muted/20">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold">Competencias a evaluar ({startComps.length})</h3>
+                  <div className="flex gap-2">
+                    <Button type="button" variant="outline" size="sm" className="h-7 text-xs"
+                      onClick={() => setStartComps(activeComps
+                        .filter(c => !c.position_name || c.position_name === startCand.position)
+                        .map(c => c.id))}>
+                      Sugeridas por cargo
+                    </Button>
+                    <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setStartComps([])}>
+                      Limpiar
+                    </Button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {activeComps.map(c => (
+                    <label key={c.id} className="flex items-start gap-2 border rounded-md p-2 bg-background cursor-pointer">
+                      <Checkbox
+                        checked={startComps.includes(c.id)}
+                        onCheckedChange={v => setStartComps(prev => v ? [...prev, c.id] : prev.filter(x => x !== c.id))}
+                      />
+                      <span className="min-w-0">
+                        <span className="block text-xs font-semibold">{c.name}</span>
+                        {c.subtitle && <span className="block text-[10px] text-muted-foreground">{c.subtitle}</span>}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setStartCand(null)}>Cancelar</Button>
+            <Button onClick={handleStartAssessment} disabled={starting}>
+              <PlayCircle className="w-4 h-4 mr-1" />
+              {starting ? 'Generando...' : 'Iniciar Assessment'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

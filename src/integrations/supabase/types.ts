@@ -416,6 +416,7 @@ export type Database = {
       assessment_evaluations: {
         Row: {
           area_id: string | null
+          candidate_id: string | null
           candidate_name: string
           created_at: string
           created_by: string | null
@@ -433,6 +434,7 @@ export type Database = {
         }
         Insert: {
           area_id?: string | null
+          candidate_id?: string | null
           candidate_name: string
           created_at?: string
           created_by?: string | null
@@ -450,6 +452,7 @@ export type Database = {
         }
         Update: {
           area_id?: string | null
+          candidate_id?: string | null
           candidate_name?: string
           created_at?: string
           created_by?: string | null
@@ -471,6 +474,13 @@ export type Database = {
             columns: ["area_id"]
             isOneToOne: false
             referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_evaluations_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_candidates"
             referencedColumns: ["id"]
           },
           {
