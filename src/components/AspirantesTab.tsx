@@ -279,13 +279,30 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
     [candidates, selectedIds],
   );
 
-  const toggleSelected = (id: string, checked: boolean) =>
-    setSelectedIds(prev => (checked ? [...new Set([...prev, id])] : prev.filter(x => x !== id)));
+  const isEvaluated = (c: Candidate) => c.status === 'evaluado';
 
-  const allFilteredSelected = filtered.length > 0 && filtered.every(c => selectedIds.includes(c.id));
+  const toggleSelected = (id: string, checked: boolean) => {
+    const cand = candidates.find(c => c.id === id);
+    if (checked && cand && isEvaluated(cand)) {
+      toast.error(`${cand.full_name} ya fue evaluado. No es posible realizar una nueva evaluación.`);
+      return;
+    }
+    setSelectedIds(prev => (checked ? [...new Set([...prev, id])] : prev.filter(x => x !== id)));
+  };
+
+  const selectableFiltered = useMemo(() => filtered.filter(c => !isEvaluated(c)), [filtered]);
+  const allFilteredSelected =
+    selectableFiltered.length > 0 && selectableFiltered.every(c => selectedIds.includes(c.id));
 
   const openStart = () => {
     if (selectedCands.length === 0) return;
+    const already = selectedCands.filter(isEvaluated);
+    if (already.length) {
+      toast.error(
+        `${already.map(c => c.full_name).join(', ')} ya ${already.length > 1 ? 'fueron evaluados' : 'fue evaluado'}. No se permite una nueva evaluación.`,
+      );
+      return;
+    }
     const base = selectedCands[0];
     const assigned = candidateComps.filter(cc => cc.candidate_id === base.id).map(cc => cc.competency_id);
     setStartComps(assigned.length
