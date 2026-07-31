@@ -651,6 +651,95 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Iniciar Assessment */}
+      <Dialog open={!!startCand} onOpenChange={o => !o && setStartCand(null)}>
+        <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Iniciar Assessment</DialogTitle>
+            <DialogDescription>
+              Se generará la planilla de Assessment con los datos de <b>{startCand?.full_name}</b>. Selecciona las competencias a evaluar y el líder que las califica.
+            </DialogDescription>
+          </DialogHeader>
+
+          {startCand && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm border rounded-md p-3 bg-muted/20">
+                <div>
+                  <p className="text-[11px] text-muted-foreground">Aspirante</p>
+                  <p className="font-semibold">{startCand.full_name}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-muted-foreground">Cargo</p>
+                  <p className="font-semibold">{startCand.position ?? '—'}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-muted-foreground">Área / Subárea</p>
+                  <p className="font-semibold">
+                    {areaName(startCand.area_id)}{startCand.subarea_id ? ` · ${subareaName(startCand.subarea_id)}` : ''}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Líder que evalúa *</label>
+                  <SearchableSelect
+                    className="w-full"
+                    options={[{ value: NONE, label: 'Sin asignar' }, ...evaluatorOptions]}
+                    value={startEvaluator}
+                    onValueChange={setStartEvaluator}
+                    placeholder="Asignar evaluador"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Fecha de evaluación</label>
+                  <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
+                </div>
+              </div>
+
+              <div className="space-y-2 border rounded-md p-3 bg-muted/20">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold">Competencias a evaluar ({startComps.length})</h3>
+                  <div className="flex gap-2">
+                    <Button type="button" variant="outline" size="sm" className="h-7 text-xs"
+                      onClick={() => setStartComps(activeComps
+                        .filter(c => !c.position_name || c.position_name === startCand.position)
+                        .map(c => c.id))}>
+                      Sugeridas por cargo
+                    </Button>
+                    <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setStartComps([])}>
+                      Limpiar
+                    </Button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {activeComps.map(c => (
+                    <label key={c.id} className="flex items-start gap-2 border rounded-md p-2 bg-background cursor-pointer">
+                      <Checkbox
+                        checked={startComps.includes(c.id)}
+                        onCheckedChange={v => setStartComps(prev => v ? [...prev, c.id] : prev.filter(x => x !== c.id))}
+                      />
+                      <span className="min-w-0">
+                        <span className="block text-xs font-semibold">{c.name}</span>
+                        {c.subtitle && <span className="block text-[10px] text-muted-foreground">{c.subtitle}</span>}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setStartCand(null)}>Cancelar</Button>
+            <Button onClick={handleStartAssessment} disabled={starting}>
+              <PlayCircle className="w-4 h-4 mr-1" />
+              {starting ? 'Generando...' : 'Iniciar Assessment'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
