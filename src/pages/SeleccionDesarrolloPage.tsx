@@ -28,6 +28,8 @@ type Assessment = {
   area_id: string | null;
   subarea_id: string | null;
   position: string | null;
+  profession: string | null;
+  university: string | null;
   weighted_score: number | null;
   evaluation_date: string;
   notes: string | null;
