@@ -1530,6 +1530,21 @@ function ObjectiveCard({
     toast.success('Meta guardada');
   };
 
+  // Save the base KPI target (used in the "Total KPI" view)
+  const saveKpiBaseTarget = async (kpiId: string, raw: string) => {
+    const trimmed = (raw ?? '').toString().trim();
+    if (trimmed === '') return;
+    const target = parseKpiNumber(trimmed);
+    if (!isFinite(target)) { toast.error('Meta inválida'); return; }
+    const kpi = objKpis.find(k => k.id === kpiId);
+    if (kpi && Number(kpi.target) === target) return;
+    const { error } = await supabase.from('kpis').update({ target } as any).eq('id', kpiId);
+    if (error) { toast.error(`No se pudo actualizar la meta: ${error.message}`); return; }
+    qcLocal.invalidateQueries({ queryKey: ['kpis'] });
+    await logActivity('update', 'kpi_target', kpiId, { target });
+    toast.success('Meta guardada');
+  };
+
   // Get KPI accumulated value up to current month in current year (sum for financial, average otherwise)
   const getKpiAccumulatedAverage = (kpiId: string) => {
     const kpi = objKpis.find(k => k.id === kpiId);
@@ -1755,7 +1770,7 @@ function ObjectiveCard({
                       {weight > 0 ? <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-accent/20 text-foreground">{weight}%</span> : <span className="text-muted-foreground">—</span>}
                     </td>
                     <td className="py-2">
-                      {isTotalView || !(canEdit || canEditKpi) ? (
+                      {!(canEdit || canEditKpi) ? (
                         <>{formatKpiValue(displayTarget, k)}</>
                       ) : (
                         <input
@@ -1772,7 +1787,8 @@ function ObjectiveCard({
                             const raw = e.target.value;
                             const orig = displayTarget === null || displayTarget === undefined ? '' : String(displayTarget);
                             if (raw.trim() !== orig.trim() && !(raw.trim() === '' && orig === '')) {
-                              saveKpiMonthTarget(k.id, raw);
+                              if (isTotalView) saveKpiBaseTarget(k.id, raw);
+                              else saveKpiMonthTarget(k.id, raw);
                             } else {
                               e.target.value = formatKpiInputValue(displayTarget, k);
                             }
