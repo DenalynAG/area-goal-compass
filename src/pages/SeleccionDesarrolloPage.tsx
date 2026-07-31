@@ -14,7 +14,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Users, Plus, Pencil, Trash2, Search } from 'lucide-react';
+import { Users, Plus, Pencil, Trash2, Search, SlidersHorizontal, ArrowUp, ArrowDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -24,13 +24,27 @@ type Assessment = {
   area_id: string | null;
   subarea_id: string | null;
   position: string | null;
-  score_creatividad: number | null;
-  score_trabajo_equipo: number | null;
-  score_pensamiento_analitico: number | null;
   weighted_score: number | null;
   evaluation_date: string;
   notes: string | null;
   created_by: string | null;
+};
+
+type Competency = {
+  id: string;
+  name: string;
+  subtitle: string | null;
+  behavior: string | null;
+  position_name: string | null;
+  sort_order: number;
+  is_active: boolean;
+};
+
+type CompScore = {
+  id: string;
+  evaluation_id: string;
+  competency_id: string;
+  score: number | null;
 };
 
 const SCORE_OPTIONS = [
@@ -40,36 +54,12 @@ const SCORE_OPTIONS = [
   { value: 5, label: '5 · Excede la competencia', short: '5', color: 'bg-green-500/15 text-green-700 border-green-500/40' },
 ] as const;
 
-const COMPETENCIAS = [
-  {
-    key: 'score_creatividad' as const,
-    label: 'Creatividad',
-    sub: 'Experiencia WOW',
-    behavior:
-      'Capacidad de generar nuevas ideas y conceptos a partir de asociaciones entre ideas y conceptos conocidos con el objetivo de dar nuevas soluciones a los retos, problemas y situaciones a afrontar. También se conoce como pensamiento divergente, asociativo o lateral.',
-  },
-  {
-    key: 'score_trabajo_equipo' as const,
-    label: 'Trabajo en equipo y empatía',
-    sub: 'Empatía y colaboración',
-    behavior:
-      'Participar activa y receptivamente en el equipo para la consecución de objetivos comunes. Transmitir información, compartir conocimientos y experiencia. Actuar con respeto frente a los compañeros. Estar disponible para ayudar y pedir ayuda. Anteponer las decisiones del equipo a las propias.',
-  },
-  {
-    key: 'score_pensamiento_analitico' as const,
-    label: 'Comunicación',
-    sub: 'Comunicación y análisis',
-    behavior:
-      'Habilidad para comprender situaciones problema y plantear soluciones adecuadas. Compartir ideas, pensamientos, conocimientos e información de la forma que mejor se relaciona con el contexto.',
-  },
-] as const;
+const ALL_POSITIONS = '__all__';
 
-type ScoreKey = typeof COMPETENCIAS[number]['key'];
-
-function calcWeighted(a: number | null, b: number | null, c: number | null): number | null {
-  const vals = [a, b, c].filter((v): v is number => v !== null && v !== undefined);
-  if (vals.length === 0) return null;
-  return Math.round((vals.reduce((s, v) => s + v, 0) / (vals.length * 5)) * 100 * 100) / 100;
+function calcWeighted(values: (number | null | undefined)[], total: number): number | null {
+  const vals = values.filter((v): v is number => v !== null && v !== undefined);
+  if (vals.length === 0 || total === 0) return null;
+  return Math.round((vals.reduce((s, v) => s + v, 0) / (total * 5)) * 100 * 100) / 100;
 }
 
 function scoreBadge(pct: number | null) {
@@ -86,11 +76,16 @@ const emptyForm = {
   area_id: '' as string,
   subarea_id: '' as string,
   position: '',
-  score_creatividad: null as number | null,
-  score_trabajo_equipo: null as number | null,
-  score_pensamiento_analitico: null as number | null,
   evaluation_date: new Date().toISOString().split('T')[0],
   notes: '',
+};
+
+const emptyComp = {
+  name: '',
+  subtitle: '',
+  behavior: '',
+  position_name: ALL_POSITIONS,
+  is_active: true,
 };
 
 export default function SeleccionDesarrolloPage() {
@@ -106,7 +101,15 @@ export default function SeleccionDesarrolloPage() {
   const [editing, setEditing] = useState<Assessment | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState({ ...emptyForm });
+  const [formScores, setFormScores] = useState<Record<string, number | null>>({});
   const [saving, setSaving] = useState(false);
+
+  // Competency manager state
+  const [compOpen, setCompOpen] = useState(false);
+  const [compEditing, setCompEditing] = useState<Competency | null>(null);
+  const [compForm, setCompForm] = useState({ ...emptyComp });
+  const [compSaving, setCompSaving] = useState(false);
+  const [compDeleteId, setCompDeleteId] = useState<string | null>(null);
 
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ['assessment_evaluations'],
@@ -121,8 +124,44 @@ export default function SeleccionDesarrolloPage() {
     },
   });
 
+  const { data: competencies = [] } = useQuery({
+    queryKey: ['assessment_competencies'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('assessment_competencies' as any)
+        .select('*')
+        .order('sort_order', { ascending: true })
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      return (data as unknown) as Competency[];
+    },
+  });
+
+  const { data: compScores = [] } = useQuery({
+    queryKey: ['assessment_competency_scores'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('assessment_competency_scores' as any)
+        .select('*');
+      if (error) throw error;
+      return (data as unknown) as CompScore[];
+    },
+  });
+
   const areaName = (id: string | null) => areas.find(a => a.id === id)?.name ?? '—';
   const subareaName = (id: string | null) => subareas.find(s => s.id === id)?.name ?? '';
+
+  const activeCompetencies = useMemo(
+    () => competencies.filter(c => c.is_active),
+    [competencies],
+  );
+
+  // Competencies applicable to a given position (global ones + position-specific)
+  const compsForPosition = (position: string | null) =>
+    activeCompetencies.filter(c => !c.position_name || c.position_name === position);
+
+  const scoreOf = (evaluationId: string, competencyId: string) =>
+    compScores.find(s => s.evaluation_id === evaluationId && s.competency_id === competencyId)?.score ?? null;
 
   const filteredSubareas = useMemo(
     () => (form.area_id ? subareas.filter(s => s.area_id === form.area_id) : []),
@@ -149,9 +188,17 @@ export default function SeleccionDesarrolloPage() {
     return r;
   }, [rows, filterArea, search]);
 
+  // Competencies shown as rows in the grid: union of those applicable to visible aspirants
+  const gridCompetencies = useMemo(() => {
+    const ids = new Set<string>();
+    filtered.forEach(row => compsForPosition(row.position).forEach(c => ids.add(c.id)));
+    return activeCompetencies.filter(c => ids.has(c.id));
+  }, [filtered, activeCompetencies]);
+
   const openNew = () => {
     setEditing(null);
     setForm({ ...emptyForm });
+    setFormScores({});
     setOpen(true);
   };
 
@@ -162,34 +209,47 @@ export default function SeleccionDesarrolloPage() {
       area_id: row.area_id ?? '',
       subarea_id: row.subarea_id ?? '',
       position: row.position ?? '',
-      score_creatividad: row.score_creatividad,
-      score_trabajo_equipo: row.score_trabajo_equipo,
-      score_pensamiento_analitico: row.score_pensamiento_analitico,
       evaluation_date: row.evaluation_date,
       notes: row.notes ?? '',
     });
+    const initial: Record<string, number | null> = {};
+    compScores.filter(s => s.evaluation_id === row.id).forEach(s => { initial[s.competency_id] = s.score; });
+    setFormScores(initial);
     setOpen(true);
+  };
+
+  const formCompetencies = useMemo(
+    () => compsForPosition(form.position || null),
+    [activeCompetencies, form.position],
+  );
+
+  const livePct = calcWeighted(
+    formCompetencies.map(c => formScores[c.id]),
+    formCompetencies.length,
+  );
+
+  const persistScores = async (evaluationId: string) => {
+    const rowsToSave = formCompetencies.map(c => ({
+      evaluation_id: evaluationId,
+      competency_id: c.id,
+      score: formScores[c.id] ?? null,
+    }));
+    if (rowsToSave.length === 0) return;
+    const { error } = await (supabase.from('assessment_competency_scores' as any) as any)
+      .upsert(rowsToSave, { onConflict: 'evaluation_id,competency_id' });
+    if (error) toast.error('Error guardando competencias: ' + error.message);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.candidate_name.trim()) return toast.error('Ingresa el nombre del aspirante');
 
-    const weighted = calcWeighted(
-      form.score_creatividad,
-      form.score_trabajo_equipo,
-      form.score_pensamiento_analitico,
-    );
-
     const payload = {
       candidate_name: form.candidate_name.trim(),
       area_id: form.area_id || null,
       subarea_id: form.subarea_id || null,
       position: form.position || null,
-      score_creatividad: form.score_creatividad,
-      score_trabajo_equipo: form.score_trabajo_equipo,
-      score_pensamiento_analitico: form.score_pensamiento_analitico,
-      weighted_score: weighted,
+      weighted_score: livePct,
       evaluation_date: form.evaluation_date,
       notes: form.notes || null,
       evaluator_user_id: user?.id ?? null,
@@ -200,16 +260,19 @@ export default function SeleccionDesarrolloPage() {
       const { error } = await (supabase.from('assessment_evaluations' as any) as any)
         .update(payload).eq('id', editing.id);
       if (error) { toast.error(error.message); setSaving(false); return; }
+      await persistScores(editing.id);
       toast.success('Evaluación actualizada');
     } else {
-      const { error } = await (supabase.from('assessment_evaluations' as any) as any)
-        .insert({ ...payload, created_by: user?.id ?? null });
+      const { data, error } = await (supabase.from('assessment_evaluations' as any) as any)
+        .insert({ ...payload, created_by: user?.id ?? null }).select('id').single();
       if (error) { toast.error(error.message); setSaving(false); return; }
+      await persistScores((data as any).id);
       toast.success('Evaluación registrada');
     }
     setSaving(false);
     setOpen(false);
     qc.invalidateQueries({ queryKey: ['assessment_evaluations'] });
+    qc.invalidateQueries({ queryKey: ['assessment_competency_scores'] });
   };
 
   const confirmDelete = async () => {
@@ -220,42 +283,110 @@ export default function SeleccionDesarrolloPage() {
     toast.success('Evaluación eliminada');
     setDeleteId(null);
     qc.invalidateQueries({ queryKey: ['assessment_evaluations'] });
+    qc.invalidateQueries({ queryKey: ['assessment_competency_scores'] });
   };
-
-  const livePct = calcWeighted(
-    form.score_creatividad,
-    form.score_trabajo_equipo,
-    form.score_pensamiento_analitico,
-  );
 
   // Inline update of a single competency score for a given aspirant
-  const updateScore = async (row: Assessment, key: ScoreKey, value: number | null) => {
-    const next = { ...row, [key]: value } as Assessment;
-    const weighted = calcWeighted(
-      next.score_creatividad,
-      next.score_trabajo_equipo,
-      next.score_pensamiento_analitico,
+  const updateScore = async (row: Assessment, competencyId: string, value: number | null) => {
+    const applicable = compsForPosition(row.position);
+    const nextValues = applicable.map(c =>
+      c.id === competencyId ? value : scoreOf(row.id, c.id),
     );
-    // Optimistic update
-    qc.setQueryData<Assessment[]>(['assessment_evaluations'], (prev) =>
-      (prev ?? []).map(r => r.id === row.id ? { ...next, weighted_score: weighted } : r),
-    );
-    const { error } = await (supabase.from('assessment_evaluations' as any) as any)
-      .update({ [key]: value, weighted_score: weighted })
-      .eq('id', row.id);
-    if (error) {
-      toast.error(error.message);
-      qc.invalidateQueries({ queryKey: ['assessment_evaluations'] });
-    }
+    const weighted = calcWeighted(nextValues, applicable.length);
+
+    const { error } = await (supabase.from('assessment_competency_scores' as any) as any)
+      .upsert({ evaluation_id: row.id, competency_id: competencyId, score: value }, { onConflict: 'evaluation_id,competency_id' });
+    if (error) { toast.error(error.message); return; }
+
+    await (supabase.from('assessment_evaluations' as any) as any)
+      .update({ weighted_score: weighted }).eq('id', row.id);
+
+    qc.invalidateQueries({ queryKey: ['assessment_competency_scores'] });
+    qc.invalidateQueries({ queryKey: ['assessment_evaluations'] });
   };
 
-  const ScoreCell = ({ row, k }: { row: Assessment; k: ScoreKey }) => {
-    const val = row[k];
+  // ---- Competency CRUD ----
+  const openCompNew = () => {
+    setCompEditing(null);
+    setCompForm({ ...emptyComp });
+  };
+
+  const openCompEdit = (c: Competency) => {
+    setCompEditing(c);
+    setCompForm({
+      name: c.name,
+      subtitle: c.subtitle ?? '',
+      behavior: c.behavior ?? '',
+      position_name: c.position_name ?? ALL_POSITIONS,
+      is_active: c.is_active,
+    });
+  };
+
+  const saveCompetency = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!compForm.name.trim()) return toast.error('Ingresa el nombre de la competencia');
+    setCompSaving(true);
+    const payload = {
+      name: compForm.name.trim(),
+      subtitle: compForm.subtitle.trim() || null,
+      behavior: compForm.behavior.trim() || null,
+      position_name: compForm.position_name === ALL_POSITIONS ? null : compForm.position_name,
+      is_active: compForm.is_active,
+    };
+    if (compEditing) {
+      const { error } = await (supabase.from('assessment_competencies' as any) as any)
+        .update(payload).eq('id', compEditing.id);
+      if (error) { toast.error(error.message); setCompSaving(false); return; }
+      toast.success('Competencia actualizada');
+    } else {
+      const nextOrder = (competencies.reduce((m, c) => Math.max(m, c.sort_order), 0) || 0) + 1;
+      const { error } = await (supabase.from('assessment_competencies' as any) as any)
+        .insert({ ...payload, sort_order: nextOrder, created_by: user?.id ?? null });
+      if (error) { toast.error(error.message); setCompSaving(false); return; }
+      toast.success('Competencia creada');
+    }
+    setCompSaving(false);
+    setCompEditing(null);
+    setCompForm({ ...emptyComp });
+    qc.invalidateQueries({ queryKey: ['assessment_competencies'] });
+  };
+
+  const confirmCompDelete = async () => {
+    if (!compDeleteId) return;
+    const { error } = await (supabase.from('assessment_competencies' as any) as any)
+      .delete().eq('id', compDeleteId);
+    if (error) return toast.error(error.message);
+    toast.success('Competencia eliminada');
+    setCompDeleteId(null);
+    qc.invalidateQueries({ queryKey: ['assessment_competencies'] });
+    qc.invalidateQueries({ queryKey: ['assessment_competency_scores'] });
+  };
+
+  const moveCompetency = async (c: Competency, dir: -1 | 1) => {
+    const idx = competencies.findIndex(x => x.id === c.id);
+    const target = competencies[idx + dir];
+    if (!target) return;
+    await (supabase.from('assessment_competencies' as any) as any)
+      .update({ sort_order: target.sort_order }).eq('id', c.id);
+    await (supabase.from('assessment_competencies' as any) as any)
+      .update({ sort_order: c.sort_order }).eq('id', target.id);
+    qc.invalidateQueries({ queryKey: ['assessment_competencies'] });
+  };
+
+  const toggleCompActive = async (c: Competency) => {
+    await (supabase.from('assessment_competencies' as any) as any)
+      .update({ is_active: !c.is_active }).eq('id', c.id);
+    qc.invalidateQueries({ queryKey: ['assessment_competencies'] });
+  };
+
+  const ScoreCell = ({ row, competencyId, disabled }: { row: Assessment; competencyId: string; disabled?: boolean }) => {
+    const val = scoreOf(row.id, competencyId);
     const opt = SCORE_OPTIONS.find(o => o.value === val);
+    if (disabled) return <span className="text-xs text-muted-foreground">No aplica</span>;
     return (
       <Select
         value={val === null || val === undefined ? '__none__' : String(val)}
-        onValueChange={(v) => updateScore(row, k, v === '__none__' ? null : Number(v))}
+        onValueChange={(v) => updateScore(row, competencyId, v === '__none__' ? null : Number(v))}
       >
         <SelectTrigger
           className={`h-9 w-full justify-center font-bold text-sm border ${
@@ -288,9 +419,14 @@ export default function SeleccionDesarrolloPage() {
             </p>
           </div>
         </div>
-        <Button onClick={openNew}>
-          <Plus className="w-4 h-4 mr-1" /> Nuevo aspirante
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => { setCompOpen(true); openCompNew(); }}>
+            <SlidersHorizontal className="w-4 h-4 mr-1" /> Competencias
+          </Button>
+          <Button onClick={openNew}>
+            <Plus className="w-4 h-4 mr-1" /> Nuevo aspirante
+          </Button>
+        </div>
       </div>
 
       <Card className="p-4 bg-muted/30 space-y-2">
@@ -303,7 +439,7 @@ export default function SeleccionDesarrolloPage() {
           ))}
         </div>
         <p className="text-xs text-muted-foreground pt-1">
-          Competencias evaluadas: <b>Creatividad (Experiencia WOW)</b>, <b>Trabajo en equipo</b> y <b>Pensamiento analítico</b>. La nota ponderada es el promedio de las 3 competencias sobre 5 expresado en %.
+          Las competencias son autogestionables: puedes crearlas, editarlas, ordenarlas o asignarlas a un cargo específico desde el botón <b>Competencias</b>. La nota ponderada es el promedio de las competencias aplicables sobre 5, expresado en %.
         </p>
       </Card>
 
@@ -370,20 +506,33 @@ export default function SeleccionDesarrolloPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {COMPETENCIAS.map(c => (
-                    <tr key={c.key} className="border-b">
+                  {gridCompetencies.length === 0 && (
+                    <tr className="border-b">
+                      <td colSpan={2 + filtered.length} className="px-3 py-6 text-center text-sm text-muted-foreground">
+                        No hay competencias configuradas. Créalas desde el botón "Competencias".
+                      </td>
+                    </tr>
+                  )}
+                  {gridCompetencies.map(c => (
+                    <tr key={c.id} className="border-b">
                       <td className="sticky left-0 z-20 bg-background px-3 py-2 border-r align-top shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
-                        <p className="font-semibold text-sm">{c.label}</p>
-                        <p className="text-[11px] text-muted-foreground">{c.sub}</p>
+                        <p className="font-semibold text-sm">{c.name}</p>
+                        {c.subtitle && <p className="text-[11px] text-muted-foreground">{c.subtitle}</p>}
+                        {c.position_name && (
+                          <p className="text-[10px] text-muted-foreground italic mt-0.5">Cargo: {c.position_name}</p>
+                        )}
                       </td>
                       <td className="px-3 py-2 border-r align-top text-xs text-muted-foreground leading-snug">
                         {c.behavior}
                       </td>
-                      {filtered.map(row => (
-                        <td key={row.id} className="px-2 py-2 border-r">
-                          <ScoreCell row={row} k={c.key} />
-                        </td>
-                      ))}
+                      {filtered.map(row => {
+                        const applies = !c.position_name || c.position_name === row.position;
+                        return (
+                          <td key={row.id} className="px-2 py-2 border-r">
+                            <ScoreCell row={row} competencyId={c.id} disabled={!applies} />
+                          </td>
+                        );
+                      })}
                     </tr>
                   ))}
                   <tr className="bg-muted/30">
@@ -435,13 +584,13 @@ export default function SeleccionDesarrolloPage() {
                   </div>
 
                   <div className="space-y-2">
-                    {COMPETENCIAS.map(c => (
-                      <div key={c.key} className="border rounded-md p-2.5 space-y-1.5 bg-muted/20">
+                    {compsForPosition(row.position).map(c => (
+                      <div key={c.id} className="border rounded-md p-2.5 space-y-1.5 bg-muted/20">
                         <div>
-                          <p className="font-semibold text-xs">{c.label}</p>
+                          <p className="font-semibold text-xs">{c.name}</p>
                           <p className="text-[10px] text-muted-foreground leading-snug line-clamp-3">{c.behavior}</p>
                         </div>
-                        <ScoreCell row={row} k={c.key} />
+                        <ScoreCell row={row} competencyId={c.id} />
                       </div>
                     ))}
                   </div>
@@ -458,6 +607,7 @@ export default function SeleccionDesarrolloPage() {
         )}
       </Card>
 
+      {/* Aspirant dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-y-auto">
           <DialogHeader>
@@ -525,23 +675,28 @@ export default function SeleccionDesarrolloPage() {
 
             <div className="space-y-2">
               <h3 className="text-sm font-semibold">Competencias</h3>
+              {formCompetencies.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  No hay competencias activas para este cargo. Configúralas en el botón "Competencias".
+                </p>
+              )}
               <div className="space-y-2">
-                {COMPETENCIAS.map(c => (
-                  <div key={c.key} className="border rounded-md p-3 space-y-2 bg-muted/20">
+                {formCompetencies.map(c => (
+                  <div key={c.id} className="border rounded-md p-3 space-y-2 bg-muted/20">
                     <div className="flex items-baseline justify-between flex-wrap gap-1">
                       <div>
-                        <p className="text-sm font-semibold">{c.label}</p>
-                        <p className="text-xs text-muted-foreground">{c.sub}</p>
+                        <p className="text-sm font-semibold">{c.name}</p>
+                        {c.subtitle && <p className="text-xs text-muted-foreground">{c.subtitle}</p>}
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
                       {SCORE_OPTIONS.map(opt => {
-                        const active = form[c.key] === opt.value;
+                        const active = formScores[c.id] === opt.value;
                         return (
                           <button
                             key={opt.value}
                             type="button"
-                            onClick={() => setForm(f => ({ ...f, [c.key]: active ? null : opt.value }))}
+                            onClick={() => setFormScores(s => ({ ...s, [c.id]: active ? null : opt.value }))}
                             className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-all ${
                               active
                                 ? `${opt.color} ring-2 ring-offset-1`
@@ -579,6 +734,101 @@ export default function SeleccionDesarrolloPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Competency manager dialog */}
+      <Dialog open={compOpen} onOpenChange={o => { setCompOpen(o); if (!o) { setCompEditing(null); setCompForm({ ...emptyComp }); } }}>
+        <DialogContent className="sm:max-w-3xl max-h-[92vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Gestionar competencias</DialogTitle>
+            <DialogDescription>
+              Crea, edita, ordena o desactiva las competencias del Assessment Center. Puedes dejarlas generales o asociarlas a un cargo.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={saveCompetency} className="space-y-3 border rounded-md p-3 bg-muted/20">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Competencia *</label>
+                <Input value={compForm.name} onChange={e => setCompForm(f => ({ ...f, name: e.target.value }))} required />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Subtítulo</label>
+                <Input value={compForm.subtitle} onChange={e => setCompForm(f => ({ ...f, subtitle: e.target.value }))} />
+              </div>
+              <div className="space-y-1.5 sm:col-span-2">
+                <label className="text-sm font-medium">Comportamientos observables</label>
+                <Textarea rows={3} value={compForm.behavior} onChange={e => setCompForm(f => ({ ...f, behavior: e.target.value }))} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Aplica al cargo</label>
+                <Select value={compForm.position_name} onValueChange={v => setCompForm(f => ({ ...f, position_name: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ALL_POSITIONS}>Todos los cargos</SelectItem>
+                    {positions.map((p: any) => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Estado</label>
+                <Select value={compForm.is_active ? 'activo' : 'inactivo'} onValueChange={v => setCompForm(f => ({ ...f, is_active: v === 'activo' }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="activo">Activa</SelectItem>
+                    <SelectItem value="inactivo">Inactiva</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              {compEditing && (
+                <Button type="button" variant="outline" onClick={openCompNew}>Cancelar edición</Button>
+              )}
+              <Button type="submit" disabled={compSaving}>
+                {compSaving ? 'Guardando...' : compEditing ? 'Actualizar competencia' : 'Agregar competencia'}
+              </Button>
+            </div>
+          </form>
+
+          <div className="divide-y border rounded-md">
+            {competencies.length === 0 && (
+              <p className="p-4 text-sm text-muted-foreground text-center">Aún no hay competencias.</p>
+            )}
+            {competencies.map((c, i) => (
+              <div key={c.id} className="p-3 flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold">
+                    {c.name}
+                    {!c.is_active && <span className="ml-2 text-[10px] uppercase text-muted-foreground border rounded px-1">Inactiva</span>}
+                  </p>
+                  {c.subtitle && <p className="text-xs text-muted-foreground">{c.subtitle}</p>}
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Cargo: {c.position_name ?? 'Todos'}
+                  </p>
+                  {c.behavior && <p className="text-[11px] text-muted-foreground mt-1 line-clamp-2">{c.behavior}</p>}
+                </div>
+                <div className="flex items-center gap-0.5 shrink-0">
+                  <Button variant="ghost" size="icon" className="h-7 w-7" disabled={i === 0} onClick={() => moveCompetency(c, -1)}>
+                    <ArrowUp className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" disabled={i === competencies.length - 1} onClick={() => moveCompetency(c, 1)}>
+                    <ArrowDown className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => toggleCompActive(c)}>
+                    {c.is_active ? 'Desactivar' : 'Activar'}
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openCompEdit(c)}>
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCompDeleteId(c.id)}>
+                    <Trash2 className="w-4 h-4 text-destructive" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <AlertDialog open={!!deleteId} onOpenChange={o => !o && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -588,6 +838,21 @@ export default function SeleccionDesarrolloPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Eliminar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!compDeleteId} onOpenChange={o => !o && setCompDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar competencia?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminarán también las calificaciones registradas para esta competencia. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmCompDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Eliminar</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
