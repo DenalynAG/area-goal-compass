@@ -14,7 +14,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Users, Pencil, Trash2, Search, SlidersHorizontal, ArrowUp, ArrowDown, Table, BarChart3, Eye, EyeOff } from 'lucide-react';
+import { Users, Pencil, Trash2, Search, SlidersHorizontal, ArrowUp, ArrowDown, Table, BarChart3, Eye, EyeOff, History } from 'lucide-react';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -155,6 +155,17 @@ export default function SeleccionDesarrolloPage() {
     },
   });
 
+  const { data: candidates = [] } = useQuery({
+    queryKey: ['assessment_candidates'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('assessment_candidates' as any)
+        .select('id, full_name, status');
+      if (error) throw error;
+      return (data as unknown) as { id: string; full_name: string; status: string }[];
+    },
+  });
+
   const areaName = (id: string | null) => areas.find(a => a.id === id)?.name ?? '—';
   const subareaName = (id: string | null) => subareas.find(s => s.id === id)?.name ?? '';
 
@@ -222,6 +233,27 @@ export default function SeleccionDesarrolloPage() {
     });
     return Array.from(map.values());
   }, [filtered]);
+
+  // Un aspirante está "completado" cuando su ficha quedó en estado evaluado
+  const isRowCompleted = (row: Assessment) => {
+    const c = candidates.find(x =>
+      (row.candidate_id && x.id === row.candidate_id) ||
+      (!row.candidate_id && x.full_name === row.candidate_name),
+    );
+    return c?.status === 'evaluado';
+  };
+
+  const activeGroups = useMemo(
+    () => groups.filter(g => !g.rows.every(isRowCompleted)),
+    [groups, candidates],
+  );
+  const historyGroups = useMemo(
+    () => groups.filter(g => g.rows.every(isRowCompleted)),
+    [groups, candidates],
+  );
+
+  const [detailGroupKey, setDetailGroupKey] = useState<string | null>(null);
+  const detailGroup = historyGroups.find(g => g.key === detailGroupKey) ?? null;
 
   const [completing, setCompleting] = useState<string | null>(null);
 
@@ -478,17 +510,47 @@ export default function SeleccionDesarrolloPage() {
           <Button variant="outline" onClick={() => setActiveTab('dashboard')}>
             <BarChart3 className="w-4 h-4 mr-1" /> Dashboard
           </Button>
+          <Button variant="outline" onClick={() => setActiveTab('historico')}>
+            <History className="w-4 h-4 mr-1" /> Histórico
+          </Button>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="aspirantes">Aspirantes</TabsTrigger>
+          <TabsTrigger value="historico">Histórico</TabsTrigger>
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
         </TabsList>
 
         <TabsContent value="aspirantes">
           <AspirantesTab onAssessmentStarted={() => setActiveTab('planilla')} />
+        </TabsContent>
+
+        <TabsContent value="historico" className="space-y-3">
+          {historyGroups.length === 0 ? (
+            <Card className="p-0 overflow-hidden">
+              <div className="py-10 text-center text-muted-foreground text-sm">
+                Aún no hay convocatorias con evaluación completada.
+              </div>
+            </Card>
+          ) : (
+            historyGroups.map(group => (
+              <Card key={group.key} className="p-4 flex items-start justify-between gap-3 flex-wrap">
+                <div>
+                  <h3 className="text-base font-bold leading-tight">
+                    Convocatoria: {group.position ?? 'Sin cargo definido'}
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Área: {areaName(group.area_id)}{group.subarea_id ? ` · Subárea: ${subareaName(group.subarea_id)}` : ''} · {group.rows.length} aspirante(s) · Completada
+                  </p>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => setDetailGroupKey(group.key)}>
+                  <Eye className="w-4 h-4 mr-1" /> Ver detalles
+                </Button>
+              </Card>
+            ))
+          )}
         </TabsContent>
 
         <TabsContent value="dashboard">
@@ -533,14 +595,14 @@ export default function SeleccionDesarrolloPage() {
         <Card className="p-0 overflow-hidden">
           <div className="py-10 text-center text-muted-foreground text-sm">Cargando...</div>
         </Card>
-      ) : filtered.length === 0 ? (
+      ) : activeGroups.length === 0 ? (
         <Card className="p-0 overflow-hidden">
           <div className="py-10 text-center text-muted-foreground text-sm">
-            No hay aspirantes. Crea el primero con "Nuevo aspirante".
+            No hay convocatorias en evaluación. Las completadas están en el botón "Histórico".
           </div>
         </Card>
       ) : (
-        groups.map(group => {
+        activeGroups.map(group => {
           const gridCompetencies = compsForRows(group.rows);
           const filtered = group.rows;
           return (
@@ -730,6 +792,75 @@ export default function SeleccionDesarrolloPage() {
       )}
         </TabsContent>
       </Tabs>
+
+      {/* Detalle histórico */}
+      <Dialog open={!!detailGroup} onOpenChange={o => !o && setDetailGroupKey(null)}>
+        <DialogContent className="sm:max-w-4xl max-h-[92vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Convocatoria: {detailGroup?.position ?? 'Sin cargo definido'}
+            </DialogTitle>
+            <DialogDescription>
+              {detailGroup
+                ? `Área: ${areaName(detailGroup.area_id)}${detailGroup.subarea_id ? ` · Subárea: ${subareaName(detailGroup.subarea_id)}` : ''} · ${detailGroup.rows.length} aspirante(s)`
+                : ''}
+            </DialogDescription>
+          </DialogHeader>
+          {detailGroup && (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-sm">
+                <thead>
+                  <tr className="bg-muted/40 border-b">
+                    <th className="text-left px-3 py-2 border-r min-w-[200px]">Competencia</th>
+                    {detailGroup.rows.map(row => (
+                      <th key={row.id} className="text-left px-3 py-2 border-r min-w-[160px]">
+                        {row.candidate_name}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {compsForRows(detailGroup.rows).map(c => (
+                    <tr key={c.id} className="border-b">
+                      <td className="px-3 py-2 border-r align-top">
+                        <p className="font-semibold text-sm">{c.name}</p>
+                        {c.subtitle && <p className="text-[11px] text-muted-foreground">{c.subtitle}</p>}
+                      </td>
+                      {detailGroup.rows.map(row => {
+                        const s = scoreOf(row.id, c.id);
+                        const opt = SCORE_OPTIONS.find(o => o.value === s);
+                        return (
+                          <td key={row.id} className="px-3 py-2 border-r">
+                            {opt
+                              ? <span className={`inline-flex px-2 py-1 rounded-md border text-xs font-medium ${opt.color}`}>{opt.label}</span>
+                              : <span className="text-xs text-muted-foreground">—</span>}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                  <tr className="bg-muted/30">
+                    <td className="px-3 py-2 border-r font-semibold">Nota ponderada</td>
+                    {detailGroup.rows.map(row => (
+                      <td key={row.id} className="px-3 py-2 border-r">
+                        {scoreBadge(row.weighted_score !== null ? Number(row.weighted_score) : null)}
+                      </td>
+                    ))}
+                  </tr>
+                  <tr>
+                    <td className="px-3 py-2 border-r text-xs text-muted-foreground">Fecha</td>
+                    {detailGroup.rows.map(row => (
+                      <td key={row.id} className="px-3 py-2 border-r text-xs text-muted-foreground">
+                        {row.evaluation_date}
+                      </td>
+                    ))}
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Aspirant dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
