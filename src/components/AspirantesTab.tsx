@@ -416,7 +416,6 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
                     <th className="px-3 py-2">Aspirante</th>
                     <th className="px-3 py-2">Cargo / Área</th>
                     <th className="px-3 py-2">Evaluador asignado</th>
-                    <th className="px-3 py-2">Competencias a evaluar</th>
                     <th className="px-3 py-2">Fecha</th>
                     <th className="px-3 py-2">Estado</th>
                     <th className="px-3 py-2 w-[230px]"></th>
@@ -441,14 +440,6 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
                           <UserCheck className="w-3.5 h-3.5 text-muted-foreground" />
                           {profileName(c.evaluator_user_id)}
                         </span>
-                      </td>
-                      <td className="px-3 py-2">
-                        <div className="flex flex-wrap gap-1 max-w-[280px]">
-                          {compsOf(c.id).length === 0 && <span className="text-xs text-muted-foreground">Sin asignar</span>}
-                          {compsOf(c.id).map(k => (
-                            <span key={k.id} className="text-[10px] border rounded px-1.5 py-0.5 bg-muted/40">{k.name}</span>
-                          ))}
-                        </div>
                       </td>
                       <td className="px-3 py-2 text-xs text-muted-foreground">{c.application_date}</td>
                       <td className="px-3 py-2">{statusBadge(c.status)}</td>
@@ -490,11 +481,6 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
                     </div>
                   </div>
                   <p className="text-xs">Evaluador: <b>{profileName(c.evaluator_user_id)}</b></p>
-                  <div className="flex flex-wrap gap-1">
-                    {compsOf(c.id).map(k => (
-                      <span key={k.id} className="text-[10px] border rounded px-1.5 py-0.5 bg-muted/40">{k.name}</span>
-                    ))}
-                  </div>
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] text-muted-foreground">{c.application_date}</span>
                     {statusBadge(c.status)}
