@@ -1770,7 +1770,7 @@ function ObjectiveCard({
                       {weight > 0 ? <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-accent/20 text-foreground">{weight}%</span> : <span className="text-muted-foreground">—</span>}
                     </td>
                     <td className="py-2">
-                      {isTotalView || !(canEdit || canEditKpi) ? (
+                      {!(canEdit || canEditKpi) ? (
                         <>{formatKpiValue(displayTarget, k)}</>
                       ) : (
                         <input
@@ -1787,7 +1787,8 @@ function ObjectiveCard({
                             const raw = e.target.value;
                             const orig = displayTarget === null || displayTarget === undefined ? '' : String(displayTarget);
                             if (raw.trim() !== orig.trim() && !(raw.trim() === '' && orig === '')) {
-                              saveKpiMonthTarget(k.id, raw);
+                              if (isTotalView) saveKpiBaseTarget(k.id, raw);
+                              else saveKpiMonthTarget(k.id, raw);
                             } else {
                               e.target.value = formatKpiInputValue(displayTarget, k);
                             }
