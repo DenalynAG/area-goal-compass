@@ -290,11 +290,12 @@ export default function SeleccionDesarrolloPage() {
     setEditing(row);
     setForm({
       candidate_name: row.candidate_name,
+      profession: row.profession ?? '',
+      university: row.university ?? '',
       area_id: row.area_id ?? '',
       subarea_id: row.subarea_id ?? '',
       position: row.position ?? '',
       evaluation_date: row.evaluation_date,
-      notes: row.notes ?? '',
     });
     const initial: Record<string, number | null> = {};
     compScores.filter(s => s.evaluation_id === row.id).forEach(s => { initial[s.competency_id] = s.score; });
