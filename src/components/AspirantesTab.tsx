@@ -81,8 +81,9 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  // Iniciar Assessment
-  const [startCand, setStartCand] = useState<Candidate | null>(null);
+  // Iniciar Assessment (selección múltiple)
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [startOpen, setStartOpen] = useState(false);
   const [startComps, setStartComps] = useState<string[]>([]);
   const [startEvaluator, setStartEvaluator] = useState<string>(NONE);
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
