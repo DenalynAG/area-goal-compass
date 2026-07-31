@@ -677,32 +677,26 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
       </AlertDialog>
 
       {/* Iniciar Assessment */}
-      <Dialog open={!!startCand} onOpenChange={o => !o && setStartCand(null)}>
+      <Dialog open={startOpen} onOpenChange={setStartOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Iniciar Assessment</DialogTitle>
             <DialogDescription>
-              Se generará la planilla de Assessment con los datos de <b>{startCand?.full_name}</b>. Selecciona las competencias a evaluar y el líder que las califica.
+              Se generará la planilla de Assessment para <b>{selectedCands.length}</b> aspirante(s) seleccionado(s). Selecciona las competencias a evaluar y el líder que las califica.
             </DialogDescription>
           </DialogHeader>
 
-          {startCand && (
+          {selectedCands.length > 0 && (
             <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm border rounded-md p-3 bg-muted/20">
-                <div>
-                  <p className="text-[11px] text-muted-foreground">Aspirante</p>
-                  <p className="font-semibold">{startCand.full_name}</p>
-                </div>
-                <div>
-                  <p className="text-[11px] text-muted-foreground">Cargo</p>
-                  <p className="font-semibold">{startCand.position ?? '—'}</p>
-                </div>
-                <div>
-                  <p className="text-[11px] text-muted-foreground">Área / Subárea</p>
-                  <p className="font-semibold">
-                    {areaName(startCand.area_id)}{startCand.subarea_id ? ` · ${subareaName(startCand.subarea_id)}` : ''}
-                  </p>
-                </div>
+              <div className="space-y-1 text-sm border rounded-md p-3 bg-muted/20 max-h-40 overflow-y-auto">
+                {selectedCands.map(sc => (
+                  <div key={sc.id} className="flex flex-wrap items-baseline gap-x-2">
+                    <span className="font-semibold">{sc.full_name}</span>
+                    <span className="text-[11px] text-muted-foreground">
+                      {sc.position ?? '—'} · {areaName(sc.area_id)}{sc.subarea_id ? ` · ${subareaName(sc.subarea_id)}` : ''}
+                    </span>
+                  </div>
+                ))}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
