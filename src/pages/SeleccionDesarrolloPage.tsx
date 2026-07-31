@@ -203,12 +203,46 @@ export default function SeleccionDesarrolloPage() {
     return r;
   }, [rows, filterArea, search]);
 
-  // Competencies shown as rows in the grid: union of those applicable to visible aspirants
-  const gridCompetencies = useMemo(() => {
+  // Competencies shown as rows in a grid: union of those applicable to its aspirants
+  const compsForRows = (rowsIn: Assessment[]) => {
     const ids = new Set<string>();
-    filtered.forEach(row => compsOfRow(row).forEach(c => ids.add(c.id)));
+    rowsIn.forEach(row => compsOfRow(row).forEach(c => ids.add(c.id)));
     return activeCompetencies.filter(c => ids.has(c.id));
-  }, [filtered, activeCompetencies, compScores]);
+  };
+
+  // Agrupar por convocatoria: cargo + área (+ subárea)
+  const groups = useMemo(() => {
+    const map = new Map<string, { key: string; position: string | null; area_id: string | null; subarea_id: string | null; rows: Assessment[] }>();
+    filtered.forEach(row => {
+      const key = `${row.position ?? '—'}|${row.area_id ?? '—'}|${row.subarea_id ?? '—'}`;
+      if (!map.has(key)) {
+        map.set(key, { key, position: row.position, area_id: row.area_id, subarea_id: row.subarea_id, rows: [] });
+      }
+      map.get(key)!.rows.push(row);
+    });
+    return Array.from(map.values());
+  }, [filtered]);
+
+  const [completing, setCompleting] = useState<string | null>(null);
+
+  const completeGroup = async (rowsIn: Assessment[], key: string) => {
+    const names = rowsIn.map(r => r.candidate_name);
+    const ids = rowsIn.map(r => r.candidate_id).filter(Boolean) as string[];
+    setCompleting(key);
+    let error: any = null;
+    if (ids.length) {
+      ({ error } = await (supabase.from('assessment_candidates' as any) as any)
+        .update({ status: 'evaluado' }).in('id', ids));
+    } else {
+      ({ error } = await (supabase.from('assessment_candidates' as any) as any)
+        .update({ status: 'evaluado' }).in('full_name', names));
+    }
+    setCompleting(null);
+    if (error) return toast.error(error.message);
+    toast.success('Evaluación completada');
+    qc.invalidateQueries({ queryKey: ['assessment_candidates'] });
+    qc.invalidateQueries({ queryKey: ['assessment_evaluations'] });
+  };
 
   const openNew = () => {
     setEditing(null);
