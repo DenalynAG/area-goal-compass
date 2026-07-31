@@ -15,8 +15,9 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Pencil, Trash2, Search, UserCheck } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, UserCheck, PlayCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 const NONE = '__none__';
 
@@ -61,8 +62,9 @@ const emptyForm = {
   status: 'pendiente',
 };
 
-export default function AspirantesTab() {
+export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentStarted?: () => void } = {}) {
   const qc = useQueryClient();
+  const { user } = useAuth();
   const { data: areas = [] } = useAreas();
   const { data: subareas = [] } = useSubareas();
   const { data: positions = [] } = usePositions();
@@ -78,6 +80,13 @@ export default function AspirantesTab() {
   const [selectedComps, setSelectedComps] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  // Iniciar Assessment
+  const [startCand, setStartCand] = useState<Candidate | null>(null);
+  const [startComps, setStartComps] = useState<string[]>([]);
+  const [startEvaluator, setStartEvaluator] = useState<string>(NONE);
+  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [starting, setStarting] = useState(false);
 
   const { data: candidates = [], isLoading } = useQuery({
     queryKey: ['assessment_candidates'],
