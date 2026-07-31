@@ -234,6 +234,27 @@ export default function SeleccionDesarrolloPage() {
     return Array.from(map.values());
   }, [filtered]);
 
+  // Un aspirante está "completado" cuando su ficha quedó en estado evaluado
+  const isRowCompleted = (row: Assessment) => {
+    const c = candidates.find(x =>
+      (row.candidate_id && x.id === row.candidate_id) ||
+      (!row.candidate_id && x.full_name === row.candidate_name),
+    );
+    return c?.status === 'evaluado';
+  };
+
+  const activeGroups = useMemo(
+    () => groups.filter(g => !g.rows.every(isRowCompleted)),
+    [groups, candidates],
+  );
+  const historyGroups = useMemo(
+    () => groups.filter(g => g.rows.every(isRowCompleted)),
+    [groups, candidates],
+  );
+
+  const [detailGroupKey, setDetailGroupKey] = useState<string | null>(null);
+  const detailGroup = historyGroups.find(g => g.key === detailGroupKey) ?? null;
+
   const [completing, setCompleting] = useState<string | null>(null);
 
   const completeGroup = async (rowsIn: Assessment[], key: string) => {
