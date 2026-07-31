@@ -1,0 +1,1 @@
+ALTER TABLE public.assessment_candidates ADD COLUMN IF NOT EXISTS profession text, ADD COLUMN IF NOT EXISTS university text;
