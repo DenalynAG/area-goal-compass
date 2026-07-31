@@ -227,6 +227,111 @@ export type Database = {
           },
         ]
       }
+      assessment_candidate_competencies: {
+        Row: {
+          candidate_id: string
+          competency_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          candidate_id: string
+          competency_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          candidate_id?: string
+          competency_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_candidate_competencies_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_candidate_competencies_competency_id_fkey"
+            columns: ["competency_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_competencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assessment_candidates: {
+        Row: {
+          application_date: string
+          area_id: string | null
+          created_at: string
+          created_by: string | null
+          document_id: string | null
+          email: string | null
+          evaluator_user_id: string | null
+          full_name: string
+          id: string
+          notes: string | null
+          phone: string | null
+          position: string | null
+          status: string
+          subarea_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          application_date?: string
+          area_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          document_id?: string | null
+          email?: string | null
+          evaluator_user_id?: string | null
+          full_name: string
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          position?: string | null
+          status?: string
+          subarea_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          application_date?: string
+          area_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          document_id?: string | null
+          email?: string | null
+          evaluator_user_id?: string | null
+          full_name?: string
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          position?: string | null
+          status?: string
+          subarea_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_candidates_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_candidates_subarea_id_fkey"
+            columns: ["subarea_id"]
+            isOneToOne: false
+            referencedRelation: "subareas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assessment_competencies: {
         Row: {
           behavior: string | null
