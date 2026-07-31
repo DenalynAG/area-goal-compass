@@ -888,14 +888,6 @@ export default function SeleccionDesarrolloPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium">Universidad de estudio</label>
-                <Input
-                  value={form.university}
-                  onChange={e => setForm(f => ({ ...f, university: e.target.value }))}
-                  placeholder="Ej. Universidad Nacional"
-                />
-              </div>
-              <div className="space-y-1.5">
                 <label className="text-sm font-medium">Área</label>
                 <Select
                   value={form.area_id || undefined}
