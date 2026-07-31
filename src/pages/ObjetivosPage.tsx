@@ -1530,6 +1530,21 @@ function ObjectiveCard({
     toast.success('Meta guardada');
   };
 
+  // Save the base KPI target (used in the "Total KPI" view)
+  const saveKpiBaseTarget = async (kpiId: string, raw: string) => {
+    const trimmed = (raw ?? '').toString().trim();
+    if (trimmed === '') return;
+    const target = parseKpiNumber(trimmed);
+    if (!isFinite(target)) { toast.error('Meta inválida'); return; }
+    const kpi = objKpis.find(k => k.id === kpiId);
+    if (kpi && Number(kpi.target) === target) return;
+    const { error } = await supabase.from('kpis').update({ target } as any).eq('id', kpiId);
+    if (error) { toast.error(`No se pudo actualizar la meta: ${error.message}`); return; }
+    qcLocal.invalidateQueries({ queryKey: ['kpis'] });
+    await logActivity('update', 'kpi_target', kpiId, { target });
+    toast.success('Meta guardada');
+  };
+
   // Get KPI accumulated value up to current month in current year (sum for financial, average otherwise)
   const getKpiAccumulatedAverage = (kpiId: string) => {
     const kpi = objKpis.find(k => k.id === kpiId);
