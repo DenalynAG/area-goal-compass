@@ -713,7 +713,7 @@ export default function SeleccionDesarrolloPage() {
                     ))}
                   </tr>
                   <tr>
-                    <td className="sticky left-0 z-20 bg-background px-3 py-2 border-r text-xs text-muted-foreground shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
+                    <td className="sticky left-0 z-20 bg-background px-4 py-3 border-r text-xs text-muted-foreground shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
                       Fecha
                     </td>
                     {filtered.map(row => (
