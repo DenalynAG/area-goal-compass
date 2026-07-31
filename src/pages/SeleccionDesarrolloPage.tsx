@@ -537,7 +537,7 @@ export default function SeleccionDesarrolloPage() {
                 <tbody>
                   {gridCompetencies.length === 0 && (
                     <tr className="border-b">
-                      <td colSpan={2 + filtered.length} className="px-3 py-6 text-center text-sm text-muted-foreground">
+                      <td colSpan={1 + filtered.length} className="px-3 py-6 text-center text-sm text-muted-foreground">
                         No hay competencias configuradas. Créalas desde el botón "Competencias".
                       </td>
                     </tr>
