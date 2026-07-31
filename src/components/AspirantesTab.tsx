@@ -500,9 +500,17 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
               {filtered.map(c => (
                 <div key={c.id} className="p-4 space-y-2">
                   <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="font-semibold text-sm">{c.full_name}</p>
-                      <p className="text-[11px] text-muted-foreground">{c.position ?? '—'} · {areaName(c.area_id)}</p>
+                    <div className="min-w-0 flex items-start gap-2">
+                      <Checkbox
+                        className="mt-0.5"
+                        checked={selectedIds.includes(c.id)}
+                        onCheckedChange={v => toggleSelected(c.id, !!v)}
+                        aria-label={`Seleccionar ${c.full_name}`}
+                      />
+                      <div className="min-w-0">
+                        <p className="font-semibold text-sm">{c.full_name}</p>
+                        <p className="text-[11px] text-muted-foreground">{c.position ?? '—'} · {areaName(c.area_id)}</p>
+                      </div>
                     </div>
                     <div className="flex items-center gap-0.5 shrink-0">
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(c)}>
@@ -518,9 +526,6 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
                     <span className="text-[11px] text-muted-foreground">{c.application_date}</span>
                     {statusBadge(c.status)}
                   </div>
-                  <Button variant="outline" size="sm" className="w-full h-8 text-xs" onClick={() => openStart(c)}>
-                    <PlayCircle className="w-4 h-4 mr-1" /> Iniciar Assessment
-                  </Button>
                 </div>
               ))}
             </div>
