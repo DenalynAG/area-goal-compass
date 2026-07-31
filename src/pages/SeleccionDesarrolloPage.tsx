@@ -793,6 +793,75 @@ export default function SeleccionDesarrolloPage() {
         </TabsContent>
       </Tabs>
 
+      {/* Detalle histórico */}
+      <Dialog open={!!detailGroup} onOpenChange={o => !o && setDetailGroupKey(null)}>
+        <DialogContent className="sm:max-w-4xl max-h-[92vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Convocatoria: {detailGroup?.position ?? 'Sin cargo definido'}
+            </DialogTitle>
+            <DialogDescription>
+              {detailGroup
+                ? `Área: ${areaName(detailGroup.area_id)}${detailGroup.subarea_id ? ` · Subárea: ${subareaName(detailGroup.subarea_id)}` : ''} · ${detailGroup.rows.length} aspirante(s)`
+                : ''}
+            </DialogDescription>
+          </DialogHeader>
+          {detailGroup && (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-sm">
+                <thead>
+                  <tr className="bg-muted/40 border-b">
+                    <th className="text-left px-3 py-2 border-r min-w-[200px]">Competencia</th>
+                    {detailGroup.rows.map(row => (
+                      <th key={row.id} className="text-left px-3 py-2 border-r min-w-[160px]">
+                        {row.candidate_name}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {compsForRows(detailGroup.rows).map(c => (
+                    <tr key={c.id} className="border-b">
+                      <td className="px-3 py-2 border-r align-top">
+                        <p className="font-semibold text-sm">{c.name}</p>
+                        {c.subtitle && <p className="text-[11px] text-muted-foreground">{c.subtitle}</p>}
+                      </td>
+                      {detailGroup.rows.map(row => {
+                        const s = scoreOf(row.id, c.id);
+                        const opt = SCORE_OPTIONS.find(o => o.value === s);
+                        return (
+                          <td key={row.id} className="px-3 py-2 border-r">
+                            {opt
+                              ? <span className={`inline-flex px-2 py-1 rounded-md border text-xs font-medium ${opt.color}`}>{opt.label}</span>
+                              : <span className="text-xs text-muted-foreground">—</span>}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                  <tr className="bg-muted/30">
+                    <td className="px-3 py-2 border-r font-semibold">Nota ponderada</td>
+                    {detailGroup.rows.map(row => (
+                      <td key={row.id} className="px-3 py-2 border-r">
+                        {scoreBadge(row.weighted_score !== null ? Number(row.weighted_score) : null)}
+                      </td>
+                    ))}
+                  </tr>
+                  <tr>
+                    <td className="px-3 py-2 border-r text-xs text-muted-foreground">Fecha</td>
+                    {detailGroup.rows.map(row => (
+                      <td key={row.id} className="px-3 py-2 border-r text-xs text-muted-foreground">
+                        {row.evaluation_date}
+                      </td>
+                    ))}
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Aspirant dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-y-auto">
