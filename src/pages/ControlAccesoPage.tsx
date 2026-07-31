@@ -68,9 +68,12 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
   const routeSubareaId = subareaFilterName
     ? subareas.find((s) => s.name === subareaFilterName)?.id ?? null
     : null;
-  const scopedAreaId = routeAreaId ?? (!isSuperAdmin ? userAreaId : null);
+  // Vista global: Super Admin y Seguridad Física ven TODAS las solicitudes
+  // de todas las áreas (cuando no hay filtro de ruta específico).
+  const globalView = isSuperAdmin || isSeguridadFisica;
+  const scopedAreaId = routeAreaId ?? (!globalView ? userAreaId : null);
   const scopedSubareaId =
-    routeSubareaId ?? (isLiderSubarea && !isSuperAdmin && !isAdminArea ? userSubareaId : null);
+    routeSubareaId ?? (isLiderSubarea && !globalView && !isAdminArea ? userSubareaId : null);
 
   const lockArea = !isSuperAdmin && !!scopedAreaId;
   const lockSubarea = !!scopedSubareaId;
