@@ -14,7 +14,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Users, Pencil, Trash2, Search, SlidersHorizontal, ArrowUp, ArrowDown, Table, BarChart3 } from 'lucide-react';
+import { Users, Pencil, Trash2, Search, SlidersHorizontal, ArrowUp, ArrowDown, Table, BarChart3, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
