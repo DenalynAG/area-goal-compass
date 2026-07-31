@@ -392,7 +392,13 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
         <p className="text-sm text-muted-foreground">
           Recursos Humanos registra los aspirantes, asigna el líder o gestor de área evaluador y selecciona las competencias a evaluar.
         </p>
-        <Button onClick={openNew}><Plus className="w-4 h-4 mr-1" /> Registrar aspirante</Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={openNew}><Plus className="w-4 h-4 mr-1" /> Registrar aspirante</Button>
+          <Button variant="outline" onClick={openStart} disabled={selectedIds.length === 0}>
+            <PlayCircle className="w-4 h-4 mr-1" />
+            Iniciar Assessment{selectedIds.length > 0 ? ` (${selectedIds.length})` : ''}
+          </Button>
+        </div>
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
