@@ -630,15 +630,30 @@ export default function SeleccionDesarrolloPage() {
                   </div>
 
                   <div className="space-y-2">
-                    {compsOfRow(row).map(c => (
-                      <div key={c.id} className="border rounded-md p-2.5 space-y-1.5 bg-muted/20">
-                        <div>
-                          <p className="font-semibold text-xs">{c.name}</p>
-                          <p className="text-[10px] text-muted-foreground leading-snug line-clamp-3">{c.behavior}</p>
+                    {compsOfRow(row).map(c => {
+                      const isExpanded = !!expandedBehaviors[c.id];
+                      return (
+                        <div key={c.id} className="border rounded-md p-2.5 space-y-1.5 bg-muted/20">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="font-semibold text-xs min-w-0">{c.name}</p>
+                            {c.behavior && (
+                              <button
+                                type="button"
+                                onClick={() => setExpandedBehaviors(prev => ({ ...prev, [c.id]: !isExpanded }))}
+                                className="shrink-0 p-0.5 rounded hover:bg-muted text-muted-foreground"
+                                title={isExpanded ? 'Ocultar comportamientos' : 'Ver comportamientos observables'}
+                              >
+                                {isExpanded ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                              </button>
+                            )}
+                          </div>
+                          {isExpanded && c.behavior && (
+                            <p className="text-[10px] text-muted-foreground leading-snug">{c.behavior}</p>
+                          )}
+                          <ScoreCell row={row} competencyId={c.id} />
                         </div>
-                        <ScoreCell row={row} competencyId={c.id} />
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   <div className="flex items-center justify-between pt-1">
