@@ -227,6 +227,87 @@ export type Database = {
           },
         ]
       }
+      assessment_competencies: {
+        Row: {
+          behavior: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          name: string
+          position_name: string | null
+          sort_order: number
+          subtitle: string | null
+          updated_at: string
+        }
+        Insert: {
+          behavior?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          position_name?: string | null
+          sort_order?: number
+          subtitle?: string | null
+          updated_at?: string
+        }
+        Update: {
+          behavior?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          position_name?: string | null
+          sort_order?: number
+          subtitle?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      assessment_competency_scores: {
+        Row: {
+          competency_id: string
+          created_at: string
+          evaluation_id: string
+          id: string
+          score: number | null
+          updated_at: string
+        }
+        Insert: {
+          competency_id: string
+          created_at?: string
+          evaluation_id: string
+          id?: string
+          score?: number | null
+          updated_at?: string
+        }
+        Update: {
+          competency_id?: string
+          created_at?: string
+          evaluation_id?: string
+          id?: string
+          score?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_competency_scores_competency_id_fkey"
+            columns: ["competency_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_competencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_competency_scores_evaluation_id_fkey"
+            columns: ["evaluation_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_evaluations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assessment_evaluations: {
         Row: {
           area_id: string | null
