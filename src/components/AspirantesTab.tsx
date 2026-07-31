@@ -722,7 +722,7 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
                   <div className="flex gap-2">
                     <Button type="button" variant="outline" size="sm" className="h-7 text-xs"
                       onClick={() => setStartComps(activeComps
-                        .filter(c => !c.position_name || c.position_name === startCand.position)
+                        .filter(c => !c.position_name || c.position_name === selectedCands[0]?.position)
                         .map(c => c.id))}>
                       Sugeridas por cargo
                     </Button>
@@ -750,7 +750,7 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setStartCand(null)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setStartOpen(false)}>Cancelar</Button>
             <Button onClick={handleStartAssessment} disabled={starting}>
               <PlayCircle className="w-4 h-4 mr-1" />
               {starting ? 'Generando...' : 'Iniciar Assessment'}
