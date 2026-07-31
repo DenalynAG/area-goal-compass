@@ -273,6 +273,103 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
     return <span className={`inline-flex px-2 py-0.5 rounded-md text-[11px] font-semibold ${st.cls}`}>{st.label}</span>;
   };
 
+  const openStart = (c: Candidate) => {
+    setStartCand(c);
+    const assigned = candidateComps.filter(cc => cc.candidate_id === c.id).map(cc => cc.competency_id);
+    setStartComps(assigned.length
+      ? assigned
+      : activeComps.filter(k => !k.position_name || k.position_name === c.position).map(k => k.id));
+    setStartEvaluator(c.evaluator_user_id ?? NONE);
+    setStartDate(new Date().toISOString().split('T')[0]);
+  };
+
+  const handleStartAssessment = async () => {
+    if (!startCand) return;
+    if (startComps.length === 0) return toast.error('Selecciona al menos una competencia');
+    if (startEvaluator === NONE) return toast.error('Asigna el líder que evaluará las competencias');
+    setStarting(true);
+    try {
+      // 1. Guardar evaluador y competencias en el aspirante
+      const { error: upErr } = await supabase
+        .from('assessment_candidates' as any)
+        .update({ evaluator_user_id: startEvaluator, status: 'en_evaluacion' })
+        .eq('id', startCand.id);
+      if (upErr) throw upErr;
+
+      const current = candidateComps.filter(cc => cc.candidate_id === startCand.id).map(cc => cc.competency_id);
+      const toAdd = startComps.filter(id => !current.includes(id));
+      const toRemove = current.filter(id => !startComps.includes(id));
+      if (toAdd.length) {
+        const { error } = await supabase
+          .from('assessment_candidate_competencies' as any)
+          .insert(toAdd.map(id => ({ candidate_id: startCand.id, competency_id: id })) as any);
+        if (error) throw error;
+      }
+      if (toRemove.length) {
+        const { error } = await supabase
+          .from('assessment_candidate_competencies' as any)
+          .delete()
+          .eq('candidate_id', startCand.id)
+          .in('competency_id', toRemove);
+        if (error) throw error;
+      }
+
+      // 2. Crear (o reutilizar) la planilla de assessment con los datos del aspirante
+      const { data: existing } = await supabase
+        .from('assessment_evaluations' as any)
+        .select('id')
+        .eq('candidate_id', startCand.id)
+        .maybeSingle();
+
+      const payload = {
+        candidate_id: startCand.id,
+        candidate_name: startCand.full_name,
+        area_id: startCand.area_id,
+        subarea_id: startCand.subarea_id,
+        position: startCand.position,
+        evaluation_date: startDate,
+        evaluator_user_id: startEvaluator,
+      };
+
+      let evaluationId = (existing as any)?.id as string | undefined;
+      if (evaluationId) {
+        const { error } = await supabase.from('assessment_evaluations' as any).update(payload as any).eq('id', evaluationId);
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase
+          .from('assessment_evaluations' as any)
+          .insert({ ...payload, created_by: user?.id ?? null } as any)
+          .select('id')
+          .single();
+        if (error) throw error;
+        evaluationId = (data as any).id;
+      }
+
+      // 3. Generar las filas de competencias seleccionadas (sin calificar)
+      const { error: scErr } = await (supabase.from('assessment_competency_scores' as any) as any)
+        .upsert(startComps.map(id => ({ evaluation_id: evaluationId, competency_id: id })),
+          { onConflict: 'evaluation_id,competency_id', ignoreDuplicates: true });
+      if (scErr) throw scErr;
+
+      // Quitar competencias deseleccionadas de la planilla
+      if (toRemove.length) {
+        await supabase.from('assessment_competency_scores' as any)
+          .delete().eq('evaluation_id', evaluationId).in('competency_id', toRemove);
+      }
+
+      toast.success('Assessment iniciado: planilla generada');
+      invalidate();
+      qc.invalidateQueries({ queryKey: ['assessment_evaluations'] });
+      qc.invalidateQueries({ queryKey: ['assessment_competency_scores'] });
+      setStartCand(null);
+      onAssessmentStarted?.();
+    } catch (err: any) {
+      toast.error(err.message ?? 'No se pudo iniciar el assessment');
+    } finally {
+      setStarting(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
