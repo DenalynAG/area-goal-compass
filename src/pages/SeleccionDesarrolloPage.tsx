@@ -28,6 +28,8 @@ type Assessment = {
   area_id: string | null;
   subarea_id: string | null;
   position: string | null;
+  profession: string | null;
+  university: string | null;
   weighted_score: number | null;
   evaluation_date: string;
   notes: string | null;
@@ -77,11 +79,12 @@ function scoreBadge(pct: number | null) {
 
 const emptyForm = {
   candidate_name: '',
+  profession: '',
+  university: '',
   area_id: '' as string,
   subarea_id: '' as string,
   position: '',
   evaluation_date: new Date().toISOString().split('T')[0],
-  notes: '',
 };
 
 const emptyComp = {
@@ -287,11 +290,12 @@ export default function SeleccionDesarrolloPage() {
     setEditing(row);
     setForm({
       candidate_name: row.candidate_name,
+      profession: row.profession ?? '',
+      university: row.university ?? '',
       area_id: row.area_id ?? '',
       subarea_id: row.subarea_id ?? '',
       position: row.position ?? '',
       evaluation_date: row.evaluation_date,
-      notes: row.notes ?? '',
     });
     const initial: Record<string, number | null> = {};
     compScores.filter(s => s.evaluation_id === row.id).forEach(s => { initial[s.competency_id] = s.score; });
@@ -327,12 +331,13 @@ export default function SeleccionDesarrolloPage() {
 
     const payload = {
       candidate_name: form.candidate_name.trim(),
+      profession: form.profession || null,
+      university: form.university || null,
       area_id: form.area_id || null,
       subarea_id: form.subarea_id || null,
       position: form.position || null,
       weighted_score: livePct,
       evaluation_date: form.evaluation_date,
-      notes: form.notes || null,
       evaluator_user_id: user?.id ?? null,
     };
 
@@ -880,6 +885,22 @@ export default function SeleccionDesarrolloPage() {
                 />
               </div>
               <div className="space-y-1.5">
+                <label className="text-sm font-medium">Profesión</label>
+                <Input
+                  value={form.profession}
+                  onChange={e => setForm(f => ({ ...f, profession: e.target.value }))}
+                  placeholder="Ej. Ingeniero Industrial"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Universidad de estudio</label>
+                <Input
+                  value={form.university}
+                  onChange={e => setForm(f => ({ ...f, university: e.target.value }))}
+                  placeholder="Ej. Universidad Nacional"
+                />
+              </div>
+              <div className="space-y-1.5">
                 <label className="text-sm font-medium">Área</label>
                 <Select
                   value={form.area_id || undefined}
@@ -970,15 +991,6 @@ export default function SeleccionDesarrolloPage() {
                 <span className="text-sm text-muted-foreground">Nota ponderada</span>
                 <span className="text-lg font-bold">{scoreBadge(livePct)}</span>
               </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">Notas</label>
-              <Textarea
-                value={form.notes}
-                onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-                rows={2}
-              />
             </div>
 
             <DialogFooter>

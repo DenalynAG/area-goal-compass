@@ -425,10 +425,12 @@ export type Database = {
           id: string
           notes: string | null
           position: string | null
+          profession: string | null
           score_creatividad: number | null
           score_pensamiento_analitico: number | null
           score_trabajo_equipo: number | null
           subarea_id: string | null
+          university: string | null
           updated_at: string
           weighted_score: number | null
         }
@@ -443,10 +445,12 @@ export type Database = {
           id?: string
           notes?: string | null
           position?: string | null
+          profession?: string | null
           score_creatividad?: number | null
           score_pensamiento_analitico?: number | null
           score_trabajo_equipo?: number | null
           subarea_id?: string | null
+          university?: string | null
           updated_at?: string
           weighted_score?: number | null
         }
@@ -461,10 +465,12 @@ export type Database = {
           id?: string
           notes?: string | null
           position?: string | null
+          profession?: string | null
           score_creatividad?: number | null
           score_pensamiento_analitico?: number | null
           score_trabajo_equipo?: number | null
           subarea_id?: string | null
+          university?: string | null
           updated_at?: string
           weighted_score?: number | null
         }
