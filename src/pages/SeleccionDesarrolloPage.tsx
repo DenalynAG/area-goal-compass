@@ -155,6 +155,17 @@ export default function SeleccionDesarrolloPage() {
     },
   });
 
+  const { data: candidates = [] } = useQuery({
+    queryKey: ['assessment_candidates'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('assessment_candidates' as any)
+        .select('id, full_name, status');
+      if (error) throw error;
+      return (data as unknown) as { id: string; full_name: string; status: string }[];
+    },
+  });
+
   const areaName = (id: string | null) => areas.find(a => a.id === id)?.name ?? '—';
   const subareaName = (id: string | null) => subareas.find(s => s.id === id)?.name ?? '';
 
