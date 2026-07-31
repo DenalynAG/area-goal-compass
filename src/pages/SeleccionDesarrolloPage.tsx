@@ -529,15 +529,40 @@ export default function SeleccionDesarrolloPage() {
         </Select>
       </div>
 
-      <Card className="p-0 overflow-hidden">
-        {isLoading ? (
+      {isLoading ? (
+        <Card className="p-0 overflow-hidden">
           <div className="py-10 text-center text-muted-foreground text-sm">Cargando...</div>
-        ) : filtered.length === 0 ? (
+        </Card>
+      ) : filtered.length === 0 ? (
+        <Card className="p-0 overflow-hidden">
           <div className="py-10 text-center text-muted-foreground text-sm">
             No hay aspirantes. Crea el primero con "Nuevo aspirante".
           </div>
-        ) : (
-          <>
+        </Card>
+      ) : (
+        groups.map(group => {
+          const gridCompetencies = compsForRows(group.rows);
+          const filtered = group.rows;
+          return (
+          <Card key={group.key} className="p-0 overflow-hidden">
+            {/* Título de la convocatoria */}
+            <div className="flex items-start justify-between gap-3 flex-wrap px-4 py-3 border-b bg-muted/20">
+              <div>
+                <h3 className="text-base font-bold leading-tight">
+                  Convocatoria: {group.position ?? 'Sin cargo definido'}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Área: {areaName(group.area_id)}{group.subarea_id ? ` · Subárea: ${subareaName(group.subarea_id)}` : ''} · {group.rows.length} aspirante(s)
+                </p>
+              </div>
+              <Button
+                size="sm"
+                onClick={() => completeGroup(group.rows, group.key)}
+                disabled={completing === group.key}
+              >
+                {completing === group.key ? 'Completando...' : 'Completar Evaluación'}
+              </Button>
+            </div>
             {/* Desktop table */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full border-collapse text-sm">
