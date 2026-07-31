@@ -587,7 +587,6 @@ export default function SeleccionDesarrolloPage() {
                     <td className="sticky left-0 z-20 bg-muted/30 px-3 py-2 border-r font-semibold shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
                       Nota ponderada
                     </td>
-                    <td className="px-3 py-2 border-r bg-muted/30" />
                     {filtered.map(row => (
                       <td key={row.id} className="px-3 py-2 border-r text-center">
                         {scoreBadge(row.weighted_score !== null ? Number(row.weighted_score) : null)}
@@ -598,7 +597,6 @@ export default function SeleccionDesarrolloPage() {
                     <td className="sticky left-0 z-20 bg-background px-3 py-2 border-r text-xs text-muted-foreground shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
                       Fecha
                     </td>
-                    <td className="px-3 py-2 border-r" />
                     {filtered.map(row => (
                       <td key={row.id} className="px-3 py-2 border-r text-xs text-muted-foreground">
                         {row.evaluation_date}
