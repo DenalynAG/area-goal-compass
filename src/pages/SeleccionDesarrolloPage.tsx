@@ -105,6 +105,7 @@ export default function SeleccionDesarrolloPage() {
   const [form, setForm] = useState({ ...emptyForm });
   const [formScores, setFormScores] = useState<Record<string, number | null>>({});
   const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState('aspirantes');
 
   // Competency manager state
   const [compOpen, setCompOpen] = useState(false);
