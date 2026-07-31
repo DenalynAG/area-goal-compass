@@ -510,17 +510,47 @@ export default function SeleccionDesarrolloPage() {
           <Button variant="outline" onClick={() => setActiveTab('dashboard')}>
             <BarChart3 className="w-4 h-4 mr-1" /> Dashboard
           </Button>
+          <Button variant="outline" onClick={() => setActiveTab('historico')}>
+            <History className="w-4 h-4 mr-1" /> Histórico
+          </Button>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="aspirantes">Aspirantes</TabsTrigger>
+          <TabsTrigger value="historico">Histórico</TabsTrigger>
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
         </TabsList>
 
         <TabsContent value="aspirantes">
           <AspirantesTab onAssessmentStarted={() => setActiveTab('planilla')} />
+        </TabsContent>
+
+        <TabsContent value="historico" className="space-y-3">
+          {historyGroups.length === 0 ? (
+            <Card className="p-0 overflow-hidden">
+              <div className="py-10 text-center text-muted-foreground text-sm">
+                Aún no hay convocatorias con evaluación completada.
+              </div>
+            </Card>
+          ) : (
+            historyGroups.map(group => (
+              <Card key={group.key} className="p-4 flex items-start justify-between gap-3 flex-wrap">
+                <div>
+                  <h3 className="text-base font-bold leading-tight">
+                    Convocatoria: {group.position ?? 'Sin cargo definido'}
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Área: {areaName(group.area_id)}{group.subarea_id ? ` · Subárea: ${subareaName(group.subarea_id)}` : ''} · {group.rows.length} aspirante(s) · Completada
+                  </p>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => setDetailGroupKey(group.key)}>
+                  <Eye className="w-4 h-4 mr-1" /> Ver detalles
+                </Button>
+              </Card>
+            ))
+          )}
         </TabsContent>
 
         <TabsContent value="dashboard">
