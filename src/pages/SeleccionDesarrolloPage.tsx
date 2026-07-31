@@ -446,7 +446,7 @@ export default function SeleccionDesarrolloPage() {
         </TabsList>
 
         <TabsContent value="aspirantes">
-          <AspirantesTab />
+          <AspirantesTab onAssessmentStarted={() => setActiveTab('planilla')} />
         </TabsContent>
 
         <TabsContent value="planilla" className="space-y-4">
@@ -547,7 +547,7 @@ export default function SeleccionDesarrolloPage() {
                         {c.behavior}
                       </td>
                       {filtered.map(row => {
-                        const applies = !c.position_name || c.position_name === row.position;
+                        const applies = compsOfRow(row).some(x => x.id === c.id);
                         return (
                           <td key={row.id} className="px-2 py-2 border-r">
                             <ScoreCell row={row} competencyId={c.id} disabled={!applies} />
@@ -605,7 +605,7 @@ export default function SeleccionDesarrolloPage() {
                   </div>
 
                   <div className="space-y-2">
-                    {compsForPosition(row.position).map(c => (
+                    {compsOfRow(row).map(c => (
                       <div key={c.id} className="border rounded-md p-2.5 space-y-1.5 bg-muted/20">
                         <div>
                           <p className="font-semibold text-xs">{c.name}</p>
