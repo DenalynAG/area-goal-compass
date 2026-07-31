@@ -430,7 +430,6 @@ export type Database = {
           score_pensamiento_analitico: number | null
           score_trabajo_equipo: number | null
           subarea_id: string | null
-          university: string | null
           updated_at: string
           weighted_score: number | null
         }
@@ -450,7 +449,6 @@ export type Database = {
           score_pensamiento_analitico?: number | null
           score_trabajo_equipo?: number | null
           subarea_id?: string | null
-          university?: string | null
           updated_at?: string
           weighted_score?: number | null
         }
@@ -470,7 +468,6 @@ export type Database = {
           score_pensamiento_analitico?: number | null
           score_trabajo_equipo?: number | null
           subarea_id?: string | null
-          university?: string | null
           updated_at?: string
           weighted_score?: number | null
         }
