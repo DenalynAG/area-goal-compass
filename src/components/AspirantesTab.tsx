@@ -81,8 +81,9 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  // Iniciar Assessment
-  const [startCand, setStartCand] = useState<Candidate | null>(null);
+  // Iniciar Assessment (selección múltiple)
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [startOpen, setStartOpen] = useState(false);
   const [startComps, setStartComps] = useState<string[]>([]);
   const [startEvaluator, setStartEvaluator] = useState<string>(NONE);
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
@@ -273,95 +274,110 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
     return <span className={`inline-flex px-2 py-0.5 rounded-md text-[11px] font-semibold ${st.cls}`}>{st.label}</span>;
   };
 
-  const openStart = (c: Candidate) => {
-    setStartCand(c);
-    const assigned = candidateComps.filter(cc => cc.candidate_id === c.id).map(cc => cc.competency_id);
+  const selectedCands = useMemo(
+    () => candidates.filter(c => selectedIds.includes(c.id)),
+    [candidates, selectedIds],
+  );
+
+  const toggleSelected = (id: string, checked: boolean) =>
+    setSelectedIds(prev => (checked ? [...new Set([...prev, id])] : prev.filter(x => x !== id)));
+
+  const allFilteredSelected = filtered.length > 0 && filtered.every(c => selectedIds.includes(c.id));
+
+  const openStart = () => {
+    if (selectedCands.length === 0) return;
+    const base = selectedCands[0];
+    const assigned = candidateComps.filter(cc => cc.candidate_id === base.id).map(cc => cc.competency_id);
     setStartComps(assigned.length
       ? assigned
-      : activeComps.filter(k => !k.position_name || k.position_name === c.position).map(k => k.id));
-    setStartEvaluator(c.evaluator_user_id ?? NONE);
+      : activeComps.filter(k => !k.position_name || k.position_name === base.position).map(k => k.id));
+    setStartEvaluator(base.evaluator_user_id ?? NONE);
     setStartDate(new Date().toISOString().split('T')[0]);
+    setStartOpen(true);
+  };
+
+  const startForCandidate = async (cand: Candidate) => {
+    const { error: upErr } = await supabase
+      .from('assessment_candidates' as any)
+      .update({ evaluator_user_id: startEvaluator, status: 'en_evaluacion' })
+      .eq('id', cand.id);
+    if (upErr) throw upErr;
+
+    const current = candidateComps.filter(cc => cc.candidate_id === cand.id).map(cc => cc.competency_id);
+    const toAdd = startComps.filter(id => !current.includes(id));
+    const toRemove = current.filter(id => !startComps.includes(id));
+    if (toAdd.length) {
+      const { error } = await supabase
+        .from('assessment_candidate_competencies' as any)
+        .insert(toAdd.map(id => ({ candidate_id: cand.id, competency_id: id })) as any);
+      if (error) throw error;
+    }
+    if (toRemove.length) {
+      const { error } = await supabase
+        .from('assessment_candidate_competencies' as any)
+        .delete()
+        .eq('candidate_id', cand.id)
+        .in('competency_id', toRemove);
+      if (error) throw error;
+    }
+
+    const { data: existing } = await supabase
+      .from('assessment_evaluations' as any)
+      .select('id')
+      .eq('candidate_id', cand.id)
+      .maybeSingle();
+
+    const payload = {
+      candidate_id: cand.id,
+      candidate_name: cand.full_name,
+      area_id: cand.area_id,
+      subarea_id: cand.subarea_id,
+      position: cand.position,
+      evaluation_date: startDate,
+      evaluator_user_id: startEvaluator,
+    };
+
+    let evaluationId = (existing as any)?.id as string | undefined;
+    if (evaluationId) {
+      const { error } = await supabase.from('assessment_evaluations' as any).update(payload as any).eq('id', evaluationId);
+      if (error) throw error;
+    } else {
+      const { data, error } = await supabase
+        .from('assessment_evaluations' as any)
+        .insert({ ...payload, created_by: user?.id ?? null } as any)
+        .select('id')
+        .single();
+      if (error) throw error;
+      evaluationId = (data as any).id;
+    }
+
+    const { error: scErr } = await (supabase.from('assessment_competency_scores' as any) as any)
+      .upsert(startComps.map(id => ({ evaluation_id: evaluationId, competency_id: id })),
+        { onConflict: 'evaluation_id,competency_id', ignoreDuplicates: true });
+    if (scErr) throw scErr;
+
+    if (toRemove.length) {
+      await supabase.from('assessment_competency_scores' as any)
+        .delete().eq('evaluation_id', evaluationId).in('competency_id', toRemove);
+    }
   };
 
   const handleStartAssessment = async () => {
-    if (!startCand) return;
+    if (selectedCands.length === 0) return toast.error('Selecciona al menos un aspirante');
     if (startComps.length === 0) return toast.error('Selecciona al menos una competencia');
     if (startEvaluator === NONE) return toast.error('Asigna el líder que evaluará las competencias');
     setStarting(true);
     try {
-      // 1. Guardar evaluador y competencias en el aspirante
-      const { error: upErr } = await supabase
-        .from('assessment_candidates' as any)
-        .update({ evaluator_user_id: startEvaluator, status: 'en_evaluacion' })
-        .eq('id', startCand.id);
-      if (upErr) throw upErr;
-
-      const current = candidateComps.filter(cc => cc.candidate_id === startCand.id).map(cc => cc.competency_id);
-      const toAdd = startComps.filter(id => !current.includes(id));
-      const toRemove = current.filter(id => !startComps.includes(id));
-      if (toAdd.length) {
-        const { error } = await supabase
-          .from('assessment_candidate_competencies' as any)
-          .insert(toAdd.map(id => ({ candidate_id: startCand.id, competency_id: id })) as any);
-        if (error) throw error;
-      }
-      if (toRemove.length) {
-        const { error } = await supabase
-          .from('assessment_candidate_competencies' as any)
-          .delete()
-          .eq('candidate_id', startCand.id)
-          .in('competency_id', toRemove);
-        if (error) throw error;
+      for (const cand of selectedCands) {
+        await startForCandidate(cand);
       }
 
-      // 2. Crear (o reutilizar) la planilla de assessment con los datos del aspirante
-      const { data: existing } = await supabase
-        .from('assessment_evaluations' as any)
-        .select('id')
-        .eq('candidate_id', startCand.id)
-        .maybeSingle();
-
-      const payload = {
-        candidate_id: startCand.id,
-        candidate_name: startCand.full_name,
-        area_id: startCand.area_id,
-        subarea_id: startCand.subarea_id,
-        position: startCand.position,
-        evaluation_date: startDate,
-        evaluator_user_id: startEvaluator,
-      };
-
-      let evaluationId = (existing as any)?.id as string | undefined;
-      if (evaluationId) {
-        const { error } = await supabase.from('assessment_evaluations' as any).update(payload as any).eq('id', evaluationId);
-        if (error) throw error;
-      } else {
-        const { data, error } = await supabase
-          .from('assessment_evaluations' as any)
-          .insert({ ...payload, created_by: user?.id ?? null } as any)
-          .select('id')
-          .single();
-        if (error) throw error;
-        evaluationId = (data as any).id;
-      }
-
-      // 3. Generar las filas de competencias seleccionadas (sin calificar)
-      const { error: scErr } = await (supabase.from('assessment_competency_scores' as any) as any)
-        .upsert(startComps.map(id => ({ evaluation_id: evaluationId, competency_id: id })),
-          { onConflict: 'evaluation_id,competency_id', ignoreDuplicates: true });
-      if (scErr) throw scErr;
-
-      // Quitar competencias deseleccionadas de la planilla
-      if (toRemove.length) {
-        await supabase.from('assessment_competency_scores' as any)
-          .delete().eq('evaluation_id', evaluationId).in('competency_id', toRemove);
-      }
-
-      toast.success('Assessment iniciado: planilla generada');
+      toast.success(`Assessment iniciado para ${selectedCands.length} aspirante(s)`);
       invalidate();
       qc.invalidateQueries({ queryKey: ['assessment_evaluations'] });
       qc.invalidateQueries({ queryKey: ['assessment_competency_scores'] });
-      setStartCand(null);
+      setStartOpen(false);
+      setSelectedIds([]);
       onAssessmentStarted?.();
     } catch (err: any) {
       toast.error(err.message ?? 'No se pudo iniciar el assessment');
@@ -376,7 +392,13 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
         <p className="text-sm text-muted-foreground">
           Recursos Humanos registra los aspirantes, asigna el líder o gestor de área evaluador y selecciona las competencias a evaluar.
         </p>
-        <Button onClick={openNew}><Plus className="w-4 h-4 mr-1" /> Registrar aspirante</Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={openNew}><Plus className="w-4 h-4 mr-1" /> Registrar aspirante</Button>
+          <Button variant="outline" onClick={openStart} disabled={selectedIds.length === 0}>
+            <PlayCircle className="w-4 h-4 mr-1" />
+            Iniciar Assessment{selectedIds.length > 0 ? ` (${selectedIds.length})` : ''}
+          </Button>
+        </div>
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
@@ -413,17 +435,31 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
               <table className="w-full text-sm border-collapse">
                 <thead>
                   <tr className="bg-muted/40 border-b text-left">
+                    <th className="px-3 py-2 w-[40px]">
+                      <Checkbox
+                        checked={allFilteredSelected}
+                        onCheckedChange={v => setSelectedIds(v ? filtered.map(c => c.id) : [])}
+                        aria-label="Seleccionar todos"
+                      />
+                    </th>
                     <th className="px-3 py-2">Aspirante</th>
                     <th className="px-3 py-2">Cargo / Área</th>
                     <th className="px-3 py-2">Evaluador asignado</th>
                     <th className="px-3 py-2">Fecha</th>
                     <th className="px-3 py-2">Estado</th>
-                    <th className="px-3 py-2 w-[230px]"></th>
+                    <th className="px-3 py-2 w-[90px]"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.map(c => (
                     <tr key={c.id} className="border-b align-top">
+                      <td className="px-3 py-3">
+                        <Checkbox
+                          checked={selectedIds.includes(c.id)}
+                          onCheckedChange={v => toggleSelected(c.id, !!v)}
+                          aria-label={`Seleccionar ${c.full_name}`}
+                        />
+                      </td>
                       <td className="px-3 py-2">
                         <p className="font-semibold">{c.full_name}</p>
                         <p className="text-[11px] text-muted-foreground">{c.document_id ?? '—'}</p>
@@ -445,9 +481,6 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
                       <td className="px-3 py-2">{statusBadge(c.status)}</td>
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-0.5">
-                          <Button variant="outline" size="sm" className="h-7 text-[11px] mr-1" onClick={() => openStart(c)}>
-                            <PlayCircle className="w-3.5 h-3.5 mr-1" /> Iniciar Assessment
-                          </Button>
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(c)}>
                             <Pencil className="w-4 h-4" />
                           </Button>
@@ -467,9 +500,17 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
               {filtered.map(c => (
                 <div key={c.id} className="p-4 space-y-2">
                   <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="font-semibold text-sm">{c.full_name}</p>
-                      <p className="text-[11px] text-muted-foreground">{c.position ?? '—'} · {areaName(c.area_id)}</p>
+                    <div className="min-w-0 flex items-start gap-2">
+                      <Checkbox
+                        className="mt-0.5"
+                        checked={selectedIds.includes(c.id)}
+                        onCheckedChange={v => toggleSelected(c.id, !!v)}
+                        aria-label={`Seleccionar ${c.full_name}`}
+                      />
+                      <div className="min-w-0">
+                        <p className="font-semibold text-sm">{c.full_name}</p>
+                        <p className="text-[11px] text-muted-foreground">{c.position ?? '—'} · {areaName(c.area_id)}</p>
+                      </div>
                     </div>
                     <div className="flex items-center gap-0.5 shrink-0">
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(c)}>
@@ -485,9 +526,6 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
                     <span className="text-[11px] text-muted-foreground">{c.application_date}</span>
                     {statusBadge(c.status)}
                   </div>
-                  <Button variant="outline" size="sm" className="w-full h-8 text-xs" onClick={() => openStart(c)}>
-                    <PlayCircle className="w-4 h-4 mr-1" /> Iniciar Assessment
-                  </Button>
                 </div>
               ))}
             </div>
@@ -639,32 +677,26 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
       </AlertDialog>
 
       {/* Iniciar Assessment */}
-      <Dialog open={!!startCand} onOpenChange={o => !o && setStartCand(null)}>
+      <Dialog open={startOpen} onOpenChange={setStartOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Iniciar Assessment</DialogTitle>
             <DialogDescription>
-              Se generará la planilla de Assessment con los datos de <b>{startCand?.full_name}</b>. Selecciona las competencias a evaluar y el líder que las califica.
+              Se generará la planilla de Assessment para <b>{selectedCands.length}</b> aspirante(s) seleccionado(s). Selecciona las competencias a evaluar y el líder que las califica.
             </DialogDescription>
           </DialogHeader>
 
-          {startCand && (
+          {selectedCands.length > 0 && (
             <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm border rounded-md p-3 bg-muted/20">
-                <div>
-                  <p className="text-[11px] text-muted-foreground">Aspirante</p>
-                  <p className="font-semibold">{startCand.full_name}</p>
-                </div>
-                <div>
-                  <p className="text-[11px] text-muted-foreground">Cargo</p>
-                  <p className="font-semibold">{startCand.position ?? '—'}</p>
-                </div>
-                <div>
-                  <p className="text-[11px] text-muted-foreground">Área / Subárea</p>
-                  <p className="font-semibold">
-                    {areaName(startCand.area_id)}{startCand.subarea_id ? ` · ${subareaName(startCand.subarea_id)}` : ''}
-                  </p>
-                </div>
+              <div className="space-y-1 text-sm border rounded-md p-3 bg-muted/20 max-h-40 overflow-y-auto">
+                {selectedCands.map(sc => (
+                  <div key={sc.id} className="flex flex-wrap items-baseline gap-x-2">
+                    <span className="font-semibold">{sc.full_name}</span>
+                    <span className="text-[11px] text-muted-foreground">
+                      {sc.position ?? '—'} · {areaName(sc.area_id)}{sc.subarea_id ? ` · ${subareaName(sc.subarea_id)}` : ''}
+                    </span>
+                  </div>
+                ))}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -690,7 +722,7 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
                   <div className="flex gap-2">
                     <Button type="button" variant="outline" size="sm" className="h-7 text-xs"
                       onClick={() => setStartComps(activeComps
-                        .filter(c => !c.position_name || c.position_name === startCand.position)
+                        .filter(c => !c.position_name || c.position_name === selectedCands[0]?.position)
                         .map(c => c.id))}>
                       Sugeridas por cargo
                     </Button>
@@ -718,7 +750,7 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setStartCand(null)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setStartOpen(false)}>Cancelar</Button>
             <Button onClick={handleStartAssessment} disabled={starting}>
               <PlayCircle className="w-4 h-4 mr-1" />
               {starting ? 'Generando...' : 'Iniciar Assessment'}
