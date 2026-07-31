@@ -299,7 +299,7 @@ export default function SeleccionDesarrolloPage() {
 
   // Inline update of a single competency score for a given aspirant
   const updateScore = async (row: Assessment, competencyId: string, value: number | null) => {
-    const applicable = compsForPosition(row.position);
+    const applicable = compsOfRow(row);
     const nextValues = applicable.map(c =>
       c.id === competencyId ? value : scoreOf(row.id, c.id),
     );
