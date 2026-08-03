@@ -74,21 +74,6 @@ const navItems: NavItem[] = [
     icon: UtensilsCrossed,
     label: "Alimentos y Bebidas",
     children: [
-      {
-        to: "/ayb/bar",
-        label: "Bar",
-        icon: UtensilsCrossed,
-      },
-      {
-        to: "/ayb/cocina",
-        label: "Cocina",
-        icon: UtensilsCrossed,
-      },
-      {
-        to: "/ayb/mesa",
-        label: "Mesa",
-        icon: UtensilsCrossed,
-      },
       { to: "/ayb/objetivos", label: "Objetivos", icon: Target },
       { to: "/ayb/leader-pass", label: "Leader Pass", icon: ClipboardList },
       { to: "/ayb/calidad", label: "Calidad", icon: ShieldCheck },
