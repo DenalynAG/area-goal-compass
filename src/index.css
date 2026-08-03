@@ -2,8 +2,64 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Editorial Luxury design system — Paper & Ink palette + DM Serif Display / Fira Sans */
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Fira+Sans:wght@300;400;500;600;700&display=swap');
+/* Editorial Luxury design system — Paper & Ink palette + Migra / Agrandir */
+
+@font-face {
+  font-family: 'Migra';
+  src: url('/__l5e/assets-v1/71f7b747-ca30-4f9d-8ea9-5e5bcbb0df92/Migra-Extralight.ttf') format('truetype');
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Migra';
+  src: url('/__l5e/assets-v1/26866e6c-8a19-40b3-a480-5b57f0945d4e/Migra-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Migra';
+  src: url('/__l5e/assets-v1/7199a45f-5265-4696-ade9-7ac69e48619d/Migra-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Migra';
+  src: url('/__l5e/assets-v1/293bc068-6426-439c-9ee9-3f9d2a7d6591/Migra-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Migra';
+  src: url('/__l5e/assets-v1/dbfb9b4c-572a-4368-855e-008f89d3358f/Migra-Semibold.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Migra';
+  src: url('/__l5e/assets-v1/97c364d5-b38a-42be-b694-6a1c8399707f/Migra-Extrabold.otf') format('opentype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Agrandir';
+  src: url('/__l5e/assets-v1/d1940091-7420-44af-b9e4-552f516a0c01/Agrandir-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Agrandir';
+  src: url('/__l5e/assets-v1/3e6c69f9-5d8a-434a-87f7-b623fd78a1c8/Agrandir-Medium.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
 
 @layer base {
   :root {
@@ -147,10 +203,21 @@
     @apply mb-10 pb-6 border-b border-border;
   }
   .page-title {
-    @apply font-display text-4xl md:text-5xl leading-none tracking-tight text-foreground;
+    @apply font-display italic font-extrabold text-[34px] md:text-[44px] leading-[1.05] tracking-tight text-foreground;
   }
   .page-subtitle {
-    @apply text-sm text-muted-foreground mt-3 tracking-wide;
+    @apply font-sans font-bold text-[15px] text-muted-foreground mt-3 tracking-wide;
+  }
+  /* Título alternativo / resaltar — Migra light→semibold, sin itálica */
+  .title-alt {
+    @apply font-display not-italic font-light text-[26px] md:text-[30px] leading-tight text-foreground;
+  }
+  .section-title {
+    @apply font-display not-italic font-semibold text-[20px] md:text-[22px] leading-tight text-foreground;
+  }
+  /* Subtítulo — Agrandir Medium */
+  .subtitle {
+    @apply font-sans font-bold text-[16px] leading-snug text-foreground;
   }
   /* Editorial kicker — small uppercase tracked label */
   .editorial-kicker {
