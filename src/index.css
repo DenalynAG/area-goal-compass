@@ -203,10 +203,21 @@
     @apply mb-10 pb-6 border-b border-border;
   }
   .page-title {
-    @apply font-display text-4xl md:text-5xl leading-none tracking-tight text-foreground;
+    @apply font-display italic font-extrabold text-[34px] md:text-[44px] leading-[1.05] tracking-tight text-foreground;
   }
   .page-subtitle {
-    @apply text-sm text-muted-foreground mt-3 tracking-wide;
+    @apply font-sans font-bold text-[15px] text-muted-foreground mt-3 tracking-wide;
+  }
+  /* Título alternativo / resaltar — Migra light→semibold, sin itálica */
+  .title-alt {
+    @apply font-display not-italic font-light text-[26px] md:text-[30px] leading-tight text-foreground;
+  }
+  .section-title {
+    @apply font-display not-italic font-semibold text-[20px] md:text-[22px] leading-tight text-foreground;
+  }
+  /* Subtítulo — Agrandir Medium */
+  .subtitle {
+    @apply font-sans font-bold text-[16px] leading-snug text-foreground;
   }
   /* Editorial kicker — small uppercase tracked label */
   .editorial-kicker {
