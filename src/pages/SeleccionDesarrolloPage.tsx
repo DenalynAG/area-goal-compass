@@ -561,7 +561,7 @@ export default function SeleccionDesarrolloPage() {
               <Card key={group.key} className="p-4 flex items-start justify-between gap-3 flex-wrap">
                 <div>
                   <h3 className="text-base font-bold leading-tight">
-                    Convocatoria: {group.position ?? 'Sin cargo definido'}
+                    Convocatoria: {group.positions.length ? group.positions.join(' · ') : 'Sin cargo definido'}
                   </h3>
                   <p className="text-xs text-muted-foreground">
                     Área: {areaName(group.area_id)}{group.subarea_id ? ` · Subárea: ${subareaName(group.subarea_id)}` : ''} · {group.rows.length} aspirante(s) · Completada
@@ -633,7 +633,7 @@ export default function SeleccionDesarrolloPage() {
             <div className="flex items-start justify-between gap-3 flex-wrap px-4 py-3 border-b bg-muted/20">
               <div>
                 <h3 className="text-base font-bold leading-tight">
-                  Convocatoria: {group.position ?? 'Sin cargo definido'}
+                  Convocatoria: {group.positions.length ? group.positions.join(' · ') : 'Sin cargo definido'}
                 </h3>
                 <p className="text-xs text-muted-foreground">
                   Área: {areaName(group.area_id)}{group.subarea_id ? ` · Subárea: ${subareaName(group.subarea_id)}` : ''} · {group.rows.length} aspirante(s)
@@ -814,7 +814,7 @@ export default function SeleccionDesarrolloPage() {
         <DialogContent className="sm:max-w-4xl max-h-[92vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              Convocatoria: {detailGroup?.position ?? 'Sin cargo definido'}
+              Convocatoria: {detailGroup?.positions.length ? detailGroup.positions.join(' · ') : 'Sin cargo definido'}
             </DialogTitle>
             <DialogDescription>
               {detailGroup
