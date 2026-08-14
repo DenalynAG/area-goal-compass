@@ -221,17 +221,24 @@ export default function SeleccionDesarrolloPage() {
     return activeCompetencies.filter(c => ids.has(c.id));
   };
 
-  // Agrupar por convocatoria: cargo + área (+ subárea)
+  // Agrupar por convocatoria: área (+ subárea) + fecha. Una misma convocatoria
+  // puede incluir varios cargos o perfiles.
   const groups = useMemo(() => {
-    const map = new Map<string, { key: string; position: string | null; area_id: string | null; subarea_id: string | null; rows: Assessment[] }>();
+    const map = new Map<string, { key: string; positions: string[]; position: string | null; area_id: string | null; subarea_id: string | null; rows: Assessment[] }>();
     filtered.forEach(row => {
-      const key = `${row.position ?? '—'}|${row.area_id ?? '—'}|${row.subarea_id ?? '—'}`;
+      const key = `${row.area_id ?? '—'}|${row.subarea_id ?? '—'}|${row.evaluation_date ?? '—'}`;
       if (!map.has(key)) {
-        map.set(key, { key, position: row.position, area_id: row.area_id, subarea_id: row.subarea_id, rows: [] });
+        map.set(key, { key, positions: [], position: row.position, area_id: row.area_id, subarea_id: row.subarea_id, rows: [] });
       }
-      map.get(key)!.rows.push(row);
+      const g = map.get(key)!;
+      g.rows.push(row);
+      const p = row.position?.trim();
+      if (p && !g.positions.includes(p)) g.positions.push(p);
     });
-    return Array.from(map.values());
+    return Array.from(map.values()).map(g => ({
+      ...g,
+      position: g.positions.length ? g.positions.join(' · ') : null,
+    }));
   }, [filtered]);
 
   // Un aspirante está "completado" cuando su ficha quedó en estado evaluado
