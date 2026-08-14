@@ -122,7 +122,6 @@ export default function ControlActivosPage() {
     setPhotoFile(null); setPhotoPreview(null);
     setEditRecord(null);
     setIsEquipoMode(false);
-    setOshCode("");
     setSelectedInventoryId("");
   };
 
