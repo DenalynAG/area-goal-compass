@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import InventarioActivosITTab from "@/components/InventarioActivosITTab";
 import * as XLSX from "xlsx";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAreas, useSubareas, useProfiles, useMemberships, useUserRoles } from "@/hooks/useSupabaseData";
+import { useAreas, useSubareas, useProfiles, useMemberships } from "@/hooks/useSupabaseData";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { format } from "date-fns";
