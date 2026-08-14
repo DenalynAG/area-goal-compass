@@ -592,7 +592,6 @@ export default function ControlActivosPage() {
                       setSelectedInventoryId(v);
                       const item = inventoryItems.find((i: any) => i.id === v);
                       if (!item) return;
-                      setOshCode(item.osh_code || "");
                       const collab =
                         profiles.find((p) => norm(p.name) === norm(item.collaborator_name)) ||
                         profiles.find((p) => nameKey(p.name) === nameKey(item.collaborator_name));
