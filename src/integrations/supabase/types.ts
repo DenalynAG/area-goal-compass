@@ -1964,6 +1964,45 @@ export type Database = {
           },
         ]
       }
+      recurring_providers: {
+        Row: {
+          arl: string | null
+          company_name: string
+          contact_name: string | null
+          created_at: string
+          created_by: string | null
+          document_id: string
+          full_name: string
+          id: string
+          nit: string | null
+          updated_at: string
+        }
+        Insert: {
+          arl?: string | null
+          company_name: string
+          contact_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          document_id: string
+          full_name: string
+          id?: string
+          nit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          arl?: string | null
+          company_name?: string
+          contact_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          document_id?: string
+          full_name?: string
+          id?: string
+          nit?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sampling_grid_rows: {
         Row: {
           area_name: string
