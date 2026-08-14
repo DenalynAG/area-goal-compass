@@ -1,10 +1,10 @@
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import InventarioActivosITTab from "@/components/InventarioActivosITTab";
 import * as XLSX from "xlsx";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAreas, useSubareas, useProfiles, useMemberships, useUserRoles } from "@/hooks/useSupabaseData";
+import { useAreas, useSubareas, useProfiles, useMemberships } from "@/hooks/useSupabaseData";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -32,6 +32,13 @@ const ASSET_TYPES = [
   "Otros",
 ];
 
+const stripAccents = (s: string) =>
+  (s || "").toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+const norm = (s: string) =>
+  stripAccents(s).trim().toLowerCase().replace(/\s+/g, " ");
+const nameKey = (s: string) =>
+  norm(s).split(" ").filter(Boolean).sort().join(" ");
+
 function useAssetMovements() {
   return useQuery({
     queryKey: ["asset_movements"],
@@ -40,6 +47,20 @@ function useAssetMovements() {
         .from("asset_movements" as any)
         .select("*")
         .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+  });
+}
+
+function useItInventory() {
+  return useQuery({
+    queryKey: ["it_asset_inventory"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("it_asset_inventory" as any)
+        .select("*")
+        .order("osh_code", { ascending: true });
       if (error) throw error;
       return (data || []) as any[];
     },
@@ -55,11 +76,12 @@ export default function ControlActivosPage() {
   const { data: subareas = [] } = useSubareas();
   const { data: profiles = [] } = useProfiles();
   const { data: memberships = [] } = useMemberships();
-  const { data: userRoles = [] } = useUserRoles();
   const { data: records = [], isLoading } = useAssetMovements();
+  const { data: inventoryItems = [] } = useItInventory();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [oshCode, setOshCode] = useState("");
+  const [selectedInventoryId, setSelectedInventoryId] = useState("");
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -102,6 +124,7 @@ export default function ControlActivosPage() {
     setEditRecord(null);
     setIsEquipoMode(false);
     setOshCode("");
+    setSelectedInventoryId("");
   };
 
   const populateForm = (r: any) => {
@@ -119,6 +142,7 @@ export default function ControlActivosPage() {
     setStatus(r.status || "pendiente");
     setPhotoPreview(r.photo_url || null);
     setPhotoFile(null);
+    setSelectedInventoryId("");
   };
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -357,54 +381,7 @@ export default function ControlActivosPage() {
   const getAreaName = (id: string | null) => areas.find((a) => a.id === id)?.name || "—";
   const getSubareaName = (id: string | null) => subareas.find((s) => s.id === id)?.name || "";
 
-  // Leaders with assigned laptops
-  const leadersWithLaptops = useMemo(() => {
-    // Get leaders: area leaders + subarea leaders + users with admin_area or lider_subarea roles
-    const leaderUserIds = new Set<string>();
 
-    // From areas table
-    areas.forEach(a => { if (a.leader_user_id) leaderUserIds.add(a.leader_user_id); });
-    // From subareas table
-    subareas.forEach(s => { if (s.leader_user_id) leaderUserIds.add(s.leader_user_id); });
-    // From user_roles
-    userRoles.forEach(r => {
-      if (r.role === "admin_area" || r.role === "lider_subarea") leaderUserIds.add(r.user_id);
-    });
-
-    // Find laptop movements for these leaders
-    return Array.from(leaderUserIds).map(userId => {
-      const profile = profiles.find(p => p.id === userId);
-      if (!profile) return null;
-
-      const membership = memberships.find(m => m.user_id === userId);
-      const area = membership ? areas.find(a => a.id === membership.area_id) : null;
-      const subarea = membership?.subarea_id ? subareas.find(s => s.id === membership.subarea_id) : null;
-
-      // Check roles
-      const roles = userRoles.filter(r => r.user_id === userId).map(r => r.role);
-      const isAreaLeader = roles.includes("admin_area") || areas.some(a => a.leader_user_id === userId);
-      const isSubareaLeader = roles.includes("lider_subarea") || subareas.some(s => s.leader_user_id === userId);
-
-      // Find laptop asset movements for this user
-      const laptopMovements = records.filter(
-        (r: any) => r.collaborator_user_id === userId && (r.asset_type === "Portátil" || r.asset_type === "Computador Escritorio")
-      );
-
-      const lastMovement = laptopMovements.length > 0 ? laptopMovements[0] : null;
-
-      return {
-        userId,
-        name: profile.name,
-        position: profile.position || "Sin cargo",
-        areaName: area?.name || "—",
-        subareaName: subarea?.name || "",
-        roleLabel: isAreaLeader ? "Líder de Área" : isSubareaLeader ? "Líder de Subárea" : "Líder",
-        hasLaptop: laptopMovements.length > 0,
-        lastMovement,
-        totalMovements: laptopMovements.length,
-      };
-    }).filter(Boolean) as any[];
-  }, [areas, subareas, profiles, memberships, userRoles, records]);
 
   return (
     <div className="space-y-6">
@@ -608,29 +585,47 @@ export default function ControlActivosPage() {
                 <div className="space-y-2 md:col-span-2">
                   <Label>Código Registro OSH</Label>
                   <SearchableSelect
-                    options={leadersWithLaptops
-                      .filter((l: any) => l.lastMovement)
-                      .map((l: any) => {
-                        const code = l.lastMovement.reason || l.lastMovement.id.substring(0, 8).toUpperCase();
-                        return {
-                          value: l.lastMovement.id,
-                          label: `${code} — ${l.name} (${l.lastMovement.asset_type}${l.lastMovement.asset_serial ? ` · ${l.lastMovement.asset_serial}` : ""})`,
-                        };
-                      })}
-                    value={oshCode}
+                    options={inventoryItems.map((i: any) => {
+                      const label = `${i.osh_code || "Sin código"} — ${i.collaborator_name || ""}${i.position_name ? ` (${i.position_name})` : ""} · ${i.asset_name || ""}${i.serial_number ? ` · ${i.serial_number}` : ""}`;
+                      return { value: i.id, label };
+                    })}
+                    value={selectedInventoryId}
                     onValueChange={(v) => {
-                      setOshCode(v);
-                      const leader = leadersWithLaptops.find((l: any) => l.lastMovement?.id === v);
-                      if (leader?.lastMovement) {
-                        const m = leader.lastMovement;
-                        setAreaId(m.area_id || "");
-                        setSubareaId(m.subarea_id || "");
-                        setCollaboratorId(m.collaborator_user_id || "");
-                        const isKnown = ASSET_TYPES.includes(m.asset_type);
-                        setAssetType(isKnown ? m.asset_type : "Otros");
-                        setCustomAssetType(isKnown ? "" : m.asset_type || "");
-                        setAssetSerial(m.asset_serial || "");
+                      setSelectedInventoryId(v);
+                      const item = inventoryItems.find((i: any) => i.id === v);
+                      if (!item) return;
+                      setOshCode(item.osh_code || "");
+                      const collab =
+                        profiles.find((p) => norm(p.name) === norm(item.collaborator_name)) ||
+                        profiles.find((p) => nameKey(p.name) === nameKey(item.collaborator_name));
+                      if (collab) {
+                        setCollaboratorId(collab.id);
+                        const membership = memberships.find((m) => m.user_id === collab.id);
+                        setAreaId(membership?.area_id || "");
+                        setSubareaId(membership?.subarea_id || "");
+                      } else {
+                        setCollaboratorId("");
+                        setAreaId("");
+                        setSubareaId("");
                       }
+                      const assetName = (item.asset_name || "").toLowerCase();
+                      if (assetName.includes("portátil") || assetName.includes("portatil") || assetName.includes("laptop") || assetName.includes("probook") || assetName.includes("notebook") || assetName.includes("macbook")) {
+                        setAssetType("Portátil");
+                        setCustomAssetType("");
+                      } else if (assetName.includes("escritorio") || assetName.includes("desktop") || assetName.includes("computador") || assetName.includes("pc fija") || assetName.includes("cpu")) {
+                        setAssetType("Computador Escritorio");
+                        setCustomAssetType("");
+                      } else if (assetName.includes("impresora") || assetName.includes("printer")) {
+                        setAssetType("Impresora");
+                        setCustomAssetType("");
+                      } else if (assetName.includes("monitor") || assetName.includes("pantalla") || assetName.includes("display")) {
+                        setAssetType("Monitor");
+                        setCustomAssetType("");
+                      } else {
+                        setAssetType("Otros");
+                        setCustomAssetType(item.asset_name || "");
+                      }
+                      setAssetSerial(item.serial_number || "");
                     }}
                     placeholder="Buscar por código OSH para autocompletar"
                     searchPlaceholder="Buscar código OSH, responsable, equipo..."
