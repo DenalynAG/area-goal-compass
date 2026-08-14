@@ -532,6 +532,11 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+        <TabsContent value="proveedores">
+          <ProveedoresRecurrentesTab />
+        </TabsContent>
+      </Tabs>
 
       {/* Detail Dialog */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
