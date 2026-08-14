@@ -411,6 +411,12 @@ export default function ControlActivosPage() {
         <p className="text-muted-foreground text-sm">Registro de entrada y salida de activos</p>
       </div>
 
+      <Tabs defaultValue="movimientos" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="movimientos">Movimientos</TabsTrigger>
+          <TabsTrigger value="inventario">Inventario de Activos IT</TabsTrigger>
+        </TabsList>
+        <TabsContent value="movimientos" className="space-y-4">
       <Card>
         <CardHeader className="pb-3">
           <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
