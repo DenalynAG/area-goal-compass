@@ -387,8 +387,6 @@ export default function ControlActivosPage() {
   const getAreaName = (id: string | null) => areas.find((a) => a.id === id)?.name || "—";
   const getSubareaName = (id: string | null) => subareas.find((s) => s.id === id)?.name || "";
 
-  // Leaders with assigned laptops (kept for possible future use)
-  const leadersWithLaptops = useMemo(() => [] as any[], []);
 
 
   return (
