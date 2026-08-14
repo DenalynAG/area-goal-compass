@@ -1,5 +1,7 @@
 import { useState, useRef, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import InventarioActivosITTab from "@/components/InventarioActivosITTab";
 import * as XLSX from "xlsx";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAreas, useSubareas, useProfiles, useMemberships, useUserRoles } from "@/hooks/useSupabaseData";
