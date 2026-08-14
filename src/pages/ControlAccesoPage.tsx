@@ -37,6 +37,20 @@ function useAccessControl() {
 
 const PAGE_SIZE = 10;
 
+function useProvidersLookup() {
+  return useQuery({
+    queryKey: ["recurring_providers"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("recurring_providers" as any)
+        .select("*")
+        .order("company_name", { ascending: true });
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+  });
+}
+
 interface ControlAccesoPageProps {
   areaFilterName?: string;
   subareaFilterName?: string;
@@ -50,6 +64,7 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
   const { data: profiles = [] } = useProfiles();
   const { data: memberships = [] } = useMemberships();
   const { data: records = [], isLoading } = useAccessControl();
+  const { data: providers = [] } = useProvidersLookup();
 
   const isSuperAdmin = roles.includes("super_admin" as any);
   const isAdminArea = roles.includes("admin_area" as any);
@@ -118,6 +133,45 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
   const [hasActivity, setHasActivity] = useState(false);
   const [arlFile, setArlFile] = useState<File | null>(null);
   const [arlFileName, setArlFileName] = useState<string | null>(null);
+  const [showProviderList, setShowProviderList] = useState(false);
+  const [savingProvider, setSavingProvider] = useState(false);
+
+  const companyMatches = companyName.trim()
+    ? providers.filter((p: any) =>
+        (p.company_name || "").toLowerCase().includes(companyName.trim().toLowerCase())
+      )
+    : providers;
+  const exactProvider = providers.find(
+    (p: any) => (p.company_name || "").trim().toLowerCase() === companyName.trim().toLowerCase()
+  );
+
+  const applyProvider = (p: any) => {
+    setCompanyName(p.company_name || "");
+    if (p.full_name) setVisitorName(p.full_name);
+    if (p.document_id) setDocumentId(p.document_id);
+    if (p.arl) setArl(p.arl);
+    setShowProviderList(false);
+    toast.success("Datos del proveedor cargados");
+  };
+
+  const saveAsProvider = async () => {
+    if (!companyName.trim() || !visitorName.trim() || !documentId.trim()) {
+      toast.error("Completa empresa, nombre y documento para crear el proveedor");
+      return;
+    }
+    setSavingProvider(true);
+    const { error } = await supabase.from("recurring_providers" as any).insert({
+      company_name: companyName.trim(),
+      full_name: visitorName.trim(),
+      document_id: documentId.trim(),
+      arl: arl.trim() || null,
+      created_by: user?.id ?? null,
+    });
+    setSavingProvider(false);
+    if (error) { toast.error("No se pudo crear el proveedor"); return; }
+    toast.success("Proveedor recurrente creado");
+    qc.invalidateQueries({ queryKey: ["recurring_providers"] });
+  };
 
   const filteredSubareas = subareas.filter((s) => s.area_id === areaId);
 
@@ -604,7 +658,43 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Nombre Empresa *</Label>
-                <Input value={companyName} onChange={(e) => setCompanyName(e.target.value)} required />
+                <div className="relative">
+                  <Input
+                    value={companyName}
+                    onChange={(e) => { setCompanyName(e.target.value); setShowProviderList(true); }}
+                    onFocus={() => setShowProviderList(true)}
+                    onBlur={() => setTimeout(() => setShowProviderList(false), 150)}
+                    placeholder="Buscar o escribir empresa..."
+                    autoComplete="off"
+                    required
+                  />
+                  {showProviderList && companyMatches.length > 0 && (
+                    <div className="absolute z-50 mt-1 w-full max-h-56 overflow-y-auto rounded-md border border-border bg-popover shadow-md">
+                      {companyMatches.slice(0, 8).map((p: any) => (
+                        <button
+                          key={p.id}
+                          type="button"
+                          className="w-full text-left px-3 py-2 hover:bg-accent text-sm"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => applyProvider(p)}
+                        >
+                          <span className="font-medium">{p.company_name}</span>
+                          <span className="block text-xs text-muted-foreground">
+                            {p.full_name}{p.document_id ? ` · ${p.document_id}` : ""}{p.nit ? ` · NIT ${p.nit}` : ""}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {companyName.trim() && !exactProvider && (
+                  <div className="flex items-center justify-between gap-2 rounded-md border border-dashed border-border p-2">
+                    <span className="text-xs text-muted-foreground">Proveedor no registrado</span>
+                    <Button type="button" size="sm" variant="outline" disabled={savingProvider} onClick={saveAsProvider}>
+                      {savingProvider ? "Creando..." : "Crear proveedor"}
+                    </Button>
+                  </div>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Nombre y Apellido *</Label>
