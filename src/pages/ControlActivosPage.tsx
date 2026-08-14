@@ -53,6 +53,20 @@ function useAssetMovements() {
   });
 }
 
+function useItInventory() {
+  return useQuery({
+    queryKey: ["it_asset_inventory"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("it_asset_inventory" as any)
+        .select("*")
+        .order("osh_code", { ascending: true });
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+  });
+}
+
 const PAGE_SIZE = 10;
 
 export default function ControlActivosPage() {
