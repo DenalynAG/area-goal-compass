@@ -560,6 +560,11 @@ export default function ControlActivosPage() {
           </div>
         </CardHeader>
       </Card>
+        </TabsContent>
+        <TabsContent value="inventario">
+          <InventarioActivosITTab />
+        </TabsContent>
+      </Tabs>
 
       {/* Detail Dialog */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
