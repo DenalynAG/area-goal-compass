@@ -639,29 +639,47 @@ export default function ControlActivosPage() {
                 <div className="space-y-2 md:col-span-2">
                   <Label>Código Registro OSH</Label>
                   <SearchableSelect
-                    options={leadersWithLaptops
-                      .filter((l: any) => l.lastMovement)
-                      .map((l: any) => {
-                        const code = l.lastMovement.reason || l.lastMovement.id.substring(0, 8).toUpperCase();
-                        return {
-                          value: l.lastMovement.id,
-                          label: `${code} — ${l.name} (${l.lastMovement.asset_type}${l.lastMovement.asset_serial ? ` · ${l.lastMovement.asset_serial}` : ""})`,
-                        };
-                      })}
-                    value={oshCode}
+                    options={inventoryItems.map((i: any) => {
+                      const label = `${i.osh_code || "Sin código"} — ${i.collaborator_name || ""}${i.position_name ? ` (${i.position_name})` : ""} · ${i.asset_name || ""}${i.serial_number ? ` · ${i.serial_number}` : ""}`;
+                      return { value: i.id, label };
+                    })}
+                    value={selectedInventoryId}
                     onValueChange={(v) => {
-                      setOshCode(v);
-                      const leader = leadersWithLaptops.find((l: any) => l.lastMovement?.id === v);
-                      if (leader?.lastMovement) {
-                        const m = leader.lastMovement;
-                        setAreaId(m.area_id || "");
-                        setSubareaId(m.subarea_id || "");
-                        setCollaboratorId(m.collaborator_user_id || "");
-                        const isKnown = ASSET_TYPES.includes(m.asset_type);
-                        setAssetType(isKnown ? m.asset_type : "Otros");
-                        setCustomAssetType(isKnown ? "" : m.asset_type || "");
-                        setAssetSerial(m.asset_serial || "");
+                      setSelectedInventoryId(v);
+                      const item = inventoryItems.find((i: any) => i.id === v);
+                      if (!item) return;
+                      setOshCode(item.osh_code || "");
+                      const collab =
+                        profiles.find((p) => norm(p.name) === norm(item.collaborator_name)) ||
+                        profiles.find((p) => nameKey(p.name) === nameKey(item.collaborator_name));
+                      if (collab) {
+                        setCollaboratorId(collab.id);
+                        const membership = memberships.find((m) => m.user_id === collab.id);
+                        setAreaId(membership?.area_id || "");
+                        setSubareaId(membership?.subarea_id || "");
+                      } else {
+                        setCollaboratorId("");
+                        setAreaId("");
+                        setSubareaId("");
                       }
+                      const assetName = (item.asset_name || "").toLowerCase();
+                      if (assetName.includes("portátil") || assetName.includes("portatil") || assetName.includes("laptop") || assetName.includes("probook") || assetName.includes("notebook") || assetName.includes("macbook")) {
+                        setAssetType("Portátil");
+                        setCustomAssetType("");
+                      } else if (assetName.includes("escritorio") || assetName.includes("desktop") || assetName.includes("computador") || assetName.includes("pc fija") || assetName.includes("cpu")) {
+                        setAssetType("Computador Escritorio");
+                        setCustomAssetType("");
+                      } else if (assetName.includes("impresora") || assetName.includes("printer")) {
+                        setAssetType("Impresora");
+                        setCustomAssetType("");
+                      } else if (assetName.includes("monitor") || assetName.includes("pantalla") || assetName.includes("display")) {
+                        setAssetType("Monitor");
+                        setCustomAssetType("");
+                      } else {
+                        setAssetType("Otros");
+                        setCustomAssetType(item.asset_name || "");
+                      }
+                      setAssetSerial(item.serial_number || "");
                     }}
                     placeholder="Buscar por código OSH para autocompletar"
                     searchPlaceholder="Buscar código OSH, responsable, equipo..."
