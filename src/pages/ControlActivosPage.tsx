@@ -78,9 +78,11 @@ export default function ControlActivosPage() {
   const { data: memberships = [] } = useMemberships();
   const { data: userRoles = [] } = useUserRoles();
   const { data: records = [], isLoading } = useAssetMovements();
+  const { data: inventoryItems = [] } = useItInventory();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [oshCode, setOshCode] = useState("");
+  const [selectedInventoryId, setSelectedInventoryId] = useState("");
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [photoFile, setPhotoFile] = useState<File | null>(null);
