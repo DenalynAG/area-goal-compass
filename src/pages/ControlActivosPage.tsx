@@ -80,7 +80,6 @@ export default function ControlActivosPage() {
   const { data: inventoryItems = [] } = useItInventory();
 
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [oshCode, setOshCode] = useState("");
   const [selectedInventoryId, setSelectedInventoryId] = useState("");
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
