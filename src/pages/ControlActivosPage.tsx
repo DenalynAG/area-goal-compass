@@ -125,6 +125,7 @@ export default function ControlActivosPage() {
     setEditRecord(null);
     setIsEquipoMode(false);
     setOshCode("");
+    setSelectedInventoryId("");
   };
 
   const populateForm = (r: any) => {
