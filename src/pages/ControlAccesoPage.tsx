@@ -18,6 +18,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Plus, DoorOpen, LogOut as LogOutIcon, Camera, X, Image as ImageIcon, Eye, Pencil, Trash2, ChevronLeft, ChevronRight, FileText, Upload, ShieldCheck, AlertTriangle, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ProveedoresRecurrentesTab from "@/components/ProveedoresRecurrentesTab";
 
 function useAccessControl() {
   return useQuery({
@@ -348,6 +350,12 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
         </p>
       </div>
 
+      <Tabs defaultValue="registros" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="registros">Registros de Acceso</TabsTrigger>
+          <TabsTrigger value="proveedores">Proveedores Recurrentes</TabsTrigger>
+        </TabsList>
+        <TabsContent value="registros" className="space-y-4">
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
@@ -524,6 +532,11 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+        <TabsContent value="proveedores">
+          <ProveedoresRecurrentesTab />
+        </TabsContent>
+      </Tabs>
 
       {/* Detail Dialog */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
