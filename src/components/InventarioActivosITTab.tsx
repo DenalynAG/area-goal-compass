@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -13,6 +13,20 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Plus, Pencil, Trash2, Database, ChevronLeft, ChevronRight } from "lucide-react";
 
 const PAGE_SIZE = 10;
+
+function useCollaborators() {
+  return useQuery({
+    queryKey: ["profiles_it_inventory"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, name, position")
+        .order("name", { ascending: true });
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+  });
+}
 
 function useItInventory() {
   return useQuery({
@@ -32,6 +46,7 @@ export default function InventarioActivosITTab() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { data: items = [], isLoading } = useItInventory();
+  const { data: collaborators = [] } = useCollaborators();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<any>(null);
@@ -45,10 +60,30 @@ export default function InventarioActivosITTab() {
   const [asset, setAsset] = useState("");
   const [serial, setSerial] = useState("");
   const [oshCode, setOshCode] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+
+  const suggestions = useMemo(() => {
+    const q = collaborator.trim().toLowerCase();
+    if (q.length < 2) return [];
+    return collaborators
+      .filter((c: any) => (c.name || "").toLowerCase().includes(q))
+      .slice(0, 8);
+  }, [collaborator, collaborators]);
+
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, []);
 
   const resetForm = () => {
     setCollaborator(""); setPosition(""); setAsset(""); setSerial(""); setOshCode("");
-    setEditRecord(null);
+    setEditRecord(null); setShowSuggestions(false);
   };
 
   const populate = (r: any) => {
@@ -204,9 +239,36 @@ export default function InventarioActivosITTab() {
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
+              <div className="space-y-2 relative" ref={suggestionsRef}>
                 <Label>Colaborador *</Label>
-                <Input value={collaborator} onChange={(e) => setCollaborator(e.target.value)} maxLength={150} required />
+                <Input
+                  value={collaborator}
+                  onChange={(e) => { setCollaborator(e.target.value); setShowSuggestions(true); }}
+                  onFocus={() => setShowSuggestions(true)}
+                  placeholder="Escribe para buscar en colaboradores..."
+                  autoComplete="off"
+                  maxLength={150}
+                  required
+                />
+                {showSuggestions && suggestions.length > 0 && (
+                  <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border border-border rounded-md shadow-md max-h-56 overflow-y-auto">
+                    {suggestions.map((c: any) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors"
+                        onClick={() => {
+                          setCollaborator(c.name || "");
+                          setPosition(c.position || "");
+                          setShowSuggestions(false);
+                        }}
+                      >
+                        <span className="font-medium">{c.name}</span>
+                        {c.position && <span className="text-muted-foreground"> — {c.position}</span>}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Cargo</Label>
