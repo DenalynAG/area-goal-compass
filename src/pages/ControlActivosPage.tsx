@@ -32,6 +32,13 @@ const ASSET_TYPES = [
   "Otros",
 ];
 
+const stripAccents = (s: string) =>
+  (s || "").toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+const norm = (s: string) =>
+  stripAccents(s).trim().toLowerCase().replace(/\s+/g, " ");
+const nameKey = (s: string) =>
+  norm(s).split(" ").filter(Boolean).sort().join(" ");
+
 function useAssetMovements() {
   return useQuery({
     queryKey: ["asset_movements"],
