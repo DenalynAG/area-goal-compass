@@ -143,6 +143,13 @@ export default function ControlActivosPage() {
     setStatus(r.status || "pendiente");
     setPhotoPreview(r.photo_url || null);
     setPhotoFile(null);
+    setOshCode(r.osh_code || "");
+    if (r.osh_code) {
+      const match = inventoryItems.find((i: any) => i.osh_code === r.osh_code);
+      setSelectedInventoryId(match?.id || "");
+    } else {
+      setSelectedInventoryId("");
+    }
   };
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
