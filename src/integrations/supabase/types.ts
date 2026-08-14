@@ -1193,6 +1193,42 @@ export type Database = {
         }
         Relationships: []
       }
+      it_asset_inventory: {
+        Row: {
+          asset_name: string
+          collaborator_name: string
+          created_at: string
+          created_by: string | null
+          id: string
+          osh_code: string | null
+          position_name: string | null
+          serial_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          asset_name: string
+          collaborator_name: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          osh_code?: string | null
+          position_name?: string | null
+          serial_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          asset_name?: string
+          collaborator_name?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          osh_code?: string | null
+          position_name?: string | null
+          serial_number?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       kpi_measurement_history: {
         Row: {
           action: string
