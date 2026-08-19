@@ -149,6 +149,44 @@ export type Database = {
           },
         ]
       }
+      access_status_history: {
+        Row: {
+          access_id: string
+          changed_at: string
+          changed_by: string | null
+          changed_by_name: string | null
+          id: string
+          new_status: string
+          previous_status: string | null
+        }
+        Insert: {
+          access_id: string
+          changed_at?: string
+          changed_by?: string | null
+          changed_by_name?: string | null
+          id?: string
+          new_status: string
+          previous_status?: string | null
+        }
+        Update: {
+          access_id?: string
+          changed_at?: string
+          changed_by?: string | null
+          changed_by_name?: string | null
+          id?: string
+          new_status?: string
+          previous_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "access_status_history_access_id_fkey"
+            columns: ["access_id"]
+            isOneToOne: false
+            referencedRelation: "access_control"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       activity_log: {
         Row: {
           action: string
