@@ -137,6 +137,14 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
   const [arlFileName, setArlFileName] = useState<string | null>(null);
   const [showProviderList, setShowProviderList] = useState(false);
   const [savingProvider, setSavingProvider] = useState(false);
+  const [showZoneSuggestions, setShowZoneSuggestions] = useState(false);
+  const { data: hotelZones = [] } = useHotelZones();
+
+  const zoneSuggestions = zoneReq.trim()
+    ? hotelZones.filter((z: any) =>
+        (z.name || "").toLowerCase().includes(zoneReq.trim().toLowerCase())
+      )
+    : hotelZones;
 
   const companyMatches = companyName.trim()
     ? providers.filter((p: any) =>
