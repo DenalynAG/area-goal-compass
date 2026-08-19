@@ -563,6 +563,10 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
                               onClick={() => { setDetailRecord(r); setDetailOpen(true); }}>
                               <Eye className="h-4 w-4" />
                             </Button>
+                            <Button size="icon" variant="ghost" className="h-8 w-8" title="Historial de estados"
+                              onClick={() => { setHistoryRecord(r); setHistoryOpen(true); }}>
+                              <History className="h-4 w-4" />
+                            </Button>
                             <Button size="icon" variant="ghost" className="h-8 w-8" title="Editar"
                               onClick={() => { setEditRecord(r); populateForm(r); setDialogOpen(true); }}>
                               <Pencil className="h-4 w-4" />
