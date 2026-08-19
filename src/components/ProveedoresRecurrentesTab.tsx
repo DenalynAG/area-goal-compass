@@ -132,7 +132,7 @@ export default function ProveedoresRecurrentesTab() {
   };
 
   const filtered = providers.filter((p: any) =>
-    [p.company_name, p.nit, p.contact_name, p.full_name, p.document_id, p.arl]
+    [p.company_name, p.nit, p.full_name, p.document_id, p.arl]
       .filter(Boolean).join(" ").toLowerCase().includes(search.toLowerCase())
   );
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -172,7 +172,6 @@ export default function ProveedoresRecurrentesTab() {
                   <TableRow>
                     <TableHead>Nombre Empresa</TableHead>
                     <TableHead>NIT</TableHead>
-                    <TableHead>Nombre</TableHead>
                     <TableHead>Nombre y Apellido</TableHead>
                     <TableHead>Documento de Identidad</TableHead>
                     <TableHead>ARL</TableHead>
@@ -184,10 +183,15 @@ export default function ProveedoresRecurrentesTab() {
                     <TableRow key={p.id}>
                       <TableCell className="font-medium">{p.company_name}</TableCell>
                       <TableCell>{p.nit || "—"}</TableCell>
-                      <TableCell>{p.contact_name || "—"}</TableCell>
                       <TableCell>{p.full_name}</TableCell>
                       <TableCell>{p.document_id}</TableCell>
-                      <TableCell>{p.arl || "—"}</TableCell>
+                      <TableCell>
+                        {p.arl_document_url ? (
+                          <a href={p.arl_document_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">
+                            <FileText className="h-4 w-4" /> Ver PDF
+                          </a>
+                        ) : "—"}
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <Button size="icon" variant="ghost" className="h-8 w-8" title="Editar"
@@ -245,10 +249,6 @@ export default function ProveedoresRecurrentesTab() {
                 <Input value={nit} onChange={(e) => setNit(e.target.value)} maxLength={50} />
               </div>
               <div className="space-y-2">
-                <Label>Nombre</Label>
-                <Input value={contactName} onChange={(e) => setContactName(e.target.value)} maxLength={100} />
-              </div>
-              <div className="space-y-2">
                 <Label>Nombre y Apellido *</Label>
                 <Input value={fullName} onChange={(e) => setFullName(e.target.value)} maxLength={150} required />
               </div>
@@ -256,9 +256,25 @@ export default function ProveedoresRecurrentesTab() {
                 <Label>Documento de Identidad *</Label>
                 <Input value={documentId} onChange={(e) => setDocumentId(e.target.value)} maxLength={50} required />
               </div>
-              <div className="space-y-2">
-                <Label>ARL</Label>
-                <Input value={arl} onChange={(e) => setArl(e.target.value)} maxLength={100} />
+              <div className="space-y-2 md:col-span-2">
+                <Label>ARL (Adjuntar PDF)</Label>
+                <input ref={arlInputRef} type="file" accept="application/pdf" className="hidden" onChange={handleArlFileChange} />
+                {arlFileName ? (
+                  <div className="flex items-center gap-2 p-3 border rounded-lg bg-muted/30">
+                    <FileText className="h-5 w-5 text-primary" />
+                    <span className="text-sm flex-1 truncate">{arlFileName}</span>
+                    <Button type="button" variant="ghost" size="icon" className="h-7 w-7"
+                      onClick={() => { setArlFile(null); setArlFileName(null); setArlDocUrl(null); }}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button type="button" variant="outline" className="w-full max-w-xs h-12 border-dashed flex items-center gap-2"
+                    onClick={() => arlInputRef.current?.click()}>
+                    <Upload className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">Subir soporte ARL en PDF</span>
+                  </Button>
+                )}
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
