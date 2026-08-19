@@ -150,6 +150,7 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
     if (p.full_name) setVisitorName(p.full_name);
     if (p.document_id) setDocumentId(p.document_id);
     if (p.arl) setArl(p.arl);
+    if (p.arl_document_url) setArlFileName(p.arl || "Soporte ARL del proveedor");
     setShowProviderList(false);
     toast.success("Datos del proveedor cargados");
   };
