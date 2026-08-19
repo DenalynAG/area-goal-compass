@@ -463,7 +463,6 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
                       <TableHead>Empresa</TableHead>
                       <TableHead>Visitante</TableHead>
                       <TableHead>Ingreso</TableHead>
-                      <TableHead>Salida Est.</TableHead>
                       <TableHead>Salida Real</TableHead>
                       <TableHead>Estado</TableHead>
                       <TableHead>Área</TableHead>
@@ -483,11 +482,8 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
                           {r.entry_datetime ? format(new Date(r.entry_datetime), "dd/MM/yy HH:mm", { locale: es }) : "—"}
                         </TableCell>
                         <TableCell className="whitespace-nowrap">
-                          {r.estimated_exit_time ? format(new Date(r.estimated_exit_time), "dd/MM/yy HH:mm", { locale: es }) : "—"}
-                        </TableCell>
-                        <TableCell className="whitespace-nowrap">
                           {r.exit_datetime ? (
-                            <Badge variant="secondary">{format(new Date(r.exit_datetime), "HH:mm", { locale: es })}</Badge>
+                            <Badge variant="secondary">{format(new Date(r.exit_datetime), "dd/MM/yy HH:mm", { locale: es })}</Badge>
                           ) : (
                             <Badge variant="destructive">En sitio</Badge>
                           )}
@@ -616,7 +612,6 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
               <DetailRow label="ARL" value={detailRecord.arl || "—"} />
               <DetailRow label="Actividad por realizar" value={detailRecord.has_activity ? "Sí" : "No"} />
               <DetailRow label="Ingreso" value={detailRecord.entry_datetime ? format(new Date(detailRecord.entry_datetime), "dd/MM/yyyy HH:mm", { locale: es }) : "—"} />
-              <DetailRow label="Salida Estimada" value={detailRecord.estimated_exit_time ? format(new Date(detailRecord.estimated_exit_time), "dd/MM/yyyy HH:mm", { locale: es }) : "—"} />
               <DetailRow label="Salida Real" value={detailRecord.exit_datetime ? format(new Date(detailRecord.exit_datetime), "dd/MM/yyyy HH:mm", { locale: es }) : "En sitio"} />
               <DetailRow label="Área" value={`${getAreaName(detailRecord.area_id)}${detailRecord.subarea_id ? ` / ${getSubareaName(detailRecord.subarea_id)}` : ""}`} />
               <DetailRow label="Acompañante" value={getProfileName(detailRecord.companion_user_id)} />
@@ -713,10 +708,6 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
               <div className="space-y-2">
                 <Label>Fecha y Hora de Ingreso</Label>
                 <Input type="datetime-local" value={entryDatetime} onChange={(e) => setEntryDatetime(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label>Tiempo Estimado de Salida</Label>
-                <Input type="datetime-local" value={estimatedExit} onChange={(e) => setEstimatedExit(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label>Área</Label>
