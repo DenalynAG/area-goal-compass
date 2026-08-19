@@ -593,6 +593,9 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
         <TabsContent value="proveedores">
           <ProveedoresRecurrentesTab />
         </TabsContent>
+        <TabsContent value="activos">
+          <ActivosProveedoresTab />
+        </TabsContent>
       </Tabs>
 
       {/* Detail Dialog */}
