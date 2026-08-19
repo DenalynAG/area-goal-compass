@@ -785,7 +785,7 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
 
               {/* Soporte ARL PDF */}
               <div className="space-y-2 md:col-span-2">
-                <Label>Soporte ARL (PDF)</Label>
+                <Label>ARL (Adjuntar PDF)</Label>
                 <input ref={arlFileInputRef} type="file" accept="application/pdf" className="hidden" onChange={handleArlFileChange} />
                 {arlFileName ? (
                   <div className="flex items-center gap-2 p-3 border rounded-lg bg-muted/30">
