@@ -150,6 +150,7 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
     if (p.full_name) setVisitorName(p.full_name);
     if (p.document_id) setDocumentId(p.document_id);
     if (p.arl) setArl(p.arl);
+    if (p.arl_document_url) setArlFileName(p.arl || "Soporte ARL del proveedor");
     setShowProviderList(false);
     toast.success("Datos del proveedor cargados");
   };
@@ -269,7 +270,7 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
       companion_user_id: companionId || null,
       requester_user_id: requesterId || null,
       zone_requirement: zoneReq.trim(),
-      arl: arl.trim(),
+      arl: arl.trim() || arlFileName || (arlDocUrl ? "Soporte ARL adjunto" : "—"),
       bloque: bloque || null,
       has_activity: hasActivity,
       arl_document_url: arlDocUrl,
@@ -705,10 +706,6 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
                 <Input value={documentId} onChange={(e) => setDocumentId(e.target.value)} required />
               </div>
               <div className="space-y-2">
-                <Label>ARL</Label>
-                <Input value={arl} onChange={(e) => setArl(e.target.value)} />
-              </div>
-              <div className="space-y-2">
                 <Label>Fecha y Hora de Ingreso</Label>
                 <Input type="datetime-local" value={entryDatetime} onChange={(e) => setEntryDatetime(e.target.value)} />
               </div>
@@ -789,7 +786,7 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
 
               {/* Soporte ARL PDF */}
               <div className="space-y-2 md:col-span-2">
-                <Label>Soporte ARL (PDF)</Label>
+                <Label>ARL (Adjuntar PDF)</Label>
                 <input ref={arlFileInputRef} type="file" accept="application/pdf" className="hidden" onChange={handleArlFileChange} />
                 {arlFileName ? (
                   <div className="flex items-center gap-2 p-3 border rounded-lg bg-muted/30">

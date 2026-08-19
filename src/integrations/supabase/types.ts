@@ -2003,6 +2003,7 @@ export type Database = {
       recurring_providers: {
         Row: {
           arl: string | null
+          arl_document_url: string | null
           company_name: string
           contact_name: string | null
           created_at: string
@@ -2015,6 +2016,7 @@ export type Database = {
         }
         Insert: {
           arl?: string | null
+          arl_document_url?: string | null
           company_name: string
           contact_name?: string | null
           created_at?: string
@@ -2027,6 +2029,7 @@ export type Database = {
         }
         Update: {
           arl?: string | null
+          arl_document_url?: string | null
           company_name?: string
           contact_name?: string | null
           created_at?: string
