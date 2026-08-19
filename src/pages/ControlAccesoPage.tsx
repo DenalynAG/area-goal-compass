@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ProveedoresRecurrentesTab from "@/components/ProveedoresRecurrentesTab";
+import ActivosProveedoresTab from "@/components/ActivosProveedoresTab";
 
 function useAccessControl() {
   return useQuery({
@@ -409,6 +410,7 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
         <TabsList>
           <TabsTrigger value="registros">Registros de Acceso</TabsTrigger>
           <TabsTrigger value="proveedores">Proveedores Recurrentes</TabsTrigger>
+          <TabsTrigger value="activos">Activos de Proveedores</TabsTrigger>
         </TabsList>
         <TabsContent value="registros" className="space-y-4">
       <Card>
@@ -590,6 +592,9 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
         </TabsContent>
         <TabsContent value="proveedores">
           <ProveedoresRecurrentesTab />
+        </TabsContent>
+        <TabsContent value="activos">
+          <ActivosProveedoresTab />
         </TabsContent>
       </Tabs>
 

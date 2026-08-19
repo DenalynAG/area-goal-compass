@@ -1941,6 +1941,57 @@ export type Database = {
         }
         Relationships: []
       }
+      provider_assets: {
+        Row: {
+          asset_type: string
+          brand: string | null
+          company_name: string
+          created_at: string
+          created_by: string | null
+          document_id: string | null
+          entry_datetime: string
+          exit_datetime: string | null
+          id: string
+          notes: string | null
+          provider_name: string
+          quantity: number
+          serial_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          asset_type: string
+          brand?: string | null
+          company_name: string
+          created_at?: string
+          created_by?: string | null
+          document_id?: string | null
+          entry_datetime?: string
+          exit_datetime?: string | null
+          id?: string
+          notes?: string | null
+          provider_name: string
+          quantity?: number
+          serial_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          asset_type?: string
+          brand?: string | null
+          company_name?: string
+          created_at?: string
+          created_by?: string | null
+          document_id?: string | null
+          entry_datetime?: string
+          exit_datetime?: string | null
+          id?: string
+          notes?: string | null
+          provider_name?: string
+          quantity?: number
+          serial_number?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       recognition_posts: {
         Row: {
           category: string
