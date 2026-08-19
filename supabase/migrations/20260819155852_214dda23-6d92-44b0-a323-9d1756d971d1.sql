@@ -1,0 +1,1 @@
+ALTER TABLE public.recurring_providers ADD COLUMN IF NOT EXISTS arl_document_url text;
