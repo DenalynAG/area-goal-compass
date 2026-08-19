@@ -21,6 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ProveedoresRecurrentesTab from "@/components/ProveedoresRecurrentesTab";
 import ActivosProveedoresTab from "@/components/ActivosProveedoresTab";
+import ZonasHotelTab, { useHotelZones } from "@/components/ZonasHotelTab";
 
 function useAccessControl() {
   return useQuery({
@@ -136,6 +137,14 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
   const [arlFileName, setArlFileName] = useState<string | null>(null);
   const [showProviderList, setShowProviderList] = useState(false);
   const [savingProvider, setSavingProvider] = useState(false);
+  const [showZoneSuggestions, setShowZoneSuggestions] = useState(false);
+  const { data: hotelZones = [] } = useHotelZones();
+
+  const zoneSuggestions = zoneReq.trim()
+    ? hotelZones.filter((z: any) =>
+        (z.name || "").toLowerCase().includes(zoneReq.trim().toLowerCase())
+      )
+    : hotelZones;
 
   const companyMatches = companyName.trim()
     ? providers.filter((p: any) =>
@@ -442,6 +451,7 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
           <TabsTrigger value="registros">Registros de Acceso</TabsTrigger>
           <TabsTrigger value="proveedores">Proveedores Recurrentes</TabsTrigger>
           <TabsTrigger value="activos">Activos de Proveedores</TabsTrigger>
+          <TabsTrigger value="zonas">Zonas del Hotel</TabsTrigger>
         </TabsList>
         <TabsContent value="registros" className="space-y-4">
       <Card>
@@ -626,6 +636,9 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
         </TabsContent>
         <TabsContent value="activos">
           <ActivosProveedoresTab />
+        </TabsContent>
+        <TabsContent value="zonas">
+          <ZonasHotelTab />
         </TabsContent>
       </Tabs>
 
@@ -830,7 +843,36 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
               </div>
               <div className="space-y-2">
                 <Label>Zona o Requerimiento</Label>
-                <Input value={zoneReq} onChange={(e) => setZoneReq(e.target.value)} placeholder="Ej: Lobby, Piso 3..." />
+                <div className="relative">
+                  <Input
+                    value={zoneReq}
+                    onChange={(e) => { setZoneReq(e.target.value); setShowZoneSuggestions(true); }}
+                    onFocus={() => setShowZoneSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowZoneSuggestions(false), 150)}
+                    placeholder="Ej: Lobby, Piso 3..."
+                    autoComplete="off"
+                  />
+                  {showZoneSuggestions && zoneSuggestions.length > 0 && (
+                    <div className="absolute z-50 mt-1 w-full max-h-56 overflow-y-auto rounded-md border bg-popover shadow-md">
+                      {zoneSuggestions.map((z: any) => (
+                        <button
+                          key={z.id}
+                          type="button"
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-accent flex items-center justify-between gap-2"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => {
+                            setZoneReq(z.name);
+                            if (z.bloque) setBloque(z.bloque);
+                            setShowZoneSuggestions(false);
+                          }}
+                        >
+                          <span>{z.name}</span>
+                          {z.bloque && <span className="text-xs text-muted-foreground">Bloque {z.bloque}</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Bloque</Label>
