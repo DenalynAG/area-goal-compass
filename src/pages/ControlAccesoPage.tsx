@@ -303,6 +303,7 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
       .update({ exit_datetime: now, estimated_exit_time: now } as any)
       .eq("id", id);
     if (error) { toast.error("Error al registrar salida"); return; }
+    await logStatusChange(id, "Entrada", "Salida");
     toast.success("Salida registrada");
     qc.invalidateQueries({ queryKey: ["access_control"] });
   };
@@ -318,6 +319,7 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
       .update(updates)
       .eq("id", record.id);
     if (error) { toast.error("Error al actualizar estado"); return; }
+    await logStatusChange(record.id, isInside ? "Entrada" : "Salida", isInside ? "Salida" : "Entrada");
     toast.success(isInside ? "Salida registrada" : "Entrada registrada");
     qc.invalidateQueries({ queryKey: ["access_control"] });
   };
