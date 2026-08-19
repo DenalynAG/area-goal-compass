@@ -15,7 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, DoorOpen, LogOut as LogOutIcon, Camera, X, Image as ImageIcon, Eye, Pencil, Trash2, ChevronLeft, ChevronRight, FileText, Upload, ShieldCheck, AlertTriangle, Clock } from "lucide-react";
+import { Plus, DoorOpen, LogOut as LogOutIcon, Camera, X, Image as ImageIcon, Eye, Pencil, Trash2, ChevronLeft, ChevronRight, FileText, Upload, ShieldCheck, AlertTriangle, Clock, History } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -296,6 +296,35 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
     setDialogOpen(false);
   };
 
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyRecord, setHistoryRecord] = useState<any>(null);
+
+  const { data: statusHistory = [], isLoading: historyLoading } = useQuery({
+    queryKey: ["access_status_history", historyRecord?.id],
+    enabled: !!historyRecord?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("access_status_history" as any)
+        .select("*")
+        .eq("access_id", historyRecord.id)
+        .order("changed_at", { ascending: false });
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+  });
+
+  const logStatusChange = async (accessId: string, previous: string | null, next: string) => {
+    const currentName = profiles.find((p) => p.id === user?.id)?.name || user?.email || "Usuario";
+    const { error } = await supabase.from("access_status_history" as any).insert({
+      access_id: accessId,
+      previous_status: previous,
+      new_status: next,
+      changed_by: user?.id ?? null,
+      changed_by_name: currentName,
+    });
+    if (!error) qc.invalidateQueries({ queryKey: ["access_status_history"] });
+  };
+
   const handleMarkExit = async (id: string) => {
     const now = new Date().toISOString();
     const { error } = await supabase
@@ -303,6 +332,7 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
       .update({ exit_datetime: now, estimated_exit_time: now } as any)
       .eq("id", id);
     if (error) { toast.error("Error al registrar salida"); return; }
+    await logStatusChange(id, "Entrada", "Salida");
     toast.success("Salida registrada");
     qc.invalidateQueries({ queryKey: ["access_control"] });
   };
@@ -318,6 +348,7 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
       .update(updates)
       .eq("id", record.id);
     if (error) { toast.error("Error al actualizar estado"); return; }
+    await logStatusChange(record.id, isInside ? "Entrada" : "Salida", isInside ? "Salida" : "Entrada");
     toast.success(isInside ? "Salida registrada" : "Entrada registrada");
     qc.invalidateQueries({ queryKey: ["access_control"] });
   };
@@ -549,6 +580,10 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
                               onClick={() => { setDetailRecord(r); setDetailOpen(true); }}>
                               <Eye className="h-4 w-4" />
                             </Button>
+                            <Button size="icon" variant="ghost" className="h-8 w-8" title="Historial de estados"
+                              onClick={() => { setHistoryRecord(r); setHistoryOpen(true); }}>
+                              <History className="h-4 w-4" />
+                            </Button>
                             <Button size="icon" variant="ghost" className="h-8 w-8" title="Editar"
                               onClick={() => { setEditRecord(r); populateForm(r); setDialogOpen(true); }}>
                               <Pencil className="h-4 w-4" />
@@ -593,6 +628,48 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
           <ActivosProveedoresTab />
         </TabsContent>
       </Tabs>
+
+      {/* Status History Dialog */}
+      <Dialog open={historyOpen} onOpenChange={(o) => { setHistoryOpen(o); if (!o) setHistoryRecord(null); }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <History className="h-5 w-5" /> Historial de Estados
+            </DialogTitle>
+            <DialogDescription>
+              {historyRecord ? `${historyRecord.visitor_name} · ${historyRecord.company_name}` : ""}
+            </DialogDescription>
+          </DialogHeader>
+          {historyLoading ? (
+            <p className="text-muted-foreground text-center py-6">Cargando...</p>
+          ) : statusHistory.length === 0 ? (
+            <p className="text-muted-foreground text-center py-6">Sin cambios de estado registrados</p>
+          ) : (
+            <div className="space-y-3">
+              {statusHistory.map((h: any) => (
+                <div key={h.id} className="flex items-start gap-3 border rounded-lg p-3">
+                  <Clock className="h-4 w-4 mt-1 text-muted-foreground shrink-0" />
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-sm">
+                      {h.previous_status && (
+                        <>
+                          <Badge variant="outline">{h.previous_status}</Badge>
+                          <span className="text-muted-foreground">→</span>
+                        </>
+                      )}
+                      <Badge variant={h.new_status === "Salida" ? "secondary" : "default"}>{h.new_status}</Badge>
+                    </div>
+                    <p className="text-sm font-medium">{h.changed_by_name || "Usuario"}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {format(new Date(h.changed_at), "dd/MM/yyyy HH:mm", { locale: es })}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Detail Dialog */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
