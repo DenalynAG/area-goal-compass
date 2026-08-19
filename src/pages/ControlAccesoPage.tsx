@@ -269,7 +269,7 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
       companion_user_id: companionId || null,
       requester_user_id: requesterId || null,
       zone_requirement: zoneReq.trim(),
-      arl: arl.trim(),
+      arl: arl.trim() || arlFileName || (arlDocUrl ? "Soporte ARL adjunto" : "—"),
       bloque: bloque || null,
       has_activity: hasActivity,
       arl_document_url: arlDocUrl,
