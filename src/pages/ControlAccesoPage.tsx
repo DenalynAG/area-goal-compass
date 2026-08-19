@@ -297,6 +297,7 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
   };
 
   const handleMarkExit = async (id: string) => {
+    // logs status change below
     const now = new Date().toISOString();
     const { error } = await supabase
       .from("access_control" as any)
