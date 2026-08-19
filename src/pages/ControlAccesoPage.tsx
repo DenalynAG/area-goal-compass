@@ -296,8 +296,19 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
     setDialogOpen(false);
   };
 
+  const logStatusChange = async (accessId: string, previous: string | null, next: string) => {
+    const currentName = profiles.find((p) => p.id === user?.id)?.name || user?.email || "Usuario";
+    const { error } = await supabase.from("access_status_history" as any).insert({
+      access_id: accessId,
+      previous_status: previous,
+      new_status: next,
+      changed_by: user?.id ?? null,
+      changed_by_name: currentName,
+    });
+    if (!error) qc.invalidateQueries({ queryKey: ["access_status_history"] });
+  };
+
   const handleMarkExit = async (id: string) => {
-    void 0;
     const now = new Date().toISOString();
     const { error } = await supabase
       .from("access_control" as any)
