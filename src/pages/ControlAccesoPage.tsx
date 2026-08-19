@@ -705,10 +705,6 @@ export default function ControlAccesoPage({ areaFilterName, subareaFilterName }:
                 <Input value={documentId} onChange={(e) => setDocumentId(e.target.value)} required />
               </div>
               <div className="space-y-2">
-                <Label>ARL</Label>
-                <Input value={arl} onChange={(e) => setArl(e.target.value)} />
-              </div>
-              <div className="space-y-2">
                 <Label>Fecha y Hora de Ingreso</Label>
                 <Input type="datetime-local" value={entryDatetime} onChange={(e) => setEntryDatetime(e.target.value)} />
               </div>
