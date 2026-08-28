@@ -245,11 +245,12 @@ export default function SeleccionDesarrolloPage() {
   }, [filtered, areas, subareas]);
 
 
+  const norm = (s: string | null | undefined) => (s ?? '').trim().toLowerCase();
   // Un aspirante está "completado" cuando su ficha quedó en estado evaluado
   const isRowCompleted = (row: Assessment) => {
     const c = candidates.find(x =>
       (row.candidate_id && x.id === row.candidate_id) ||
-      (!row.candidate_id && x.full_name === row.candidate_name),
+      norm(x.full_name) === norm(row.candidate_name),
     );
     return c?.status === 'evaluado';
   };
