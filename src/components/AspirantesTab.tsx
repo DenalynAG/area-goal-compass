@@ -358,6 +358,7 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
       area_id: cand.area_id,
       subarea_id: cand.subarea_id,
       position: cand.position,
+      profession: cand.profession ?? null,
       evaluation_date: startDate,
       evaluator_user_id: startEvaluator,
     };
