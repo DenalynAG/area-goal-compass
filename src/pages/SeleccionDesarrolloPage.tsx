@@ -568,7 +568,7 @@ export default function SeleccionDesarrolloPage() {
                     Convocatoria: {group.positions.length ? group.positions.join(' · ') : 'Sin cargo definido'}
                   </h3>
                   <p className="text-xs text-muted-foreground">
-                    Área: {areaName(group.area_id)}{group.subarea_id ? ` · Subárea: ${subareaName(group.subarea_id)}` : ''} · {group.rows.length} aspirante(s) · Completada
+                    Áreas: {group.areasLabel} · {group.rows.length} aspirante(s) · Completada
                   </p>
                 </div>
                 <Button size="sm" variant="outline" onClick={() => setDetailGroupKey(group.key)}>
@@ -640,7 +640,7 @@ export default function SeleccionDesarrolloPage() {
                   Convocatoria: {group.positions.length ? group.positions.join(' · ') : 'Sin cargo definido'}
                 </h3>
                 <p className="text-xs text-muted-foreground">
-                  Área: {areaName(group.area_id)}{group.subarea_id ? ` · Subárea: ${subareaName(group.subarea_id)}` : ''} · {group.rows.length} aspirante(s)
+                  Áreas: {group.areasLabel} · {group.rows.length} aspirante(s)
                 </p>
               </div>
               <Button
@@ -823,7 +823,7 @@ export default function SeleccionDesarrolloPage() {
             </DialogTitle>
             <DialogDescription>
               {detailGroup
-                ? `Área: ${areaName(detailGroup.area_id)}${detailGroup.subarea_id ? ` · Subárea: ${subareaName(detailGroup.subarea_id)}` : ''} · ${detailGroup.rows.length} aspirante(s)`
+                ? `Áreas: ${detailGroup.areasLabel} · ${detailGroup.rows.length} aspirante(s)`
                 : ''}
             </DialogDescription>
           </DialogHeader>
