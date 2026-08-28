@@ -245,11 +245,12 @@ export default function SeleccionDesarrolloPage() {
   }, [filtered, areas, subareas]);
 
 
+  const norm = (s: string | null | undefined) => (s ?? '').trim().toLowerCase();
   // Un aspirante está "completado" cuando su ficha quedó en estado evaluado
   const isRowCompleted = (row: Assessment) => {
     const c = candidates.find(x =>
       (row.candidate_id && x.id === row.candidate_id) ||
-      (!row.candidate_id && x.full_name === row.candidate_name),
+      norm(x.full_name) === norm(row.candidate_name),
     );
     return c?.status === 'evaluado';
   };
@@ -272,19 +273,33 @@ export default function SeleccionDesarrolloPage() {
     const names = rowsIn.map(r => r.candidate_name);
     const ids = rowsIn.map(r => r.candidate_id).filter(Boolean) as string[];
     setCompleting(key);
-    let error: any = null;
-    if (ids.length) {
-      ({ error } = await (supabase.from('assessment_candidates' as any) as any)
-        .update({ status: 'evaluado' }).in('id', ids));
-    } else {
-      ({ error } = await (supabase.from('assessment_candidates' as any) as any)
-        .update({ status: 'evaluado' }).in('full_name', names));
+    try {
+      // Actualizar por id y también por nombre (filas sin candidate_id)
+      if (ids.length) {
+        const { error } = await (supabase.from('assessment_candidates' as any) as any)
+          .update({ status: 'evaluado' }).in('id', ids);
+        if (error) throw error;
+      }
+      const { error } = await (supabase.from('assessment_candidates' as any) as any)
+        .update({ status: 'evaluado' }).in('full_name', names);
+      if (error) throw error;
+
+      // Actualización optimista: limpiar la plantilla de inmediato y pasar a Histórico
+      qc.setQueryData(['assessment_candidates'], (old: any[] | undefined) =>
+        (old ?? []).map(c =>
+          ids.includes(c.id) || names.some(n => norm(n) === norm(c.full_name))
+            ? { ...c, status: 'evaluado' }
+            : c,
+        ),
+      );
+      toast.success('Evaluación completada y enviada al Histórico');
+    } catch (e: any) {
+      toast.error(e?.message ?? 'No se pudo completar la evaluación');
+    } finally {
+      setCompleting(null);
+      qc.invalidateQueries({ queryKey: ['assessment_candidates'] });
+      qc.invalidateQueries({ queryKey: ['assessment_evaluations'] });
     }
-    setCompleting(null);
-    if (error) return toast.error(error.message);
-    toast.success('Evaluación completada');
-    qc.invalidateQueries({ queryKey: ['assessment_candidates'] });
-    qc.invalidateQueries({ queryKey: ['assessment_evaluations'] });
   };
 
   const openNew = () => {
