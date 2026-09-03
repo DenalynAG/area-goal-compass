@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEvidences, type Evidence } from '@/hooks/useSupabaseData';
@@ -36,6 +36,30 @@ const STATUS_CONFIG: Record<string, { icon: typeof Clock; label: string; classNa
   aprobada: { icon: CheckCircle, label: 'Aprobada', className: 'text-green-600 bg-green-50' },
   rechazada: { icon: XCircle, label: 'Rechazada', className: 'text-destructive bg-destructive/10' },
 };
+
+function EvidenceImagePreview({ filePath, fileName }: { filePath: string; fileName: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    supabase.storage.from('evidencias').createSignedUrl(filePath, 600).then(({ data }) => {
+      if (!cancelled && data?.signedUrl) setUrl(data.signedUrl);
+    });
+    return () => { cancelled = true; };
+  }, [filePath]);
+
+  if (!url) return null;
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer" className="block">
+      <img
+        src={url}
+        alt={fileName}
+        className="w-full max-h-64 object-contain rounded-md border bg-muted/20"
+        loading="lazy"
+      />
+    </a>
+  );
+}
 
 export default function EvidencePanel({ entityType, entityId, entityName, open, onOpenChange, period }: Props) {
   const { user, profile, isSuperAdmin, hasRole } = useAuth();
@@ -202,6 +226,10 @@ export default function EvidencePanel({ entityType, entityId, entityName, open, 
                     {statusConf.label}
                   </span>
                 </div>
+
+                {category === 'image' && (
+                  <EvidenceImagePreview filePath={ev.file_path} fileName={ev.file_name} />
+                )}
 
                 {ev.review_notes && (
                   <p className="text-xs text-muted-foreground bg-muted/30 rounded p-2">
