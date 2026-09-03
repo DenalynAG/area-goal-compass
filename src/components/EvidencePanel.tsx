@@ -227,6 +227,10 @@ export default function EvidencePanel({ entityType, entityId, entityName, open, 
                   </span>
                 </div>
 
+                {category === 'image' && (
+                  <EvidenceImagePreview filePath={ev.file_path} fileName={ev.file_name} />
+                )}
+
                 {ev.review_notes && (
                   <p className="text-xs text-muted-foreground bg-muted/30 rounded p-2">
                     <span className="font-medium">Nota:</span> {ev.review_notes}
