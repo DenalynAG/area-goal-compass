@@ -73,6 +73,8 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   const [dashMonth, setDashMonth] = useState<string>(defaultDashMonth);
   const [expandedAreas, setExpandedAreas] = useState<Record<string, boolean>>({});
   const toggleArea = (id: string) => setExpandedAreas(prev => ({ ...prev, [id]: !prev[id] }));
+  const [expandedOwners, setExpandedOwners] = useState<Record<string, boolean>>({});
+  const toggleOwner = (key: string) => setExpandedOwners(prev => ({ ...prev, [key]: !prev[key] }));
 
   // KPI dialog state
   const [kpiDialogOpen, setKpiDialogOpen] = useState(false);
@@ -657,29 +659,42 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
               </div>
               {expandedAreas[`obj-area-${selectedArea.id}`] && (
                 <div className="border-t bg-muted/20 px-5 py-4 space-y-5">
-                  {groupObjectivesByOwner(directAreaObjs, selectedArea.leader_user_id).map(group => (
-                    <div key={group.key} className="space-y-3">
-                      <div className="flex items-center gap-2 pl-1">
+                  {groupObjectivesByOwner(directAreaObjs, selectedArea.leader_user_id).map(group => {
+                    const gKey = `drill-area-${selectedArea.id}-${group.key}`;
+                    const gOpen = expandedOwners[gKey] ?? true;
+                    return (
+                    <div key={group.key} className="rounded-lg border border-border/60 overflow-hidden">
+                      <button
+                        onClick={() => toggleOwner(gKey)}
+                        className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted/40 transition-colors text-left"
+                      >
+                        {gOpen ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+                        <User className="w-3.5 h-3.5 text-muted-foreground" />
                         <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                          Responsable: {group.name}
+                          {group.name}
                         </span>
                         <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
                           {group.objs.length}
                         </span>
                         <div className="flex-1 h-px bg-border" />
-                      </div>
-                      {group.objs.map((obj, idx) => {
-                        const objKpis2 = kpis.filter(k => k.objective_id === obj.id);
-                        const isOpen = expandedObj[obj.id];
-                        return (
-                          <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
-                            onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={(month) => openNewKPI(obj.id, month)} onEditKPI={(k, month) => openEditKPI(k, month)}
-                            onDelete={() => setObjToDelete(obj)} onDeleteKPI={(k) => setKpiToDelete(k)}
-                            profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin} />
-                        );
-                      })}
+                      </button>
+                      {gOpen && (
+                        <div className="px-3 pb-3 pt-1 space-y-3">
+                          {group.objs.map((obj, idx) => {
+                            const objKpis2 = kpis.filter(k => k.objective_id === obj.id);
+                            const isOpen = expandedObj[obj.id];
+                            return (
+                              <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
+                                onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={(month) => openNewKPI(obj.id, month)} onEditKPI={(k, month) => openEditKPI(k, month)}
+                                onDelete={() => setObjToDelete(obj)} onDeleteKPI={(k) => setKpiToDelete(k)}
+                                profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin} />
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
               )}
@@ -723,29 +738,42 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                 </div>
                 {isSubExpanded && (
                   <div className="border-t bg-muted/20 px-5 py-4 space-y-5">
-                    {groupObjectivesByOwner(subObjs, sub.leader_user_id).map(group => (
-                      <div key={group.key} className="space-y-3">
-                        <div className="flex items-center gap-2 pl-1">
+                    {groupObjectivesByOwner(subObjs, sub.leader_user_id).map(group => {
+                      const gKey = `drill-sub-${sub.id}-${group.key}`;
+                      const gOpen = expandedOwners[gKey] ?? true;
+                      return (
+                      <div key={group.key} className="rounded-lg border border-border/60 overflow-hidden">
+                        <button
+                          onClick={() => toggleOwner(gKey)}
+                          className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted/40 transition-colors text-left"
+                        >
+                          {gOpen ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+                          <User className="w-3.5 h-3.5 text-muted-foreground" />
                           <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                            Responsable: {group.name}
+                            {group.name}
                           </span>
                           <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
                             {group.objs.length}
                           </span>
                           <div className="flex-1 h-px bg-border" />
-                        </div>
-                        {group.objs.map((obj, idx) => {
-                          const objKpis2 = kpis.filter(k => k.objective_id === obj.id);
-                          const isOpen = expandedObj[obj.id];
-                          return (
-                            <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
-                              onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={(month) => openNewKPI(obj.id, month)} onEditKPI={(k, month) => openEditKPI(k, month)}
-                              onDelete={() => setObjToDelete(obj)} onDeleteKPI={(k) => setKpiToDelete(k)}
-                              profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin} />
-                          );
-                        })}
+                        </button>
+                        {gOpen && (
+                          <div className="px-3 pb-3 pt-1 space-y-3">
+                            {group.objs.map((obj, idx) => {
+                              const objKpis2 = kpis.filter(k => k.objective_id === obj.id);
+                              const isOpen = expandedObj[obj.id];
+                              return (
+                                <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
+                                  onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={(month) => openNewKPI(obj.id, month)} onEditKPI={(k, month) => openEditKPI(k, month)}
+                                  onDelete={() => setObjToDelete(obj)} onDeleteKPI={(k) => setKpiToDelete(k)}
+                                  profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin} />
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
-                    ))}
+                      );
+                    })}
 
                     {subObjs.length === 0 && (
                       <div className="text-center py-8 text-sm text-muted-foreground bg-muted/20 rounded-lg">
@@ -1126,43 +1154,56 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                             <Target className="w-3.5 h-3.5" />
                             Objetivos del Área
                           </div>
-                          {groupObjectivesByOwner(directObjs, area.leader_user_id).map(group => (
-                            <div key={group.key} className="space-y-3">
-                              <div className="flex items-center gap-2 pl-1">
+                          {groupObjectivesByOwner(directObjs, area.leader_user_id).map(group => {
+                            const gKey = `global-area-${area.id}-${group.key}`;
+                            const gOpen = expandedOwners[gKey] ?? true;
+                            return (
+                            <div key={group.key} className="rounded-lg border border-border/60 overflow-hidden">
+                              <button
+                                onClick={() => toggleOwner(gKey)}
+                                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted/40 transition-colors text-left"
+                              >
+                                {gOpen ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+                                <User className="w-3.5 h-3.5 text-muted-foreground" />
                                 <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                  Responsable: {group.name}
+                                  {group.name}
                                 </span>
                                 <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
                                   {group.objs.length}
                                 </span>
                                 <div className="flex-1 h-px bg-border" />
-                              </div>
-                              {group.objs.map((obj, idx) => {
-                                const objKpis = kpis.filter(k => k.objective_id === obj.id);
-                                const isOpen = expandedObj[obj.id];
-                                return (
-                                  <ObjectiveCard
-                                    key={obj.id}
-                                    obj={obj}
-                                    index={idx + 1}
-                                    objKpis={objKpis}
-                                    isOpen={isOpen}
-                                    onToggle={() => toggleObj(obj.id)}
-                                    onEdit={() => openEdit(obj)}
-                                    onNewKPI={(month) => openNewKPI(obj.id, month)}
-                                    onEditKPI={(k, month) => openEditKPI(k, month)}
-                                    onDelete={() => setObjToDelete(obj)}
-                                    onDeleteKPI={(k) => setKpiToDelete(k)}
-                                    profiles={profiles}
-                                    areas={areas}
-                                    subareas={subareas}
-                                    measurements={measurements}
-                                    canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin}
-                                  />
-                                );
-                              })}
+                              </button>
+                              {gOpen && (
+                                <div className="px-3 pb-3 pt-1 space-y-3">
+                                  {group.objs.map((obj, idx) => {
+                                    const objKpis = kpis.filter(k => k.objective_id === obj.id);
+                                    const isOpen = expandedObj[obj.id];
+                                    return (
+                                      <ObjectiveCard
+                                        key={obj.id}
+                                        obj={obj}
+                                        index={idx + 1}
+                                        objKpis={objKpis}
+                                        isOpen={isOpen}
+                                        onToggle={() => toggleObj(obj.id)}
+                                        onEdit={() => openEdit(obj)}
+                                        onNewKPI={(month) => openNewKPI(obj.id, month)}
+                                        onEditKPI={(k, month) => openEditKPI(k, month)}
+                                        onDelete={() => setObjToDelete(obj)}
+                                        onDeleteKPI={(k) => setKpiToDelete(k)}
+                                        profiles={profiles}
+                                        areas={areas}
+                                        subareas={subareas}
+                                        measurements={measurements}
+                                        canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin}
+                                      />
+                                    );
+                                  })}
+                                </div>
+                              )}
                             </div>
-                          ))}
+                            );
+                          })}
 
                         </div>
                       );
@@ -1208,43 +1249,56 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                           </button>
                           {isSubExpanded && (
                             <div className="border-t bg-card px-4 py-3 space-y-3">
-                              {groupObjectivesByOwner(subObjs, sub.leader_user_id).map(group => (
-                                <div key={group.key} className="space-y-3">
-                                  <div className="flex items-center gap-2 pl-1">
+                              {groupObjectivesByOwner(subObjs, sub.leader_user_id).map(group => {
+                                const gKey = `global-sub-${sub.id}-${group.key}`;
+                                const gOpen = expandedOwners[gKey] ?? true;
+                                return (
+                                <div key={group.key} className="rounded-lg border border-border/60 overflow-hidden">
+                                  <button
+                                    onClick={() => toggleOwner(gKey)}
+                                    className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted/40 transition-colors text-left"
+                                  >
+                                    {gOpen ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+                                    <User className="w-3.5 h-3.5 text-muted-foreground" />
                                     <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                      Responsable: {group.name}
+                                      {group.name}
                                     </span>
                                     <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
                                       {group.objs.length}
                                     </span>
                                     <div className="flex-1 h-px bg-border" />
-                                  </div>
-                                  {group.objs.map((obj, idx) => {
-                                    const objKpis = kpis.filter(k => k.objective_id === obj.id);
-                                    const isOpen = expandedObj[obj.id];
-                                    return (
-                                      <ObjectiveCard
-                                        key={obj.id}
-                                        obj={obj}
-                                        index={idx + 1}
-                                        objKpis={objKpis}
-                                        isOpen={isOpen}
-                                        onToggle={() => toggleObj(obj.id)}
-                                        onEdit={() => openEdit(obj)}
-                                        onNewKPI={(month) => openNewKPI(obj.id, month)}
-                                        onEditKPI={(k, month) => openEditKPI(k, month)}
-                                        onDelete={() => setObjToDelete(obj)}
-                                        onDeleteKPI={(k) => setKpiToDelete(k)}
-                                        profiles={profiles}
-                                        areas={areas}
-                                        subareas={subareas}
-                                        measurements={measurements}
-                                        canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin}
-                                      />
-                                    );
-                                  })}
+                                  </button>
+                                  {gOpen && (
+                                    <div className="px-3 pb-3 pt-1 space-y-3">
+                                      {group.objs.map((obj, idx) => {
+                                        const objKpis = kpis.filter(k => k.objective_id === obj.id);
+                                        const isOpen = expandedObj[obj.id];
+                                        return (
+                                          <ObjectiveCard
+                                            key={obj.id}
+                                            obj={obj}
+                                            index={idx + 1}
+                                            objKpis={objKpis}
+                                            isOpen={isOpen}
+                                            onToggle={() => toggleObj(obj.id)}
+                                            onEdit={() => openEdit(obj)}
+                                            onNewKPI={(month) => openNewKPI(obj.id, month)}
+                                            onEditKPI={(k, month) => openEditKPI(k, month)}
+                                            onDelete={() => setObjToDelete(obj)}
+                                            onDeleteKPI={(k) => setKpiToDelete(k)}
+                                            profiles={profiles}
+                                            areas={areas}
+                                            subareas={subareas}
+                                            measurements={measurements}
+                                            canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin}
+                                          />
+                                        );
+                                      })}
+                                    </div>
+                                  )}
                                 </div>
-                              ))}
+                                );
+                              })}
 
                               {subObjs.length === 0 && (
                                 <div className="text-center py-6 text-xs text-muted-foreground">Sin objetivos en esta subárea</div>
