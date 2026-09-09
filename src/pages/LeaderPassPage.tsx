@@ -128,6 +128,11 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
     }
   }, [presetAreaId]);
 
+  // Ensure a target user is set once auth loads
+  useEffect(() => {
+    if (!selectedUserId && user?.id) setSelectedUserId(user.id);
+  }, [user?.id, selectedUserId]);
+
   const periods = useMemo(() => getPeriodOptions(), []);
 
   // For super admin / admin_area, show a user selector
@@ -176,7 +181,7 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
     return filtered;
   }, [baseProfiles, memberships, filterAreaId, filterSubareaId, filterCargo]);
 
-  const targetUserId = canViewOthers ? selectedUserId : (user?.id ?? '');
+  const targetUserId = canViewOthers ? (selectedUserId || user?.id || '') : (user?.id ?? '');
   const { data: records = [], isLoading: loadingRecs } = useLeaderPassRecords(selectedPeriod, targetUserId || undefined);
 
   const getRecord = (activityId: string) => records.find(r => r.activity_id === activityId && r.user_id === targetUserId);
@@ -209,7 +214,8 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
   };
 
   const saveNotes = async () => {
-    if (!notesDialog || !targetUserId) return;
+    if (!notesDialog) return;
+    if (!targetUserId) { toast.error('Selecciona un colaborador antes de guardar'); return; }
     setSaving(true);
     const existing = getRecord(notesDialog.activityId);
 
