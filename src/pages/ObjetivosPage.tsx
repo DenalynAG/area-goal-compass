@@ -1208,30 +1208,44 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                           </button>
                           {isSubExpanded && (
                             <div className="border-t bg-card px-4 py-3 space-y-3">
-                              {subObjs.map((obj, idx) => {
-                                const objKpis = kpis.filter(k => k.objective_id === obj.id);
-                                const isOpen = expandedObj[obj.id];
-                                return (
-                                  <ObjectiveCard
-                                    key={obj.id}
-                                    obj={obj}
-                                    index={idx + 1}
-                                    objKpis={objKpis}
-                                    isOpen={isOpen}
-                                    onToggle={() => toggleObj(obj.id)}
-                                    onEdit={() => openEdit(obj)}
-                                    onNewKPI={(month) => openNewKPI(obj.id, month)}
-                                    onEditKPI={(k, month) => openEditKPI(k, month)}
-                                    onDelete={() => setObjToDelete(obj)}
-                                    onDeleteKPI={(k) => setKpiToDelete(k)}
-                                    profiles={profiles}
-                                    areas={areas}
-                                    subareas={subareas}
-                                    measurements={measurements}
-                                    canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin}
-                                  />
-                                );
-                              })}
+                              {groupObjectivesByOwner(subObjs, sub.leader_user_id).map(group => (
+                                <div key={group.key} className="space-y-3">
+                                  <div className="flex items-center gap-2 pl-1">
+                                    <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                      Responsable: {group.name}
+                                    </span>
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                                      {group.objs.length}
+                                    </span>
+                                    <div className="flex-1 h-px bg-border" />
+                                  </div>
+                                  {group.objs.map((obj, idx) => {
+                                    const objKpis = kpis.filter(k => k.objective_id === obj.id);
+                                    const isOpen = expandedObj[obj.id];
+                                    return (
+                                      <ObjectiveCard
+                                        key={obj.id}
+                                        obj={obj}
+                                        index={idx + 1}
+                                        objKpis={objKpis}
+                                        isOpen={isOpen}
+                                        onToggle={() => toggleObj(obj.id)}
+                                        onEdit={() => openEdit(obj)}
+                                        onNewKPI={(month) => openNewKPI(obj.id, month)}
+                                        onEditKPI={(k, month) => openEditKPI(k, month)}
+                                        onDelete={() => setObjToDelete(obj)}
+                                        onDeleteKPI={(k) => setKpiToDelete(k)}
+                                        profiles={profiles}
+                                        areas={areas}
+                                        subareas={subareas}
+                                        measurements={measurements}
+                                        canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin}
+                                      />
+                                    );
+                                  })}
+                                </div>
+                              ))}
+
                               {subObjs.length === 0 && (
                                 <div className="text-center py-6 text-xs text-muted-foreground">Sin objetivos en esta subárea</div>
                               )}
