@@ -661,7 +661,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                 <div className="border-t bg-muted/20 px-5 py-4 space-y-5">
                   {groupObjectivesByOwner(directAreaObjs, selectedArea.leader_user_id).map(group => {
                     const gKey = `drill-area-${selectedArea.id}-${group.key}`;
-                    const gOpen = expandedOwners[gKey] ?? true;
+                    const gOpen = expandedOwners[gKey] ?? false;
                     return (
                     <div key={group.key} className="rounded-lg border border-border/60 overflow-hidden">
                       <button
@@ -740,7 +740,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                   <div className="border-t bg-muted/20 px-5 py-4 space-y-5">
                     {groupObjectivesByOwner(subObjs, sub.leader_user_id).map(group => {
                       const gKey = `drill-sub-${sub.id}-${group.key}`;
-                      const gOpen = expandedOwners[gKey] ?? true;
+                      const gOpen = expandedOwners[gKey] ?? false;
                       return (
                       <div key={group.key} className="rounded-lg border border-border/60 overflow-hidden">
                         <button
@@ -1156,7 +1156,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                           </div>
                           {groupObjectivesByOwner(directObjs, area.leader_user_id).map(group => {
                             const gKey = `global-area-${area.id}-${group.key}`;
-                            const gOpen = expandedOwners[gKey] ?? true;
+                            const gOpen = expandedOwners[gKey] ?? false;
                             return (
                             <div key={group.key} className="rounded-lg border border-border/60 overflow-hidden">
                               <button
@@ -1251,7 +1251,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                             <div className="border-t bg-card px-4 py-3 space-y-3">
                               {groupObjectivesByOwner(subObjs, sub.leader_user_id).map(group => {
                                 const gKey = `global-sub-${sub.id}-${group.key}`;
-                                const gOpen = expandedOwners[gKey] ?? true;
+                                const gOpen = expandedOwners[gKey] ?? false;
                                 return (
                                 <div key={group.key} className="rounded-lg border border-border/60 overflow-hidden">
                                   <button
