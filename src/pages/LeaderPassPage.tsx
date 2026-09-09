@@ -128,6 +128,11 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
     }
   }, [presetAreaId]);
 
+  // Ensure a target user is set once auth loads
+  useEffect(() => {
+    if (!selectedUserId && user?.id) setSelectedUserId(user.id);
+  }, [user?.id, selectedUserId]);
+
   const periods = useMemo(() => getPeriodOptions(), []);
 
   // For super admin / admin_area, show a user selector
