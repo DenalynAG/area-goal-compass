@@ -422,7 +422,8 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
                 </div>
               </div>
 
-              {/* Actions row */}
+              {/* Actions row — solo Super Admin */}
+              {isSuperAdmin && (
               <div className="mt-3 flex items-center gap-2">
                 <Button
                   variant="ghost"
@@ -451,6 +452,7 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
                   </span>
                 )}
               </div>
+              )}
 
               {/* Notes list visible on card */}
               {record?.notes && record.notes.trim() && (
