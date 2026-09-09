@@ -176,7 +176,7 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
     return filtered;
   }, [baseProfiles, memberships, filterAreaId, filterSubareaId, filterCargo]);
 
-  const targetUserId = canViewOthers ? selectedUserId : (user?.id ?? '');
+  const targetUserId = canViewOthers ? (selectedUserId || user?.id || '') : (user?.id ?? '');
   const { data: records = [], isLoading: loadingRecs } = useLeaderPassRecords(selectedPeriod, targetUserId || undefined);
 
   const getRecord = (activityId: string) => records.find(r => r.activity_id === activityId && r.user_id === targetUserId);
