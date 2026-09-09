@@ -8,8 +8,9 @@ import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { CheckCircle2, Circle, ClipboardList, MessageSquare, Save, Paperclip, Filter, ChevronDown, ChevronUp, Info } from 'lucide-react';
+import { CheckCircle2, Circle, ClipboardList, MessageSquare, Save, Paperclip, Filter, ChevronDown, ChevronUp, Info, ShieldCheck } from 'lucide-react';
 import EvidencePanel from '@/components/EvidencePanel';
+import LeaderPassImportDialog from '@/components/LeaderPassImportDialog';
 
 // Activities info is now loaded dynamically from leader_pass_activities table
 
@@ -109,6 +110,7 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
   const [saving, setSaving] = useState(false);
   const [evidenceActivity, setEvidenceActivity] = useState<{ id: string; name: string } | null>(null);
   const [showBanner, setShowBanner] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   // Resolve area filter from name
   const presetAreaId = useMemo(() => {
@@ -255,6 +257,12 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
           <p className="page-subtitle">Plan de desarrollo y seguimiento de actividades de liderazgo</p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
+          {isSuperAdmin && (
+            <Button variant="outline" size="sm" className="gap-1" onClick={() => setImportOpen(true)}>
+              <ShieldCheck className="w-4 h-4" />
+              Acciones Admin
+            </Button>
+          )}
           <SearchableSelect
             value={selectedPeriod}
             onValueChange={setSelectedPeriod}
@@ -507,6 +515,15 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Admin bulk import */}
+      <LeaderPassImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        activities={activities}
+        period={selectedPeriod}
+        periodOptions={periods.map(p => ({ value: p, label: formatPeriod(p) }))}
+      />
 
       {/* Evidence panel */}
       {evidenceActivity && (
