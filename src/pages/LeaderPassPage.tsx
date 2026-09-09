@@ -8,8 +8,9 @@ import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { CheckCircle2, Circle, ClipboardList, MessageSquare, Save, Paperclip, Filter, ChevronDown, ChevronUp, Info } from 'lucide-react';
+import { CheckCircle2, Circle, ClipboardList, MessageSquare, Save, Paperclip, Filter, ChevronDown, ChevronUp, Info, ShieldCheck } from 'lucide-react';
 import EvidencePanel from '@/components/EvidencePanel';
+import LeaderPassImportDialog from '@/components/LeaderPassImportDialog';
 
 // Activities info is now loaded dynamically from leader_pass_activities table
 
