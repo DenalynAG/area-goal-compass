@@ -542,7 +542,23 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
     return subareas.filter(s => s.area_id === dashAreaId);
   }, [dashAreaId, subareas]);
 
+  // Sub-agrupación de objetivos por responsable
+  const groupObjectivesByOwner = (objs: typeof objectives, fallbackLeaderId?: string | null) => {
+    const map = new Map<string, { name: string; objs: typeof objs }>();
+    objs.forEach(o => {
+      const ownerId = o.owner_user_id ?? fallbackLeaderId ?? null;
+      const name = ownerId ? getProfileName(profiles, ownerId) : 'Sin responsable';
+      const key = ownerId ?? '__none__';
+      if (!map.has(key)) map.set(key, { name, objs: [] as typeof objs });
+      map.get(key)!.objs.push(o);
+    });
+    return Array.from(map.entries())
+      .map(([key, v]) => ({ key, ...v }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'es'));
+  };
+
   if (isLoading) return <div className="flex items-center justify-center py-20 text-muted-foreground">Cargando objetivos...</div>;
+
 
   // Drill-down view for a specific area
   if (selectedArea) {
@@ -640,18 +656,32 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                 </button>
               </div>
               {expandedAreas[`obj-area-${selectedArea.id}`] && (
-                <div className="border-t bg-muted/20 px-5 py-4 space-y-3">
-                  {directAreaObjs.map((obj, idx) => {
-                    const objKpis2 = kpis.filter(k => k.objective_id === obj.id);
-                    const isOpen = expandedObj[obj.id];
-                    return (
-                      <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
-                        onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={(month) => openNewKPI(obj.id, month)} onEditKPI={(k, month) => openEditKPI(k, month)}
-                          onDelete={() => setObjToDelete(obj)} onDeleteKPI={(k) => setKpiToDelete(k)}
-                          profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin} />
-                    );
-                  })}
+                <div className="border-t bg-muted/20 px-5 py-4 space-y-5">
+                  {groupObjectivesByOwner(directAreaObjs, selectedArea.leader_user_id).map(group => (
+                    <div key={group.key} className="space-y-3">
+                      <div className="flex items-center gap-2 pl-1">
+                        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          Responsable: {group.name}
+                        </span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                          {group.objs.length}
+                        </span>
+                        <div className="flex-1 h-px bg-border" />
+                      </div>
+                      {group.objs.map((obj, idx) => {
+                        const objKpis2 = kpis.filter(k => k.objective_id === obj.id);
+                        const isOpen = expandedObj[obj.id];
+                        return (
+                          <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
+                            onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={(month) => openNewKPI(obj.id, month)} onEditKPI={(k, month) => openEditKPI(k, month)}
+                            onDelete={() => setObjToDelete(obj)} onDeleteKPI={(k) => setKpiToDelete(k)}
+                            profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin} />
+                        );
+                      })}
+                    </div>
+                  ))}
                 </div>
+
               )}
             </div>
           )}
@@ -692,17 +722,31 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                   </button>
                 </div>
                 {isSubExpanded && (
-                  <div className="border-t bg-muted/20 px-5 py-4 space-y-3">
-                    {subObjs.map((obj, idx) => {
-                      const objKpis2 = kpis.filter(k => k.objective_id === obj.id);
-                      const isOpen = expandedObj[obj.id];
-                      return (
-                        <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
-                          onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={(month) => openNewKPI(obj.id, month)} onEditKPI={(k, month) => openEditKPI(k, month)}
-                          onDelete={() => setObjToDelete(obj)} onDeleteKPI={(k) => setKpiToDelete(k)}
-                          profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin} />
-                      );
-                    })}
+                  <div className="border-t bg-muted/20 px-5 py-4 space-y-5">
+                    {groupObjectivesByOwner(subObjs, sub.leader_user_id).map(group => (
+                      <div key={group.key} className="space-y-3">
+                        <div className="flex items-center gap-2 pl-1">
+                          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            Responsable: {group.name}
+                          </span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                            {group.objs.length}
+                          </span>
+                          <div className="flex-1 h-px bg-border" />
+                        </div>
+                        {group.objs.map((obj, idx) => {
+                          const objKpis2 = kpis.filter(k => k.objective_id === obj.id);
+                          const isOpen = expandedObj[obj.id];
+                          return (
+                            <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
+                              onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={(month) => openNewKPI(obj.id, month)} onEditKPI={(k, month) => openEditKPI(k, month)}
+                              onDelete={() => setObjToDelete(obj)} onDeleteKPI={(k) => setKpiToDelete(k)}
+                              profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin} />
+                          );
+                        })}
+                      </div>
+                    ))}
+
                     {subObjs.length === 0 && (
                       <div className="text-center py-8 text-sm text-muted-foreground bg-muted/20 rounded-lg">
                         Sin objetivos registrados
@@ -1082,30 +1126,44 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                             <Target className="w-3.5 h-3.5" />
                             Objetivos del Área
                           </div>
-                          {directObjs.map((obj, idx) => {
-                            const objKpis = kpis.filter(k => k.objective_id === obj.id);
-                            const isOpen = expandedObj[obj.id];
-                            return (
-                              <ObjectiveCard
-                                key={obj.id}
-                                obj={obj}
-                                index={idx + 1}
-                                objKpis={objKpis}
-                                isOpen={isOpen}
-                                onToggle={() => toggleObj(obj.id)}
-                                onEdit={() => openEdit(obj)}
-                                onNewKPI={(month) => openNewKPI(obj.id, month)}
-                                onEditKPI={(k, month) => openEditKPI(k, month)}
-                                onDelete={() => setObjToDelete(obj)}
-                                onDeleteKPI={(k) => setKpiToDelete(k)}
-                                profiles={profiles}
-                                areas={areas}
-                                subareas={subareas}
-                                measurements={measurements}
-                                canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin}
-                              />
-                            );
-                          })}
+                          {groupObjectivesByOwner(directObjs, area.leader_user_id).map(group => (
+                            <div key={group.key} className="space-y-3">
+                              <div className="flex items-center gap-2 pl-1">
+                                <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                  Responsable: {group.name}
+                                </span>
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                                  {group.objs.length}
+                                </span>
+                                <div className="flex-1 h-px bg-border" />
+                              </div>
+                              {group.objs.map((obj, idx) => {
+                                const objKpis = kpis.filter(k => k.objective_id === obj.id);
+                                const isOpen = expandedObj[obj.id];
+                                return (
+                                  <ObjectiveCard
+                                    key={obj.id}
+                                    obj={obj}
+                                    index={idx + 1}
+                                    objKpis={objKpis}
+                                    isOpen={isOpen}
+                                    onToggle={() => toggleObj(obj.id)}
+                                    onEdit={() => openEdit(obj)}
+                                    onNewKPI={(month) => openNewKPI(obj.id, month)}
+                                    onEditKPI={(k, month) => openEditKPI(k, month)}
+                                    onDelete={() => setObjToDelete(obj)}
+                                    onDeleteKPI={(k) => setKpiToDelete(k)}
+                                    profiles={profiles}
+                                    areas={areas}
+                                    subareas={subareas}
+                                    measurements={measurements}
+                                    canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin}
+                                  />
+                                );
+                              })}
+                            </div>
+                          ))}
+
                         </div>
                       );
                     })()}
@@ -1150,30 +1208,44 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                           </button>
                           {isSubExpanded && (
                             <div className="border-t bg-card px-4 py-3 space-y-3">
-                              {subObjs.map((obj, idx) => {
-                                const objKpis = kpis.filter(k => k.objective_id === obj.id);
-                                const isOpen = expandedObj[obj.id];
-                                return (
-                                  <ObjectiveCard
-                                    key={obj.id}
-                                    obj={obj}
-                                    index={idx + 1}
-                                    objKpis={objKpis}
-                                    isOpen={isOpen}
-                                    onToggle={() => toggleObj(obj.id)}
-                                    onEdit={() => openEdit(obj)}
-                                    onNewKPI={(month) => openNewKPI(obj.id, month)}
-                                    onEditKPI={(k, month) => openEditKPI(k, month)}
-                                    onDelete={() => setObjToDelete(obj)}
-                                    onDeleteKPI={(k) => setKpiToDelete(k)}
-                                    profiles={profiles}
-                                    areas={areas}
-                                    subareas={subareas}
-                                    measurements={measurements}
-                                    canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin}
-                                  />
-                                );
-                              })}
+                              {groupObjectivesByOwner(subObjs, sub.leader_user_id).map(group => (
+                                <div key={group.key} className="space-y-3">
+                                  <div className="flex items-center gap-2 pl-1">
+                                    <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                      Responsable: {group.name}
+                                    </span>
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                                      {group.objs.length}
+                                    </span>
+                                    <div className="flex-1 h-px bg-border" />
+                                  </div>
+                                  {group.objs.map((obj, idx) => {
+                                    const objKpis = kpis.filter(k => k.objective_id === obj.id);
+                                    const isOpen = expandedObj[obj.id];
+                                    return (
+                                      <ObjectiveCard
+                                        key={obj.id}
+                                        obj={obj}
+                                        index={idx + 1}
+                                        objKpis={objKpis}
+                                        isOpen={isOpen}
+                                        onToggle={() => toggleObj(obj.id)}
+                                        onEdit={() => openEdit(obj)}
+                                        onNewKPI={(month) => openNewKPI(obj.id, month)}
+                                        onEditKPI={(k, month) => openEditKPI(k, month)}
+                                        onDelete={() => setObjToDelete(obj)}
+                                        onDeleteKPI={(k) => setKpiToDelete(k)}
+                                        profiles={profiles}
+                                        areas={areas}
+                                        subareas={subareas}
+                                        measurements={measurements}
+                                        canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin}
+                                      />
+                                    );
+                                  })}
+                                </div>
+                              ))}
+
                               {subObjs.length === 0 && (
                                 <div className="text-center py-6 text-xs text-muted-foreground">Sin objetivos en esta subárea</div>
                               )}
