@@ -209,7 +209,8 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
   };
 
   const saveNotes = async () => {
-    if (!notesDialog || !targetUserId) return;
+    if (!notesDialog) return;
+    if (!targetUserId) { toast.error('Selecciona un colaborador antes de guardar'); return; }
     setSaving(true);
     const existing = getRecord(notesDialog.activityId);
 
