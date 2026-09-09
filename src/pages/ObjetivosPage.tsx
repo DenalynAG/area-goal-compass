@@ -73,6 +73,8 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   const [dashMonth, setDashMonth] = useState<string>(defaultDashMonth);
   const [expandedAreas, setExpandedAreas] = useState<Record<string, boolean>>({});
   const toggleArea = (id: string) => setExpandedAreas(prev => ({ ...prev, [id]: !prev[id] }));
+  const [expandedOwners, setExpandedOwners] = useState<Record<string, boolean>>({});
+  const toggleOwner = (key: string) => setExpandedOwners(prev => ({ ...prev, [key]: !prev[key] }));
 
   // KPI dialog state
   const [kpiDialogOpen, setKpiDialogOpen] = useState(false);
