@@ -542,7 +542,23 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
     return subareas.filter(s => s.area_id === dashAreaId);
   }, [dashAreaId, subareas]);
 
+  // Sub-agrupación de objetivos por responsable
+  const groupObjectivesByOwner = (objs: typeof objectives, fallbackLeaderId?: string | null) => {
+    const map = new Map<string, { name: string; objs: typeof objs }>();
+    objs.forEach(o => {
+      const ownerId = o.owner_user_id ?? fallbackLeaderId ?? null;
+      const name = ownerId ? getProfileName(profiles, ownerId) : 'Sin responsable';
+      const key = ownerId ?? '__none__';
+      if (!map.has(key)) map.set(key, { name, objs: [] as typeof objs });
+      map.get(key)!.objs.push(o);
+    });
+    return Array.from(map.entries())
+      .map(([key, v]) => ({ key, ...v }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'es'));
+  };
+
   if (isLoading) return <div className="flex items-center justify-center py-20 text-muted-foreground">Cargando objetivos...</div>;
+
 
   // Drill-down view for a specific area
   if (selectedArea) {
