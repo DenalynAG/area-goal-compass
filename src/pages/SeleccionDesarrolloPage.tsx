@@ -538,6 +538,10 @@ export default function SeleccionDesarrolloPage() {
           ))}
         </SelectContent>
       </Select>
+      <p className="text-[9px] leading-tight text-muted-foreground text-center truncate" title={evaluatorName(compEv)}>
+        {evaluatorName(compEv)}
+      </p>
+      </div>
     );
   };
 
