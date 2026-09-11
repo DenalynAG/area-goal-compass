@@ -52,6 +52,7 @@ type CompScore = {
   evaluation_id: string;
   competency_id: string;
   score: number | null;
+  evaluator_user_id?: string | null;
 };
 
 const SCORE_OPTIONS = [
