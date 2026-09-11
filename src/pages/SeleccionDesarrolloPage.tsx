@@ -534,6 +534,7 @@ export default function SeleccionDesarrolloPage() {
       behavior: compForm.behavior.trim() || null,
       position_name: compForm.position_name === ALL_POSITIONS ? null : compForm.position_name,
       is_active: compForm.is_active,
+      color: compForm.color || null,
     };
     if (compEditing) {
       const { error } = await (supabase.from('assessment_competencies' as any) as any)
