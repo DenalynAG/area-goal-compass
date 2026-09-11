@@ -30,6 +30,7 @@ type Assessment = {
   subarea_id: string | null;
   position: string | null;
   profession: string | null;
+  evaluator_user_id?: string | null;
   weighted_score: number | null;
   evaluation_date: string;
   created_by: string | null;
