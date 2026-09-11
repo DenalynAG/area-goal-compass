@@ -888,15 +888,23 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
                       </div>
                       <div className="p-3 space-y-3">
                         <div className="space-y-1.5">
-                          <label className="text-xs font-medium">Líder que evalúa sus competencias *</label>
+                          <label className="text-xs font-medium">Líder por defecto de este aspirante</label>
                           <SearchableSelect
                             className="w-full"
                             options={[{ value: NONE, label: 'Sin asignar' }, ...evaluatorOptions]}
                             value={cfg.evaluator}
-                            onValueChange={v => setCfg(sc.id, { evaluator: v })}
+                            onValueChange={v => {
+                              const compEval = { ...cfg.compEval };
+                              cfg.comps.forEach(id => { compEval[id] = v; });
+                              setCfg(sc.id, { evaluator: v, compEval });
+                            }}
                             placeholder="Asignar evaluador"
                           />
+                          <p className="text-[10px] text-muted-foreground">
+                            Puedes cambiar el líder de cada competencia por separado.
+                          </p>
                         </div>
+
 
                         <div className="space-y-2">
                           <div className="flex items-center justify-between flex-wrap gap-2">
