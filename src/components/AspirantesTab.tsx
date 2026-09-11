@@ -94,7 +94,7 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [startOpen, setStartOpen] = useState(false);
   const [startComps, setStartComps] = useState<string[]>([]);
-  const [startEvaluator, setStartEvaluator] = useState<string>(NONE);
+  
   // Config por aspirante: líder base, competencias y líder por competencia
   type StartCfg = { evaluator: string; comps: string[]; compEval: Record<string, string> };
   const [startConfig, setStartConfig] = useState<Record<string, StartCfg>>({});
@@ -342,7 +342,6 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
     });
     setStartConfig(cfg);
     setStartComps([]);
-    setStartEvaluator(NONE);
     setStartDate(new Date().toISOString().split('T')[0]);
     setStartOpen(true);
   };
@@ -845,50 +844,30 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
 
           {selectedCands.length > 0 && (
             <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 border rounded-md p-3 bg-muted/20">
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium">Aplicar líder a todos</label>
-                  <SearchableSelect
-                    className="w-full"
-                    options={[{ value: NONE, label: 'Sin asignar' }, ...evaluatorOptions]}
-                    value={startEvaluator}
-                    onValueChange={v => {
-                      setStartEvaluator(v);
-                      setStartConfig(prev => {
-                        const next = { ...prev };
-                        selectedCands.forEach(c => {
-                          const cur = next[c.id] ?? { evaluator: NONE, comps: [], compEval: {} };
-                          const compEval = { ...cur.compEval };
-                          cur.comps.forEach(id => { compEval[id] = v; });
-                          next[c.id] = { ...cur, evaluator: v, compEval };
-                        });
-                        return next;
-                      });
-                    }}
-                    placeholder="Opcional: mismo líder para todos"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium">Fecha de evaluación</label>
-                  <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
-                </div>
+              <div className="rounded-lg border bg-accent/10 px-3 py-2 text-xs text-muted-foreground">
+                Asigna el líder evaluador y marca las competencias de cada aspirante. La fecha se toma de hoy.
               </div>
 
               <div className="space-y-3">
                 {selectedCands.map(sc => {
                   const cfg = cfgFor(sc.id);
                   return (
-                    <div key={sc.id} className="border rounded-md overflow-hidden">
-                      <div className="px-3 py-2 bg-muted/40 border-b">
-                        <p className="text-sm font-semibold leading-tight">{sc.full_name}</p>
-                        <p className="text-[11px] text-muted-foreground leading-tight">
-                          {sc.profession ? `${sc.profession} · ` : ''}{sc.position ?? '—'} · {areaName(sc.area_id)}
-                          {sc.subarea_id ? ` · ${subareaName(sc.subarea_id)}` : ''}
-                        </p>
+                    <div key={sc.id} className="border rounded-xl overflow-hidden shadow-sm border-l-4 border-l-primary">
+                      <div className="px-4 py-2.5 bg-primary/5 border-b flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-primary/15 text-primary flex items-center justify-center text-xs font-bold uppercase shrink-0">
+                          {sc.full_name.split(' ').slice(0, 2).map(w => w[0]).join('')}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold leading-tight text-foreground">{sc.full_name}</p>
+                          <p className="text-[11px] text-muted-foreground leading-tight">
+                            {sc.profession ? `${sc.profession} · ` : ''}{sc.position ?? '—'} · {areaName(sc.area_id)}
+                            {sc.subarea_id ? ` · ${subareaName(sc.subarea_id)}` : ''}
+                          </p>
+                        </div>
                       </div>
-                      <div className="p-3 space-y-3">
+                      <div className="p-4 space-y-4">
                         <div className="space-y-1.5">
-                          <label className="text-xs font-medium">Líder por defecto de este aspirante</label>
+                          <label className="text-xs font-semibold text-primary">Líder por defecto de este aspirante</label>
                           <SearchableSelect
                             className="w-full"
                             options={[{ value: NONE, label: 'Sin asignar' }, ...evaluatorOptions]}
@@ -934,7 +913,7 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
                               const checked = cfg.comps.includes(c.id);
                               const compEv = cfg.compEval[c.id] ?? NONE;
                               return (
-                                <div key={c.id} className="border rounded-md p-2 bg-background space-y-2">
+                                <div key={c.id} className={`border rounded-lg p-2.5 space-y-2 transition-colors ${checked ? 'border-primary/60 bg-primary/5 shadow-sm' : 'bg-muted/20 hover:bg-muted/40'}`}>
                                   <label className="flex items-start gap-2 cursor-pointer">
                                     <Checkbox
                                       checked={checked}
