@@ -472,9 +472,12 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
     if (sinComps.length) {
       return toast.error(`Selecciona al menos una competencia para: ${sinComps.map(c => c.full_name).join(', ')}`);
     }
-    const sinLider = selectedCands.filter(c => cfgFor(c.id).evaluator === NONE);
+    const sinLider = selectedCands.filter(c => {
+      const cfg = cfgFor(c.id);
+      return cfg.comps.some(id => !cfg.compEval[id] || cfg.compEval[id] === NONE);
+    });
     if (sinLider.length) {
-      return toast.error(`Asigna el líder que evalúa a: ${sinLider.map(c => c.full_name).join(', ')}`);
+      return toast.error(`Asigna el líder de cada competencia para: ${sinLider.map(c => c.full_name).join(', ')}`);
     }
     setStarting(true);
     try {
