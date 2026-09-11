@@ -196,6 +196,9 @@ export default function SeleccionDesarrolloPage() {
   const scoreOf = (evaluationId: string, competencyId: string) =>
     compScores.find(s => s.evaluation_id === evaluationId && s.competency_id === competencyId)?.score ?? null;
 
+  const compEvaluatorOf = (evaluationId: string, competencyId: string) =>
+    compScores.find(s => s.evaluation_id === evaluationId && s.competency_id === competencyId)?.evaluator_user_id ?? null;
+
   const filteredSubareas = useMemo(
     () => (form.area_id ? subareas.filter(s => s.area_id === form.area_id) : []),
     [subareas, form.area_id],
