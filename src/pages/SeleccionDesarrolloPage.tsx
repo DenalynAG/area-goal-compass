@@ -18,6 +18,7 @@ import { Users, Pencil, Trash2, Search, SlidersHorizontal, ArrowUp, ArrowDown, T
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
 import AspirantesTab from '@/components/AspirantesTab';
 import AssessmentDashboardTab from '@/components/AssessmentDashboardTab';
 
