@@ -799,32 +799,30 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
           <DialogHeader>
             <DialogTitle>Iniciar Assessment</DialogTitle>
             <DialogDescription>
-              Se generará la planilla de Assessment para <b>{selectedCands.length}</b> aspirante(s) seleccionado(s). Selecciona las competencias a evaluar y el líder que las califica.
+              Se generará la planilla de Assessment para <b>{selectedCands.length}</b> aspirante(s). Para cada aspirante define el líder que evalúa y las competencias que le serán evaluadas.
             </DialogDescription>
           </DialogHeader>
 
           {selectedCands.length > 0 && (
             <div className="space-y-4">
-              <div className="space-y-1 text-sm border rounded-md p-3 bg-muted/20 max-h-40 overflow-y-auto">
-                {selectedCands.map(sc => (
-                  <div key={sc.id} className="flex flex-wrap items-baseline gap-x-2">
-                    <span className="font-semibold">{sc.full_name}</span>
-                    <span className="text-[11px] text-muted-foreground">
-                      {sc.position ?? '—'} · {areaName(sc.area_id)}{sc.subarea_id ? ` · ${subareaName(sc.subarea_id)}` : ''}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 border rounded-md p-3 bg-muted/20">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium">Líder que evalúa *</label>
+                  <label className="text-sm font-medium">Aplicar líder a todos</label>
                   <SearchableSelect
                     className="w-full"
                     options={[{ value: NONE, label: 'Sin asignar' }, ...evaluatorOptions]}
                     value={startEvaluator}
-                    onValueChange={setStartEvaluator}
-                    placeholder="Asignar evaluador"
+                    onValueChange={v => {
+                      setStartEvaluator(v);
+                      setStartConfig(prev => {
+                        const next = { ...prev };
+                        selectedCands.forEach(c => {
+                          next[c.id] = { ...(next[c.id] ?? { evaluator: NONE, comps: [] }), evaluator: v };
+                        });
+                        return next;
+                      });
+                    }}
+                    placeholder="Opcional: mismo líder para todos"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -833,35 +831,77 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
                 </div>
               </div>
 
-              <div className="space-y-2 border rounded-md p-3 bg-muted/20">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold">Competencias a evaluar ({startComps.length})</h3>
-                  <div className="flex gap-2">
-                    <Button type="button" variant="outline" size="sm" className="h-7 text-xs"
-                      onClick={() => setStartComps(activeComps
-                        .filter(c => !c.position_name || c.position_name === selectedCands[0]?.position)
-                        .map(c => c.id))}>
-                      Sugeridas por cargo
-                    </Button>
-                    <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setStartComps([])}>
-                      Limpiar
-                    </Button>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {activeComps.map(c => (
-                    <label key={c.id} className="flex items-start gap-2 border rounded-md p-2 bg-background cursor-pointer">
-                      <Checkbox
-                        checked={startComps.includes(c.id)}
-                        onCheckedChange={v => setStartComps(prev => v ? [...prev, c.id] : prev.filter(x => x !== c.id))}
-                      />
-                      <span className="min-w-0">
-                        <span className="block text-xs font-semibold">{c.name}</span>
-                        {c.subtitle && <span className="block text-[10px] text-muted-foreground">{c.subtitle}</span>}
-                      </span>
-                    </label>
-                  ))}
-                </div>
+              <div className="space-y-3">
+                {selectedCands.map(sc => {
+                  const cfg = cfgFor(sc.id);
+                  return (
+                    <div key={sc.id} className="border rounded-md overflow-hidden">
+                      <div className="px-3 py-2 bg-muted/40 border-b">
+                        <p className="text-sm font-semibold leading-tight">{sc.full_name}</p>
+                        <p className="text-[11px] text-muted-foreground leading-tight">
+                          {sc.profession ? `${sc.profession} · ` : ''}{sc.position ?? '—'} · {areaName(sc.area_id)}
+                          {sc.subarea_id ? ` · ${subareaName(sc.subarea_id)}` : ''}
+                        </p>
+                      </div>
+                      <div className="p-3 space-y-3">
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-medium">Líder que evalúa sus competencias *</label>
+                          <SearchableSelect
+                            className="w-full"
+                            options={[{ value: NONE, label: 'Sin asignar' }, ...evaluatorOptions]}
+                            value={cfg.evaluator}
+                            onValueChange={v => setCfg(sc.id, { evaluator: v })}
+                            placeholder="Asignar evaluador"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between flex-wrap gap-2">
+                            <h4 className="text-xs font-semibold">
+                              Competencias a evaluar ({cfg.comps.length})
+                            </h4>
+                            <div className="flex gap-1">
+                              <Button type="button" variant="outline" size="sm" className="h-6 text-[11px] px-2"
+                                onClick={() => setCfg(sc.id, {
+                                  comps: activeComps
+                                    .filter(c => !c.position_name || c.position_name === sc.position)
+                                    .map(c => c.id),
+                                })}>
+                                Sugeridas por cargo
+                              </Button>
+                              <Button type="button" variant="ghost" size="sm" className="h-6 text-[11px] px-2"
+                                onClick={() => setCfg(sc.id, { comps: [] })}>
+                                Limpiar
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {activeComps.map(c => {
+                              const checked = cfg.comps.includes(c.id);
+                              return (
+                                <label key={c.id} className="flex items-start gap-2 border rounded-md p-2 bg-background cursor-pointer">
+                                  <Checkbox
+                                    checked={checked}
+                                    onCheckedChange={v => toggleCandComp(sc.id, c.id, !!v)}
+                                  />
+                                  <span className="min-w-0">
+                                    <span className="block text-xs font-semibold">{c.name}</span>
+                                    {c.subtitle && <span className="block text-[10px] text-muted-foreground">{c.subtitle}</span>}
+                                    {checked && cfg.evaluator !== NONE && (
+                                      <span className="block text-[10px] text-muted-foreground mt-0.5">
+                                        Evalúa: <b className="text-foreground/80">{profileName(cfg.evaluator)}</b>
+                                      </span>
+                                    )}
+                                  </span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
