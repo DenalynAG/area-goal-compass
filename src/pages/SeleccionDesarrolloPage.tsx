@@ -726,9 +726,14 @@ export default function SeleccionDesarrolloPage() {
                     Áreas: {group.areasLabel} · {group.rows.length} aspirante(s) · Completada
                   </p>
                 </div>
-                <Button size="sm" variant="outline" onClick={() => setDetailGroupKey(group.key)}>
-                  <Eye className="w-4 h-4 mr-1" /> Ver detalles
-                </Button>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => setDetailGroupKey(group.key)}>
+                    <Eye className="w-4 h-4 mr-1" /> Ver detalles
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={() => exportGroupPDF(group)}>
+                    <FileDown className="w-4 h-4 mr-1" /> Exportar PDF
+                  </Button>
+                </div>
               </Card>
             ))
           )}
