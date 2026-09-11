@@ -58,6 +58,11 @@ const emptyForm = {
   email: '',
   profession: '',
   university: '',
+  salario_aspiracion: '',
+  fecha_nacimiento: '',
+  nivel_ingles: NONE,
+  direccion: '',
+  anos_experiencia: '',
   position: NONE,
   area_id: NONE,
   subarea_id: NONE,
@@ -190,6 +195,11 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
       email: c.email ?? '',
       profession: (c as any).profession ?? '',
       university: (c as any).university ?? '',
+      salario_aspiracion: (c as any).salario_aspiracion != null ? String((c as any).salario_aspiracion) : '',
+      fecha_nacimiento: (c as any).fecha_nacimiento ?? '',
+      nivel_ingles: (c as any).nivel_ingles ?? NONE,
+      direccion: (c as any).direccion ?? '',
+      anos_experiencia: (c as any).anos_experiencia != null ? String((c as any).anos_experiencia) : '',
       position: c.position ?? NONE,
       area_id: c.area_id ?? NONE,
       subarea_id: c.subarea_id ?? NONE,
@@ -218,6 +228,11 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
         email: form.email.trim() || null,
         profession: form.profession.trim() || null,
         university: form.university.trim() || null,
+        salario_aspiracion: form.salario_aspiracion ? Number(form.salario_aspiracion) : null,
+        fecha_nacimiento: form.fecha_nacimiento || null,
+        nivel_ingles: form.nivel_ingles === NONE ? null : form.nivel_ingles,
+        direccion: form.direccion.trim() || null,
+        anos_experiencia: form.anos_experiencia ? Number(form.anos_experiencia) : null,
         position: form.position === NONE ? null : form.position,
         area_id: form.area_id === NONE ? null : form.area_id,
         subarea_id: form.subarea_id === NONE ? null : form.subarea_id,
@@ -602,6 +617,38 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Universidad de estudio</label>
                 <Input value={form.university} onChange={e => setForm(f => ({ ...f, university: e.target.value }))} placeholder="Ej. Universidad Nacional" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Aspiración salarial</label>
+                <Input type="number" min="0" step="any" value={form.salario_aspiracion} onChange={e => setForm(f => ({ ...f, salario_aspiracion: e.target.value }))} placeholder="Ej. 2500000" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Fecha de nacimiento</label>
+                <Input type="date" value={form.fecha_nacimiento} onChange={e => setForm(f => ({ ...f, fecha_nacimiento: e.target.value }))} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Nivel de inglés</label>
+                <SearchableSelect
+                  className="w-full"
+                  options={[
+                    { value: NONE, label: 'Sin especificar' },
+                    { value: 'basico', label: 'Básico' },
+                    { value: 'intermedio', label: 'Intermedio' },
+                    { value: 'avanzado', label: 'Avanzado' },
+                    { value: 'nativo', label: 'Nativo' },
+                  ]}
+                  value={form.nivel_ingles}
+                  onValueChange={v => setForm(f => ({ ...f, nivel_ingles: v }))}
+                  placeholder="Selecciona nivel"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Años de experiencia</label>
+                <Input type="number" min="0" step="any" value={form.anos_experiencia} onChange={e => setForm(f => ({ ...f, anos_experiencia: e.target.value }))} placeholder="Ej. 3" />
+              </div>
+              <div className="space-y-1.5 sm:col-span-2">
+                <label className="text-sm font-medium">Dirección</label>
+                <Input value={form.direccion} onChange={e => setForm(f => ({ ...f, direccion: e.target.value }))} placeholder="Ej. Calle 10 # 5-20, Medellín" />
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Área</label>
