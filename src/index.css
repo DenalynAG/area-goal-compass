@@ -109,16 +109,16 @@
 
     --radius: 0.125rem;
 
-    /* Sidebar: crema con texto negro */
-    --sidebar-background: 20 100% 93%;         /* #FFE7DB */
-    --sidebar-foreground: 0 0% 0%;             /* #000000 */
-    --sidebar-primary: 0 0% 0%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 20 60% 88%;
-    --sidebar-accent-foreground: 0 0% 0%;
-    --sidebar-border: 20 40% 85%;
-    --sidebar-ring: 0 0% 0%;
-    --sidebar-muted: 0 0% 35%;
+    /* Sidebar: negro con texto blanco */
+    --sidebar-background: 0 0% 0%;              /* #000000 */
+    --sidebar-foreground: 0 0% 100%;            /* #FFFFFF */
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 0 0% 15%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 18%;
+    --sidebar-ring: 0 0% 100%;
+    --sidebar-muted: 0 0% 65%;
 
     /* Charts: negro + acentos secundarios */
     --chart-1: 0 0% 0%;
