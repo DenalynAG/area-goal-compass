@@ -929,22 +929,41 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {activeComps.map(c => {
                               const checked = cfg.comps.includes(c.id);
+                              const compEv = cfg.compEval[c.id] ?? NONE;
                               return (
-                                <label key={c.id} className="flex items-start gap-2 border rounded-md p-2 bg-background cursor-pointer">
-                                  <Checkbox
-                                    checked={checked}
-                                    onCheckedChange={v => toggleCandComp(sc.id, c.id, !!v)}
-                                  />
-                                  <span className="min-w-0">
-                                    <span className="block text-xs font-semibold">{c.name}</span>
-                                    {c.subtitle && <span className="block text-[10px] text-muted-foreground">{c.subtitle}</span>}
-                                    {checked && cfg.evaluator !== NONE && (
-                                      <span className="block text-[10px] text-muted-foreground mt-0.5">
-                                        Evalúa: <b className="text-foreground/80">{profileName(cfg.evaluator)}</b>
-                                      </span>
-                                    )}
-                                  </span>
-                                </label>
+                                <div key={c.id} className="border rounded-md p-2 bg-background space-y-2">
+                                  <label className="flex items-start gap-2 cursor-pointer">
+                                    <Checkbox
+                                      checked={checked}
+                                      onCheckedChange={v => toggleCandComp(sc.id, c.id, !!v)}
+                                    />
+                                    <span className="min-w-0">
+                                      <span className="block text-xs font-semibold">{c.name}</span>
+                                      {c.subtitle && <span className="block text-[10px] text-muted-foreground">{c.subtitle}</span>}
+                                    </span>
+                                  </label>
+                                  {checked && (
+                                    <div className="space-y-1 pl-6">
+                                      <span className="block text-[10px] font-medium text-muted-foreground">Líder que evalúa esta competencia *</span>
+                                      <SearchableSelect
+                                        className="w-full"
+                                        options={[{ value: NONE, label: 'Sin asignar' }, ...evaluatorOptions]}
+                                        value={compEv}
+                                        onValueChange={v => setCompEvaluator(sc.id, c.id, v)}
+                                        placeholder="Asignar líder"
+                                      />
+                                      {compEv !== NONE && (
+                                        <button
+                                          type="button"
+                                          className="text-[10px] underline text-muted-foreground hover:text-foreground"
+                                          onClick={() => applyEvaluatorToComp(c.id, compEv)}
+                                        >
+                                          Aplicar {profileName(compEv)} a esta competencia en todos los aspirantes
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
                               );
                             })}
                           </div>
