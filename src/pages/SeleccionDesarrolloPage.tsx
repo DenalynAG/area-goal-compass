@@ -1303,7 +1303,7 @@ export default function SeleccionDesarrolloPage() {
               <p className="p-4 text-sm text-muted-foreground text-center">Aún no hay competencias.</p>
             )}
             {competencies.map((c, i) => (
-              <div key={c.id} className="p-3 flex items-start justify-between gap-3">
+              <div key={c.id} className="p-3 flex items-start justify-between gap-3" style={compTint(c.color)}>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold">
                     {c.name}
