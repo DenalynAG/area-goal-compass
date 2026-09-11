@@ -978,7 +978,7 @@ export default function SeleccionDesarrolloPage() {
                     {compsOfRow(row).map(c => {
                       const isExpanded = !!expandedBehaviors[c.id];
                       return (
-                        <div key={c.id} className="border rounded-md p-2 space-y-1 md:p-2.5 md:space-y-1.5 bg-muted/20">
+                        <div key={c.id} className="border rounded-md p-2 space-y-1 md:p-2.5 md:space-y-1.5 bg-muted/20" style={compTint(c.color)}>
                           <div className="flex items-start justify-between gap-2">
                             <p className="font-semibold text-[11px] md:text-xs min-w-0">{c.name}</p>
                             {c.behavior && (
