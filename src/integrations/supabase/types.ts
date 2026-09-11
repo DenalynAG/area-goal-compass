@@ -481,7 +481,9 @@ export type Database = {
           created_by: string | null
           evaluation_date: string
           evaluator_user_id: string | null
+          fastpool_marked_at: string | null
           id: string
+          is_fastpool: boolean
           notes: string | null
           position: string | null
           profession: string | null
@@ -500,7 +502,9 @@ export type Database = {
           created_by?: string | null
           evaluation_date?: string
           evaluator_user_id?: string | null
+          fastpool_marked_at?: string | null
           id?: string
+          is_fastpool?: boolean
           notes?: string | null
           position?: string | null
           profession?: string | null
@@ -519,7 +523,9 @@ export type Database = {
           created_by?: string | null
           evaluation_date?: string
           evaluator_user_id?: string | null
+          fastpool_marked_at?: string | null
           id?: string
+          is_fastpool?: boolean
           notes?: string | null
           position?: string | null
           profession?: string | null

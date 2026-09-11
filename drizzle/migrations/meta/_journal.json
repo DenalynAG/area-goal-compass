@@ -8,6 +8,13 @@
       "when": 1789136475687,
       "tag": "0000_add_candidate_extra_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789136675810,
+      "tag": "0001_add_fastpool_to_assessment_evaluations",
+      "breakpoints": true
     }
   ]
 }

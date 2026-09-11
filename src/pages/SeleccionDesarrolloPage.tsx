@@ -18,6 +18,7 @@ import { Users, Pencil, Trash2, Search, SlidersHorizontal, ArrowUp, ArrowDown, T
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
 import AspirantesTab from '@/components/AspirantesTab';
 import AssessmentDashboardTab from '@/components/AssessmentDashboardTab';
 
@@ -32,6 +33,7 @@ type Assessment = {
   weighted_score: number | null;
   evaluation_date: string;
   created_by: string | null;
+  is_fastpool?: boolean | null;
 };
 
 type Competency = {
@@ -268,6 +270,23 @@ export default function SeleccionDesarrolloPage() {
   const detailGroup = historyGroups.find(g => g.key === detailGroupKey) ?? null;
 
   const [completing, setCompleting] = useState<string | null>(null);
+
+  const fastpoolRows = useMemo(() => rows.filter(r => r.is_fastpool), [rows]);
+
+  const toggleFastpool = async (row: Assessment, value: boolean) => {
+    qc.setQueryData(['assessment_evaluations'], (old: Assessment[] | undefined) =>
+      (old ?? []).map(r => (r.id === row.id ? { ...r, is_fastpool: value } : r)),
+    );
+    const { error } = await (supabase.from('assessment_evaluations' as any) as any)
+      .update({ is_fastpool: value, fastpool_marked_at: value ? new Date().toISOString() : null })
+      .eq('id', row.id);
+    if (error) {
+      toast.error(error.message);
+      qc.invalidateQueries({ queryKey: ['assessment_evaluations'] });
+      return;
+    }
+    toast.success(value ? `${row.candidate_name} agregado a FastPool` : `${row.candidate_name} retirado de FastPool`);
+  };
 
   const completeGroup = async (rowsIn: Assessment[], key: string) => {
     const names = rowsIn.map(r => r.candidate_name);
@@ -562,7 +581,66 @@ export default function SeleccionDesarrolloPage() {
           >
             Dashboard
           </TabsTrigger>
+          <TabsTrigger
+            value="fastpool"
+            className="bg-success/10 text-success data-[state=active]:bg-success data-[state=active]:text-success-foreground"
+          >
+            FastPool
+          </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="fastpool" className="space-y-3">
+          <Card className="p-0 overflow-hidden">
+            <div className="px-4 py-3 border-b bg-muted/20">
+              <h3 className="text-base font-bold leading-tight">Candidatos FastPool</h3>
+              <p className="text-xs text-muted-foreground">
+                Perfiles marcados como FastPool en la planilla de Assessment · {fastpoolRows.length} candidato(s)
+              </p>
+            </div>
+            {fastpoolRows.length === 0 ? (
+              <div className="py-10 text-center text-muted-foreground text-sm">
+                Aún no hay candidatos marcados como FastPool.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-muted/40 border-b text-left">
+                      <th className="px-3 py-2 font-semibold">Candidato</th>
+                      <th className="px-3 py-2 font-semibold">Profesión</th>
+                      <th className="px-3 py-2 font-semibold">Cargo</th>
+                      <th className="px-3 py-2 font-semibold">Área</th>
+                      <th className="px-3 py-2 font-semibold">Nota</th>
+                      <th className="px-3 py-2 font-semibold">Fecha</th>
+                      <th className="px-3 py-2 font-semibold text-right">Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {fastpoolRows.map(row => (
+                      <tr key={row.id} className="border-b">
+                        <td className="px-3 py-2 font-medium">{row.candidate_name}</td>
+                        <td className="px-3 py-2 text-muted-foreground">{row.profession ?? '—'}</td>
+                        <td className="px-3 py-2 text-muted-foreground">{row.position ?? '—'}</td>
+                        <td className="px-3 py-2 text-muted-foreground">
+                          {areaName(row.area_id)}{row.subarea_id ? ` / ${subareaName(row.subarea_id)}` : ''}
+                        </td>
+                        <td className="px-3 py-2">
+                          {scoreBadge(row.weighted_score !== null ? Number(row.weighted_score) : null)}
+                        </td>
+                        <td className="px-3 py-2 text-xs text-muted-foreground">{row.evaluation_date}</td>
+                        <td className="px-3 py-2 text-right">
+                          <Button size="sm" variant="outline" onClick={() => toggleFastpool(row, false)}>
+                            Quitar
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
+        </TabsContent>
 
         <TabsContent value="aspirantes">
           <AspirantesTab onAssessmentStarted={() => setActiveTab('planilla')} />
@@ -754,6 +832,19 @@ export default function SeleccionDesarrolloPage() {
                       </td>
                     ))}
                   </tr>
+                  <tr className="bg-amber-500/5">
+                    <td className="sticky left-0 z-20 bg-amber-500/10 px-3 py-2 md:px-4 md:py-3 border-r font-semibold text-xs md:text-sm shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
+                      Candidato FastPool
+                    </td>
+                    {filtered.map(row => (
+                      <td key={row.id} className="px-2 py-1.5 md:px-3 md:py-2 border-r text-center">
+                        <Checkbox
+                          checked={!!row.is_fastpool}
+                          onCheckedChange={v => toggleFastpool(row, !!v)}
+                        />
+                      </td>
+                    ))}
+                  </tr>
                   <tr>
                     <td className="sticky left-0 z-20 bg-background px-3 py-2 md:px-4 md:py-3 border-r text-xs text-muted-foreground shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
                       Fecha
@@ -818,6 +909,10 @@ export default function SeleccionDesarrolloPage() {
                     <span className="text-xs text-muted-foreground">Nota ponderada</span>
                     {scoreBadge(row.weighted_score !== null ? Number(row.weighted_score) : null)}
                   </div>
+                  <label className="flex items-center justify-between gap-2 pt-1 border-t">
+                    <span className="text-xs font-semibold">Candidato FastPool</span>
+                    <Checkbox checked={!!row.is_fastpool} onCheckedChange={v => toggleFastpool(row, !!v)} />
+                  </label>
                   <p className="text-[10px] md:text-[11px] text-muted-foreground">Fecha: {row.evaluation_date}</p>
                 </div>
               ))}
