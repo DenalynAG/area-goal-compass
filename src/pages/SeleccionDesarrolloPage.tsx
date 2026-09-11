@@ -271,6 +271,23 @@ export default function SeleccionDesarrolloPage() {
 
   const [completing, setCompleting] = useState<string | null>(null);
 
+  const fastpoolRows = useMemo(() => rows.filter(r => r.is_fastpool), [rows]);
+
+  const toggleFastpool = async (row: Assessment, value: boolean) => {
+    qc.setQueryData(['assessment_evaluations'], (old: Assessment[] | undefined) =>
+      (old ?? []).map(r => (r.id === row.id ? { ...r, is_fastpool: value } : r)),
+    );
+    const { error } = await (supabase.from('assessment_evaluations' as any) as any)
+      .update({ is_fastpool: value, fastpool_marked_at: value ? new Date().toISOString() : null })
+      .eq('id', row.id);
+    if (error) {
+      toast.error(error.message);
+      qc.invalidateQueries({ queryKey: ['assessment_evaluations'] });
+      return;
+    }
+    toast.success(value ? `${row.candidate_name} agregado a FastPool` : `${row.candidate_name} retirado de FastPool`);
+  };
+
   const completeGroup = async (rowsIn: Assessment[], key: string) => {
     const names = rowsIn.map(r => r.candidate_name);
     const ids = rowsIn.map(r => r.candidate_id).filter(Boolean) as string[];
