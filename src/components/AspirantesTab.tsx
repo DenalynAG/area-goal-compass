@@ -342,7 +342,6 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
     });
     setStartConfig(cfg);
     setStartComps([]);
-    setStartEvaluator(NONE);
     setStartDate(new Date().toISOString().split('T')[0]);
     setStartOpen(true);
   };
