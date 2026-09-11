@@ -1,0 +1,1 @@
+ALTER TABLE public.assessment_competencies ADD COLUMN IF NOT EXISTS color TEXT;
