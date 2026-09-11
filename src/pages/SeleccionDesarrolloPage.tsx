@@ -98,7 +98,7 @@ const emptyComp = {
   color: '',
 };
 
-export { COMP_COLORS, compTint } from '@/lib/competencyColors';
+import { COMP_COLORS, compTint } from '@/lib/competencyColors';
 
 
 
