@@ -101,6 +101,9 @@ export default function SeleccionDesarrolloPage() {
   const { data: areas = [] } = useAreas();
   const { data: subareas = [] } = useSubareas();
   const { data: positions = [] } = usePositions();
+  const { data: profiles = [] } = useProfiles();
+  const evaluatorName = (id?: string | null) =>
+    id ? (profiles.find(p => p.id === id)?.name ?? 'Sin asignar') : 'Sin asignar';
 
   const [search, setSearch] = useState('');
   const [filterArea, setFilterArea] = useState('all');
