@@ -857,7 +857,10 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
                       setStartConfig(prev => {
                         const next = { ...prev };
                         selectedCands.forEach(c => {
-                          next[c.id] = { ...(next[c.id] ?? { evaluator: NONE, comps: [] }), evaluator: v };
+                          const cur = next[c.id] ?? { evaluator: NONE, comps: [], compEval: {} };
+                          const compEval = { ...cur.compEval };
+                          cur.comps.forEach(id => { compEval[id] = v; });
+                          next[c.id] = { ...cur, evaluator: v, compEval };
                         });
                         return next;
                       });
