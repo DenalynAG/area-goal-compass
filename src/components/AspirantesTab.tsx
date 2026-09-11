@@ -347,13 +347,31 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
     setStartOpen(true);
   };
 
-  const cfgFor = (id: string) => startConfig[id] ?? { evaluator: NONE, comps: [] };
-  const setCfg = (id: string, patch: Partial<{ evaluator: string; comps: string[] }>) =>
+  const cfgFor = (id: string): StartCfg => startConfig[id] ?? { evaluator: NONE, comps: [], compEval: {} };
+  const setCfg = (id: string, patch: Partial<StartCfg>) =>
     setStartConfig(prev => ({ ...prev, [id]: { ...cfgFor(id), ...patch } }));
   const toggleCandComp = (candId: string, compId: string, checked: boolean) => {
-    const comps = cfgFor(candId).comps;
-    setCfg(candId, { comps: checked ? [...new Set([...comps, compId])] : comps.filter(x => x !== compId) });
+    const cur = cfgFor(candId);
+    const comps = checked ? [...new Set([...cur.comps, compId])] : cur.comps.filter(x => x !== compId);
+    const compEval = { ...cur.compEval };
+    if (checked) compEval[compId] = compEval[compId] ?? cur.evaluator;
+    else delete compEval[compId];
+    setCfg(candId, { comps, compEval });
   };
+  const setCompEvaluator = (candId: string, compId: string, evaluator: string) =>
+    setCfg(candId, { compEval: { ...cfgFor(candId).compEval, [compId]: evaluator } });
+  // Aplica un líder a una competencia en TODOS los aspirantes que la tengan seleccionada
+  const applyEvaluatorToComp = (compId: string, evaluator: string) =>
+    setStartConfig(prev => {
+      const next = { ...prev };
+      selectedCands.forEach(c => {
+        const cur = next[c.id] ?? { evaluator: NONE, comps: [], compEval: {} };
+        if (cur.comps.includes(compId)) {
+          next[c.id] = { ...cur, compEval: { ...cur.compEval, [compId]: evaluator } };
+        }
+      });
+      return next;
+    });
 
   const startForCandidate = async (cand: Candidate) => {
     const cfg = cfgFor(cand.id);
