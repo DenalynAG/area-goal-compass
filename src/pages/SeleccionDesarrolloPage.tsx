@@ -516,8 +516,10 @@ export default function SeleccionDesarrolloPage() {
   const ScoreCell = ({ row, competencyId, disabled }: { row: Assessment; competencyId: string; disabled?: boolean }) => {
     const val = scoreOf(row.id, competencyId);
     const opt = SCORE_OPTIONS.find(o => o.value === val);
+    const compEv = compEvaluatorOf(row.id, competencyId) ?? row.evaluator_user_id;
     if (disabled) return <span className="text-xs text-muted-foreground">No aplica</span>;
     return (
+      <div className="space-y-1">
       <Select
         value={val === null || val === undefined ? '__none__' : String(val)}
         onValueChange={(v) => updateScore(row, competencyId, v === '__none__' ? null : Number(v))}
