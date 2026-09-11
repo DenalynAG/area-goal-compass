@@ -291,12 +291,31 @@ export default function SeleccionDesarrolloPage() {
     const autoTable = (await import('jspdf-autotable')).default;
     const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
 
+    // Logo OSH
+    let logoData: string | null = null;
+    try {
+      const res = await fetch('https://dnifnjmiqbrtnmeqjizw.supabase.co/storage/v1/object/public/OSH-B/OSH-B.png');
+      const blob = await res.blob();
+      logoData = await new Promise<string>((resolve, reject) => {
+        const fr = new FileReader();
+        fr.onload = () => resolve(String(fr.result));
+        fr.onerror = reject;
+        fr.readAsDataURL(blob);
+      });
+    } catch { /* si falla el logo, se exporta igual */ }
+
+    const textX = logoData ? 100 : 40;
+    if (logoData) {
+      try { doc.addImage(logoData, 'PNG', 40, 26, 48, 48); } catch { /* ignore */ }
+    }
+
     doc.setFontSize(14);
-    doc.text('Assessment Center', 40, 40);
+    doc.text('Assessment Center', textX, 40);
     doc.setFontSize(10);
-    doc.text(`Convocatoria: ${group.positions.length ? group.positions.join(' · ') : 'Sin cargo definido'}`, 40, 58);
-    doc.text(`Áreas: ${group.areasLabel}`, 40, 72);
-    doc.text(`Fecha: ${group.key} · ${group.rows.length} aspirante(s)`, 40, 86);
+    doc.text(`Convocatoria: ${group.positions.length ? group.positions.join(' · ') : 'Sin cargo definido'}`, textX, 58);
+    doc.text(`Áreas: ${group.areasLabel}`, textX, 72);
+    doc.text(`Fecha: ${group.key} · ${group.rows.length} aspirante(s)`, textX, 86);
+
 
     const comps = compsForRows(group.rows);
     const head = [['Competencia', ...group.rows.map((r: Assessment) => r.candidate_name)]];
