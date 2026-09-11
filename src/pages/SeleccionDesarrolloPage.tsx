@@ -754,6 +754,19 @@ export default function SeleccionDesarrolloPage() {
                       </td>
                     ))}
                   </tr>
+                  <tr className="bg-amber-500/5">
+                    <td className="sticky left-0 z-20 bg-amber-500/10 px-3 py-2 md:px-4 md:py-3 border-r font-semibold text-xs md:text-sm shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
+                      Candidato FastPool
+                    </td>
+                    {filtered.map(row => (
+                      <td key={row.id} className="px-2 py-1.5 md:px-3 md:py-2 border-r text-center">
+                        <Checkbox
+                          checked={!!row.is_fastpool}
+                          onCheckedChange={v => toggleFastpool(row, !!v)}
+                        />
+                      </td>
+                    ))}
+                  </tr>
                   <tr>
                     <td className="sticky left-0 z-20 bg-background px-3 py-2 md:px-4 md:py-3 border-r text-xs text-muted-foreground shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
                       Fecha
