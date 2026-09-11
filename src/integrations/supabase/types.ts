@@ -435,6 +435,7 @@ export type Database = {
           competency_id: string
           created_at: string
           evaluation_id: string
+          evaluator_user_id: string | null
           id: string
           score: number | null
           updated_at: string
@@ -443,6 +444,7 @@ export type Database = {
           competency_id: string
           created_at?: string
           evaluation_id: string
+          evaluator_user_id?: string | null
           id?: string
           score?: number | null
           updated_at?: string
@@ -451,6 +453,7 @@ export type Database = {
           competency_id?: string
           created_at?: string
           evaluation_id?: string
+          evaluator_user_id?: string | null
           id?: string
           score?: number | null
           updated_at?: string
