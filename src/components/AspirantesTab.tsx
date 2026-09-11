@@ -95,8 +95,9 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
   const [startOpen, setStartOpen] = useState(false);
   const [startComps, setStartComps] = useState<string[]>([]);
   const [startEvaluator, setStartEvaluator] = useState<string>(NONE);
-  // Config por aspirante: { [candidateId]: { evaluator, comps[] } }
-  const [startConfig, setStartConfig] = useState<Record<string, { evaluator: string; comps: string[] }>>({});
+  // Config por aspirante: líder base, competencias y líder por competencia
+  type StartCfg = { evaluator: string; comps: string[]; compEval: Record<string, string> };
+  const [startConfig, setStartConfig] = useState<Record<string, StartCfg>>({});
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [starting, setStarting] = useState(false);
 
