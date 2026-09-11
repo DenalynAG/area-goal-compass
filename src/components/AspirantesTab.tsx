@@ -395,7 +395,7 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
       position: cand.position,
       profession: cand.profession ?? null,
       evaluation_date: startDate,
-      evaluator_user_id: startEvaluator,
+      evaluator_user_id: startEvaluatorId,
     };
 
     let evaluationId = (existing as any)?.id as string | undefined;
