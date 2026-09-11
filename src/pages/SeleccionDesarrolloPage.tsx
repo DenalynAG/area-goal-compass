@@ -520,6 +520,7 @@ export default function SeleccionDesarrolloPage() {
       behavior: c.behavior ?? '',
       position_name: c.position_name ?? ALL_POSITIONS,
       is_active: c.is_active,
+      color: c.color ?? '',
     });
   };
 
