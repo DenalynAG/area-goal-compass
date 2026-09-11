@@ -63,70 +63,71 @@
 
 @layer base {
   :root {
-    /* Paper & Ink — #f5f3ee / #e8e4dd / #2d2d2d / #0d0d0d */
-    --background: 40 24% 95%;          /* #f5f3ee paper */
-    --foreground: 0 0% 5%;             /* #0d0d0d deep ink */
+    /* Marca minimalista — Crema #FFE7DB / Negro #000000 / Blanco #FFFFFF */
+    --background: 0 0% 100%;           /* blanco */
+    --foreground: 0 0% 0%;             /* negro */
 
-    --card: 0 0% 100%;                 /* white card on paper */
-    --card-foreground: 0 0% 5%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 0%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 5%;
+    --popover-foreground: 0 0% 0%;
 
-    --primary: 0 0% 5%;                /* deep ink acts as primary */
-    --primary-foreground: 40 24% 95%;  /* paper on ink */
+    --primary: 0 0% 0%;                /* negro */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 39 20% 89%;           /* #e8e4dd soft */
-    --secondary-foreground: 0 0% 18%;
+    --secondary: 20 100% 93%;          /* #FFE7DB crema */
+    --secondary-foreground: 0 0% 0%;
 
-    --muted: 39 20% 89%;
-    --muted-foreground: 0 0% 30%;
+    --muted: 20 100% 96%;
+    --muted-foreground: 0 0% 32%;
 
-    --accent: 39 20% 89%;
-    --accent-foreground: 0 0% 5%;
+    --accent: 20 100% 93%;             /* crema */
+    --accent-foreground: 0 0% 0%;
 
-    --destructive: 0 60% 40%;
-    --destructive-foreground: 40 24% 95%;
+    --destructive: 13 71% 56%;         /* #DE613E */
+    --destructive-foreground: 0 0% 100%;
 
-    --success: 145 35% 32%;            /* muted forest — sobrio */
-    --success-foreground: 40 24% 95%;
-    --success-bright: 142 71% 45%;     /* brighter green for Alto */
+    --success: 116 21% 45%;            /* #5E8C5B */
+    --success-foreground: 0 0% 100%;
+    --success-bright: 116 30% 42%;
 
-    --warning: 35 55% 45%;             /* muted ochre */
-    --warning-foreground: 40 24% 95%;
-    --warning-bright: 38 92% 50%;      /* brighter amber for Medio */
+    --warning: 37 84% 49%;             /* #E59514 */
+    --warning-foreground: 0 0% 100%;
+    --warning-bright: 37 90% 47%;
 
-    --info: 205 55% 45%;                /* muted ocean — distintivo */
-    --info-foreground: 40 24% 95%;
+    --info: 213 64% 51%;               /* #3076D2 */
+    --info-foreground: 0 0% 100%;
 
-    --danger: 0 60% 40%;
-    --danger-foreground: 40 24% 95%;
-    --danger-bright: 0 84% 60%;       /* brighter red for Bajo */
+    --danger: 13 71% 56%;              /* #DE613E */
+    --danger-foreground: 0 0% 100%;
+    --danger-bright: 13 75% 50%;
 
-    --border: 39 20% 89%;              /* hairline on paper */
-    --input: 39 20% 89%;
-    --ring: 0 0% 18%;
+    --border: 20 40% 88%;              /* hairline crema */
+    --input: 20 40% 88%;
+    --ring: 0 0% 0%;
 
-    --radius: 0.125rem;                /* editorial = casi cuadrado */
+    --radius: 0.125rem;
 
-    /* Sidebar: tinta profunda, texto papel */
-    --sidebar-background: 0 0% 5%;             /* #0d0d0d */
-    --sidebar-foreground: 40 24% 95%;          /* #f5f3ee */
-    --sidebar-primary: 40 24% 95%;
-    --sidebar-primary-foreground: 0 0% 5%;
-    --sidebar-accent: 0 0% 12%;                /* subtle hover on dark */
-    --sidebar-accent-foreground: 40 24% 95%;
-    --sidebar-border: 0 0% 18%;
-    --sidebar-ring: 40 24% 95%;
-    --sidebar-muted: 40 10% 65%;
+    /* Sidebar: crema con texto negro */
+    --sidebar-background: 20 100% 93%;         /* #FFE7DB */
+    --sidebar-foreground: 0 0% 0%;             /* #000000 */
+    --sidebar-primary: 0 0% 0%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 20 60% 88%;
+    --sidebar-accent-foreground: 0 0% 0%;
+    --sidebar-border: 20 40% 85%;
+    --sidebar-ring: 0 0% 0%;
+    --sidebar-muted: 0 0% 35%;
 
-    /* Charts sobrios en escala de tinta + acentos muy contenidos */
-    --chart-1: 0 0% 5%;
-    --chart-2: 0 0% 25%;
-    --chart-3: 145 35% 32%;
-    --chart-4: 35 55% 45%;
-    --chart-5: 0 60% 40%;
+    /* Charts: negro + acentos secundarios */
+    --chart-1: 0 0% 0%;
+    --chart-2: 213 64% 51%;
+    --chart-3: 116 21% 45%;
+    --chart-4: 37 84% 49%;
+    --chart-5: 335 100% 86%;
   }
+
 
   .dark {
     --background: 220 25% 10%;
