@@ -95,8 +95,9 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
   const [startOpen, setStartOpen] = useState(false);
   const [startComps, setStartComps] = useState<string[]>([]);
   const [startEvaluator, setStartEvaluator] = useState<string>(NONE);
-  // Config por aspirante: { [candidateId]: { evaluator, comps[] } }
-  const [startConfig, setStartConfig] = useState<Record<string, { evaluator: string; comps: string[] }>>({});
+  // Config por aspirante: líder base, competencias y líder por competencia
+  type StartCfg = { evaluator: string; comps: string[]; compEval: Record<string, string> };
+  const [startConfig, setStartConfig] = useState<Record<string, StartCfg>>({});
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [starting, setStarting] = useState(false);
 
@@ -328,15 +329,16 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
       );
       return;
     }
-    const cfg: Record<string, { evaluator: string; comps: string[] }> = {};
+    const cfg: Record<string, StartCfg> = {};
     selectedCands.forEach(c => {
       const assigned = candidateComps.filter(cc => cc.candidate_id === c.id).map(cc => cc.competency_id);
-      cfg[c.id] = {
-        evaluator: c.evaluator_user_id ?? NONE,
-        comps: assigned.length
-          ? assigned
-          : activeComps.filter(k => !k.position_name || k.position_name === c.position).map(k => k.id),
-      };
+      const comps = assigned.length
+        ? assigned
+        : activeComps.filter(k => !k.position_name || k.position_name === c.position).map(k => k.id);
+      const base = c.evaluator_user_id ?? NONE;
+      const compEval: Record<string, string> = {};
+      comps.forEach(id => { compEval[id] = base; });
+      cfg[c.id] = { evaluator: base, comps, compEval };
     });
     setStartConfig(cfg);
     setStartComps([]);
@@ -345,18 +347,37 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
     setStartOpen(true);
   };
 
-  const cfgFor = (id: string) => startConfig[id] ?? { evaluator: NONE, comps: [] };
-  const setCfg = (id: string, patch: Partial<{ evaluator: string; comps: string[] }>) =>
+  const cfgFor = (id: string): StartCfg => startConfig[id] ?? { evaluator: NONE, comps: [], compEval: {} };
+  const setCfg = (id: string, patch: Partial<StartCfg>) =>
     setStartConfig(prev => ({ ...prev, [id]: { ...cfgFor(id), ...patch } }));
   const toggleCandComp = (candId: string, compId: string, checked: boolean) => {
-    const comps = cfgFor(candId).comps;
-    setCfg(candId, { comps: checked ? [...new Set([...comps, compId])] : comps.filter(x => x !== compId) });
+    const cur = cfgFor(candId);
+    const comps = checked ? [...new Set([...cur.comps, compId])] : cur.comps.filter(x => x !== compId);
+    const compEval = { ...cur.compEval };
+    if (checked) compEval[compId] = compEval[compId] ?? cur.evaluator;
+    else delete compEval[compId];
+    setCfg(candId, { comps, compEval });
   };
+  const setCompEvaluator = (candId: string, compId: string, evaluator: string) =>
+    setCfg(candId, { compEval: { ...cfgFor(candId).compEval, [compId]: evaluator } });
+  // Aplica un líder a una competencia en TODOS los aspirantes que la tengan seleccionada
+  const applyEvaluatorToComp = (compId: string, evaluator: string) =>
+    setStartConfig(prev => {
+      const next = { ...prev };
+      selectedCands.forEach(c => {
+        const cur = next[c.id] ?? { evaluator: NONE, comps: [], compEval: {} };
+        if (cur.comps.includes(compId)) {
+          next[c.id] = { ...cur, compEval: { ...cur.compEval, [compId]: evaluator } };
+        }
+      });
+      return next;
+    });
 
   const startForCandidate = async (cand: Candidate) => {
     const cfg = cfgFor(cand.id);
     const startComps = cfg.comps;
-    const startEvaluatorId = cfg.evaluator;
+    const compEvals = startComps.map(id => cfg.compEval[id]).filter(v => v && v !== NONE);
+    const startEvaluatorId = cfg.evaluator !== NONE ? cfg.evaluator : (compEvals[0] ?? null);
     const { error: upErr } = await supabase
       .from('assessment_candidates' as any)
       .update({ evaluator_user_id: startEvaluatorId, status: 'en_evaluacion' })
@@ -413,9 +434,25 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
     }
 
     const { error: scErr } = await (supabase.from('assessment_competency_scores' as any) as any)
-      .upsert(startComps.map(id => ({ evaluation_id: evaluationId, competency_id: id })),
-        { onConflict: 'evaluation_id,competency_id', ignoreDuplicates: true });
+      .upsert(
+        startComps.map(id => ({
+          evaluation_id: evaluationId,
+          competency_id: id,
+          evaluator_user_id: cfg.compEval[id] && cfg.compEval[id] !== NONE ? cfg.compEval[id] : null,
+        })),
+        { onConflict: 'evaluation_id,competency_id', ignoreDuplicates: true },
+      );
     if (scErr) throw scErr;
+
+    // Actualiza el líder por competencia también en filas ya existentes
+    for (const id of startComps) {
+      const ev = cfg.compEval[id] && cfg.compEval[id] !== NONE ? cfg.compEval[id] : null;
+      await (supabase.from('assessment_competency_scores' as any) as any)
+        .update({ evaluator_user_id: ev })
+        .eq('evaluation_id', evaluationId)
+        .eq('competency_id', id);
+    }
+
 
     if (toRemove.length) {
       await supabase.from('assessment_competency_scores' as any)
@@ -435,9 +472,12 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
     if (sinComps.length) {
       return toast.error(`Selecciona al menos una competencia para: ${sinComps.map(c => c.full_name).join(', ')}`);
     }
-    const sinLider = selectedCands.filter(c => cfgFor(c.id).evaluator === NONE);
+    const sinLider = selectedCands.filter(c => {
+      const cfg = cfgFor(c.id);
+      return cfg.comps.some(id => !cfg.compEval[id] || cfg.compEval[id] === NONE);
+    });
     if (sinLider.length) {
-      return toast.error(`Asigna el líder que evalúa a: ${sinLider.map(c => c.full_name).join(', ')}`);
+      return toast.error(`Asigna el líder de cada competencia para: ${sinLider.map(c => c.full_name).join(', ')}`);
     }
     setStarting(true);
     try {
@@ -817,7 +857,10 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
                       setStartConfig(prev => {
                         const next = { ...prev };
                         selectedCands.forEach(c => {
-                          next[c.id] = { ...(next[c.id] ?? { evaluator: NONE, comps: [] }), evaluator: v };
+                          const cur = next[c.id] ?? { evaluator: NONE, comps: [], compEval: {} };
+                          const compEval = { ...cur.compEval };
+                          cur.comps.forEach(id => { compEval[id] = v; });
+                          next[c.id] = { ...cur, evaluator: v, compEval };
                         });
                         return next;
                       });
@@ -845,15 +888,23 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
                       </div>
                       <div className="p-3 space-y-3">
                         <div className="space-y-1.5">
-                          <label className="text-xs font-medium">Líder que evalúa sus competencias *</label>
+                          <label className="text-xs font-medium">Líder por defecto de este aspirante</label>
                           <SearchableSelect
                             className="w-full"
                             options={[{ value: NONE, label: 'Sin asignar' }, ...evaluatorOptions]}
                             value={cfg.evaluator}
-                            onValueChange={v => setCfg(sc.id, { evaluator: v })}
+                            onValueChange={v => {
+                              const compEval = { ...cfg.compEval };
+                              cfg.comps.forEach(id => { compEval[id] = v; });
+                              setCfg(sc.id, { evaluator: v, compEval });
+                            }}
                             placeholder="Asignar evaluador"
                           />
+                          <p className="text-[10px] text-muted-foreground">
+                            Puedes cambiar el líder de cada competencia por separado.
+                          </p>
                         </div>
+
 
                         <div className="space-y-2">
                           <div className="flex items-center justify-between flex-wrap gap-2">
@@ -862,15 +913,18 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
                             </h4>
                             <div className="flex gap-1">
                               <Button type="button" variant="outline" size="sm" className="h-6 text-[11px] px-2"
-                                onClick={() => setCfg(sc.id, {
-                                  comps: activeComps
+                                onClick={() => {
+                                  const comps = activeComps
                                     .filter(c => !c.position_name || c.position_name === sc.position)
-                                    .map(c => c.id),
-                                })}>
+                                    .map(c => c.id);
+                                  const compEval = { ...cfg.compEval };
+                                  comps.forEach(id => { compEval[id] = compEval[id] ?? cfg.evaluator; });
+                                  setCfg(sc.id, { comps, compEval });
+                                }}>
                                 Sugeridas por cargo
                               </Button>
                               <Button type="button" variant="ghost" size="sm" className="h-6 text-[11px] px-2"
-                                onClick={() => setCfg(sc.id, { comps: [] })}>
+                                onClick={() => setCfg(sc.id, { comps: [], compEval: {} })}>
                                 Limpiar
                               </Button>
                             </div>
@@ -878,22 +932,41 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {activeComps.map(c => {
                               const checked = cfg.comps.includes(c.id);
+                              const compEv = cfg.compEval[c.id] ?? NONE;
                               return (
-                                <label key={c.id} className="flex items-start gap-2 border rounded-md p-2 bg-background cursor-pointer">
-                                  <Checkbox
-                                    checked={checked}
-                                    onCheckedChange={v => toggleCandComp(sc.id, c.id, !!v)}
-                                  />
-                                  <span className="min-w-0">
-                                    <span className="block text-xs font-semibold">{c.name}</span>
-                                    {c.subtitle && <span className="block text-[10px] text-muted-foreground">{c.subtitle}</span>}
-                                    {checked && cfg.evaluator !== NONE && (
-                                      <span className="block text-[10px] text-muted-foreground mt-0.5">
-                                        Evalúa: <b className="text-foreground/80">{profileName(cfg.evaluator)}</b>
-                                      </span>
-                                    )}
-                                  </span>
-                                </label>
+                                <div key={c.id} className="border rounded-md p-2 bg-background space-y-2">
+                                  <label className="flex items-start gap-2 cursor-pointer">
+                                    <Checkbox
+                                      checked={checked}
+                                      onCheckedChange={v => toggleCandComp(sc.id, c.id, !!v)}
+                                    />
+                                    <span className="min-w-0">
+                                      <span className="block text-xs font-semibold">{c.name}</span>
+                                      {c.subtitle && <span className="block text-[10px] text-muted-foreground">{c.subtitle}</span>}
+                                    </span>
+                                  </label>
+                                  {checked && (
+                                    <div className="space-y-1 pl-6">
+                                      <span className="block text-[10px] font-medium text-muted-foreground">Líder que evalúa esta competencia *</span>
+                                      <SearchableSelect
+                                        className="w-full"
+                                        options={[{ value: NONE, label: 'Sin asignar' }, ...evaluatorOptions]}
+                                        value={compEv}
+                                        onValueChange={v => setCompEvaluator(sc.id, c.id, v)}
+                                        placeholder="Asignar líder"
+                                      />
+                                      {compEv !== NONE && (
+                                        <button
+                                          type="button"
+                                          className="text-[10px] underline text-muted-foreground hover:text-foreground"
+                                          onClick={() => applyEvaluatorToComp(c.id, compEv)}
+                                        >
+                                          Aplicar {profileName(compEv)} a esta competencia en todos los aspirantes
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
                               );
                             })}
                           </div>

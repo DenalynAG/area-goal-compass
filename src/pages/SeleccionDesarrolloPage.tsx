@@ -52,6 +52,7 @@ type CompScore = {
   evaluation_id: string;
   competency_id: string;
   score: number | null;
+  evaluator_user_id?: string | null;
 };
 
 const SCORE_OPTIONS = [
@@ -194,6 +195,9 @@ export default function SeleccionDesarrolloPage() {
 
   const scoreOf = (evaluationId: string, competencyId: string) =>
     compScores.find(s => s.evaluation_id === evaluationId && s.competency_id === competencyId)?.score ?? null;
+
+  const compEvaluatorOf = (evaluationId: string, competencyId: string) =>
+    compScores.find(s => s.evaluation_id === evaluationId && s.competency_id === competencyId)?.evaluator_user_id ?? null;
 
   const filteredSubareas = useMemo(
     () => (form.area_id ? subareas.filter(s => s.area_id === form.area_id) : []),
@@ -512,8 +516,10 @@ export default function SeleccionDesarrolloPage() {
   const ScoreCell = ({ row, competencyId, disabled }: { row: Assessment; competencyId: string; disabled?: boolean }) => {
     const val = scoreOf(row.id, competencyId);
     const opt = SCORE_OPTIONS.find(o => o.value === val);
+    const compEv = compEvaluatorOf(row.id, competencyId) ?? row.evaluator_user_id;
     if (disabled) return <span className="text-xs text-muted-foreground">No aplica</span>;
     return (
+      <div className="space-y-1">
       <Select
         value={val === null || val === undefined ? '__none__' : String(val)}
         onValueChange={(v) => updateScore(row, competencyId, v === '__none__' ? null : Number(v))}
@@ -532,6 +538,10 @@ export default function SeleccionDesarrolloPage() {
           ))}
         </SelectContent>
       </Select>
+      <p className="text-[9px] leading-tight text-muted-foreground text-center truncate" title={evaluatorName(compEv)}>
+        {evaluatorName(compEv)}
+      </p>
+      </div>
     );
   };
 
