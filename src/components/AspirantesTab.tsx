@@ -42,7 +42,7 @@ type Candidate = {
 type CandidateComp = { id: string; candidate_id: string; competency_id: string };
 
 type Competency = {
-  id: string; name: string; subtitle: string | null; position_name: string | null; is_active: boolean;
+  id: string; name: string; subtitle: string | null; position_name: string | null; is_active: boolean; color?: string | null;
 };
 
 const STATUSES = [
