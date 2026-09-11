@@ -328,20 +328,38 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
       );
       return;
     }
-    const base = selectedCands[0];
-    const assigned = candidateComps.filter(cc => cc.candidate_id === base.id).map(cc => cc.competency_id);
-    setStartComps(assigned.length
-      ? assigned
-      : activeComps.filter(k => !k.position_name || k.position_name === base.position).map(k => k.id));
-    setStartEvaluator(base.evaluator_user_id ?? NONE);
+    const cfg: Record<string, { evaluator: string; comps: string[] }> = {};
+    selectedCands.forEach(c => {
+      const assigned = candidateComps.filter(cc => cc.candidate_id === c.id).map(cc => cc.competency_id);
+      cfg[c.id] = {
+        evaluator: c.evaluator_user_id ?? NONE,
+        comps: assigned.length
+          ? assigned
+          : activeComps.filter(k => !k.position_name || k.position_name === c.position).map(k => k.id),
+      };
+    });
+    setStartConfig(cfg);
+    setStartComps([]);
+    setStartEvaluator(NONE);
     setStartDate(new Date().toISOString().split('T')[0]);
     setStartOpen(true);
   };
 
+  const cfgFor = (id: string) => startConfig[id] ?? { evaluator: NONE, comps: [] };
+  const setCfg = (id: string, patch: Partial<{ evaluator: string; comps: string[] }>) =>
+    setStartConfig(prev => ({ ...prev, [id]: { ...cfgFor(id), ...patch } }));
+  const toggleCandComp = (candId: string, compId: string, checked: boolean) => {
+    const comps = cfgFor(candId).comps;
+    setCfg(candId, { comps: checked ? [...new Set([...comps, compId])] : comps.filter(x => x !== compId) });
+  };
+
   const startForCandidate = async (cand: Candidate) => {
+    const cfg = cfgFor(cand.id);
+    const startComps = cfg.comps;
+    const startEvaluatorId = cfg.evaluator;
     const { error: upErr } = await supabase
       .from('assessment_candidates' as any)
-      .update({ evaluator_user_id: startEvaluator, status: 'en_evaluacion' })
+      .update({ evaluator_user_id: startEvaluatorId, status: 'en_evaluacion' })
       .eq('id', cand.id);
     if (upErr) throw upErr;
 
