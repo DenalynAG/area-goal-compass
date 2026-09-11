@@ -279,6 +279,54 @@ export default function SeleccionDesarrolloPage() {
 
   const [completing, setCompleting] = useState<string | null>(null);
 
+  const exportGroupPDF = async (group: any) => {
+    const { default: jsPDF } = await import('jspdf');
+    const autoTable = (await import('jspdf-autotable')).default;
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+
+    doc.setFontSize(14);
+    doc.text('Assessment Center', 40, 40);
+    doc.setFontSize(10);
+    doc.text(`Convocatoria: ${group.positions.length ? group.positions.join(' · ') : 'Sin cargo definido'}`, 40, 58);
+    doc.text(`Áreas: ${group.areasLabel}`, 40, 72);
+    doc.text(`Fecha: ${group.key} · ${group.rows.length} aspirante(s)`, 40, 86);
+
+    const comps = compsForRows(group.rows);
+    const head = [['Competencia', ...group.rows.map((r: Assessment) => r.candidate_name)]];
+    const body: string[][] = comps.map(c => [
+      c.name,
+      ...group.rows.map((r: Assessment) => {
+        const applies = compsOfRow(r).some(x => x.id === c.id);
+        if (!applies) return 'No aplica';
+        const v = scoreOf(r.id, c.id);
+        return v === null || v === undefined ? '—' : String(v);
+      }),
+    ]);
+    body.push([
+      'Nota ponderada',
+      ...group.rows.map((r: Assessment) => (r.weighted_score !== null && r.weighted_score !== undefined ? `${Number(r.weighted_score)}%` : '—')),
+    ]);
+    body.push([
+      'Profesión',
+      ...group.rows.map((r: Assessment) => r.profession || '—'),
+    ]);
+    body.push([
+      'FastPool',
+      ...group.rows.map((r: Assessment) => (r.is_fastpool ? 'Sí' : 'No')),
+    ]);
+
+    autoTable(doc, {
+      head,
+      body,
+      startY: 100,
+      styles: { fontSize: 8, cellPadding: 4, overflow: 'linebreak' },
+      headStyles: { fillColor: [30, 30, 30], textColor: 255 },
+      columnStyles: { 0: { cellWidth: 160, fontStyle: 'bold' } },
+    });
+
+    doc.save(`assessment-${group.key}.pdf`);
+  };
+
   const fastpoolRows = useMemo(() => rows.filter(r => r.is_fastpool), [rows]);
 
   const toggleFastpool = async (row: Assessment, value: boolean) => {
