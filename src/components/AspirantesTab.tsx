@@ -845,33 +845,8 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
 
           {selectedCands.length > 0 && (
             <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 border rounded-md p-3 bg-muted/20">
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium">Aplicar líder a todos</label>
-                  <SearchableSelect
-                    className="w-full"
-                    options={[{ value: NONE, label: 'Sin asignar' }, ...evaluatorOptions]}
-                    value={startEvaluator}
-                    onValueChange={v => {
-                      setStartEvaluator(v);
-                      setStartConfig(prev => {
-                        const next = { ...prev };
-                        selectedCands.forEach(c => {
-                          const cur = next[c.id] ?? { evaluator: NONE, comps: [], compEval: {} };
-                          const compEval = { ...cur.compEval };
-                          cur.comps.forEach(id => { compEval[id] = v; });
-                          next[c.id] = { ...cur, evaluator: v, compEval };
-                        });
-                        return next;
-                      });
-                    }}
-                    placeholder="Opcional: mismo líder para todos"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium">Fecha de evaluación</label>
-                  <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
-                </div>
+              <div className="rounded-lg border bg-accent/10 px-3 py-2 text-xs text-muted-foreground">
+                Asigna el líder evaluador y marca las competencias de cada aspirante. La fecha se toma de hoy.
               </div>
 
               <div className="space-y-3">
