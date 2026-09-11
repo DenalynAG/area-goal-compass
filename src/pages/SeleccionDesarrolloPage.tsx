@@ -562,7 +562,66 @@ export default function SeleccionDesarrolloPage() {
           >
             Dashboard
           </TabsTrigger>
+          <TabsTrigger
+            value="fastpool"
+            className="bg-success/10 text-success data-[state=active]:bg-success data-[state=active]:text-success-foreground"
+          >
+            FastPool
+          </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="fastpool" className="space-y-3">
+          <Card className="p-0 overflow-hidden">
+            <div className="px-4 py-3 border-b bg-muted/20">
+              <h3 className="text-base font-bold leading-tight">Candidatos FastPool</h3>
+              <p className="text-xs text-muted-foreground">
+                Perfiles marcados como FastPool en la planilla de Assessment · {fastpoolRows.length} candidato(s)
+              </p>
+            </div>
+            {fastpoolRows.length === 0 ? (
+              <div className="py-10 text-center text-muted-foreground text-sm">
+                Aún no hay candidatos marcados como FastPool.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-muted/40 border-b text-left">
+                      <th className="px-3 py-2 font-semibold">Candidato</th>
+                      <th className="px-3 py-2 font-semibold">Profesión</th>
+                      <th className="px-3 py-2 font-semibold">Cargo</th>
+                      <th className="px-3 py-2 font-semibold">Área</th>
+                      <th className="px-3 py-2 font-semibold">Nota</th>
+                      <th className="px-3 py-2 font-semibold">Fecha</th>
+                      <th className="px-3 py-2 font-semibold text-right">Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {fastpoolRows.map(row => (
+                      <tr key={row.id} className="border-b">
+                        <td className="px-3 py-2 font-medium">{row.candidate_name}</td>
+                        <td className="px-3 py-2 text-muted-foreground">{row.profession ?? '—'}</td>
+                        <td className="px-3 py-2 text-muted-foreground">{row.position ?? '—'}</td>
+                        <td className="px-3 py-2 text-muted-foreground">
+                          {areaName(row.area_id)}{row.subarea_id ? ` / ${subareaName(row.subarea_id)}` : ''}
+                        </td>
+                        <td className="px-3 py-2">
+                          {scoreBadge(row.weighted_score !== null ? Number(row.weighted_score) : null)}
+                        </td>
+                        <td className="px-3 py-2 text-xs text-muted-foreground">{row.evaluation_date}</td>
+                        <td className="px-3 py-2 text-right">
+                          <Button size="sm" variant="outline" onClick={() => toggleFastpool(row, false)}>
+                            Quitar
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
+        </TabsContent>
 
         <TabsContent value="aspirantes">
           <AspirantesTab onAssessmentStarted={() => setActiveTab('planilla')} />
