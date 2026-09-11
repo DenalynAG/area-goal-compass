@@ -329,15 +329,16 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
       );
       return;
     }
-    const cfg: Record<string, { evaluator: string; comps: string[] }> = {};
+    const cfg: Record<string, StartCfg> = {};
     selectedCands.forEach(c => {
       const assigned = candidateComps.filter(cc => cc.candidate_id === c.id).map(cc => cc.competency_id);
-      cfg[c.id] = {
-        evaluator: c.evaluator_user_id ?? NONE,
-        comps: assigned.length
-          ? assigned
-          : activeComps.filter(k => !k.position_name || k.position_name === c.position).map(k => k.id),
-      };
+      const comps = assigned.length
+        ? assigned
+        : activeComps.filter(k => !k.position_name || k.position_name === c.position).map(k => k.id);
+      const base = c.evaluator_user_id ?? NONE;
+      const compEval: Record<string, string> = {};
+      comps.forEach(id => { compEval[id] = base; });
+      cfg[c.id] = { evaluator: base, comps, compEval };
     });
     setStartConfig(cfg);
     setStartComps([]);
