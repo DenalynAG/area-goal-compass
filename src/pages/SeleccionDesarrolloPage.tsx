@@ -831,6 +831,10 @@ export default function SeleccionDesarrolloPage() {
                     <span className="text-xs text-muted-foreground">Nota ponderada</span>
                     {scoreBadge(row.weighted_score !== null ? Number(row.weighted_score) : null)}
                   </div>
+                  <label className="flex items-center justify-between gap-2 pt-1 border-t">
+                    <span className="text-xs font-semibold">Candidato FastPool</span>
+                    <Checkbox checked={!!row.is_fastpool} onCheckedChange={v => toggleFastpool(row, !!v)} />
+                  </label>
                   <p className="text-[10px] md:text-[11px] text-muted-foreground">Fecha: {row.evaluation_date}</p>
                 </div>
               ))}
