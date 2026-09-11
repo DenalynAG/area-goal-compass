@@ -434,9 +434,25 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
     }
 
     const { error: scErr } = await (supabase.from('assessment_competency_scores' as any) as any)
-      .upsert(startComps.map(id => ({ evaluation_id: evaluationId, competency_id: id })),
-        { onConflict: 'evaluation_id,competency_id', ignoreDuplicates: true });
+      .upsert(
+        startComps.map(id => ({
+          evaluation_id: evaluationId,
+          competency_id: id,
+          evaluator_user_id: cfg.compEval[id] && cfg.compEval[id] !== NONE ? cfg.compEval[id] : null,
+        })),
+        { onConflict: 'evaluation_id,competency_id', ignoreDuplicates: true },
+      );
     if (scErr) throw scErr;
+
+    // Actualiza el líder por competencia también en filas ya existentes
+    for (const id of startComps) {
+      const ev = cfg.compEval[id] && cfg.compEval[id] !== NONE ? cfg.compEval[id] : null;
+      await (supabase.from('assessment_competency_scores' as any) as any)
+        .update({ evaluator_user_id: ev })
+        .eq('evaluation_id', evaluationId)
+        .eq('competency_id', id);
+    }
+
 
     if (toRemove.length) {
       await supabase.from('assessment_competency_scores' as any)
