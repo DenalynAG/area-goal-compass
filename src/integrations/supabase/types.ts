@@ -303,57 +303,72 @@ export type Database = {
       }
       assessment_candidates: {
         Row: {
+          anos_experiencia: number | null
           application_date: string
           area_id: string | null
           created_at: string
           created_by: string | null
+          direccion: string | null
           document_id: string | null
           email: string | null
           evaluator_user_id: string | null
+          fecha_nacimiento: string | null
           full_name: string
           id: string
+          nivel_ingles: string | null
           notes: string | null
           phone: string | null
           position: string | null
           profession: string | null
+          salario_aspiracion: number | null
           status: string
           subarea_id: string | null
           university: string | null
           updated_at: string
         }
         Insert: {
+          anos_experiencia?: number | null
           application_date?: string
           area_id?: string | null
           created_at?: string
           created_by?: string | null
+          direccion?: string | null
           document_id?: string | null
           email?: string | null
           evaluator_user_id?: string | null
+          fecha_nacimiento?: string | null
           full_name: string
           id?: string
+          nivel_ingles?: string | null
           notes?: string | null
           phone?: string | null
           position?: string | null
           profession?: string | null
+          salario_aspiracion?: number | null
           status?: string
           subarea_id?: string | null
           university?: string | null
           updated_at?: string
         }
         Update: {
+          anos_experiencia?: number | null
           application_date?: string
           area_id?: string | null
           created_at?: string
           created_by?: string | null
+          direccion?: string | null
           document_id?: string | null
           email?: string | null
           evaluator_user_id?: string | null
+          fecha_nacimiento?: string | null
           full_name?: string
           id?: string
+          nivel_ingles?: string | null
           notes?: string | null
           phone?: string | null
           position?: string | null
           profession?: string | null
+          salario_aspiracion?: number | null
           status?: string
           subarea_id?: string | null
           university?: string | null
