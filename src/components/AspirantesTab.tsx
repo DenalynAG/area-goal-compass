@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Pencil, Trash2, Search, UserCheck, PlayCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
-import { compTint } from '@/pages/SeleccionDesarrolloPage';
+import { compTint } from '@/lib/competencyColors';
 
 const NONE = '__none__';
 
