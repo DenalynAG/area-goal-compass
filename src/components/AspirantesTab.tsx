@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Pencil, Trash2, Search, UserCheck, PlayCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import { compTint } from '@/lib/competencyColors';
 
 const NONE = '__none__';
 
@@ -41,7 +42,7 @@ type Candidate = {
 type CandidateComp = { id: string; candidate_id: string; competency_id: string };
 
 type Competency = {
-  id: string; name: string; subtitle: string | null; position_name: string | null; is_active: boolean;
+  id: string; name: string; subtitle: string | null; position_name: string | null; is_active: boolean; color?: string | null;
 };
 
 const STATUSES = [
@@ -913,15 +914,18 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
                               const checked = cfg.comps.includes(c.id);
                               const compEv = cfg.compEval[c.id] ?? NONE;
                               return (
-                                <div key={c.id} className={`border rounded-lg p-2.5 space-y-2 transition-colors ${checked ? 'border-primary/60 bg-primary/5 shadow-sm' : 'bg-muted/20 hover:bg-muted/40'}`}>
+                                <div key={c.id} className={`border rounded-lg p-2.5 space-y-2 transition-colors ${checked ? 'border-primary/60 bg-primary/5 shadow-sm' : 'bg-muted/20 hover:bg-muted/40'}`} style={compTint(c.color, checked ? '26' : '14')}>
                                   <label className="flex items-start gap-2 cursor-pointer">
                                     <Checkbox
                                       checked={checked}
                                       onCheckedChange={v => toggleCandComp(sc.id, c.id, !!v)}
                                     />
-                                    <span className="min-w-0">
+                                    <span className="min-w-0 flex items-start gap-1.5">
+                                      {c.color && <span className="mt-1 h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: c.color }} />}
+                                      <span className="min-w-0">
                                       <span className="block text-xs font-semibold">{c.name}</span>
                                       {c.subtitle && <span className="block text-[10px] text-muted-foreground">{c.subtitle}</span>}
+                                      </span>
                                     </span>
                                   </label>
                                   {checked && (

@@ -45,6 +45,7 @@ type Competency = {
   position_name: string | null;
   sort_order: number;
   is_active: boolean;
+  color?: string | null;
 };
 
 type CompScore = {
@@ -94,7 +95,13 @@ const emptyComp = {
   behavior: '',
   position_name: ALL_POSITIONS,
   is_active: true,
+  color: '',
 };
+
+import { COMP_COLORS, compTint } from '@/lib/competencyColors';
+
+
+
 
 export default function SeleccionDesarrolloPage() {
   const { user } = useAuth();
@@ -501,6 +508,7 @@ export default function SeleccionDesarrolloPage() {
       behavior: c.behavior ?? '',
       position_name: c.position_name ?? ALL_POSITIONS,
       is_active: c.is_active,
+      color: c.color ?? '',
     });
   };
 
@@ -514,6 +522,7 @@ export default function SeleccionDesarrolloPage() {
       behavior: compForm.behavior.trim() || null,
       position_name: compForm.position_name === ALL_POSITIONS ? null : compForm.position_name,
       is_active: compForm.is_active,
+      color: compForm.color || null,
     };
     if (compEditing) {
       const { error } = await (supabase.from('assessment_competencies' as any) as any)
@@ -856,7 +865,7 @@ export default function SeleccionDesarrolloPage() {
                     const isExpanded = !!expandedBehaviors[c.id];
                     return (
                       <tr key={c.id} className="border-b">
-                        <td className="sticky left-0 z-20 bg-background px-3 py-2 md:px-4 md:py-3 border-r align-top shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
+                        <td className="sticky left-0 z-20 bg-background px-3 py-2 md:px-4 md:py-3 border-r align-top shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]" style={compTint(c.color)}>
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
                               <p className="font-semibold text-xs md:text-sm">{c.name}</p>
@@ -957,7 +966,7 @@ export default function SeleccionDesarrolloPage() {
                     {compsOfRow(row).map(c => {
                       const isExpanded = !!expandedBehaviors[c.id];
                       return (
-                        <div key={c.id} className="border rounded-md p-2 space-y-1 md:p-2.5 md:space-y-1.5 bg-muted/20">
+                        <div key={c.id} className="border rounded-md p-2 space-y-1 md:p-2.5 md:space-y-1.5 bg-muted/20" style={compTint(c.color)}>
                           <div className="flex items-start justify-between gap-2">
                             <p className="font-semibold text-[11px] md:text-xs min-w-0">{c.name}</p>
                             {c.behavior && (
@@ -1239,6 +1248,33 @@ export default function SeleccionDesarrolloPage() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-1.5 sm:col-span-2">
+                <label className="text-sm font-medium">Color de la competencia</label>
+                <div className="flex flex-wrap items-center gap-2">
+                  {COMP_COLORS.map(opt => {
+                    const selected = compForm.color === opt.value;
+                    return (
+                      <button
+                        key={opt.label}
+                        type="button"
+                        title={opt.label}
+                        onClick={() => setCompForm(f => ({ ...f, color: opt.value }))}
+                        className={`h-8 w-8 rounded-full border-2 flex items-center justify-center text-[10px] ${selected ? 'border-foreground ring-2 ring-offset-1 ring-foreground/30' : 'border-border'}`}
+                        style={opt.value ? { backgroundColor: opt.value } : undefined}
+                      >
+                        {!opt.value && '—'}
+                      </button>
+                    );
+                  })}
+                  <input
+                    type="color"
+                    value={compForm.color || '#000000'}
+                    onChange={e => setCompForm(f => ({ ...f, color: e.target.value }))}
+                    className="h-8 w-10 rounded border cursor-pointer bg-transparent"
+                    title="Color personalizado"
+                  />
+                </div>
+              </div>
             </div>
             <div className="flex justify-end gap-2">
               {compEditing && (
@@ -1255,7 +1291,7 @@ export default function SeleccionDesarrolloPage() {
               <p className="p-4 text-sm text-muted-foreground text-center">Aún no hay competencias.</p>
             )}
             {competencies.map((c, i) => (
-              <div key={c.id} className="p-3 flex items-start justify-between gap-3">
+              <div key={c.id} className="p-3 flex items-start justify-between gap-3" style={compTint(c.color)}>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold">
                     {c.name}

@@ -394,6 +394,7 @@ export type Database = {
       assessment_competencies: {
         Row: {
           behavior: string | null
+          color: string | null
           created_at: string
           created_by: string | null
           id: string
@@ -406,6 +407,7 @@ export type Database = {
         }
         Insert: {
           behavior?: string | null
+          color?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -418,6 +420,7 @@ export type Database = {
         }
         Update: {
           behavior?: string | null
+          color?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
