@@ -913,15 +913,18 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
                             </h4>
                             <div className="flex gap-1">
                               <Button type="button" variant="outline" size="sm" className="h-6 text-[11px] px-2"
-                                onClick={() => setCfg(sc.id, {
-                                  comps: activeComps
+                                onClick={() => {
+                                  const comps = activeComps
                                     .filter(c => !c.position_name || c.position_name === sc.position)
-                                    .map(c => c.id),
-                                })}>
+                                    .map(c => c.id);
+                                  const compEval = { ...cfg.compEval };
+                                  comps.forEach(id => { compEval[id] = compEval[id] ?? cfg.evaluator; });
+                                  setCfg(sc.id, { comps, compEval });
+                                }}>
                                 Sugeridas por cargo
                               </Button>
                               <Button type="button" variant="ghost" size="sm" className="h-6 text-[11px] px-2"
-                                onClick={() => setCfg(sc.id, { comps: [] })}>
+                                onClick={() => setCfg(sc.id, { comps: [], compEval: {} })}>
                                 Limpiar
                               </Button>
                             </div>
