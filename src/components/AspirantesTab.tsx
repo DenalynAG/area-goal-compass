@@ -95,6 +95,8 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
   const [startOpen, setStartOpen] = useState(false);
   const [startComps, setStartComps] = useState<string[]>([]);
   const [startEvaluator, setStartEvaluator] = useState<string>(NONE);
+  // Config por aspirante: { [candidateId]: { evaluator, comps[] } }
+  const [startConfig, setStartConfig] = useState<Record<string, { evaluator: string; comps: string[] }>>({});
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [starting, setStarting] = useState(false);
 
