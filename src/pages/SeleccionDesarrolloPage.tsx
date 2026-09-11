@@ -45,6 +45,7 @@ type Competency = {
   position_name: string | null;
   sort_order: number;
   is_active: boolean;
+  color?: string | null;
 };
 
 type CompScore = {
