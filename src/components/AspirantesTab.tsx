@@ -431,8 +431,14 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
         `${yaEvaluados.map(c => c.full_name).join(', ')} ya ${yaEvaluados.length > 1 ? 'fueron evaluados' : 'fue evaluado'}. No se permite una nueva evaluación.`,
       );
     }
-    if (startComps.length === 0) return toast.error('Selecciona al menos una competencia');
-    if (startEvaluator === NONE) return toast.error('Asigna el líder que evaluará las competencias');
+    const sinComps = selectedCands.filter(c => cfgFor(c.id).comps.length === 0);
+    if (sinComps.length) {
+      return toast.error(`Selecciona al menos una competencia para: ${sinComps.map(c => c.full_name).join(', ')}`);
+    }
+    const sinLider = selectedCands.filter(c => cfgFor(c.id).evaluator === NONE);
+    if (sinLider.length) {
+      return toast.error(`Asigna el líder que evalúa a: ${sinLider.map(c => c.full_name).join(', ')}`);
+    }
     setStarting(true);
     try {
       for (const cand of selectedCands) {
