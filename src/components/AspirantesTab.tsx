@@ -914,7 +914,7 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
                               const checked = cfg.comps.includes(c.id);
                               const compEv = cfg.compEval[c.id] ?? NONE;
                               return (
-                                <div key={c.id} className="border rounded-md p-2 bg-background space-y-2">
+                                <div key={c.id} className={`border rounded-lg p-2.5 space-y-2 transition-colors ${checked ? 'border-primary/60 bg-primary/5 shadow-sm' : 'bg-muted/20 hover:bg-muted/40'}`}>
                                   <label className="flex items-start gap-2 cursor-pointer">
                                     <Checkbox
                                       checked={checked}
