@@ -32,6 +32,7 @@ type Assessment = {
   weighted_score: number | null;
   evaluation_date: string;
   created_by: string | null;
+  is_fastpool?: boolean | null;
 };
 
 type Competency = {
