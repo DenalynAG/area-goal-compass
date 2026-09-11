@@ -875,6 +875,10 @@ export default function SeleccionDesarrolloPage() {
                     <div className="min-w-0">
                       <p className="font-semibold text-sm truncate">{row.candidate_name}</p>
                       <p className="text-[11px] text-muted-foreground">{row.profession ?? '—'}</p>
+                      <p className="text-[10px] text-foreground/80">
+                        <span className="text-muted-foreground">Evalúa: </span>
+                        <span className="font-medium">{evaluatorName(row.evaluator_user_id)}</span>
+                      </p>
                     </div>
                     <div className="flex items-center gap-0.5 shrink-0">
                       <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(row)}>
