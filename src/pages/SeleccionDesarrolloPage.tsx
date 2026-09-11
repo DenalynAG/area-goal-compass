@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAreas, useSubareas, usePositions } from '@/hooks/useSupabaseData';
+import { useAreas, useSubareas, usePositions, useProfiles } from '@/hooks/useSupabaseData';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -30,6 +30,7 @@ type Assessment = {
   subarea_id: string | null;
   position: string | null;
   profession: string | null;
+  evaluator_user_id?: string | null;
   weighted_score: number | null;
   evaluation_date: string;
   created_by: string | null;
@@ -100,6 +101,9 @@ export default function SeleccionDesarrolloPage() {
   const { data: areas = [] } = useAreas();
   const { data: subareas = [] } = useSubareas();
   const { data: positions = [] } = usePositions();
+  const { data: profiles = [] } = useProfiles();
+  const evaluatorName = (id?: string | null) =>
+    id ? (profiles.find(p => p.id === id)?.name ?? 'Sin asignar') : 'Sin asignar';
 
   const [search, setSearch] = useState('');
   const [filterArea, setFilterArea] = useState('all');
@@ -759,6 +763,10 @@ export default function SeleccionDesarrolloPage() {
                             <p className="font-semibold text-xs md:text-sm leading-tight truncate">{row.candidate_name}</p>
                             <p className="text-[11px] text-muted-foreground leading-tight">{row.profession ?? '—'}</p>
                             <p className="text-[11px] text-muted-foreground leading-tight">{row.position ?? '—'}</p>
+                            <p className="text-[10px] leading-tight text-foreground/80 mt-1">
+                              <span className="text-muted-foreground">Evalúa: </span>
+                              <span className="font-medium">{evaluatorName(row.evaluator_user_id)}</span>
+                            </p>
                           </div>
                           <div className="flex items-center gap-0.5 shrink-0">
                             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(row)}>
@@ -867,6 +875,10 @@ export default function SeleccionDesarrolloPage() {
                     <div className="min-w-0">
                       <p className="font-semibold text-sm truncate">{row.candidate_name}</p>
                       <p className="text-[11px] text-muted-foreground">{row.profession ?? '—'}</p>
+                      <p className="text-[10px] text-foreground/80">
+                        <span className="text-muted-foreground">Evalúa: </span>
+                        <span className="font-medium">{evaluatorName(row.evaluator_user_id)}</span>
+                      </p>
                     </div>
                     <div className="flex items-center gap-0.5 shrink-0">
                       <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(row)}>
