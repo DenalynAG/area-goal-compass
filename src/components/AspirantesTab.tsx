@@ -376,7 +376,8 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
   const startForCandidate = async (cand: Candidate) => {
     const cfg = cfgFor(cand.id);
     const startComps = cfg.comps;
-    const startEvaluatorId = cfg.evaluator;
+    const compEvals = startComps.map(id => cfg.compEval[id]).filter(v => v && v !== NONE);
+    const startEvaluatorId = cfg.evaluator !== NONE ? cfg.evaluator : (compEvals[0] ?? null);
     const { error: upErr } = await supabase
       .from('assessment_candidates' as any)
       .update({ evaluator_user_id: startEvaluatorId, status: 'en_evaluacion' })
