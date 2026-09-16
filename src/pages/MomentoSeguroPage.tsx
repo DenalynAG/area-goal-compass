@@ -79,13 +79,13 @@ const CATEGORY_META: Record<Category, { label: string; icon: any; chip: string }
 const RISK_META: Record<RiskLevel, { label: string; chip: string }> = {
   bajo: { label: "Bajo", chip: "bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]" },
   medio: { label: "Medio", chip: "bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))]" },
-  alto: { label: "Alto", chip: "bg-[hsl(var(--accent-orange)/0.18)] text-[hsl(var(--accent-orange))]" },
+  alto: { label: "Alto", chip: "bg-[hsl(var(--warning)/0.18)] text-[hsl(var(--warning))]" },
   critico: { label: "Crítico", chip: "bg-destructive/15 text-destructive" },
 };
 
 const STATUS_META: Record<Status, { label: string; chip: string }> = {
   abierta: { label: "Abierta", chip: "bg-muted text-foreground" },
-  en_seguimiento: { label: "En seguimiento", chip: "bg-[hsl(var(--accent-blue)/0.15)] text-[hsl(var(--accent-blue))]" },
+  en_seguimiento: { label: "En seguimiento", chip: "bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))]" },
   cerrada: { label: "Cerrada", chip: "bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]" },
 };
 
@@ -269,7 +269,7 @@ export default function MomentoSeguroPage() {
       value: filtered.filter((o) => o.risk_level === r).length,
     })).filter((d) => d.value > 0), [filtered]);
 
-  const RISK_COLORS = ["hsl(var(--success))", "hsl(var(--warning))", "hsl(var(--accent-orange))", "hsl(var(--destructive))"];
+  const RISK_COLORS = ["hsl(var(--success))", "hsl(var(--warning))", "hsl(var(--warning))", "hsl(var(--destructive))"];
 
   const canEdit = (o: Observation) =>
     isSuperAdmin || o.created_by === user?.id || o.observer_user_id === user?.id || o.followup_responsible_user_id === user?.id;
@@ -649,7 +649,7 @@ export default function MomentoSeguroPage() {
                     <XAxis type="number" allowDecimals={false} fontSize={12} />
                     <YAxis type="category" dataKey="area" width={120} fontSize={11} />
                     <Tooltip />
-                    <Bar dataKey="total" fill="hsl(var(--accent-blue))" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="total" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
