@@ -206,6 +206,7 @@ const navItems: NavItem[] = [
       { to: "/osh-people", label: "OSH People", icon: Sparkles },
       { to: "/mision-cerosh", label: "Misión CerOSH", icon: Rocket },
       { to: "/seleccion-desarrollo", label: "Selección y Desarrollo", icon: Handshake },
+      { to: "/momento-seguro", label: "Momento Seguro", icon: ShieldCheck },
       { to: "/rrhh/control-acceso", label: "Control de Acceso", icon: DoorOpen },
     ],
   },
