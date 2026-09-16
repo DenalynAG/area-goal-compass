@@ -79,7 +79,7 @@ const CATEGORY_META: Record<Category, { label: string; icon: any; chip: string }
 const RISK_META: Record<RiskLevel, { label: string; chip: string }> = {
   bajo: { label: "Bajo", chip: "bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]" },
   medio: { label: "Medio", chip: "bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))]" },
-  alto: { label: "Alto", chip: "bg-[hsl(var(--warning)/0.18)] text-[hsl(var(--warning))]" },
+  alto: { label: "Alto", chip: "bg-destructive/10 text-destructive" },
   critico: { label: "Crítico", chip: "bg-destructive/15 text-destructive" },
 };
 
@@ -269,7 +269,7 @@ export default function MomentoSeguroPage() {
       value: filtered.filter((o) => o.risk_level === r).length,
     })).filter((d) => d.value > 0), [filtered]);
 
-  const RISK_COLORS = ["hsl(var(--success))", "hsl(var(--warning))", "hsl(var(--warning))", "hsl(var(--destructive))"];
+  const RISK_COLORS = ["hsl(var(--success))", "hsl(var(--warning))", "hsl(var(--destructive)/0.65)", "hsl(var(--destructive))"];
 
   const canEdit = (o: Observation) =>
     isSuperAdmin || o.created_by === user?.id || o.observer_user_id === user?.id || o.followup_responsible_user_id === user?.id;
