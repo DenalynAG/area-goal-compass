@@ -29,6 +29,13 @@
       "when": 1789138539513,
       "tag": "0003_add_color_to_assessment_competencies",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789594172897,
+      "tag": "0004_create_safe_moment_observations",
+      "breakpoints": true
     }
   ]
 }
