@@ -2191,6 +2191,123 @@ export type Database = {
         }
         Relationships: []
       }
+      safe_moment_observations: {
+        Row: {
+          area_id: string | null
+          associated_risk: string | null
+          behavior_category: string | null
+          category: string
+          closed_at: string | null
+          contributing_factors: string[]
+          created_at: string
+          created_by: string | null
+          description: string
+          evidence_urls: string[]
+          followup_due_date: string | null
+          followup_notes: string | null
+          followup_required: boolean
+          followup_responsible_user_id: string | null
+          id: string
+          immediate_actions: string | null
+          location: string | null
+          observation_date: string
+          observation_time: string | null
+          observed_document: string | null
+          observed_name: string | null
+          observed_position: string | null
+          observed_user_id: string | null
+          observer_name: string | null
+          observer_user_id: string | null
+          risk_level: string
+          signature_observed: string | null
+          signature_observer: string | null
+          status: string
+          subarea_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          area_id?: string | null
+          associated_risk?: string | null
+          behavior_category?: string | null
+          category?: string
+          closed_at?: string | null
+          contributing_factors?: string[]
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          evidence_urls?: string[]
+          followup_due_date?: string | null
+          followup_notes?: string | null
+          followup_required?: boolean
+          followup_responsible_user_id?: string | null
+          id?: string
+          immediate_actions?: string | null
+          location?: string | null
+          observation_date?: string
+          observation_time?: string | null
+          observed_document?: string | null
+          observed_name?: string | null
+          observed_position?: string | null
+          observed_user_id?: string | null
+          observer_name?: string | null
+          observer_user_id?: string | null
+          risk_level?: string
+          signature_observed?: string | null
+          signature_observer?: string | null
+          status?: string
+          subarea_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          area_id?: string | null
+          associated_risk?: string | null
+          behavior_category?: string | null
+          category?: string
+          closed_at?: string | null
+          contributing_factors?: string[]
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          evidence_urls?: string[]
+          followup_due_date?: string | null
+          followup_notes?: string | null
+          followup_required?: boolean
+          followup_responsible_user_id?: string | null
+          id?: string
+          immediate_actions?: string | null
+          location?: string | null
+          observation_date?: string
+          observation_time?: string | null
+          observed_document?: string | null
+          observed_name?: string | null
+          observed_position?: string | null
+          observed_user_id?: string | null
+          observer_name?: string | null
+          observer_user_id?: string | null
+          risk_level?: string
+          signature_observed?: string | null
+          signature_observer?: string | null
+          status?: string
+          subarea_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safe_moment_observations_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "safe_moment_observations_subarea_id_fkey"
+            columns: ["subarea_id"]
+            isOneToOne: false
+            referencedRelation: "subareas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sampling_grid_rows: {
         Row: {
           area_name: string
