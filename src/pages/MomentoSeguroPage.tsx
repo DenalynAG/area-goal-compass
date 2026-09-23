@@ -240,23 +240,47 @@ export default function MomentoSeguroPage() {
     setFFrom(""); setFTo(""); setPage(1);
   };
 
-  // Indicators
+  // Indicadores de cultura preventiva
   const indicators = useMemo(() => {
     const total = filtered.length;
     const by = (c: Category) => filtered.filter((o) => o.category === c).length;
     const safe = by("comportamiento_seguro");
     const open = filtered.filter((o) => o.status !== "cerrada").length;
     const closed = filtered.filter((o) => o.status === "cerrada").length;
+    const today = new Date();
+    const ym = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
+    const monthCount = filtered.filter((o) => (o.observation_date ?? "").startsWith(ym)).length;
     const overdue = filtered.filter((o) =>
       o.followup_required && o.status !== "cerrada" && o.followup_due_date &&
-      o.followup_due_date < new Date().toISOString().slice(0, 10)).length;
+      o.followup_due_date < today.toISOString().slice(0, 10)).length;
+    const pendingFollowups = filtered.filter((o) => o.followup_required && o.status !== "cerrada").length;
+    const ambassadors = filtered.filter((o) => o.is_ambassador).length;
+
+    const stats = new Map<string, { total: number; safe: number }>();
+    filtered.forEach((o) => {
+      const name = o.hotel_area ?? areas.find((a) => a.id === o.area_id)?.name ?? "Sin área";
+      const s = stats.get(name) ?? { total: 0, safe: 0 };
+      s.total += 1;
+      if (o.category === "comportamiento_seguro") s.safe += 1;
+      stats.set(name, s);
+    });
+    const entries = Array.from(stats, ([area, s]) => ({ area, ...s }));
+    const topArea = entries.slice().sort((a, b) => b.total - a.total)[0];
+    const topSafe = entries.filter((e) => e.total >= 1)
+      .map((e) => ({ ...e, pct: Math.round((e.safe / e.total) * 100) }))
+      .sort((a, b) => b.pct - a.pct || b.total - a.total)[0];
+
     return {
       total, safe, improvement: by("oportunidad_mejora"), unsafe: by("comportamiento_inseguro"),
-      open, closed, overdue,
+      open, closed, overdue, monthCount, pendingFollowups, ambassadors,
+      topAreaName: topArea?.area ?? "—",
+      topAreaCount: topArea?.total ?? 0,
+      topSafeName: topSafe?.area ?? "—",
+      topSafePct: topSafe?.pct ?? 0,
       safeIndex: total ? Math.round((safe / total) * 100) : 0,
       closureRate: total ? Math.round((closed / total) * 100) : 0,
     };
-  }, [filtered]);
+  }, [filtered, areas]);
 
   const monthlyData = useMemo(() => {
     const year = new Date().getFullYear();
@@ -277,7 +301,7 @@ export default function MomentoSeguroPage() {
   const areaData = useMemo(() => {
     const map = new Map<string, number>();
     filtered.forEach((o) => {
-      const name = areas.find((a) => a.id === o.area_id)?.name ?? "Sin área";
+      const name = o.hotel_area ?? areas.find((a) => a.id === o.area_id)?.name ?? "Sin área";
       map.set(name, (map.get(name) ?? 0) + 1);
     });
     return Array.from(map, ([area, total]) => ({ area, total })).sort((a, b) => b.total - a.total);
