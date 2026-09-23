@@ -375,7 +375,7 @@ export default function MomentoSeguroPage() {
 
   const validate = () => {
     if (!form.observation_date) return "La fecha de observación es obligatoria";
-    if (!form.area_id) return "Selecciona el área";
+    if (!form.hotel_area) return "Selecciona el área del hotel";
     if (!form.observed_name?.trim() && !form.observed_user_id) return "Indica el colaborador observado";
     if (!form.category) return "Selecciona la categoría del comportamiento";
     if (!form.description?.trim() || form.description.trim().length < 15)
@@ -400,7 +400,9 @@ export default function MomentoSeguroPage() {
       const payload: any = {
         observation_date: form.observation_date,
         observation_time: form.observation_time || null,
-        area_id: form.area_id,
+        area_id: form.area_id ?? null,
+        hotel_area: form.hotel_area ?? null,
+        process: form.process?.trim() || null,
         subarea_id: form.subarea_id || null,
         location: form.location?.trim() || null,
         observer_user_id: form.observer_user_id || user?.id || null,
@@ -435,7 +437,7 @@ export default function MomentoSeguroPage() {
         const { error } = await (supabase as any)
           .from("safe_moment_observations").insert({ ...payload, created_by: user?.id ?? null });
         if (error) throw error;
-        toast.success("Observación registrada");
+        toast.success(SUCCESS_MESSAGE, { duration: 8000 });
       }
       qc.invalidateQueries({ queryKey: ["safe_moment_observations"] });
       qc.invalidateQueries({ queryKey: ["safe_moment_history"] });
@@ -460,9 +462,22 @@ export default function MomentoSeguroPage() {
     setToDelete(null);
   };
 
-  const areaName = (id: string | null) => areas.find((a) => a.id === id)?.name ?? "—";
   const subareaName = (id: string | null) => subareas.find((s) => s.id === id)?.name ?? "";
   const profileName = (id: string | null) => profiles.find((p) => p.id === id)?.name ?? "—";
+
+  // Reconocimiento positivo: Embajador Misión CerOSH
+  const toggleAmbassador = async (o: Observation) => {
+    const next = !o.is_ambassador;
+    const { error } = await (supabase as any)
+      .from("safe_moment_observations")
+      .update({ is_ambassador: next, ambassador_at: next ? new Date().toISOString() : null })
+      .eq("id", o.id);
+    if (error) { toast.error("No se pudo registrar el reconocimiento"); return; }
+    toast.success(next
+      ? `🏆 ${o.observed_name ?? "El colaborador"} fue reconocido como Embajador Misión CerOSH`
+      : "Reconocimiento retirado");
+    qc.invalidateQueries({ queryKey: ["safe_moment_observations"] });
+  };
 
   return (
     <div className="space-y-6">
