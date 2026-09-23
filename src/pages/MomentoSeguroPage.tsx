@@ -204,28 +204,33 @@ export default function MomentoSeguroPage() {
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  const areaOptions = areas.map((a) => ({ value: a.id, label: a.name }));
-  const subareaOptions = (form.area_id ? subareas.filter((s) => s.area_id === form.area_id) : subareas)
-    .map((s) => ({ value: s.id, label: s.name }));
+  const areaOptions = HOTEL_AREA_OPTIONS;
+  const subareaOptions = subareas.map((s) => ({ value: s.id, label: s.name }));
   const profileOptions = profiles.map((p) => ({ value: p.id, label: p.name }));
+
+  // Etiqueta de área: nueva lista oficial, con respaldo a registros antiguos
+  const areaLabel = (o: Observation) =>
+    o.hotel_area ?? areas.find((a) => a.id === o.area_id)?.name ?? "Sin área";
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return observations.filter((o) => {
-      if (fArea !== NONE && o.area_id !== fArea) return false;
+      const aLabel = o.hotel_area ?? areas.find((a) => a.id === o.area_id)?.name ?? "";
+      if (fArea !== NONE && aLabel !== fArea) return false;
       if (fCategory !== NONE && o.category !== fCategory) return false;
       if (fRisk !== NONE && o.risk_level !== fRisk) return false;
       if (fStatus !== NONE && o.status !== fStatus) return false;
       if (fFrom && o.observation_date < fFrom) return false;
       if (fTo && o.observation_date > fTo) return false;
       if (q) {
-        const hay = [o.observed_name, o.observer_name, o.description, o.location, o.behavior_category, o.associated_risk]
+        const hay = [o.observed_name, o.observer_name, o.description, o.location,
+          o.behavior_category, o.associated_risk, o.process, aLabel]
           .filter(Boolean).join(" ").toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
     });
-  }, [observations, search, fArea, fCategory, fRisk, fStatus, fFrom, fTo]);
+  }, [observations, areas, search, fArea, fCategory, fRisk, fStatus, fFrom, fTo]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const pageItems = filtered.slice((page - 1) * pageSize, page * pageSize);
