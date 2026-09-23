@@ -24,11 +24,16 @@ import SignaturePad from "@/components/SignaturePad";
 import {
   ShieldCheck, AlertTriangle, Lightbulb, Plus, Pencil, Trash2, Search, Filter,
   Paperclip, History, BarChart3, ClipboardList, Loader2, Download, X,
+  Trophy, CalendarDays, Building2, HeartHandshake, Timer,
 } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend,
   PieChart, Pie, Cell,
 } from "recharts";
+import {
+  HOTEL_AREA_OPTIONS, MISION_CEROSH_SUBTITLE, MISION_CEROSH_TAGLINE,
+} from "@/lib/hotelAreas";
+import misionLogo from "@/assets/mision-cerosh-logo.png.asset.json";
 
 const NONE = "__none__";
 
@@ -43,6 +48,10 @@ interface Observation {
   area_id: string | null;
   subarea_id: string | null;
   location: string | null;
+  hotel_area: string | null;
+  process: string | null;
+  is_ambassador: boolean | null;
+  ambassador_at: string | null;
   observer_user_id: string | null;
   observer_name: string | null;
   observed_user_id: string | null;
@@ -129,7 +138,13 @@ const emptyForm = (): Partial<Observation> => ({
   contributing_factors: [],
   evidence_urls: [],
   followup_required: false,
+  hotel_area: null,
+  process: "",
+  is_ambassador: false,
 });
+
+const SUCCESS_MESSAGE =
+  "¡Observación registrada exitosamente! Gracias por fortalecer la cultura preventiva de Oshpitality Group. Cada observación preventiva contribuye a proteger a nuestros colaboradores y huéspedes.";
 
 function useObservations() {
   return useQuery({
@@ -189,28 +204,33 @@ export default function MomentoSeguroPage() {
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  const areaOptions = areas.map((a) => ({ value: a.id, label: a.name }));
-  const subareaOptions = (form.area_id ? subareas.filter((s) => s.area_id === form.area_id) : subareas)
-    .map((s) => ({ value: s.id, label: s.name }));
+  const areaOptions = HOTEL_AREA_OPTIONS;
+  const subareaOptions = subareas.map((s) => ({ value: s.id, label: s.name }));
   const profileOptions = profiles.map((p) => ({ value: p.id, label: p.name }));
+
+  // Etiqueta de área: nueva lista oficial, con respaldo a registros antiguos
+  const areaLabel = (o: Observation) =>
+    o.hotel_area ?? areas.find((a) => a.id === o.area_id)?.name ?? "Sin área";
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return observations.filter((o) => {
-      if (fArea !== NONE && o.area_id !== fArea) return false;
+      const aLabel = o.hotel_area ?? areas.find((a) => a.id === o.area_id)?.name ?? "";
+      if (fArea !== NONE && aLabel !== fArea) return false;
       if (fCategory !== NONE && o.category !== fCategory) return false;
       if (fRisk !== NONE && o.risk_level !== fRisk) return false;
       if (fStatus !== NONE && o.status !== fStatus) return false;
       if (fFrom && o.observation_date < fFrom) return false;
       if (fTo && o.observation_date > fTo) return false;
       if (q) {
-        const hay = [o.observed_name, o.observer_name, o.description, o.location, o.behavior_category, o.associated_risk]
+        const hay = [o.observed_name, o.observer_name, o.description, o.location,
+          o.behavior_category, o.associated_risk, o.process, aLabel]
           .filter(Boolean).join(" ").toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
     });
-  }, [observations, search, fArea, fCategory, fRisk, fStatus, fFrom, fTo]);
+  }, [observations, areas, search, fArea, fCategory, fRisk, fStatus, fFrom, fTo]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const pageItems = filtered.slice((page - 1) * pageSize, page * pageSize);
@@ -220,23 +240,47 @@ export default function MomentoSeguroPage() {
     setFFrom(""); setFTo(""); setPage(1);
   };
 
-  // Indicators
+  // Indicadores de cultura preventiva
   const indicators = useMemo(() => {
     const total = filtered.length;
     const by = (c: Category) => filtered.filter((o) => o.category === c).length;
     const safe = by("comportamiento_seguro");
     const open = filtered.filter((o) => o.status !== "cerrada").length;
     const closed = filtered.filter((o) => o.status === "cerrada").length;
+    const today = new Date();
+    const ym = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
+    const monthCount = filtered.filter((o) => (o.observation_date ?? "").startsWith(ym)).length;
     const overdue = filtered.filter((o) =>
       o.followup_required && o.status !== "cerrada" && o.followup_due_date &&
-      o.followup_due_date < new Date().toISOString().slice(0, 10)).length;
+      o.followup_due_date < today.toISOString().slice(0, 10)).length;
+    const pendingFollowups = filtered.filter((o) => o.followup_required && o.status !== "cerrada").length;
+    const ambassadors = filtered.filter((o) => o.is_ambassador).length;
+
+    const stats = new Map<string, { total: number; safe: number }>();
+    filtered.forEach((o) => {
+      const name = o.hotel_area ?? areas.find((a) => a.id === o.area_id)?.name ?? "Sin área";
+      const s = stats.get(name) ?? { total: 0, safe: 0 };
+      s.total += 1;
+      if (o.category === "comportamiento_seguro") s.safe += 1;
+      stats.set(name, s);
+    });
+    const entries = Array.from(stats, ([area, s]) => ({ area, ...s }));
+    const topArea = entries.slice().sort((a, b) => b.total - a.total)[0];
+    const topSafe = entries.filter((e) => e.total >= 1)
+      .map((e) => ({ ...e, pct: Math.round((e.safe / e.total) * 100) }))
+      .sort((a, b) => b.pct - a.pct || b.total - a.total)[0];
+
     return {
       total, safe, improvement: by("oportunidad_mejora"), unsafe: by("comportamiento_inseguro"),
-      open, closed, overdue,
+      open, closed, overdue, monthCount, pendingFollowups, ambassadors,
+      topAreaName: topArea?.area ?? "—",
+      topAreaCount: topArea?.total ?? 0,
+      topSafeName: topSafe?.area ?? "—",
+      topSafePct: topSafe?.pct ?? 0,
       safeIndex: total ? Math.round((safe / total) * 100) : 0,
       closureRate: total ? Math.round((closed / total) * 100) : 0,
     };
-  }, [filtered]);
+  }, [filtered, areas]);
 
   const monthlyData = useMemo(() => {
     const year = new Date().getFullYear();
@@ -257,7 +301,7 @@ export default function MomentoSeguroPage() {
   const areaData = useMemo(() => {
     const map = new Map<string, number>();
     filtered.forEach((o) => {
-      const name = areas.find((a) => a.id === o.area_id)?.name ?? "Sin área";
+      const name = o.hotel_area ?? areas.find((a) => a.id === o.area_id)?.name ?? "Sin área";
       map.set(name, (map.get(name) ?? 0) + 1);
     });
     return Array.from(map, ([area, total]) => ({ area, total })).sort((a, b) => b.total - a.total);
@@ -331,7 +375,7 @@ export default function MomentoSeguroPage() {
 
   const validate = () => {
     if (!form.observation_date) return "La fecha de observación es obligatoria";
-    if (!form.area_id) return "Selecciona el área";
+    if (!form.hotel_area) return "Selecciona el área del hotel";
     if (!form.observed_name?.trim() && !form.observed_user_id) return "Indica el colaborador observado";
     if (!form.category) return "Selecciona la categoría del comportamiento";
     if (!form.description?.trim() || form.description.trim().length < 15)
@@ -356,7 +400,9 @@ export default function MomentoSeguroPage() {
       const payload: any = {
         observation_date: form.observation_date,
         observation_time: form.observation_time || null,
-        area_id: form.area_id,
+        area_id: form.area_id ?? null,
+        hotel_area: form.hotel_area ?? null,
+        process: form.process?.trim() || null,
         subarea_id: form.subarea_id || null,
         location: form.location?.trim() || null,
         observer_user_id: form.observer_user_id || user?.id || null,
@@ -391,7 +437,7 @@ export default function MomentoSeguroPage() {
         const { error } = await (supabase as any)
           .from("safe_moment_observations").insert({ ...payload, created_by: user?.id ?? null });
         if (error) throw error;
-        toast.success("Observación registrada");
+        toast.success(SUCCESS_MESSAGE, { duration: 8000 });
       }
       qc.invalidateQueries({ queryKey: ["safe_moment_observations"] });
       qc.invalidateQueries({ queryKey: ["safe_moment_history"] });
@@ -416,22 +462,43 @@ export default function MomentoSeguroPage() {
     setToDelete(null);
   };
 
-  const areaName = (id: string | null) => areas.find((a) => a.id === id)?.name ?? "—";
   const subareaName = (id: string | null) => subareas.find((s) => s.id === id)?.name ?? "";
   const profileName = (id: string | null) => profiles.find((p) => p.id === id)?.name ?? "—";
 
+  // Reconocimiento positivo: Embajador Misión CerOSH
+  const toggleAmbassador = async (o: Observation) => {
+    const next = !o.is_ambassador;
+    const { error } = await (supabase as any)
+      .from("safe_moment_observations")
+      .update({ is_ambassador: next, ambassador_at: next ? new Date().toISOString() : null })
+      .eq("id", o.id);
+    if (error) { toast.error("No se pudo registrar el reconocimiento"); return; }
+    toast.success(next
+      ? `🏆 ${o.observed_name ?? "El colaborador"} fue reconocido como Embajador Misión CerOSH`
+      : "Reconocimiento retirado");
+    qc.invalidateQueries({ queryKey: ["safe_moment_observations"] });
+  };
+
   return (
     <div className="space-y-6">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-display">Momento Seguro</h1>
-          <p className="text-sm text-muted-foreground">
-            Observación de comportamientos y seguimiento SG-SST
-          </p>
+      <header className="rounded-2xl border border-border bg-card shadow-sm p-5 sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4 min-w-0">
+            <img
+              src={misionLogo.url}
+              alt="Logo Misión CerOSH"
+              className="h-14 w-14 sm:h-16 sm:w-16 rounded-xl object-contain bg-background p-1 border border-border shrink-0"
+            />
+            <div className="min-w-0">
+              <h1 className="text-2xl sm:text-3xl font-display leading-tight">Observaciones Preventivas</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">{MISION_CEROSH_SUBTITLE}</p>
+              <p className="text-sm font-medium mt-2">“{MISION_CEROSH_TAGLINE}”</p>
+            </div>
+          </div>
+          <Button onClick={openNew} className="w-full sm:w-auto rounded-xl">
+            <Plus className="h-4 w-4 mr-2" /> Nueva observación
+          </Button>
         </div>
-        <Button onClick={openNew} className="w-full sm:w-auto">
-          <Plus className="h-4 w-4 mr-2" /> Nueva observación
-        </Button>
       </header>
 
       <Tabs defaultValue="observaciones" className="space-y-4">
@@ -489,19 +556,41 @@ export default function MomentoSeguroPage() {
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {[
-              { label: "Total observaciones", value: indicators.total },
-              { label: "Índice de seguridad", value: `${indicators.safeIndex}%` },
-              { label: "Abiertas", value: indicators.open },
-              { label: "Seguimientos vencidos", value: indicators.overdue },
-            ].map((k) => (
-              <Card key={k.label}>
-                <CardContent className="p-4">
-                  <p className="text-xs text-muted-foreground">{k.label}</p>
-                  <p className="text-2xl font-semibold mt-1">{k.value}</p>
-                </CardContent>
-              </Card>
-            ))}
+              { label: "Observaciones preventivas", value: indicators.total, icon: ClipboardList, hint: "Registradas" },
+              { label: "Comportamientos seguros", value: indicators.safe, icon: ShieldCheck, hint: `${indicators.safeIndex}% del total` },
+              { label: "Oportunidades de mejora", value: indicators.improvement, icon: Lightbulb },
+              { label: "Comportamientos inseguros", value: indicators.unsafe, icon: AlertTriangle },
+              { label: "Observaciones del mes", value: indicators.monthCount, icon: CalendarDays },
+              { label: "Área con más observaciones", value: indicators.topAreaName, icon: Building2, hint: `${indicators.topAreaCount} registros`, small: true },
+              { label: "Área más segura", value: `${indicators.topSafePct}%`, icon: HeartHandshake, hint: indicators.topSafeName },
+              { label: "Seguimientos pendientes", value: indicators.pendingFollowups, icon: Timer, hint: `${indicators.overdue} vencidos` },
+            ].map((k) => {
+              const Icon = k.icon;
+              return (
+                <Card key={k.label} className="rounded-2xl border-border shadow-sm hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs text-muted-foreground leading-tight">{k.label}</p>
+                      <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
+                    </div>
+                    <p className={`${k.small ? "text-base sm:text-lg" : "text-2xl"} font-semibold mt-1.5 truncate`}>{k.value}</p>
+                    {k.hint && <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{k.hint}</p>}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
+
+          {indicators.ambassadors > 0 && (
+            <Card className="rounded-2xl border-border bg-muted/40 shadow-sm">
+              <CardContent className="p-4 flex items-center gap-3">
+                <Trophy className="h-5 w-5 text-[hsl(var(--warning))]" />
+                <p className="text-sm">
+                  <span className="font-semibold">{indicators.ambassadors}</span> reconocimientos Embajador Misión CerOSH otorgados.
+                </p>
+              </CardContent>
+            </Card>
+          )}
 
           {isLoading ? (
             <div className="flex items-center justify-center py-12 text-muted-foreground">
@@ -516,8 +605,8 @@ export default function MomentoSeguroPage() {
               {pageItems.map((o) => {
                 const CatIcon = CATEGORY_META[o.category]?.icon ?? ShieldCheck;
                 return (
-                  <Card key={o.id} className="overflow-hidden">
-                    <CardContent className="p-4 space-y-3">
+                  <Card key={o.id} className="overflow-hidden rounded-2xl border-border shadow-sm hover:shadow-md transition-shadow">
+                    <CardContent className="p-4 sm:p-5 space-y-3">
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
@@ -526,14 +615,30 @@ export default function MomentoSeguroPage() {
                             </Badge>
                             <Badge className={`${RISK_META[o.risk_level]?.chip} border-0`}>Riesgo {RISK_META[o.risk_level]?.label}</Badge>
                             <Badge className={`${STATUS_META[o.status]?.chip} border-0`}>{STATUS_META[o.status]?.label}</Badge>
+                            {o.is_ambassador && (
+                              <Badge className="border-0 bg-[hsl(var(--warning)/0.18)] text-[hsl(var(--warning))]">
+                                <Trophy className="h-3 w-3 mr-1" />Embajador Misión CerOSH
+                              </Badge>
+                            )}
                           </div>
                           <p className="mt-2 font-medium">{o.observed_name ?? "Sin colaborador"}{o.observed_position ? ` · ${o.observed_position}` : ""}</p>
                           <p className="text-xs text-muted-foreground">
-                            {o.observation_date}{o.observation_time ? ` ${o.observation_time}` : ""} · {areaName(o.area_id)}
+                            {o.observation_date}{o.observation_time ? ` ${o.observation_time}` : ""} · {areaLabel(o)}
                             {o.subarea_id ? ` / ${subareaName(o.subarea_id)}` : ""}{o.location ? ` · ${o.location}` : ""}
                           </p>
                         </div>
-                        <div className="flex gap-1">
+                        <div className="flex items-center gap-1">
+                          {o.category === "comportamiento_seguro" && canEdit(o) && (
+                            <Button
+                              variant={o.is_ambassador ? "secondary" : "outline"}
+                              size="sm"
+                              className="rounded-xl h-8 text-xs"
+                              onClick={() => toggleAmbassador(o)}
+                            >
+                              <Trophy className="h-3.5 w-3.5 mr-1.5" />
+                              {o.is_ambassador ? "Reconocido" : "Embajador Misión CerOSH"}
+                            </Button>
+                          )}
                           {canEdit(o) && (
                             <Button variant="ghost" size="icon" onClick={() => openEdit(o)} title="Editar">
                               <Pencil className="h-4 w-4" />
@@ -550,6 +655,7 @@ export default function MomentoSeguroPage() {
                       <p className="text-sm whitespace-pre-wrap">{o.description}</p>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-xs text-muted-foreground">
+                        {o.process && <p><span className="font-medium text-foreground">Proceso:</span> {o.process}</p>}
                         {o.behavior_category && <p><span className="font-medium text-foreground">Categoría:</span> {o.behavior_category}</p>}
                         {o.associated_risk && <p><span className="font-medium text-foreground">Riesgo asociado:</span> {o.associated_risk}</p>}
                         {!!o.contributing_factors?.length && (
@@ -700,7 +806,10 @@ export default function MomentoSeguroPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editing ? "Editar observación" : "Nueva observación de Momento Seguro"}</DialogTitle>
+            <DialogTitle className="flex items-center gap-3">
+              <img src={misionLogo.url} alt="" aria-hidden className="h-8 w-8 rounded-lg object-contain" />
+              {editing ? "Editar observación preventiva" : "Nueva observación preventiva"}
+            </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-6">
@@ -713,13 +822,16 @@ export default function MomentoSeguroPage() {
                 <div><Label>Hora</Label>
                   <Input type="time" value={form.observation_time ?? ""} onChange={(e) => setField("observation_time", e.target.value)} /></div>
                 <div><Label>Área *</Label>
-                  <SearchableSelect options={areaOptions} value={form.area_id ?? ""}
-                    onValueChange={(v) => { setField("area_id", v); setField("subarea_id", null); }} placeholder="Seleccionar área" /></div>
+                  <SearchableSelect options={areaOptions} value={form.hotel_area ?? ""}
+                    onValueChange={(v) => setField("hotel_area", v)} placeholder="Seleccionar área" /></div>
+                <div><Label>Proceso</Label>
+                  <Input maxLength={150} value={form.process ?? ""} onChange={(e) => setField("process", e.target.value)}
+                    placeholder="Escribe el proceso observado" /></div>
                 <div><Label>Subárea</Label>
                   <SearchableSelect options={[{ value: NONE, label: "Sin subárea" }, ...subareaOptions]}
                     value={form.subarea_id ?? NONE}
                     onValueChange={(v) => setField("subarea_id", v === NONE ? null : v)} placeholder="Seleccionar subárea" /></div>
-                <div className="sm:col-span-2"><Label>Lugar / zona</Label>
+                <div><Label>Lugar / zona</Label>
                   <Input maxLength={150} value={form.location ?? ""} onChange={(e) => setField("location", e.target.value)} placeholder="Ej. Cocina principal, Bloque B" /></div>
                 <div className="sm:col-span-2"><Label>Observador</Label>
                   <SearchableSelect options={profileOptions} value={form.observer_user_id ?? ""}
