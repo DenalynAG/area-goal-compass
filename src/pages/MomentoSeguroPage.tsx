@@ -605,8 +605,8 @@ export default function MomentoSeguroPage() {
               {pageItems.map((o) => {
                 const CatIcon = CATEGORY_META[o.category]?.icon ?? ShieldCheck;
                 return (
-                  <Card key={o.id} className="overflow-hidden">
-                    <CardContent className="p-4 space-y-3">
+                  <Card key={o.id} className="overflow-hidden rounded-2xl border-border shadow-sm hover:shadow-md transition-shadow">
+                    <CardContent className="p-4 sm:p-5 space-y-3">
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
@@ -615,14 +615,30 @@ export default function MomentoSeguroPage() {
                             </Badge>
                             <Badge className={`${RISK_META[o.risk_level]?.chip} border-0`}>Riesgo {RISK_META[o.risk_level]?.label}</Badge>
                             <Badge className={`${STATUS_META[o.status]?.chip} border-0`}>{STATUS_META[o.status]?.label}</Badge>
+                            {o.is_ambassador && (
+                              <Badge className="border-0 bg-[hsl(var(--warning)/0.18)] text-[hsl(var(--warning))]">
+                                <Trophy className="h-3 w-3 mr-1" />Embajador Misión CerOSH
+                              </Badge>
+                            )}
                           </div>
                           <p className="mt-2 font-medium">{o.observed_name ?? "Sin colaborador"}{o.observed_position ? ` · ${o.observed_position}` : ""}</p>
                           <p className="text-xs text-muted-foreground">
-                            {o.observation_date}{o.observation_time ? ` ${o.observation_time}` : ""} · {areaName(o.area_id)}
+                            {o.observation_date}{o.observation_time ? ` ${o.observation_time}` : ""} · {areaLabel(o)}
                             {o.subarea_id ? ` / ${subareaName(o.subarea_id)}` : ""}{o.location ? ` · ${o.location}` : ""}
                           </p>
                         </div>
-                        <div className="flex gap-1">
+                        <div className="flex items-center gap-1">
+                          {o.category === "comportamiento_seguro" && canEdit(o) && (
+                            <Button
+                              variant={o.is_ambassador ? "secondary" : "outline"}
+                              size="sm"
+                              className="rounded-xl h-8 text-xs"
+                              onClick={() => toggleAmbassador(o)}
+                            >
+                              <Trophy className="h-3.5 w-3.5 mr-1.5" />
+                              {o.is_ambassador ? "Reconocido" : "Embajador Misión CerOSH"}
+                            </Button>
+                          )}
                           {canEdit(o) && (
                             <Button variant="ghost" size="icon" onClick={() => openEdit(o)} title="Editar">
                               <Pencil className="h-4 w-4" />
@@ -639,6 +655,7 @@ export default function MomentoSeguroPage() {
                       <p className="text-sm whitespace-pre-wrap">{o.description}</p>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-xs text-muted-foreground">
+                        {o.process && <p><span className="font-medium text-foreground">Proceso:</span> {o.process}</p>}
                         {o.behavior_category && <p><span className="font-medium text-foreground">Categoría:</span> {o.behavior_category}</p>}
                         {o.associated_risk && <p><span className="font-medium text-foreground">Riesgo asociado:</span> {o.associated_risk}</p>}
                         {!!o.contributing_factors?.length && (
