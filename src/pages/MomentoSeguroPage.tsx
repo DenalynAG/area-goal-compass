@@ -24,11 +24,16 @@ import SignaturePad from "@/components/SignaturePad";
 import {
   ShieldCheck, AlertTriangle, Lightbulb, Plus, Pencil, Trash2, Search, Filter,
   Paperclip, History, BarChart3, ClipboardList, Loader2, Download, X,
+  Trophy, CalendarDays, Building2, HeartHandshake, Timer,
 } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend,
   PieChart, Pie, Cell,
 } from "recharts";
+import {
+  HOTEL_AREA_OPTIONS, MISION_CEROSH_SUBTITLE, MISION_CEROSH_TAGLINE,
+} from "@/lib/hotelAreas";
+import misionLogo from "@/assets/mision-cerosh-logo.png.asset.json";
 
 const NONE = "__none__";
 
@@ -43,6 +48,10 @@ interface Observation {
   area_id: string | null;
   subarea_id: string | null;
   location: string | null;
+  hotel_area: string | null;
+  process: string | null;
+  is_ambassador: boolean | null;
+  ambassador_at: string | null;
   observer_user_id: string | null;
   observer_name: string | null;
   observed_user_id: string | null;
@@ -129,7 +138,13 @@ const emptyForm = (): Partial<Observation> => ({
   contributing_factors: [],
   evidence_urls: [],
   followup_required: false,
+  hotel_area: null,
+  process: "",
+  is_ambassador: false,
 });
+
+const SUCCESS_MESSAGE =
+  "¡Observación registrada exitosamente! Gracias por fortalecer la cultura preventiva de Oshpitality Group. Cada observación preventiva contribuye a proteger a nuestros colaboradores y huéspedes.";
 
 function useObservations() {
   return useQuery({
