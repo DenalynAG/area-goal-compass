@@ -481,16 +481,24 @@ export default function MomentoSeguroPage() {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-display">Momento Seguro</h1>
-          <p className="text-sm text-muted-foreground">
-            Observación de comportamientos y seguimiento SG-SST
-          </p>
+      <header className="rounded-2xl border border-border bg-card shadow-sm p-5 sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4 min-w-0">
+            <img
+              src={misionLogo.url}
+              alt="Logo Misión CerOSH"
+              className="h-14 w-14 sm:h-16 sm:w-16 rounded-xl object-contain bg-background p-1 border border-border shrink-0"
+            />
+            <div className="min-w-0">
+              <h1 className="text-2xl sm:text-3xl font-display leading-tight">Observaciones Preventivas</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">{MISION_CEROSH_SUBTITLE}</p>
+              <p className="text-sm font-medium mt-2">“{MISION_CEROSH_TAGLINE}”</p>
+            </div>
+          </div>
+          <Button onClick={openNew} className="w-full sm:w-auto rounded-xl">
+            <Plus className="h-4 w-4 mr-2" /> Nueva observación
+          </Button>
         </div>
-        <Button onClick={openNew} className="w-full sm:w-auto">
-          <Plus className="h-4 w-4 mr-2" /> Nueva observación
-        </Button>
       </header>
 
       <Tabs defaultValue="observaciones" className="space-y-4">
