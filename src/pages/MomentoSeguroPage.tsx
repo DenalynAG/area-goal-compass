@@ -556,19 +556,41 @@ export default function MomentoSeguroPage() {
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {[
-              { label: "Total observaciones", value: indicators.total },
-              { label: "Índice de seguridad", value: `${indicators.safeIndex}%` },
-              { label: "Abiertas", value: indicators.open },
-              { label: "Seguimientos vencidos", value: indicators.overdue },
-            ].map((k) => (
-              <Card key={k.label}>
-                <CardContent className="p-4">
-                  <p className="text-xs text-muted-foreground">{k.label}</p>
-                  <p className="text-2xl font-semibold mt-1">{k.value}</p>
-                </CardContent>
-              </Card>
-            ))}
+              { label: "Observaciones preventivas", value: indicators.total, icon: ClipboardList, hint: "Registradas" },
+              { label: "Comportamientos seguros", value: indicators.safe, icon: ShieldCheck, hint: `${indicators.safeIndex}% del total` },
+              { label: "Oportunidades de mejora", value: indicators.improvement, icon: Lightbulb },
+              { label: "Comportamientos inseguros", value: indicators.unsafe, icon: AlertTriangle },
+              { label: "Observaciones del mes", value: indicators.monthCount, icon: CalendarDays },
+              { label: "Área con más observaciones", value: indicators.topAreaName, icon: Building2, hint: `${indicators.topAreaCount} registros`, small: true },
+              { label: "Área más segura", value: `${indicators.topSafePct}%`, icon: HeartHandshake, hint: indicators.topSafeName },
+              { label: "Seguimientos pendientes", value: indicators.pendingFollowups, icon: Timer, hint: `${indicators.overdue} vencidos` },
+            ].map((k) => {
+              const Icon = k.icon;
+              return (
+                <Card key={k.label} className="rounded-2xl border-border shadow-sm hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs text-muted-foreground leading-tight">{k.label}</p>
+                      <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
+                    </div>
+                    <p className={`${k.small ? "text-base sm:text-lg" : "text-2xl"} font-semibold mt-1.5 truncate`}>{k.value}</p>
+                    {k.hint && <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{k.hint}</p>}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
+
+          {indicators.ambassadors > 0 && (
+            <Card className="rounded-2xl border-border bg-muted/40 shadow-sm">
+              <CardContent className="p-4 flex items-center gap-3">
+                <Trophy className="h-5 w-5 text-[hsl(var(--warning))]" />
+                <p className="text-sm">
+                  <span className="font-semibold">{indicators.ambassadors}</span> reconocimientos Embajador Misión CerOSH otorgados.
+                </p>
+              </CardContent>
+            </Card>
+          )}
 
           {isLoading ? (
             <div className="flex items-center justify-center py-12 text-muted-foreground">
