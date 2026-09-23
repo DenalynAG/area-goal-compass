@@ -806,7 +806,10 @@ export default function MomentoSeguroPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editing ? "Editar observación" : "Nueva observación de Momento Seguro"}</DialogTitle>
+            <DialogTitle className="flex items-center gap-3">
+              <img src={misionLogo.url} alt="" aria-hidden className="h-8 w-8 rounded-lg object-contain" />
+              {editing ? "Editar observación preventiva" : "Nueva observación preventiva"}
+            </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-6">
@@ -819,13 +822,16 @@ export default function MomentoSeguroPage() {
                 <div><Label>Hora</Label>
                   <Input type="time" value={form.observation_time ?? ""} onChange={(e) => setField("observation_time", e.target.value)} /></div>
                 <div><Label>Área *</Label>
-                  <SearchableSelect options={areaOptions} value={form.area_id ?? ""}
-                    onValueChange={(v) => { setField("area_id", v); setField("subarea_id", null); }} placeholder="Seleccionar área" /></div>
+                  <SearchableSelect options={areaOptions} value={form.hotel_area ?? ""}
+                    onValueChange={(v) => setField("hotel_area", v)} placeholder="Seleccionar área" /></div>
+                <div><Label>Proceso</Label>
+                  <Input maxLength={150} value={form.process ?? ""} onChange={(e) => setField("process", e.target.value)}
+                    placeholder="Escribe el proceso observado" /></div>
                 <div><Label>Subárea</Label>
                   <SearchableSelect options={[{ value: NONE, label: "Sin subárea" }, ...subareaOptions]}
                     value={form.subarea_id ?? NONE}
                     onValueChange={(v) => setField("subarea_id", v === NONE ? null : v)} placeholder="Seleccionar subárea" /></div>
-                <div className="sm:col-span-2"><Label>Lugar / zona</Label>
+                <div><Label>Lugar / zona</Label>
                   <Input maxLength={150} value={form.location ?? ""} onChange={(e) => setField("location", e.target.value)} placeholder="Ej. Cocina principal, Bloque B" /></div>
                 <div className="sm:col-span-2"><Label>Observador</Label>
                   <SearchableSelect options={profileOptions} value={form.observer_user_id ?? ""}
