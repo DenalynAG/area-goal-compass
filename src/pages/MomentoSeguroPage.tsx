@@ -561,7 +561,7 @@ export default function MomentoSeguroPage() {
         </div>
       </header>
 
-      <Tabs defaultValue="observaciones" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="w-full sm:w-auto overflow-x-auto">
           <TabsTrigger value="observaciones"><ClipboardList className="h-4 w-4 mr-1.5" />Observaciones</TabsTrigger>
           <TabsTrigger value="indicadores"><BarChart3 className="h-4 w-4 mr-1.5" />Indicadores</TabsTrigger>
@@ -1060,59 +1060,6 @@ export default function MomentoSeguroPage() {
               })}
             </div>
           </section>
-
-          <Card>
-            <CardHeader><CardTitle className="text-base">Comportamiento mensual ({new Date().getFullYear()})</CardTitle></CardHeader>
-            <CardContent className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.25} />
-                  <XAxis dataKey="mes" fontSize={12} />
-                  <YAxis allowDecimals={false} fontSize={12} />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="Seguro" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="Mejora" fill="hsl(var(--warning))" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="Inseguro" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader><CardTitle className="text-base">Observaciones por área</CardTitle></CardHeader>
-              <CardContent className="h-72">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={areaData} layout="vertical" margin={{ left: 20 }}>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.25} />
-                    <XAxis type="number" allowDecimals={false} fontSize={12} />
-                    <YAxis type="category" dataKey="area" width={120} fontSize={11} />
-                    <Tooltip />
-                    <Bar dataKey="total" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader><CardTitle className="text-base">Distribución por nivel de riesgo</CardTitle></CardHeader>
-              <CardContent className="h-72">
-                {riskData.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center pt-20">Sin datos</p>
-                ) : (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie data={riskData} dataKey="value" nameKey="name" outerRadius={90} label>
-                        {riskData.map((_, i) => <Cell key={i} fill={RISK_COLORS[i % RISK_COLORS.length]} />)}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                )}
-              </CardContent>
-            </Card>
-          </div>
         </TabsContent>
 
         {/* HISTORIAL */}
