@@ -45,7 +45,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex bg-white">
       {/* Lado izquierdo — negro con identidad */}
-      <div className="hidden lg:flex lg:w-1/2 bg-black text-white flex-col justify-between p-12 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-black text-white flex-col p-12 relative overflow-hidden">
         {/* Patrón de círculos concéntricos */}
         <div
           className="absolute inset-0 opacity-[0.08] pointer-events-none"
@@ -64,8 +64,8 @@ export default function LoginPage() {
           <span className="font-display text-xl tracking-tight">Oshpitality Group</span>
         </div>
 
-        {/* Texto central */}
-        <div className="relative">
+        {/* Texto central — centrado y alineado con el formulario */}
+        <div className="relative flex-1 flex flex-col items-center justify-center text-center">
           <h2 className="font-display text-3xl xl:text-4xl leading-tight tracking-tight">
             Work Plan
           </h2>
