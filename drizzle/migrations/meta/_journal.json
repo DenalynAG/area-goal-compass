@@ -50,6 +50,13 @@
       "when": 1790286722287,
       "tag": "0006_assessment_evaluator_access",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790286735658,
+      "tag": "0007_assessment_evaluator_fallback",
+      "breakpoints": true
     }
   ]
 }
