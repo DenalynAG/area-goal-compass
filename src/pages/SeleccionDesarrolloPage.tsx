@@ -103,7 +103,7 @@ import { COMP_COLORS, compTint } from '@/lib/competencyColors';
 
 
 
-export default function SeleccionDesarrolloPage() {
+export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { evaluatorMode?: boolean } = {}) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { data: areas = [] } = useAreas();
@@ -121,7 +121,7 @@ export default function SeleccionDesarrolloPage() {
   const [form, setForm] = useState({ ...emptyForm });
   const [formScores, setFormScores] = useState<Record<string, number | null>>({});
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState('aspirantes');
+  const [activeTab, setActiveTab] = useState(evaluatorMode ? 'planilla' : 'aspirantes');
 
   // Competency manager state
   const [compOpen, setCompOpen] = useState(false);
@@ -218,8 +218,12 @@ export default function SeleccionDesarrolloPage() {
     );
   }, [positions, form.area_id, form.subarea_id]);
 
+  const isMine = (row: Assessment) =>
+    row.evaluator_user_id === user?.id ||
+    compScores.some(s => s.evaluation_id === row.id && s.evaluator_user_id === user?.id);
+
   const filtered = useMemo(() => {
-    let r = rows;
+    let r = evaluatorMode ? rows.filter(isMine) : rows;
     if (filterArea !== 'all') r = r.filter(x => x.area_id === filterArea);
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -229,7 +233,7 @@ export default function SeleccionDesarrolloPage() {
       );
     }
     return r;
-  }, [rows, filterArea, search]);
+  }, [rows, filterArea, search, evaluatorMode, compScores, user?.id]);
 
   // Competencies shown as rows in a grid: union of those applicable to its aspirants
   const compsForRows = (rowsIn: Assessment[]) => {
@@ -502,8 +506,11 @@ export default function SeleccionDesarrolloPage() {
     );
     const weighted = calcWeighted(nextValues, applicable.length);
 
-    const { error } = await (supabase.from('assessment_competency_scores' as any) as any)
-      .upsert({ evaluation_id: row.id, competency_id: competencyId, score: value }, { onConflict: 'evaluation_id,competency_id' });
+    const { error } = evaluatorMode
+      ? await (supabase.from('assessment_competency_scores' as any) as any)
+          .update({ score: value }).eq('evaluation_id', row.id).eq('competency_id', competencyId)
+      : await (supabase.from('assessment_competency_scores' as any) as any)
+          .upsert({ evaluation_id: row.id, competency_id: competencyId, score: value }, { onConflict: 'evaluation_id,competency_id' });
     if (error) { toast.error(error.message); return; }
 
     await (supabase.from('assessment_evaluations' as any) as any)
@@ -594,6 +601,18 @@ export default function SeleccionDesarrolloPage() {
     const opt = SCORE_OPTIONS.find(o => o.value === val);
     const compEv = compEvaluatorOf(row.id, competencyId) ?? row.evaluator_user_id;
     if (disabled) return <span className="text-xs text-muted-foreground">No aplica</span>;
+    if (evaluatorMode && compEv !== user?.id) {
+      return (
+        <div className="space-y-1 text-center">
+          <div className={`h-8 md:h-9 rounded-md border flex items-center justify-center text-xs font-bold ${opt ? opt.color : 'bg-muted/40 text-muted-foreground'}`}>
+            {opt ? opt.value : '—'}
+          </div>
+          <p className="text-[9px] leading-tight text-muted-foreground truncate" title={evaluatorName(compEv)}>
+            Asignada a {evaluatorName(compEv)}
+          </p>
+        </div>
+      );
+    }
     return (
       <div className="space-y-1">
       <Select
@@ -629,13 +648,13 @@ export default function SeleccionDesarrolloPage() {
             <Users className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-xl md:text-2xl font-bold">Selección y Desarrollo</h1>
+            <h1 className="text-xl md:text-2xl font-bold">{evaluatorMode ? 'Mis Assessments' : 'Selección y Desarrollo'}</h1>
             <p className="text-sm text-muted-foreground">
-              Planilla de Evaluación Assessment Center — Aspirantes por área y cargo
+              {evaluatorMode ? 'Solo puedes calificar las competencias de los aspirantes que te fueron asignados' : 'Planilla de Evaluación Assessment Center — Aspirantes por área y cargo'}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        {!evaluatorMode && <div className="flex items-center gap-2">
           <Button variant="default" onClick={() => { setCompOpen(true); openCompNew(); }}>
             <SlidersHorizontal className="w-4 h-4 mr-1" /> Competencias
           </Button>
@@ -648,11 +667,11 @@ export default function SeleccionDesarrolloPage() {
           <Button variant="info" onClick={() => setActiveTab('historico')}>
             <History className="w-4 h-4 mr-1" /> Histórico
           </Button>
-        </div>
+        </div>}
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="gap-1">
+        <TabsList className={evaluatorMode ? 'hidden' : 'gap-1'}>
           <TabsTrigger
             value="aspirantes"
             className="bg-primary/10 text-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
@@ -812,7 +831,7 @@ export default function SeleccionDesarrolloPage() {
       ) : activeGroups.length === 0 ? (
         <Card className="p-0 overflow-hidden">
           <div className="py-10 text-center text-muted-foreground text-sm">
-            No hay convocatorias en evaluación. Las completadas están en el botón "Histórico".
+            {evaluatorMode ? 'No tienes aspirantes asignados para evaluar.' : 'No hay convocatorias en evaluación. Las completadas están en el botón "Histórico".'}
           </div>
         </Card>
       ) : (
@@ -831,13 +850,13 @@ export default function SeleccionDesarrolloPage() {
                   Áreas: {group.areasLabel} · {group.rows.length} aspirante(s)
                 </p>
               </div>
-              <Button
+              {!evaluatorMode && <Button
                 size="sm"
                 onClick={() => completeGroup(group.rows, group.key)}
                 disabled={completing === group.key}
               >
                 {completing === group.key ? 'Completando...' : 'Completar Evaluación'}
-              </Button>
+              </Button>}
             </div>
             {/* Desktop table */}
             <div className="hidden md:block overflow-x-auto">
@@ -859,7 +878,7 @@ export default function SeleccionDesarrolloPage() {
                               <span className="font-medium">{evaluatorName(row.evaluator_user_id)}</span>
                             </p>
                           </div>
-                          <div className="flex items-center gap-0.5 shrink-0">
+                          <div className={evaluatorMode ? 'hidden' : 'flex items-center gap-0.5 shrink-0'}>
                             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(row)}>
                               <Pencil className="w-3.5 h-3.5" />
                             </Button>
@@ -931,7 +950,7 @@ export default function SeleccionDesarrolloPage() {
                       </td>
                     ))}
                   </tr>
-                  <tr className="bg-amber-500/5">
+                  <tr className={evaluatorMode ? 'hidden' : 'bg-amber-500/5'}>
                     <td className="sticky left-0 z-20 bg-amber-500/10 px-3 py-2 md:px-4 md:py-3 border-r font-semibold text-xs md:text-sm shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
                       Candidato FastPool
                     </td>
@@ -971,7 +990,7 @@ export default function SeleccionDesarrolloPage() {
                         <span className="font-medium">{evaluatorName(row.evaluator_user_id)}</span>
                       </p>
                     </div>
-                    <div className="flex items-center gap-0.5 shrink-0">
+                    <div className={evaluatorMode ? 'hidden' : 'flex items-center gap-0.5 shrink-0'}>
                       <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(row)}>
                         <Pencil className="w-3.5 h-3.5" />
                       </Button>
@@ -1014,7 +1033,7 @@ export default function SeleccionDesarrolloPage() {
                   </div>
                   <label className="flex items-center justify-between gap-2 pt-1 border-t">
                     <span className="text-xs font-semibold">Candidato FastPool</span>
-                    <Checkbox checked={!!row.is_fastpool} onCheckedChange={v => toggleFastpool(row, !!v)} />
+                    {!evaluatorMode && <Checkbox checked={!!row.is_fastpool} onCheckedChange={v => toggleFastpool(row, !!v)} />}
                   </label>
                   <p className="text-[10px] md:text-[11px] text-muted-foreground">Fecha: {row.evaluation_date}</p>
                 </div>
@@ -1322,7 +1341,7 @@ export default function SeleccionDesarrolloPage() {
                   </p>
                   {c.behavior && <p className="text-[11px] text-muted-foreground mt-1 line-clamp-2">{c.behavior}</p>}
                 </div>
-                <div className="flex items-center gap-0.5 shrink-0">
+                <div className={evaluatorMode ? 'hidden' : 'flex items-center gap-0.5 shrink-0'}>
                   <Button variant="ghost" size="icon" className="h-7 w-7" disabled={i === 0} onClick={() => moveCompetency(c, -1)}>
                     <ArrowUp className="w-4 h-4" />
                   </Button>

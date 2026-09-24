@@ -1,3 +1,5 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -236,6 +238,17 @@ export default function AppSidebar() {
   const visibleMenuKeys = useVisibleMenuKeys();
   const { data: areas = [] } = useAreas();
   const { data: memberships = [] } = useMemberships();
+  const { data: myAssessmentCount = 0 } = useQuery({
+    queryKey: ['my_assessment_count', user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const [a, b] = await Promise.all([
+        (supabase.from('assessment_evaluations' as any) as any).select('id', { count: 'exact', head: true }).eq('evaluator_user_id', user!.id),
+        (supabase.from('assessment_competency_scores' as any) as any).select('id', { count: 'exact', head: true }).eq('evaluator_user_id', user!.id),
+      ]);
+      return (a.count ?? 0) + (b.count ?? 0);
+    },
+  });
 
   // Determine which area routes the user is allowed to see
   const allowedAreaRoutes = useMemo(() => {
@@ -279,6 +292,12 @@ export default function AppSidebar() {
       })
       .filter(Boolean) as NavItem[];
   }, [visibleMenuKeys, allowedAreaRoutes]);
+
+  const navWithAssessments = useMemo(() => {
+    if (!myAssessmentCount) return filteredNavItems;
+    const item: NavItem = { to: "/mis-assessments", icon: ClipboardCheck, label: "Mis Assessments" } as NavItem;
+    return [item, ...filteredNavItems];
+  }, [filteredNavItems, myAssessmentCount]);
 
   // Close mobile sidebar on route change
   useEffect(() => {
@@ -338,7 +357,7 @@ export default function AppSidebar() {
 
       {/* Nav */}
       <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto scrollbar-thin">
-        {filteredNavItems.map((item) => {
+        {navWithAssessments.map((item) => {
           const isActive = location.pathname === item.to || (item.to !== "/" && location.pathname.startsWith(item.to));
 
           if (item.children && item.children.length > 0) {

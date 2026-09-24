@@ -59,6 +59,7 @@ function ProtectedRoutes() {
         <Route path="/osh-people" element={<OshPeoplePage />} />
         <Route path="/mision-cerosh" element={<MisionCeroshPage />} />
         <Route path="/seleccion-desarrollo" element={<SeleccionDesarrolloPage />} />
+        <Route path="/mis-assessments" element={<SeleccionDesarrolloPage evaluatorMode />} />
         <Route path="/momento-seguro" element={<MomentoSeguroPage />} />
         <Route path="/organigrama" element={<OrganigramaPage />} />
         <Route path="/administracion" element={<AdministracionPage />} />
