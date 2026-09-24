@@ -43,9 +43,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex bg-white">
-      {/* Lado izquierdo — negro con identidad */}
-      <div className="hidden lg:flex lg:w-1/2 bg-black text-white flex-col p-12 relative overflow-hidden">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-white">
+      {/* Panel de identidad — visible en todos los tamaños, centrado */}
+      <div className="w-full lg:w-1/2 bg-black text-white flex flex-col items-center justify-center text-center p-8 sm:p-12 lg:p-16 relative overflow-hidden">
         {/* Patrón de círculos concéntricos */}
         <div
           className="absolute inset-0 opacity-[0.08] pointer-events-none"
@@ -54,43 +54,34 @@ export default function LoginPage() {
               "radial-gradient(circle at 50% 55%, rgba(255,255,255,0.9) 0%, transparent 38%), radial-gradient(circle at 50% 55%, rgba(255,255,255,0.6) 0%, transparent 55%), radial-gradient(circle at 50% 55%, rgba(255,255,255,0.4) 0%, transparent 72%)",
           }}
         />
-        {/* Logo */}
-        <div className="relative flex items-center gap-3">
+        {/* Logo + nombre */}
+        <div className="relative flex items-center gap-3 mb-10 lg:mb-12">
           <img
             src="https://dnifnjmiqbrtnmeqjizw.supabase.co/storage/v1/object/public/OSH-B/OSH-B.png"
             alt="Logo Oshpitality Group"
-            className="w-12 h-12 object-contain brightness-0 invert"
+            className="w-10 h-10 lg:w-12 lg:h-12 object-contain brightness-0 invert"
           />
-          <span className="font-display text-xl tracking-tight">Oshpitality Group</span>
+          <span className="font-display text-lg lg:text-xl tracking-tight">Oshpitality Group</span>
         </div>
 
-        {/* Texto central — centrado y alineado con el formulario */}
-        <div className="relative flex-1 flex flex-col items-center justify-center text-center">
-          <h2 className="font-display text-3xl xl:text-4xl leading-tight tracking-tight">
+        {/* Texto central */}
+        <div className="relative">
+          <h2 className="font-display text-3xl sm:text-4xl xl:text-5xl leading-tight tracking-tight">
             Work Plan
           </h2>
-          <p className="mt-5 text-white/60 text-sm max-w-sm leading-relaxed">
+          <p className="mt-4 sm:mt-5 text-white/60 text-sm sm:text-base max-w-sm leading-relaxed">
             Gestiona objetivos, indicadores y reportes operativos de tu área en un solo lugar.
           </p>
-          <p className="mt-6 font-display text-base text-white/80 italic">
+          <p className="mt-5 sm:mt-6 font-display text-base sm:text-lg text-white/80 italic">
             "Cuidarnos, es sonreír con seguridad."
           </p>
         </div>
-
       </div>
 
-      {/* Lado derecho — formulario */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
+      {/* Formulario */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-10 lg:p-12">
         <div className="w-full max-w-[420px] animate-fade-in">
-          {/* Logo móvil */}
-          <div className="flex lg:hidden items-center justify-center gap-3 mb-8">
-            <img
-              src="https://dnifnjmiqbrtnmeqjizw.supabase.co/storage/v1/object/public/OSH-B/OSH-B.png"
-              alt="Logo Oshpitality Group"
-              className="w-10 h-10 object-contain"
-            />
-            <span className="font-display text-lg text-foreground tracking-tight">Oshpitality Group</span>
-          </div>
+
 
           <div className="mb-8">
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-medium mb-2">
