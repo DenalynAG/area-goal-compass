@@ -67,7 +67,7 @@ export default function LoginPage() {
         {/* Texto central */}
         <div className="relative">
           <h2 className="font-display text-3xl xl:text-4xl leading-tight tracking-tight">
-            Plataforma de Gestión<br />Objetivos e Indicadores
+            Work Plan
           </h2>
           <p className="mt-5 text-white/60 text-sm max-w-sm leading-relaxed">
             Gestiona objetivos, indicadores y reportes operativos de tu área en un solo lugar.

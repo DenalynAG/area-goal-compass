@@ -13,7 +13,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           <div className="flex-1" />
           <div className="text-center">
             <h1 className="text-sm font-bold text-foreground leading-tight">
-              Plataforma de Gestión Objetivo e Indicadores
+              Work Plan
             </h1>
             <p className="text-[11px] text-muted-foreground leading-tight">V1.0.</p>
           </div>
