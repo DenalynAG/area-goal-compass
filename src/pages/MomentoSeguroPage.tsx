@@ -25,10 +25,11 @@ import {
   ShieldCheck, AlertTriangle, Lightbulb, Plus, Pencil, Trash2, Search, Filter,
   Paperclip, History, BarChart3, ClipboardList, Loader2, Download, X,
   Trophy, CalendarDays, Building2, HeartHandshake, Timer,
+  TrendingUp, Target, CheckCircle2, ArrowRight, Sparkles, Award, MapPin,
 } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend,
-  PieChart, Pie, Cell,
+  PieChart, Pie, Cell, AreaChart, Area, LineChart, Line,
 } from "recharts";
 import {
   HOTEL_AREA_OPTIONS, MISION_CEROSH_SUBTITLE, MISION_CEROSH_TAGLINE,
@@ -771,20 +772,294 @@ export default function MomentoSeguroPage() {
         </TabsContent>
 
         {/* INDICADORES */}
-        <TabsContent value="indicadores" className="space-y-4">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {[
-              { label: "Comportamientos seguros", value: indicators.safe },
-              { label: "Oportunidades de mejora", value: indicators.improvement },
-              { label: "Comportamientos inseguros", value: indicators.unsafe },
-              { label: "% de cierre", value: `${indicators.closureRate}%` },
-            ].map((k) => (
-              <Card key={k.label}><CardContent className="p-4">
-                <p className="text-xs text-muted-foreground">{k.label}</p>
-                <p className="text-2xl font-semibold mt-1">{k.value}</p>
-              </CardContent></Card>
-            ))}
-          </div>
+        <TabsContent value="indicadores" className="space-y-6">
+          {/* INDICADORES CLAVE */}
+          <section className="space-y-3">
+            <h3 className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">Indicadores clave</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+              {[
+                { label: "Comportamientos seguros", value: indicators.safe, hint: `${indicators.safeIndex}% del total registrado`, icon: CheckCircle2, tint: "bg-success/15 text-success" },
+                { label: "Oportunidades de mejora", value: indicators.improvement, hint: "Prácticas mejorables detectadas", icon: Lightbulb, tint: "bg-warning/15 text-warning" },
+                { label: "Comportamientos inseguros", value: indicators.unsafe, hint: `${filtered.filter((o) => o.risk_level === "critico").length} de riesgo crítico`, icon: ShieldCheck, tint: "bg-destructive/10 text-destructive" },
+                { label: "Observaciones del mes", value: indicators.monthCount, hint: "Registradas en el mes en curso", icon: ClipboardList, tint: "bg-primary/10 text-primary" },
+                { label: indicators.topAreaName, value: null, bigLabel: true, hint: `${indicators.topAreaCount} registros`, icon: MapPin, tint: "bg-primary/10 text-primary", caption: "Área con más observaciones" },
+                { label: indicators.topSafeName, value: null, bigLabel: true, hint: `${indicators.topSafePct}% de comportamientos seguros`, icon: Sparkles, tint: "bg-success/15 text-success", caption: "Área más segura" },
+                { label: "Cumplimiento de acciones", value: `${indicators.closureRate}%`, hint: "Acciones inmediatas completadas", icon: TrendingUp, tint: "bg-warning/15 text-warning" },
+                { label: "Registros cerrados", value: indicators.closed, hint: `${indicators.open} en gestión`, icon: BarChart3, tint: "bg-primary/10 text-primary" },
+              ].map((k: any) => (
+                <Card key={k.caption ?? k.label} className="rounded-2xl shadow-sm">
+                  <CardContent className="p-5 space-y-2">
+                    <div className={`h-9 w-9 rounded-xl flex items-center justify-center ${k.tint}`}>
+                      <k.icon className="h-4.5 w-4.5" />
+                    </div>
+                    {k.bigLabel ? (
+                      <p className="text-xl font-semibold leading-tight truncate">{k.label}</p>
+                    ) : (
+                      <p className="text-3xl font-semibold">{k.value}</p>
+                    )}
+                    <div>
+                      <p className="text-sm font-medium">{k.bigLabel ? k.caption : k.label}</p>
+                      <p className="text-xs text-muted-foreground">{k.hint}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+
+          {/* DESEMPEÑO DEL MES */}
+          <section className="space-y-3">
+            <h3 className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">Desempeño del mes</h3>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <Card className="rounded-2xl shadow-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2"><Target className="h-4 w-4 text-primary" />Meta del mes</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  <div className="flex items-end justify-between">
+                    <p className="text-3xl font-semibold">{indicators.monthCount}<span className="text-base text-muted-foreground font-normal">/{MONTH_GOAL}</span></p>
+                    <Badge variant="secondary">{Math.min(100, Math.round((indicators.monthCount / MONTH_GOAL) * 100))}%</Badge>
+                  </div>
+                  <div className="h-2 rounded-full bg-muted overflow-hidden">
+                    <div className="h-full bg-success rounded-full transition-all" style={{ width: `${Math.min(100, (indicators.monthCount / MONTH_GOAL) * 100)}%` }} />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Faltan {Math.max(0, MONTH_GOAL - indicators.monthCount)} observaciones preventivas para la meta.</p>
+                  <div className="space-y-3 pt-2 border-t border-border">
+                    <div>
+                      <div className="flex justify-between text-xs mb-1"><span className="text-muted-foreground">Índice de seguridad</span><span className="font-medium">{indicators.safeIndex}%</span></div>
+                      <div className="h-2 rounded-full bg-muted overflow-hidden"><div className="h-full bg-success" style={{ width: `${indicators.safeIndex}%` }} /></div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-xs mb-1"><span className="text-muted-foreground">Acciones inmediatas</span><span className="font-medium">{indicators.closureRate}%</span></div>
+                      <div className="h-2 rounded-full bg-muted overflow-hidden"><div className="h-full bg-success" style={{ width: `${indicators.closureRate}%` }} /></div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="rounded-2xl shadow-sm lg:col-span-2">
+                <CardHeader className="pb-0"><CardTitle className="text-sm">Distribución del comportamiento</CardTitle></CardHeader>
+                <CardContent className="h-72">
+                  {indicators.total === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center pt-24">Sin datos suficientes todavía</p>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: "Seguros", value: indicators.safe },
+                            { name: "Oportunidades", value: indicators.improvement },
+                            { name: "Inseguros", value: indicators.unsafe },
+                          ].filter((d) => d.value > 0)}
+                          dataKey="value" nameKey="name" innerRadius={75} outerRadius={105}
+                          paddingAngle={4} cornerRadius={6} strokeWidth={0}
+                        >
+                          <Cell fill="#5E8C5B" />
+                          <Cell fill="#E59514" />
+                          <Cell fill="#DE613E" />
+                        </Pie>
+                        <Tooltip />
+                        <Legend />
+                        <text x="50%" y="46%" textAnchor="middle" dominantBaseline="middle" className="fill-foreground" style={{ fontSize: 28, fontWeight: 700 }}>
+                          {indicators.safeIndex}%
+                        </text>
+                        <text x="50%" y="56%" textAnchor="middle" dominantBaseline="middle" className="fill-muted-foreground" style={{ fontSize: 12 }}>
+                          seguro
+                        </text>
+                      </PieChart>
+                    </ResponsiveContainer>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+
+          {/* EVOLUCIÓN */}
+          <section className="space-y-3">
+            <h3 className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">Evolución</h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <Card className="rounded-2xl shadow-sm">
+                <CardHeader className="pb-0"><CardTitle className="text-sm">Observaciones preventivas por mes</CardTitle></CardHeader>
+                <CardContent className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={evolutionData}>
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.25} vertical={false} />
+                      <XAxis dataKey="mes" fontSize={11} />
+                      <YAxis allowDecimals={false} fontSize={11} />
+                      <Tooltip />
+                      <Area type="monotone" dataKey="Preventivas" stroke="hsl(var(--primary))" fill="hsl(var(--primary)/0.12)" strokeWidth={2.5} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+              <Card className="rounded-2xl shadow-sm">
+                <CardHeader className="pb-0"><CardTitle className="text-sm">Tendencia por categoría</CardTitle></CardHeader>
+                <CardContent className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={evolutionData}>
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.25} vertical={false} />
+                      <XAxis dataKey="mes" fontSize={11} />
+                      <YAxis allowDecimals={false} fontSize={11} />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="Preventivas" stroke="hsl(var(--primary))" strokeWidth={2.5} dot={false} />
+                      <Line type="monotone" dataKey="Seguros" stroke="#5E8C5B" strokeWidth={2} dot={false} />
+                      <Line type="monotone" dataKey="Mejora" stroke="#E59514" strokeWidth={2} dot={false} />
+                      <Line type="monotone" dataKey="Inseguros" stroke="#DE613E" strokeWidth={2} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+
+          {/* ANÁLISIS POR ÁREA */}
+          <section className="space-y-3">
+            <h3 className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">Análisis por área</h3>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <Card className="rounded-2xl shadow-sm lg:col-span-2">
+                <CardHeader className="pb-0"><CardTitle className="text-sm">Observaciones por área</CardTitle></CardHeader>
+                <CardContent className="h-72">
+                  {areaStackData.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center pt-24">Sin datos</p>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={areaStackData} layout="vertical" margin={{ left: 20 }}>
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.25} horizontal={false} />
+                        <XAxis type="number" allowDecimals={false} fontSize={11} />
+                        <YAxis type="category" dataKey="area" width={140} fontSize={11} />
+                        <Tooltip />
+                        <Legend />
+                        <Bar dataKey="Seguro" stackId="a" fill="#5E8C5B" radius={[0, 0, 0, 0]} barSize={18} />
+                        <Bar dataKey="Mejora" stackId="a" fill="#E59514" barSize={18} />
+                        <Bar dataKey="Inseguro" stackId="a" fill="#DE613E" radius={[0, 6, 6, 0]} barSize={18} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                </CardContent>
+              </Card>
+              <Card className="rounded-2xl shadow-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2"><Trophy className="h-4 w-4 text-warning" />Ranking preventivo</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {areaData.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-10">Sin datos suficientes todavía</p>
+                  ) : areaData.slice(0, 6).map((a, i) => (
+                    <div key={a.area} className="space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className={`h-6 w-6 rounded-full text-xs font-semibold flex items-center justify-center ${i === 0 ? "bg-warning/20 text-warning" : "bg-muted text-muted-foreground"}`}>{i + 1}</span>
+                          <span className="text-sm font-medium truncate">{a.area}</span>
+                        </div>
+                        <span className="text-sm font-semibold">{a.total}</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-muted overflow-hidden ml-8">
+                        <div className="h-full bg-success rounded-full" style={{ width: `${Math.round((a.total / (areaData[0]?.total || 1)) * 100)}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+
+          {/* EMBAJADORES */}
+          <section className="space-y-3">
+            <h3 className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">Embajadores Misión CerOSH</h3>
+            <Card className="rounded-2xl shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2"><Award className="h-4 w-4 text-success" />Reconocimientos otorgados</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {ambassadorList.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-8">Sin datos suficientes todavía</p>
+                ) : ambassadorList.map((o) => (
+                  <div key={o.id} className="flex items-center justify-between gap-3 border-b border-border pb-3 last:border-0 last:pb-0">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="h-9 w-9 rounded-xl bg-warning/15 text-warning flex items-center justify-center shrink-0"><Trophy className="h-4 w-4" /></span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{o.observed_name ?? "Colaborador"}</p>
+                        <p className="text-xs text-muted-foreground truncate">{areaLabel(o)} · {o.observation_date}</p>
+                      </div>
+                    </div>
+                    <Badge className="bg-success/15 text-success border-0 shrink-0">Embajador</Badge>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </section>
+
+          {/* ACTIVIDAD RECIENTE */}
+          <section className="space-y-3">
+            <h3 className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">Actividad reciente</h3>
+            <Card className="rounded-2xl shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2"><History className="h-4 w-4 text-primary" />Línea de tiempo</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-1">
+                {recentObs.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-8">Sin actividad reciente</p>
+                ) : recentObs.map((o, i) => {
+                  const CatIcon = CATEGORY_META[o.category]?.icon ?? ShieldCheck;
+                  return (
+                    <div key={o.id} className="relative pl-6 pb-4 last:pb-0">
+                      {i < recentObs.length - 1 && <span className="absolute left-[5px] top-4 bottom-0 w-px bg-border" />}
+                      <span className="absolute left-0 top-1.5 h-2.5 w-2.5 rounded-full bg-primary" />
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">
+                            {codeOf.get(o.id)} · {o.observed_name ?? "Colaborador"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {o.observation_date}{o.observation_time ? ` ${o.observation_time.slice(0, 5)}` : ""} · {areaLabel(o)} · Observador: {o.observer_name ?? "—"}
+                          </p>
+                        </div>
+                        <div className="flex gap-2 shrink-0">
+                          <Badge className={`${CATEGORY_META[o.category]?.chip} border-0`}>
+                            <CatIcon className="h-3 w-3 mr-1" />{CATEGORY_META[o.category]?.label}
+                          </Badge>
+                          <Badge className={`${STATUS_META[o.status]?.chip} border-0`}>{STATUS_META[o.status]?.label}</Badge>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          </section>
+
+          {/* REGISTROS RECIENTES */}
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">Registros recientes</h3>
+              <Button variant="link" size="sm" className="text-xs" onClick={() => setActiveTab("observaciones")}>Ver todos</Button>
+            </div>
+            <div className="space-y-3">
+              {recentObs.slice(0, 3).map((o) => {
+                const CatIcon = CATEGORY_META[o.category]?.icon ?? ShieldCheck;
+                return (
+                  <Card key={o.id} className="rounded-2xl shadow-sm">
+                    <CardContent className="p-4 flex items-center justify-between gap-3">
+                      <div className="min-w-0 space-y-1.5">
+                        <p className="text-sm font-semibold">{codeOf.get(o.id)} · {o.observed_name ?? "Colaborador"}</p>
+                        <p className="text-xs text-muted-foreground truncate">{areaLabel(o)} · {o.observation_date} · {o.associated_risk ?? o.description}</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          <Badge className={`${CATEGORY_META[o.category]?.chip} border-0`}>
+                            <CatIcon className="h-3 w-3 mr-1" />{CATEGORY_META[o.category]?.label}
+                          </Badge>
+                          <Badge className={`${RISK_META[o.risk_level]?.chip} border-0`}>Riesgo {RISK_META[o.risk_level]?.label}</Badge>
+                          <Badge className={`${STATUS_META[o.status]?.chip} border-0`}>{STATUS_META[o.status]?.label}</Badge>
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="icon" className="shrink-0" onClick={() => { setActiveTab("observaciones"); openEdit(o); }}>
+                        <ArrowRight className="h-4 w-4" />
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </section>
 
           <Card>
             <CardHeader><CardTitle className="text-base">Comportamiento mensual ({new Date().getFullYear()})</CardTitle></CardHeader>
