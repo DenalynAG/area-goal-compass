@@ -2193,6 +2193,7 @@ export type Database = {
       }
       safe_moment_observations: {
         Row: {
+          ambassador_at: string | null
           area_id: string | null
           associated_risk: string | null
           behavior_category: string | null
@@ -2207,8 +2208,10 @@ export type Database = {
           followup_notes: string | null
           followup_required: boolean
           followup_responsible_user_id: string | null
+          hotel_area: string | null
           id: string
           immediate_actions: string | null
+          is_ambassador: boolean
           location: string | null
           observation_date: string
           observation_time: string | null
@@ -2218,6 +2221,7 @@ export type Database = {
           observed_user_id: string | null
           observer_name: string | null
           observer_user_id: string | null
+          process: string | null
           risk_level: string
           signature_observed: string | null
           signature_observer: string | null
@@ -2226,6 +2230,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          ambassador_at?: string | null
           area_id?: string | null
           associated_risk?: string | null
           behavior_category?: string | null
@@ -2240,8 +2245,10 @@ export type Database = {
           followup_notes?: string | null
           followup_required?: boolean
           followup_responsible_user_id?: string | null
+          hotel_area?: string | null
           id?: string
           immediate_actions?: string | null
+          is_ambassador?: boolean
           location?: string | null
           observation_date?: string
           observation_time?: string | null
@@ -2251,6 +2258,7 @@ export type Database = {
           observed_user_id?: string | null
           observer_name?: string | null
           observer_user_id?: string | null
+          process?: string | null
           risk_level?: string
           signature_observed?: string | null
           signature_observer?: string | null
@@ -2259,6 +2267,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          ambassador_at?: string | null
           area_id?: string | null
           associated_risk?: string | null
           behavior_category?: string | null
@@ -2273,8 +2282,10 @@ export type Database = {
           followup_notes?: string | null
           followup_required?: boolean
           followup_responsible_user_id?: string | null
+          hotel_area?: string | null
           id?: string
           immediate_actions?: string | null
+          is_ambassador?: boolean
           location?: string | null
           observation_date?: string
           observation_time?: string | null
@@ -2284,6 +2295,7 @@ export type Database = {
           observed_user_id?: string | null
           observer_name?: string | null
           observer_user_id?: string | null
+          process?: string | null
           risk_level?: string
           signature_observed?: string | null
           signature_observer?: string | null

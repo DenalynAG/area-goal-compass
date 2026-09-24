@@ -36,6 +36,13 @@
       "when": 1789594172897,
       "tag": "0004_create_safe_moment_observations",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790258164207,
+      "tag": "0005_add_preventive_observation_fields",
+      "breakpoints": true
     }
   ]
 }
