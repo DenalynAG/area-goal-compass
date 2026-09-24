@@ -82,7 +82,7 @@ export default function LoginPage() {
           <img
             src={misionLogo.url}
             alt="Logo Misión CerOSH"
-            className="w-10 h-10 object-contain brightness-0 invert"
+            className="w-10 h-10 object-contain"
           />
           <span className="text-white/50 text-xs tracking-wide uppercase">Misión CerOSH</span>
         </div>
