@@ -238,15 +238,17 @@ export default function AppSidebar() {
   const visibleMenuKeys = useVisibleMenuKeys();
   const { data: areas = [] } = useAreas();
   const { data: memberships = [] } = useMemberships();
-  const { data: myAssessmentCount = 0 } = useQuery({
-    queryKey: ['my_assessment_count', user?.id],
+  const { data: myAssessmentAreaIds = [] } = useQuery({
+    queryKey: ['my_assessment_areas', user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
-      const [a, b] = await Promise.all([
-        (supabase.from('assessment_evaluations' as any) as any).select('id', { count: 'exact', head: true }).eq('evaluator_user_id', user!.id),
-        (supabase.from('assessment_competency_scores' as any) as any).select('id', { count: 'exact', head: true }).eq('evaluator_user_id', user!.id),
-      ]);
-      return (a.count ?? 0) + (b.count ?? 0);
+      const { data: sc } = await (supabase.from('assessment_competency_scores' as any) as any)
+        .select('evaluation_id').eq('evaluator_user_id', user!.id);
+      const ids = Array.from(new Set(((sc ?? []) as any[]).map((r) => r.evaluation_id)));
+      let q = (supabase.from('assessment_evaluations' as any) as any).select('area_id');
+      q = ids.length ? q.or(`evaluator_user_id.eq.${user!.id},id.in.(${ids.join(',')})`) : q.eq('evaluator_user_id', user!.id);
+      const { data } = await q;
+      return Array.from(new Set(((data ?? []) as any[]).map((r) => r.area_id).filter(Boolean))) as string[];
     },
   });
 
@@ -294,14 +296,17 @@ export default function AppSidebar() {
   }, [visibleMenuKeys, allowedAreaRoutes]);
 
   const navWithAssessments = useMemo(() => {
-    if (!myAssessmentCount) return filteredNavItems;
-    const child = { to: "/mis-assessments", icon: ClipboardCheck, label: "Mis Assessments" } as any;
-    return filteredNavItems.map((item) =>
-      item.children && !item.children.some((c: any) => c.to === "/mis-assessments")
-        ? { ...item, children: [...item.children, child] }
-        : item,
-    );
-  }, [filteredNavItems, myAssessmentCount]);
+    if (!myAssessmentAreaIds.length) return filteredNavItems;
+    const norm = (t: string) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+    return filteredNavItems.map((item) => {
+      const areaNameForRoute = AREA_ROUTE_TO_NAME[item.to];
+      if (!item.children || !areaNameForRoute) return item;
+      const area = areas.find((a) => norm(a.name) === norm(areaNameForRoute));
+      if (!area || !myAssessmentAreaIds.includes(area.id)) return item;
+      const child = { to: `/mis-assessments?area=${area.id}`, icon: ClipboardCheck, label: "Mis Assessments" } as any;
+      return { ...item, children: [...item.children, child] };
+    });
+  }, [filteredNavItems, myAssessmentAreaIds, areas]);
 
   // Close mobile sidebar on route change
   useEffect(() => {
@@ -393,7 +398,7 @@ export default function AppSidebar() {
                 {isGroupExpanded && !collapsed && (
                   <div className="ml-5 pl-3 border-l border-sidebar-border/50 space-y-0.5 mt-0.5">
                     {item.children.map((child) => {
-                      const childActive = location.pathname === child.to;
+                      const childActive = location.pathname + location.search === child.to || location.pathname === child.to;
                       const hasSubChildren = child.children && child.children.length > 0;
                       const isSubExpanded = expandedGroups.has(child.to);
 

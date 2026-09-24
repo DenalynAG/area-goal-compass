@@ -1,3 +1,4 @@
+import { useSearchParams } from 'react-router-dom';
 import { useMemo, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -113,6 +114,8 @@ export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { eva
   const evaluatorName = (id?: string | null) =>
     id ? (profiles.find(p => p.id === id)?.name ?? 'Sin asignar') : 'Sin asignar';
 
+  const [searchParams] = useSearchParams();
+  const areaParam = searchParams.get('area');
   const [search, setSearch] = useState('');
   const [filterArea, setFilterArea] = useState('all');
   const [open, setOpen] = useState(false);
@@ -224,6 +227,7 @@ export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { eva
 
   const filtered = useMemo(() => {
     let r = evaluatorMode ? rows.filter(isMine) : rows;
+    if (evaluatorMode && areaParam) r = r.filter(x => x.area_id === areaParam);
     if (filterArea !== 'all') r = r.filter(x => x.area_id === filterArea);
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -233,7 +237,7 @@ export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { eva
       );
     }
     return r;
-  }, [rows, filterArea, search, evaluatorMode, compScores, user?.id]);
+  }, [rows, filterArea, search, evaluatorMode, compScores, user?.id, areaParam]);
 
   // Competencies shown as rows in a grid: union of those applicable to its aspirants
   const compsForRows = (rowsIn: Assessment[]) => {
