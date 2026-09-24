@@ -506,8 +506,11 @@ export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { eva
     );
     const weighted = calcWeighted(nextValues, applicable.length);
 
-    const { error } = await (supabase.from('assessment_competency_scores' as any) as any)
-      .upsert({ evaluation_id: row.id, competency_id: competencyId, score: value }, { onConflict: 'evaluation_id,competency_id' });
+    const { error } = evaluatorMode
+      ? await (supabase.from('assessment_competency_scores' as any) as any)
+          .update({ score: value }).eq('evaluation_id', row.id).eq('competency_id', competencyId)
+      : await (supabase.from('assessment_competency_scores' as any) as any)
+          .upsert({ evaluation_id: row.id, competency_id: competencyId, score: value }, { onConflict: 'evaluation_id,competency_id' });
     if (error) { toast.error(error.message); return; }
 
     await (supabase.from('assessment_evaluations' as any) as any)
