@@ -295,8 +295,12 @@ export default function AppSidebar() {
 
   const navWithAssessments = useMemo(() => {
     if (!myAssessmentCount) return filteredNavItems;
-    const item: NavItem = { to: "/mis-assessments", icon: ClipboardCheck, label: "Mis Assessments" } as NavItem;
-    return [item, ...filteredNavItems];
+    const child = { to: "/mis-assessments", icon: ClipboardCheck, label: "Mis Assessments" } as any;
+    return filteredNavItems.map((item) =>
+      item.children && !item.children.some((c: any) => c.to === "/mis-assessments")
+        ? { ...item, children: [...item.children, child] }
+        : item,
+    );
   }, [filteredNavItems, myAssessmentCount]);
 
   // Close mobile sidebar on route change
