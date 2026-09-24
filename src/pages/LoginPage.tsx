@@ -77,15 +77,6 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Logo Misión CerOSH abajo */}
-        <div className="relative flex items-center gap-3">
-          <img
-            src="https://dnifnjmiqbrtnmeqjizw.supabase.co/storage/v1/object/public/OSH-B/OSH-B.png"
-            alt="Logo Misión CerOSH"
-            className="w-10 h-10 object-contain brightness-0 invert"
-          />
-          <span className="text-white/50 text-xs tracking-wide uppercase">Misión CerOSH</span>
-        </div>
       </div>
 
       {/* Lado derecho — formulario */}
