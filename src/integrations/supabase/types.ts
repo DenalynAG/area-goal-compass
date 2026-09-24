@@ -2609,6 +2609,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_assessment_evaluator: {
+        Args: { _evaluation_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_assessment_manager: {
+        Args: { _evaluation_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_direccion_general_objective: {
         Args: { _scope_id: string; _scope_type: string }
         Returns: boolean
