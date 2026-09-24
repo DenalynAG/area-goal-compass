@@ -831,7 +831,7 @@ export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { eva
       ) : activeGroups.length === 0 ? (
         <Card className="p-0 overflow-hidden">
           <div className="py-10 text-center text-muted-foreground text-sm">
-            No hay convocatorias en evaluación. Las completadas están en el botón "Histórico".
+            {evaluatorMode ? 'No tienes aspirantes asignados para evaluar.' : 'No hay convocatorias en evaluación. Las completadas están en el botón "Histórico".'}
           </div>
         </Card>
       ) : (
@@ -1033,7 +1033,7 @@ export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { eva
                   </div>
                   <label className="flex items-center justify-between gap-2 pt-1 border-t">
                     <span className="text-xs font-semibold">Candidato FastPool</span>
-                    <Checkbox checked={!!row.is_fastpool} onCheckedChange={v => toggleFastpool(row, !!v)} />
+                    {!evaluatorMode && <Checkbox checked={!!row.is_fastpool} onCheckedChange={v => toggleFastpool(row, !!v)} />}
                   </label>
                   <p className="text-[10px] md:text-[11px] text-muted-foreground">Fecha: {row.evaluation_date}</p>
                 </div>
