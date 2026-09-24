@@ -47,13 +47,21 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-white p-4">
       <div className="w-full max-w-[420px] animate-fade-in">
         <div className="text-center mb-10">
-          <img
-            src="https://dnifnjmiqbrtnmeqjizw.supabase.co/storage/v1/object/public/OSH-B/OSH-B.png"
-            alt="OSHOME logo"
-            className="w-24 h-24 object-contain mx-auto mb-6"
-          />
+          <div className="flex items-center justify-center gap-4 mb-6">
+            <img
+              src="https://dnifnjmiqbrtnmeqjizw.supabase.co/storage/v1/object/public/OSH-B/OSH-B.png"
+              alt="Logo Oshpitality Group"
+              className="w-20 h-20 object-contain"
+            />
+            <img
+              src={misionLogo.url}
+              alt="Logo Misión CerOSH"
+              className="w-20 h-20 object-contain"
+            />
+          </div>
           <h1 className="text-3xl font-display font-bold text-foreground tracking-tight">Work Plan</h1>
           <p className="text-muted-foreground mt-2 text-sm font-medium">Plataforma de Gestión Objetivos e Indicadores</p>
+          <p className="text-foreground mt-3 text-sm font-medium">“Cuidarnos, es sonreír con seguridad.”</p>
           <p className="text-muted-foreground/60 mt-1 text-xs">Inicia sesión con tu cuenta</p>
         </div>
 
