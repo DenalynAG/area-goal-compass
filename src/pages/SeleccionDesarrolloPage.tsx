@@ -447,10 +447,7 @@ export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { eva
       score: formScores[c.id] ?? null,
     }));
     if (rowsToSave.length === 0) return;
-    const { error } = evaluatorMode
-      ? await (supabase.from('assessment_competency_scores' as any) as any)
-          .update({ score: value }).eq('evaluation_id', row.id).eq('competency_id', competencyId)
-      : await (supabase.from('assessment_competency_scores' as any) as any)
+    const { error } = await (supabase.from('assessment_competency_scores' as any) as any)
       .upsert(rowsToSave, { onConflict: 'evaluation_id,competency_id' });
     if (error) toast.error('Error guardando competencias: ' + error.message);
   };
