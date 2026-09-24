@@ -128,6 +128,7 @@ const CONTRIBUTING_FACTORS = [
 ];
 
 const MONTHS = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+const MONTH_GOAL = 100;
 
 const emptyForm = (): Partial<Observation> => ({
   observation_date: new Date().toISOString().slice(0, 10),
@@ -235,6 +236,8 @@ export default function MomentoSeguroPage() {
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const pageItems = filtered.slice((page - 1) * pageSize, page * pageSize);
+
+  const [activeTab, setActiveTab] = useState("observaciones");
 
   const resetFilters = () => {
     setSearch(""); setFArea(NONE); setFCategory(NONE); setFRisk(NONE); setFStatus(NONE);
