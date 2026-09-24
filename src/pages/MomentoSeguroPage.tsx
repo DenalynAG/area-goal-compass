@@ -307,6 +307,65 @@ export default function MomentoSeguroPage() {
     return Array.from(map, ([area, total]) => ({ area, total })).sort((a, b) => b.total - a.total);
   }, [filtered, areas]);
 
+  // Evolución: últimos 6 meses (total y por categoría)
+  const evolutionData = useMemo(() => {
+    const now = new Date();
+    const out: { mes: string; Preventivas: number; Seguros: number; Mejora: number; Inseguros: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const rows = filtered.filter((o) => (o.observation_date ?? "").startsWith(ym));
+      out.push({
+        mes: `${MONTHS[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`,
+        Preventivas: rows.length,
+        Seguros: rows.filter((r) => r.category === "comportamiento_seguro").length,
+        Mejora: rows.filter((r) => r.category === "oportunidad_mejora").length,
+        Inseguros: rows.filter((r) => r.category === "comportamiento_inseguro").length,
+      });
+    }
+    return out;
+  }, [filtered]);
+
+  // Barras apiladas por área y categoría
+  const areaStackData = useMemo(() => {
+    const map = new Map<string, { area: string; Seguro: number; Mejora: number; Inseguro: number }>();
+    filtered.forEach((o) => {
+      const name = o.hotel_area ?? areas.find((a) => a.id === o.area_id)?.name ?? "Sin área";
+      const s = map.get(name) ?? { area: name, Seguro: 0, Mejora: 0, Inseguro: 0 };
+      if (o.category === "comportamiento_seguro") s.Seguro += 1;
+      else if (o.category === "oportunidad_mejora") s.Mejora += 1;
+      else s.Inseguro += 1;
+      map.set(name, s);
+    });
+    return Array.from(map.values())
+      .sort((a, b) => (b.Seguro + b.Mejora + b.Inseguro) - (a.Seguro + a.Mejora + a.Inseguro))
+      .slice(0, 8);
+  }, [filtered, areas]);
+
+  // Código visible por registro (OC-AAAA-#### según orden cronológico)
+  const codeOf = useMemo(() => {
+    const sorted = [...filtered].sort((a, b) =>
+      (a.observation_date + (a.created_at ?? "")).localeCompare(b.observation_date + (b.created_at ?? "")));
+    const m = new Map<string, string>();
+    sorted.forEach((o, i) => {
+      const year = (o.observation_date ?? "").slice(0, 4) || new Date().getFullYear();
+      m.set(o.id, `OC-${year}-${String(i + 1).padStart(4, "0")}`);
+    });
+    return m;
+  }, [filtered]);
+
+  const recentObs = useMemo(
+    () => [...filtered].sort((a, b) =>
+      (b.observation_date + (b.created_at ?? "")).localeCompare(a.observation_date + (a.created_at ?? ""))).slice(0, 5),
+    [filtered],
+  );
+
+  const ambassadorList = useMemo(
+    () => filtered.filter((o) => o.is_ambassador)
+      .sort((a, b) => (b.ambassador_at ?? "").localeCompare(a.ambassador_at ?? "")).slice(0, 6),
+    [filtered],
+  );
+
   const riskData = useMemo(() =>
     (Object.keys(RISK_META) as RiskLevel[]).map((r) => ({
       name: RISK_META[r].label,
