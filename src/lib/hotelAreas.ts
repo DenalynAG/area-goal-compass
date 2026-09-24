@@ -1,7 +1,7 @@
 /**
  * Áreas oficiales del hotel (Oshpitality Group).
  * Fuente única de verdad para los módulos del programa Misión CerOSH
- * (Observaciones Preventivas y futuros módulos SST).
+ * (Momento Seguro y futuros módulos SST).
  * El orden es institucional y no debe alterarse.
  */
 export const HOTEL_AREAS = [

@@ -553,7 +553,7 @@ export default function MomentoSeguroPage() {
               className="h-14 w-14 sm:h-16 sm:w-16 rounded-xl object-contain bg-background p-1 border border-border shrink-0"
             />
             <div className="min-w-0">
-              <h1 className="text-2xl sm:text-3xl font-display leading-tight">Observaciones Preventivas</h1>
+              <h1 className="text-2xl sm:text-3xl font-display leading-tight">Momento Seguro</h1>
               <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">{MISION_CEROSH_SUBTITLE}</p>
               <p className="text-sm font-medium mt-2">“{MISION_CEROSH_TAGLINE}”</p>
             </div>
