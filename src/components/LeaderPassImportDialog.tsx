@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import * as XLSX from 'xlsx';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
-import { useProfiles } from '@/hooks/useSupabaseData';
+import { useProfiles, useAreas, useSubareas } from '@/hooks/useSupabaseData';
 import { Button } from '@/components/ui/button';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -23,54 +23,98 @@ interface Props {
   periodOptions: { value: string; label: string }[];
 }
 
-// Actividades habilitadas para carga masiva
-const IMPORTABLE_ORDERS = [1, 2, 3, 4, 5, 6, 8];
-
 const norm = (v: unknown) =>
   String(v ?? '')
     .trim()
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
+    .replace(/[̀-ͯ]/g, '');
+
+const MONTHS_SHORT = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+const stripOrder = (name: string) => norm(name).replace(/^\d+[\.\)\-\s]*/, '').trim();
+
+const periodFromFecha = (fecha: unknown): string | null => {
+  if (fecha === undefined || fecha === null || fecha === '') return null;
+  let d: Date | null = null;
+  if (fecha instanceof Date) d = fecha;
+  else if (typeof fecha === 'number') {
+    const parsed = XLSX.SSF.parse_date_code(fecha);
+    if (parsed) d = new Date(parsed.y, parsed.m - 1, parsed.d);
+  } else {
+    const s = String(fecha).trim();
+    const m = s.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/) || s.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+    if (m) {
+      const [y, mo] = m[1].length === 4 ? [m[1], m[2]] : [m[3], m[2]];
+      d = new Date(Number(y), Number(mo) - 1, 1);
+    } else {
+      const t = new Date(s);
+      if (!isNaN(t.getTime())) d = t;
+    }
+  }
+  if (!d || isNaN(d.getTime())) return null;
+  return `${MONTHS_SHORT[d.getMonth()]} ${d.getFullYear()}`;
+};
 
 export default function LeaderPassImportDialog({ open, onOpenChange, activities, period, periodOptions }: Props) {
   const { data: profiles = [] } = useProfiles();
+  const { data: areas = [] } = useAreas();
+  const { data: subareas = [] } = useSubareas();
   const qc = useQueryClient();
-  const [activityId, setActivityId] = useState('');
   const [selectedPeriod, setSelectedPeriod] = useState(period);
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<{ ok: number; fail: string[] } | null>(null);
 
-  const importable = useMemo(
-    () => activities.filter(a => IMPORTABLE_ORDERS.includes(a.sort_order)).sort((a, b) => a.sort_order - b.sort_order),
+  const sortedActivities = useMemo(
+    () => [...activities].sort((a, b) => a.sort_order - b.sort_order),
     [activities]
   );
 
   const downloadTemplate = () => {
-    const ws = XLSX.utils.aoa_to_sheet([
-      ['correo', 'documento', 'nombre', 'cumple'],
-      ['ejemplo@osh.com', '1234567890', 'Perez Gomez Juan', 'SI'],
-    ]);
+    const exampleArea = areas[0]?.name ?? 'Comercial';
+    const exampleLeader = profiles[0]?.name ?? 'Perez Gomez Juan';
+    const rows = [
+      ['Fecha', 'Área / Sub Área', 'Responsable del Área / Subárea', 'Nombre Actividad', 'Cumplimiento'],
+      ...sortedActivities.map(a => [`${MONTHS_SHORT[new Date().getMonth()]} ${new Date().getFullYear()}`, exampleArea, exampleLeader, `${a.sort_order}. ${a.name}`, 'SI']),
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{ wch: 12 }, { wch: 24 }, { wch: 30 }, { wch: 40 }, { wch: 14 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'LeaderPass');
     XLSX.writeFile(wb, 'plantilla_leader_pass.xlsx');
   };
 
   const handleFile = async (file: File) => {
-    if (!activityId) { toast.error('Selecciona primero la actividad'); return; }
     setImporting(true);
     setResult(null);
     try {
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(buf);
-      const rows: any[] = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+      const rows: any[] = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { raw: true });
       if (rows.length === 0) { toast.error('El archivo está vacío'); setImporting(false); return; }
 
       const byEmail = new Map(profiles.map(p => [norm(p.email), p.id]));
       const byDoc = new Map(profiles.filter(p => p.identificacion).map(p => [norm(p.identificacion), p.id]));
       const byName = new Map(profiles.map(p => [norm(p.name), p.id]));
+      const areaByName = new Map(areas.map(a => [norm(a.name), a]));
+      const subareaByName = new Map(subareas.map(s => [norm(s.name), s]));
 
-      const targets: string[] = [];
+      const findProfile = (v: unknown): string | undefined => {
+        if (!v) return undefined;
+        const n = norm(v);
+        return byEmail.get(n) || byDoc.get(n) || byName.get(n);
+      };
+
+      const findActivity = (v: unknown): Activity | undefined => {
+        if (!v) return undefined;
+        const n = stripOrder(String(v));
+        return (
+          sortedActivities.find(a => stripOrder(a.name) === n) ||
+          sortedActivities.find(a => stripOrder(a.name).includes(n) || n.includes(stripOrder(a.name)))
+        );
+      };
+
+      const targets: { userId: string; activityId: string; period: string }[] = [];
       const fail: string[] = [];
 
       for (const row of rows) {
@@ -79,62 +123,85 @@ export default function LeaderPassImportDialog({ open, onOpenChange, activities,
           const k = keys.find(k2 => frag.some(f => norm(k2).includes(f)));
           return k ? row[k] : undefined;
         };
-        const email = pick(['correo', 'email', 'mail']);
-        const doc = pick(['documento', 'identificacion', 'cedula']);
-        const name = pick(['nombre', 'colaborador', 'lider']);
-        const cumple = pick(['cumple', 'completado', 'estado']);
+        const fecha = pick(['fecha', 'date']);
+        const areaVal = pick(['area', 'sub area', 'subarea', 'zona']);
+        const respVal = pick(['responsable', 'lider', 'correo', 'documento', 'nombre']);
+        const actVal = pick(['actividad', 'activity']);
+        const cumple = pick(['cumplimiento', 'cumple', 'completado', 'estado']);
 
         if (cumple !== undefined && ['no', 'false', '0'].includes(norm(cumple))) continue;
 
-        const id =
-          (email && byEmail.get(norm(email))) ||
-          (doc && byDoc.get(norm(doc))) ||
-          (name && byName.get(norm(name)));
+        const activity = findActivity(actVal);
+        if (!activity) { fail.push(`Actividad no encontrada: ${actVal ?? '(vacía)'}`); continue; }
 
-        if (id) targets.push(id as string);
-        else fail.push(String(email || doc || name || '(fila vacía)'));
+        let userId = findProfile(respVal);
+        if (!userId && areaVal) {
+          const nArea = norm(areaVal);
+          const area = areaByName.get(nArea) || areas.find(a => norm(a.name).includes(nArea) || nArea.includes(norm(a.name)));
+          const sub = subareaByName.get(nArea) || subareas.find(s => norm(s.name).includes(nArea) || nArea.includes(norm(s.name)));
+          userId = (sub?.leader_user_id as string | undefined) || (area?.leader_user_id as string | undefined);
+        }
+        if (!userId) { fail.push(`Responsable no encontrado: ${respVal || areaVal || '(vacío)'}`); continue; }
+
+        const rowPeriod = periodFromFecha(fecha) || selectedPeriod;
+        targets.push({ userId, activityId: activity.id, period: rowPeriod });
       }
 
-      const unique = Array.from(new Set(targets));
+      const unique = Array.from(new Map(targets.map(t => [`${t.userId}|${t.activityId}|${t.period}`, t])).values());
       if (unique.length === 0) {
         setResult({ ok: 0, fail });
-        toast.error('No se encontró ningún colaborador del archivo');
+        toast.error('No se encontró ningún registro válido en el archivo');
         setImporting(false);
         return;
       }
 
-      const { data: existing, error: exErr } = await supabase
-        .from('leader_pass_records')
-        .select('id,user_id')
-        .eq('activity_id', activityId)
-        .eq('period', selectedPeriod)
-        .in('user_id', unique);
-      if (exErr) throw exErr;
-
-      const existingMap = new Map((existing ?? []).map(r => [r.user_id, r.id]));
       const now = new Date().toISOString();
+      let applied = 0;
 
-      const toInsert = unique
-        .filter(u => !existingMap.has(u))
-        .map(u => ({ activity_id: activityId, user_id: u, period: selectedPeriod, completed: true, completed_at: now }));
+      // Procesar por periodo para consultar existentes
+      const byPeriod = new Map<string, typeof unique>();
+      unique.forEach(t => {
+        const arr = byPeriod.get(t.period) ?? [];
+        arr.push(t);
+        byPeriod.set(t.period, arr);
+      });
 
-      if (toInsert.length > 0) {
-        const { error } = await supabase.from('leader_pass_records').insert(toInsert);
-        if (error) throw error;
-      }
-
-      const toUpdate = unique.filter(u => existingMap.has(u)).map(u => existingMap.get(u)!);
-      if (toUpdate.length > 0) {
-        const { error } = await supabase
+      for (const [per, items] of byPeriod) {
+        const userIds = Array.from(new Set(items.map(i => i.userId)));
+        const activityIds = Array.from(new Set(items.map(i => i.activityId)));
+        const { data: existing, error: exErr } = await supabase
           .from('leader_pass_records')
-          .update({ completed: true, completed_at: now })
-          .in('id', toUpdate);
-        if (error) throw error;
+          .select('id,user_id,activity_id')
+          .eq('period', per)
+          .in('user_id', userIds)
+          .in('activity_id', activityIds);
+        if (exErr) throw exErr;
+
+        const existingMap = new Map((existing ?? []).map(r => [`${r.user_id}|${r.activity_id}`, r.id]));
+        const toInsert = items
+          .filter(i => !existingMap.has(`${i.userId}|${i.activityId}`))
+          .map(i => ({ activity_id: i.activityId, user_id: i.userId, period: per, completed: true, completed_at: now }));
+        const toUpdate = items
+          .filter(i => existingMap.has(`${i.userId}|${i.activityId}`))
+          .map(i => existingMap.get(`${i.userId}|${i.activityId}`)!);
+
+        if (toInsert.length > 0) {
+          const { error } = await supabase.from('leader_pass_records').insert(toInsert);
+          if (error) throw error;
+        }
+        if (toUpdate.length > 0) {
+          const { error } = await supabase
+            .from('leader_pass_records')
+            .update({ completed: true, completed_at: now })
+            .in('id', toUpdate);
+          if (error) throw error;
+        }
+        applied += items.length;
       }
 
       qc.invalidateQueries({ queryKey: ['leader_pass_records'] });
-      setResult({ ok: unique.length, fail });
-      toast.success(`${unique.length} colaboradores marcados como cumplidos`);
+      setResult({ ok: applied, fail });
+      toast.success(`${applied} registros marcados como cumplidos`);
     } catch (e: any) {
       toast.error(e.message ?? 'Error al importar el archivo');
     } finally {
@@ -154,19 +221,7 @@ export default function LeaderPassImportDialog({ open, onOpenChange, activities,
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Actividad</label>
-            <SearchableSelect
-              value={activityId}
-              onValueChange={v => { setActivityId(v); setResult(null); }}
-              options={importable.map(a => ({ value: a.id, label: `${a.sort_order}. ${a.name}` }))}
-              placeholder="Selecciona la actividad..."
-              searchPlaceholder="Buscar actividad..."
-              className="w-full"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Periodo</label>
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Periodo por defecto</label>
             <SearchableSelect
               value={selectedPeriod}
               onValueChange={setSelectedPeriod}
@@ -175,11 +230,14 @@ export default function LeaderPassImportDialog({ open, onOpenChange, activities,
               searchPlaceholder="Buscar periodo..."
               className="w-full"
             />
+            <p className="text-[11px] text-muted-foreground">Se usa cuando la fila no tiene Fecha válida.</p>
           </div>
 
           <div className="rounded-lg border bg-muted/40 p-3 text-xs text-muted-foreground leading-relaxed">
-            El archivo debe tener una columna con <strong>correo</strong>, <strong>documento</strong> o <strong>nombre</strong> del
-            colaborador. Opcionalmente una columna <strong>cumple</strong> con SI / NO.
+            El archivo puede incluir <strong>todas las actividades</strong> en un solo Excel, con las columnas:
+            <strong> Fecha</strong>, <strong>Área / Sub Área</strong>, <strong>Responsable del Área / Subárea</strong>,
+            <strong> Nombre Actividad</strong> y <strong>Cumplimiento</strong> (SI / NO). Si el responsable está vacío,
+            se usa el líder del área o subárea indicada.
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -192,7 +250,7 @@ export default function LeaderPassImportDialog({ open, onOpenChange, activities,
                 type="file"
                 accept=".xlsx,.xls,.csv"
                 className="hidden"
-                disabled={importing || !activityId}
+                disabled={importing}
                 onChange={e => {
                   const f = e.target.files?.[0];
                   if (f) handleFile(f);
@@ -201,7 +259,7 @@ export default function LeaderPassImportDialog({ open, onOpenChange, activities,
               />
               <span
                 className={`inline-flex items-center gap-1 h-9 px-3 rounded-md text-sm font-medium cursor-pointer transition-colors ${
-                  importing || !activityId
+                  importing
                     ? 'bg-muted text-muted-foreground cursor-not-allowed'
                     : 'bg-primary text-primary-foreground hover:opacity-90'
                 }`}
@@ -217,7 +275,7 @@ export default function LeaderPassImportDialog({ open, onOpenChange, activities,
               <p className="font-semibold">Resultado: {result.ok} registros aplicados</p>
               {result.fail.length > 0 && (
                 <div>
-                  <p className="text-destructive font-medium">No encontrados ({result.fail.length}):</p>
+                  <p className="text-destructive font-medium">No procesados ({result.fail.length}):</p>
                   <p className="text-muted-foreground break-words">{result.fail.slice(0, 20).join(', ')}</p>
                 </div>
               )}
