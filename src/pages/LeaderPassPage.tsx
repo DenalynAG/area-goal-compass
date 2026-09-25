@@ -361,22 +361,20 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
               className="w-[180px]"
             />
           )}
-          <SearchableSelect
-            value={filterCargo}
-            onValueChange={v => { setFilterCargo(v); setSelectedUserId(''); }}
-            options={[{ value: 'all', label: 'Todos los cargos' }, ...availableCargos.map(c => ({ value: c, label: c }))]}
-            placeholder="Todos los cargos"
-            searchPlaceholder="Buscar cargo..."
-            className="w-[180px]"
-          />
-          <SearchableSelect
-            value={selectedUserId}
-            onValueChange={setSelectedUserId}
-            options={viewableProfiles.map(p => ({ value: p.id, label: p.name }))}
-            placeholder="Seleccionar líder..."
-            searchPlaceholder="Buscar líder..."
-            className="w-[220px]"
-          />
+          {(areaLeaderName || subareaLeaderName) && (
+            <div className="flex items-center gap-2 flex-wrap text-xs">
+              {areaLeaderName && (
+                <span className="px-3 py-1.5 rounded-full bg-accent text-accent-foreground font-medium">
+                  Responsable del área: <span className="font-bold">{areaLeaderName}</span>
+                </span>
+              )}
+              {subareaLeaderName && (
+                <span className="px-3 py-1.5 rounded-full bg-accent text-accent-foreground font-medium">
+                  Responsable de la subárea: <span className="font-bold">{subareaLeaderName}</span>
+                </span>
+              )}
+            </div>
+          )}
         </div>
       )}
 
