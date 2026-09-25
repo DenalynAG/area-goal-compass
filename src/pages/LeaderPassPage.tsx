@@ -121,7 +121,6 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
   // Filters
   const [filterAreaId, setFilterAreaId] = useState<string>('all');
   const [filterSubareaId, setFilterSubareaId] = useState<string>('all');
-  const [filterCargo, setFilterCargo] = useState<string>('all');
 
   // Auto-set area filter when areaFilterName is provided
   useEffect(() => {
@@ -161,27 +160,26 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
     return subareas.filter(s => s.area_id === filterAreaId);
   }, [subareas, filterAreaId]);
 
-  const availableCargos = useMemo(() => {
-    const cargos = new Set(baseProfiles.map(p => p.position).filter(Boolean));
-    return Array.from(cargos).sort() as string[];
-  }, [baseProfiles]);
+  // Responsible leader of the selected area / subarea
+  const selectedArea = useMemo(
+    () => (filterAreaId !== 'all' ? areas.find(a => a.id === filterAreaId) ?? null : null),
+    [areas, filterAreaId]
+  );
+  const selectedSubarea = useMemo(
+    () => (filterSubareaId !== 'all' ? subareas.find(s => s.id === filterSubareaId) ?? null : null),
+    [subareas, filterSubareaId]
+  );
+  const areaLeaderName = selectedArea?.leader_user_id ? getProfileName(profiles, selectedArea.leader_user_id) : null;
+  const subareaLeaderName = selectedSubarea?.leader_user_id ? getProfileName(profiles, selectedSubarea.leader_user_id) : null;
 
-  // Apply filters to profiles
-  const viewableProfiles = useMemo(() => {
-    let filtered = baseProfiles;
-    if (filterAreaId !== 'all') {
-      const areaUserIds = new Set(memberships.filter(m => m.area_id === filterAreaId).map(m => m.user_id));
-      filtered = filtered.filter(p => areaUserIds.has(p.id));
+  // Auto-select the responsible leader when an area/subarea is chosen
+  useEffect(() => {
+    if (selectedSubarea?.leader_user_id) {
+      setSelectedUserId(selectedSubarea.leader_user_id);
+    } else if (selectedArea?.leader_user_id) {
+      setSelectedUserId(selectedArea.leader_user_id);
     }
-    if (filterSubareaId !== 'all') {
-      const subUserIds = new Set(memberships.filter(m => m.subarea_id === filterSubareaId).map(m => m.user_id));
-      filtered = filtered.filter(p => subUserIds.has(p.id));
-    }
-    if (filterCargo !== 'all') {
-      filtered = filtered.filter(p => p.position === filterCargo);
-    }
-    return filtered;
-  }, [baseProfiles, memberships, filterAreaId, filterSubareaId, filterCargo]);
+  }, [selectedSubarea?.leader_user_id, selectedArea?.leader_user_id]);
 
   const targetUserId = canViewOthers ? (selectedUserId || user?.id || '') : (user?.id ?? '');
   const { data: records = [], isLoading: loadingRecs } = useLeaderPassRecords(selectedPeriod, targetUserId || undefined);
@@ -363,22 +361,20 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
               className="w-[180px]"
             />
           )}
-          <SearchableSelect
-            value={filterCargo}
-            onValueChange={v => { setFilterCargo(v); setSelectedUserId(''); }}
-            options={[{ value: 'all', label: 'Todos los cargos' }, ...availableCargos.map(c => ({ value: c, label: c }))]}
-            placeholder="Todos los cargos"
-            searchPlaceholder="Buscar cargo..."
-            className="w-[180px]"
-          />
-          <SearchableSelect
-            value={selectedUserId}
-            onValueChange={setSelectedUserId}
-            options={viewableProfiles.map(p => ({ value: p.id, label: p.name }))}
-            placeholder="Seleccionar líder..."
-            searchPlaceholder="Buscar líder..."
-            className="w-[220px]"
-          />
+          {(areaLeaderName || subareaLeaderName) && (
+            <div className="flex items-center gap-2 flex-wrap text-xs">
+              {areaLeaderName && (
+                <span className="px-3 py-1.5 rounded-full bg-accent text-accent-foreground font-medium">
+                  Responsable del área: <span className="font-bold">{areaLeaderName}</span>
+                </span>
+              )}
+              {subareaLeaderName && (
+                <span className="px-3 py-1.5 rounded-full bg-accent text-accent-foreground font-medium">
+                  Responsable de la subárea: <span className="font-bold">{subareaLeaderName}</span>
+                </span>
+              )}
+            </div>
+          )}
         </div>
       )}
 
