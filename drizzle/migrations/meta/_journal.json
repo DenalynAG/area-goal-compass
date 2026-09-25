@@ -57,6 +57,13 @@
       "when": 1790286735658,
       "tag": "0007_assessment_evaluator_fallback",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1790370042017,
+      "tag": "0008_leader_pass_orden_limpieza_rule",
+      "breakpoints": true
     }
   ]
 }
