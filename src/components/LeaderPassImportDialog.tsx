@@ -73,9 +73,14 @@ export default function LeaderPassImportDialog({ open, onOpenChange, activities,
   const downloadTemplate = () => {
     const exampleArea = areas[0]?.name ?? 'Comercial';
     const exampleLeader = profiles[0]?.name ?? 'Perez Gomez Juan';
+    const fechas = periodOptions.length > 0
+      ? periodOptions.map(p => p.value)
+      : [`${MONTHS_SHORT[new Date().getMonth()]} ${new Date().getFullYear()}`];
     const rows = [
       ['Fecha', 'Área / Sub Área', 'Responsable del Área / Subárea', 'Nombre Actividad', 'Cumplimiento'],
-      ...sortedActivities.map(a => [`${MONTHS_SHORT[new Date().getMonth()]} ${new Date().getFullYear()}`, exampleArea, exampleLeader, `${a.sort_order}. ${a.name}`, 'SI']),
+      ...fechas.flatMap(fecha =>
+        sortedActivities.map(a => [fecha, exampleArea, exampleLeader, `${a.sort_order}. ${a.name}`, 'SI'])
+      ),
     ];
     const ws = XLSX.utils.aoa_to_sheet(rows);
     ws['!cols'] = [{ wch: 12 }, { wch: 24 }, { wch: 30 }, { wch: 40 }, { wch: 14 }];
