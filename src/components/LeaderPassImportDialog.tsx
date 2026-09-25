@@ -48,8 +48,15 @@ const periodFromFecha = (fecha: unknown): string | null => {
       const [y, mo] = m[1].length === 4 ? [m[1], m[2]] : [m[3], m[2]];
       d = new Date(Number(y), Number(mo) - 1, 1);
     } else {
-      const t = new Date(s);
-      if (!isNaN(t.getTime())) d = t;
+      const txt = s.match(/^([A-Za-zÁéíóúñ]+)\.?\s+(\d{4})$/);
+      if (txt) {
+        const mi = MONTHS_SHORT.findIndex(m2 => norm(m2) === norm(txt[1]));
+        if (mi >= 0) d = new Date(Number(txt[2]), mi, 1);
+      }
+      if (!d) {
+        const t = new Date(s);
+        if (!isNaN(t.getTime())) d = t;
+      }
     }
   }
   if (!d || isNaN(d.getTime())) return null;
@@ -74,7 +81,7 @@ export default function LeaderPassImportDialog({ open, onOpenChange, activities,
     const exampleArea = areas[0]?.name ?? 'Comercial';
     const exampleLeader = profiles[0]?.name ?? 'Perez Gomez Juan';
     const fechas = periodOptions.length > 0
-      ? periodOptions.map(p => p.value)
+      ? periodOptions.map(p => p.label)
       : [`${MONTHS_SHORT[new Date().getMonth()]} ${new Date().getFullYear()}`];
     const rows = [
       ['Fecha', 'Área / Sub Área', 'Responsable del Área / Subárea', 'Nombre Actividad', 'Cumplimiento'],
