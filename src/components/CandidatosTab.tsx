@@ -33,7 +33,7 @@ export interface TalentCandidate {
 }
 
 const NONE = '__none__';
-const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+const LEVELS = [{ value: 'basico', label: 'Básico' }, { value: 'intermedio', label: 'Intermedio' }, { value: 'avanzado', label: 'Avanzado' }, { value: 'nativo', label: 'Nativo' }];
 
 export function useTalentCandidates() {
   return useQuery({
@@ -154,7 +154,7 @@ export default function CandidatosTab() {
                 <td className="p-3">{r.profession ?? '—'}</td>
                 <td className="p-3">{r.university ?? '—'}</td>
                 <td className="p-3">{r.anos_experiencia != null ? `${r.anos_experiencia} años` : '—'}</td>
-                <td className="p-3">{r.nivel_ingles ?? '—'}</td>
+                <td className="p-3">{LEVELS.find(l => l.value === r.nivel_ingles)?.label ?? '—'}</td>
                 <td className="p-3">
                   <div className="flex gap-1">
                     <Button size="icon" variant="ghost" onClick={() => openEdit(r)}><Pencil className="w-4 h-4" /></Button>
@@ -186,7 +186,7 @@ export default function CandidatosTab() {
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Nivel de inglés</label>
                 <SearchableSelect
-                  options={[{ value: NONE, label: 'Sin especificar' }, ...LEVELS.map(l => ({ value: l, label: l }))]}
+                  options={[{ value: NONE, label: 'Sin especificar' }, ...LEVELS]}
                   value={form.nivel_ingles}
                   onValueChange={v => setForm(s => ({ ...s, nivel_ingles: v }))}
                 />
