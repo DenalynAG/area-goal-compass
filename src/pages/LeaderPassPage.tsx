@@ -51,6 +51,8 @@ function useLeaderPassRecords(period: string, userId?: string) {
   return useQuery({
     queryKey: ['leader_pass_records', period, userId],
     queryFn: async () => {
+      // Auto-completa "10. Accidentes de Trabajo" si no hubo accidentes en el mes
+      try { await (supabase as any).rpc('sync_leader_pass_accidentes', { _period: period }); } catch { /* noop */ }
       let q = supabase.from('leader_pass_records').select('*').eq('period', period);
       if (userId) q = q.eq('user_id', userId);
       const { data, error } = await q;
