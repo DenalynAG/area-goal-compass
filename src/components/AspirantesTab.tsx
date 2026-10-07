@@ -19,6 +19,7 @@ import { Plus, Pencil, Trash2, Search, UserCheck, PlayCircle } from 'lucide-reac
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { compTint } from '@/lib/competencyColors';
+import { useTalentCandidates } from '@/components/CandidatosTab';
 
 const NONE = '__none__';
 
@@ -80,6 +81,12 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
   const { data: positions = [] } = usePositions();
   const { data: profiles = [] } = useProfiles();
   const { data: userRoles = [] } = useUserRoles();
+  const { data: talentPool = [] } = useTalentCandidates();
+  const pickTalent = (id: string) => {
+    const t = talentPool.find(x => x.id === id);
+    if (!t) return;
+    setForm(f => ({ ...f, full_name: t.full_name, document_id: t.document_id ?? '', phone: t.phone ?? '', email: t.email ?? '', profession: t.profession ?? '', university: t.university ?? '', salario_aspiracion: t.salario_aspiracion?.toString() ?? '', fecha_nacimiento: t.fecha_nacimiento ?? '', nivel_ingles: t.nivel_ingles ?? NONE, direccion: t.direccion ?? '', anos_experiencia: t.anos_experiencia?.toString() ?? '' }));
+  };
 
   const [search, setSearch] = useState('');
   const [filterArea, setFilterArea] = useState('all');
@@ -659,6 +666,17 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {!editing && (
+              <div className="space-y-1.5 rounded-md border bg-muted/30 p-3">
+                <label className="text-sm font-medium">Seleccionar desde Candidatos</label>
+                <SearchableSelect
+                  options={talentPool.map(t => ({ value: t.id, label: `${t.full_name}${t.document_id ? ` · ${t.document_id}` : ''}${t.profession ? ` · ${t.profession}` : ''}` }))}
+                  value=""
+                  onValueChange={pickTalent}
+                  placeholder={talentPool.length ? 'Busca un candidato registrado para autocompletar' : 'No hay candidatos registrados'}
+                />
+              </div>
+            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5 sm:col-span-2">
                 <label className="text-sm font-medium">Nombre completo *</label>

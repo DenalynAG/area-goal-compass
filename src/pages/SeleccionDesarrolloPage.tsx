@@ -21,6 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import AspirantesTab from '@/components/AspirantesTab';
+import CandidatosTab from '@/components/CandidatosTab';
 import AssessmentDashboardTab from '@/components/AssessmentDashboardTab';
 
 type Assessment = {
@@ -677,6 +678,12 @@ export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { eva
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className={evaluatorMode ? 'hidden' : 'gap-1'}>
           <TabsTrigger
+            value="candidatos"
+            className="bg-primary/10 text-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+          >
+            Candidatos
+          </TabsTrigger>
+          <TabsTrigger
             value="aspirantes"
             className="bg-primary/10 text-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
           >
@@ -753,6 +760,10 @@ export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { eva
               </div>
             )}
           </Card>
+        </TabsContent>
+
+        <TabsContent value="candidatos">
+          <CandidatosTab />
         </TabsContent>
 
         <TabsContent value="aspirantes">

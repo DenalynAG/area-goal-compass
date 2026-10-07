@@ -71,6 +71,13 @@
       "when": 1791381058825,
       "tag": "0009_objective_monthly_notes",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791399742415,
+      "tag": "0010_create_talent_candidates",
+      "breakpoints": true
     }
   ]
 }
