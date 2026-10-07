@@ -78,6 +78,13 @@
       "when": 1791399742415,
       "tag": "0010_create_talent_candidates",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791400467565,
+      "tag": "0011_leader_pass_accidentes_rule",
+      "breakpoints": true
     }
   ]
 }

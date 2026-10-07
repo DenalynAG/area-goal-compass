@@ -2738,6 +2738,10 @@ export type Database = {
           read_ct: number
         }[]
       }
+      sync_leader_pass_accidentes: {
+        Args: { _period: string }
+        Returns: undefined
+      }
       sync_leader_pass_orden_limpieza_area: {
         Args: { _area_id: string; _creator: string; _period: string }
         Returns: undefined
