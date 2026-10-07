@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import ObjectiveMonthNote from '@/components/ObjectiveMonthNote';
 import { useObjectives, useKPIs, useKPIMeasurements, useAreas, useSubareas, useProfiles, useUserRoles, getProfileName, getAreaNameFromList, useEvidenceCountsByEntity } from '@/hooks/useSupabaseData';
 import { getTrafficLight } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
