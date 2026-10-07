@@ -2073,6 +2073,9 @@ function ObjectiveCard({
               </tr>
             </tfoot>
           </table>
+          {selectedMonth !== 'total' && (
+            <ObjectiveMonthNote objectiveId={obj.id} period={selectedMonth} periodLabel={getMonthLabel(selectedMonth)} canEdit={Boolean(canEdit || canEditKpi)} />
+          )}
         </div>
       )}
 
