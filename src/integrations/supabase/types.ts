@@ -1832,6 +1832,47 @@ export type Database = {
         }
         Relationships: []
       }
+      objective_monthly_notes: {
+        Row: {
+          created_at: string
+          id: string
+          note: string
+          objective_id: string
+          period: string
+          updated_at: string
+          updated_by: string | null
+          updated_by_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          note?: string
+          objective_id: string
+          period: string
+          updated_at?: string
+          updated_by?: string | null
+          updated_by_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          note?: string
+          objective_id?: string
+          period?: string
+          updated_at?: string
+          updated_by?: string | null
+          updated_by_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "objective_monthly_notes_objective_id_fkey"
+            columns: ["objective_id"]
+            isOneToOne: false
+            referencedRelation: "objectives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       objectives: {
         Row: {
           created_at: string
