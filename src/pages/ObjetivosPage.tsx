@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import ObjectiveMonthNote from '@/components/ObjectiveMonthNote';
 import { useObjectives, useKPIs, useKPIMeasurements, useAreas, useSubareas, useProfiles, useUserRoles, getProfileName, getAreaNameFromList, useEvidenceCountsByEntity } from '@/hooks/useSupabaseData';
 import { getTrafficLight } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
@@ -2073,6 +2074,9 @@ function ObjectiveCard({
               </tr>
             </tfoot>
           </table>
+          {selectedMonth !== 'total' && (
+            <ObjectiveMonthNote objectiveId={obj.id} period={selectedMonth} periodLabel={getMonthLabel(selectedMonth)} canEdit={Boolean(canEdit || canEditKpi)} />
+          )}
         </div>
       )}
 

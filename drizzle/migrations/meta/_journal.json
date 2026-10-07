@@ -64,6 +64,13 @@
       "when": 1790370042017,
       "tag": "0008_leader_pass_orden_limpieza_rule",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791381058825,
+      "tag": "0009_objective_monthly_notes",
+      "breakpoints": true
     }
   ]
 }
