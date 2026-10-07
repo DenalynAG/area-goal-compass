@@ -2539,6 +2539,63 @@ export type Database = {
         }
         Relationships: []
       }
+      talent_candidates: {
+        Row: {
+          anos_experiencia: number | null
+          created_at: string
+          created_by: string | null
+          direccion: string | null
+          document_id: string | null
+          email: string | null
+          fecha_nacimiento: string | null
+          full_name: string
+          id: string
+          nivel_ingles: string | null
+          notes: string | null
+          phone: string | null
+          profession: string | null
+          salario_aspiracion: number | null
+          university: string | null
+          updated_at: string
+        }
+        Insert: {
+          anos_experiencia?: number | null
+          created_at?: string
+          created_by?: string | null
+          direccion?: string | null
+          document_id?: string | null
+          email?: string | null
+          fecha_nacimiento?: string | null
+          full_name: string
+          id?: string
+          nivel_ingles?: string | null
+          notes?: string | null
+          phone?: string | null
+          profession?: string | null
+          salario_aspiracion?: number | null
+          university?: string | null
+          updated_at?: string
+        }
+        Update: {
+          anos_experiencia?: number | null
+          created_at?: string
+          created_by?: string | null
+          direccion?: string | null
+          document_id?: string | null
+          email?: string | null
+          fecha_nacimiento?: string | null
+          full_name?: string
+          id?: string
+          nivel_ingles?: string | null
+          notes?: string | null
+          phone?: string | null
+          profession?: string | null
+          salario_aspiracion?: number | null
+          university?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_menu_overrides: {
         Row: {
           created_at: string
