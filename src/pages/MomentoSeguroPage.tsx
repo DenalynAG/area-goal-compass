@@ -843,16 +843,24 @@ export default function MomentoSeguroPage() {
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-xs text-muted-foreground">
                         {o.process && <p><span className="font-medium text-foreground">Proceso:</span> {o.process}</p>}
+                        {o.activity_observed && <p><span className="font-medium text-foreground">Actividad:</span> {o.activity_observed}</p>}
+                        {o.observation_type && <p><span className="font-medium text-foreground">Tipo de observación:</span> {obsTypeLabel(o.observation_type)}</p>}
                         {o.behavior_category && <p><span className="font-medium text-foreground">Categoría:</span> {o.behavior_category}</p>}
+                        {o.hazard && <p><span className="font-medium text-foreground">Peligro:</span> {o.hazard}</p>}
                         {o.associated_risk && <p><span className="font-medium text-foreground">Riesgo asociado:</span> {o.associated_risk}</p>}
                         {!!o.contributing_factors?.length && (
                           <p className="sm:col-span-2"><span className="font-medium text-foreground">Factores:</span> {o.contributing_factors.join(", ")}</p>
                         )}
+                        {!!o.intervention_options?.length && (
+                          <p className="sm:col-span-2"><span className="font-medium text-foreground">Intervención:</span> {o.intervention_options.join(", ")}</p>
+                        )}
                         {o.immediate_actions && <p className="sm:col-span-2"><span className="font-medium text-foreground">Acción inmediata:</span> {o.immediate_actions}</p>}
-                        {o.followup_required && (
-                          <p className="sm:col-span-2">
-                            <span className="font-medium text-foreground">Seguimiento:</span> {profileName(o.followup_responsible_user_id)}
-                            {o.followup_due_date ? ` · vence ${o.followup_due_date}` : ""}
+                        {o.action_required && <p className="sm:col-span-2"><span className="font-medium text-foreground">Acción requerida:</span> {o.action_required}</p>}
+                        {hasAction(o) && (
+                          <p className="sm:col-span-2 flex items-center gap-2 flex-wrap">
+                            <span><span className="font-medium text-foreground">Seguimiento:</span> {profileName(o.followup_responsible_user_id)}
+                            {o.followup_due_date ? ` · vence ${o.followup_due_date}` : ""}</span>
+                            <Badge className={`${actionStatus(o).chip} border-0`}>{actionStatus(o).label}</Badge>
                           </p>
                         )}
                         <p><span className="font-medium text-foreground">Observador:</span> {o.observer_name ?? profileName(o.observer_user_id)}</p>
