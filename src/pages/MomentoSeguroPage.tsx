@@ -1098,6 +1098,97 @@ export default function MomentoSeguroPage() {
             </div>
           </section>
 
+          {/* PELIGROS Y RIESGOS */}
+          <section className="space-y-3">
+            <h3 className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">Peligros y riesgos</h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <Card className="rounded-2xl shadow-sm">
+                <CardHeader className="pb-0"><CardTitle className="text-sm">Peligros identificados</CardTitle></CardHeader>
+                <CardContent className="h-64">
+                  {hazardData.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center pt-24">Sin datos</p>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={hazardData} layout="vertical" margin={{ left: 20 }}>
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.25} horizontal={false} />
+                        <XAxis type="number" allowDecimals={false} fontSize={11} />
+                        <YAxis type="category" dataKey="name" width={130} fontSize={11} />
+                        <Tooltip />
+                        <Bar dataKey="total" fill="hsl(var(--primary))" radius={[0, 6, 6, 0]} barSize={16} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                </CardContent>
+              </Card>
+              <Card className="rounded-2xl shadow-sm">
+                <CardHeader className="pb-0"><CardTitle className="text-sm">Riesgos asociados</CardTitle></CardHeader>
+                <CardContent className="h-64">
+                  {riskAssocData.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center pt-24">Sin datos</p>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={riskAssocData} layout="vertical" margin={{ left: 20 }}>
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.25} horizontal={false} />
+                        <XAxis type="number" allowDecimals={false} fontSize={11} />
+                        <YAxis type="category" dataKey="name" width={150} fontSize={11} />
+                        <Tooltip />
+                        <Bar dataKey="total" fill="#E59514" radius={[0, 6, 6, 0]} barSize={16} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+
+          {/* PARTICIPACIÓN Y GESTIÓN */}
+          <section className="space-y-3">
+            <h3 className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">Participación y gestión</h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <Card className="rounded-2xl shadow-sm">
+                <CardHeader className="pb-0"><CardTitle className="text-sm">Momentos Seguros por observador</CardTitle></CardHeader>
+                <CardContent className="h-64">
+                  {observerData.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center pt-24">Sin datos</p>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={observerData} layout="vertical" margin={{ left: 20 }}>
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.25} horizontal={false} />
+                        <XAxis type="number" allowDecimals={false} fontSize={11} />
+                        <YAxis type="category" dataKey="name" width={150} fontSize={11} />
+                        <Tooltip />
+                        <Bar dataKey="total" fill="#5E8C5B" radius={[0, 6, 6, 0]} barSize={16} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                </CardContent>
+              </Card>
+              <Card className="rounded-2xl shadow-sm">
+                <CardHeader className="pb-0"><CardTitle className="text-sm">Acciones de mejora por estado</CardTitle></CardHeader>
+                <CardContent className="h-64">
+                  {actionStatusData.every((d) => d.total === 0) ? (
+                    <p className="text-sm text-muted-foreground text-center pt-24">Sin acciones registradas</p>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={actionStatusData}>
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.25} vertical={false} />
+                        <XAxis dataKey="name" fontSize={11} />
+                        <YAxis allowDecimals={false} fontSize={11} />
+                        <Tooltip />
+                        <Bar dataKey="total" radius={[6, 6, 0, 0]} barSize={42}>
+                          {actionStatusData.map((d) => <Cell key={d.name} fill={d.fill} />)}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                  <p className="text-xs text-muted-foreground text-center mt-1">
+                    Cierre de oportunidades: {indicators.improvementClosureRate}% ({indicators.improvementsClosed} de {indicators.improvement})
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+
           {/* EMBAJADORES */}
           <section className="space-y-3">
             <h3 className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">Embajadores Misión CerOSH</h3>
