@@ -78,12 +78,18 @@ interface Observation {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  activity_observed: string | null;
+  observation_type: string | null;
+  hazard: string | null;
+  intervention_options: string[] | null;
+  intervention_comments: string | null;
+  action_required: string | null;
 }
 
-const CATEGORY_META: Record<Category, { label: string; icon: any; chip: string }> = {
-  comportamiento_seguro: { label: "Comportamiento seguro", icon: ShieldCheck, chip: "bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]" },
-  oportunidad_mejora: { label: "Oportunidad de mejora", icon: Lightbulb, chip: "bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))]" },
-  comportamiento_inseguro: { label: "Comportamiento inseguro", icon: AlertTriangle, chip: "bg-destructive/15 text-destructive" },
+const CATEGORY_META: Record<Category, { label: string; icon: any; chip: string; dot: string }> = {
+  comportamiento_seguro: { label: "Comportamiento seguro", icon: ShieldCheck, chip: "bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]", dot: "🟢" },
+  oportunidad_mejora: { label: "Oportunidad de mejora", icon: Lightbulb, chip: "bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))]", dot: "🟡" },
+  comportamiento_inseguro: { label: "Comportamiento inseguro", icon: AlertTriangle, chip: "bg-destructive/15 text-destructive", dot: "🔴" },
 };
 
 const RISK_META: Record<RiskLevel, { label: string; chip: string }> = {
@@ -93,11 +99,39 @@ const RISK_META: Record<RiskLevel, { label: string; chip: string }> = {
   critico: { label: "Crítico", chip: "bg-destructive/15 text-destructive" },
 };
 
+// Estados de la acción / seguimiento (se conservan los valores guardados)
 const STATUS_META: Record<Status, { label: string; chip: string }> = {
-  abierta: { label: "Abierta", chip: "bg-muted text-foreground" },
-  en_seguimiento: { label: "En seguimiento", chip: "bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))]" },
-  cerrada: { label: "Cerrada", chip: "bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]" },
+  abierta: { label: "Pendiente", chip: "bg-muted text-foreground" },
+  en_seguimiento: { label: "En proceso", chip: "bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))]" },
+  cerrada: { label: "Cerrado", chip: "bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]" },
 };
+const OVERDUE_META = { label: "Vencido", chip: "bg-destructive/15 text-destructive" };
+
+const OBS_TYPES = [
+  { value: "comportamiento", label: "Comportamiento" },
+  { value: "condicion", label: "Condición" },
+  { value: "ambos", label: "Comportamiento + condición" },
+];
+const obsTypeLabel = (v: string | null) => OBS_TYPES.find((t) => t.value === v)?.label ?? "—";
+
+const HAZARDS = [
+  "Biomecánico", "Locativo", "Mecánico", "Eléctrico", "Químico", "Físico", "Biológico",
+  "Seguridad / público", "Incendio", "Tránsito / movilidad", "Otro",
+];
+
+const RISK_SUGGESTIONS = [
+  "Caída al mismo nivel", "Caída de objetos", "Sobreesfuerzo", "Postura prolongada",
+  "Contacto eléctrico", "Cortes", "Quemaduras", "Exposición a sustancias químicas",
+];
+
+const INTERVENTIONS = [
+  "Se reconoció una buena práctica",
+  "Se realizó retroalimentación",
+  "Se corrigió inmediatamente",
+  "Se acordó una acción de mejora",
+  "Se requiere seguimiento",
+  "No requirió intervención",
+];
 
 const BEHAVIOR_CATEGORIES = [
   "Uso de EPP",
@@ -130,23 +164,41 @@ const CONTRIBUTING_FACTORS = [
 const MONTHS = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
 const MONTH_GOAL = 100;
 
+const todayISO = () => new Date().toISOString().slice(0, 10);
+
+// ¿La observación tiene una acción de gestión asociada?
+const hasAction = (o: Partial<Observation>) =>
+  !!o.followup_required || (o.category !== "comportamiento_seguro" && !!(o.action_required || o.followup_due_date));
+
+// Estado efectivo de la acción, con vencimiento automático
+const actionStatus = (o: Observation): { label: string; chip: string; key: "pendiente" | "en_proceso" | "cerrado" | "vencido" } => {
+  if (o.status === "cerrada") return { ...STATUS_META.cerrada, key: "cerrado" };
+  if (o.followup_due_date && o.followup_due_date < todayISO()) return { ...OVERDUE_META, key: "vencido" };
+  if (o.status === "en_seguimiento") return { ...STATUS_META.en_seguimiento, key: "en_proceso" };
+  return { ...STATUS_META.abierta, key: "pendiente" };
+};
+
 const emptyForm = (): Partial<Observation> => ({
-  observation_date: new Date().toISOString().slice(0, 10),
+  observation_date: todayISO(),
   observation_time: new Date().toTimeString().slice(0, 5),
   category: "comportamiento_seguro",
+  observation_type: "comportamiento",
   risk_level: "bajo",
   status: "abierta",
   description: "",
   contributing_factors: [],
   evidence_urls: [],
+  intervention_options: [],
   followup_required: false,
   hotel_area: null,
   process: "",
+  activity_observed: "",
   is_ambassador: false,
 });
 
 const SUCCESS_MESSAGE =
-  "¡Observación registrada exitosamente! Gracias por fortalecer la cultura preventiva de Oshpitality Group. Cada observación preventiva contribuye a proteger a nuestros colaboradores y huéspedes.";
+  "¡Momento Seguro registrado exitosamente! Gracias por fortalecer la cultura preventiva de Oshpitality Group. Cada Momento Seguro contribuye a proteger a nuestros colaboradores y huéspedes.";
+
 
 function useObservations() {
   return useQuery({
