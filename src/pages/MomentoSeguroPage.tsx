@@ -442,6 +442,45 @@ export default function MomentoSeguroPage() {
 
   const RISK_COLORS = ["hsl(var(--success))", "hsl(var(--warning))", "hsl(var(--destructive)/0.65)", "hsl(var(--destructive))"];
 
+  // Peligros identificados
+  const hazardData = useMemo(() => {
+    const map = new Map<string, number>();
+    filtered.forEach((o) => { if (o.hazard) map.set(o.hazard, (map.get(o.hazard) ?? 0) + 1); });
+    return Array.from(map, ([name, total]) => ({ name, total })).sort((a, b) => b.total - a.total);
+  }, [filtered]);
+
+  // Riesgos asociados (texto libre, top 8)
+  const riskAssocData = useMemo(() => {
+    const map = new Map<string, number>();
+    filtered.forEach((o) => {
+      const r = o.associated_risk?.trim();
+      if (r) map.set(r, (map.get(r) ?? 0) + 1);
+    });
+    return Array.from(map, ([name, total]) => ({ name, total })).sort((a, b) => b.total - a.total).slice(0, 8);
+  }, [filtered]);
+
+  // Momentos Seguros por observador
+  const observerData = useMemo(() => {
+    const map = new Map<string, number>();
+    filtered.forEach((o) => {
+      const n = o.observer_name ?? "Sin observador";
+      map.set(n, (map.get(n) ?? 0) + 1);
+    });
+    return Array.from(map, ([name, total]) => ({ name, total })).sort((a, b) => b.total - a.total).slice(0, 8);
+  }, [filtered]);
+
+  // Acciones de mejora por estado (con vencimiento automático)
+  const actionStatusData = useMemo(() => {
+    const counts = { pendiente: 0, en_proceso: 0, cerrado: 0, vencido: 0 };
+    filtered.filter(hasAction).forEach((o) => { counts[actionStatus(o).key] += 1; });
+    return [
+      { name: "Pendientes", total: counts.pendiente, fill: "hsl(var(--muted-foreground))" },
+      { name: "En proceso", total: counts.en_proceso, fill: "hsl(var(--primary))" },
+      { name: "Cerradas", total: counts.cerrado, fill: "#5E8C5B" },
+      { name: "Vencidas", total: counts.vencido, fill: "#DE613E" },
+    ];
+  }, [filtered]);
+
   const canEdit = (o: Observation) =>
     isSuperAdmin || o.created_by === user?.id || o.observer_user_id === user?.id || o.followup_responsible_user_id === user?.id;
 
