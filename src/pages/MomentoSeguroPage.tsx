@@ -1289,7 +1289,46 @@ export default function MomentoSeguroPage() {
         </TabsContent>
 
         {/* HISTORIAL */}
-        <TabsContent value="historial">
+        <TabsContent value="historial" className="space-y-4">
+          <Card>
+            <CardHeader><CardTitle className="text-base">Registros de Momentos Seguros</CardTitle></CardHeader>
+            <CardContent className="space-y-2">
+              {filtered.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-6 text-center">No hay registros con los filtros seleccionados.</p>
+              ) : filtered.map((o) => {
+                const st = actionStatus(o);
+                return (
+                  <div key={o.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-border py-2 last:border-0">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">
+                        {codeOf.get(o.id)} · {o.observed_name ?? "Colaborador"}{o.observed_position ? ` · ${o.observed_position}` : ""}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {o.observation_date}{o.observation_time ? ` ${o.observation_time.slice(0, 5)}` : ""} · {areaLabel(o)}
+                        {o.process ? ` · ${o.process}` : ""}{o.activity_observed ? ` · ${o.activity_observed}` : ""}
+                        {` · ${obsTypeLabel(o.observation_type)}`}
+                        {o.hazard ? ` · Peligro: ${o.hazard}` : ""}{o.associated_risk ? ` · Riesgo: ${o.associated_risk}` : ""}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        Observador: {o.observer_name ?? "—"}
+                        {o.action_required ? ` · Acción: ${o.action_required}` : ""}
+                        {o.followup_responsible_user_id ? ` · Responsable: ${profileName(o.followup_responsible_user_id)}` : ""}
+                        {o.followup_due_date ? ` · Compromiso: ${o.followup_due_date}` : ""}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {hasAction(o) && <Badge className={`${st.chip} border-0`}>{st.label}</Badge>}
+                      <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDetail(o)}>Ver detalle</Button>
+                      {canEdit(o) && (
+                        <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => openEdit(o)}>Actualizar</Button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader><CardTitle className="text-base">Historial de cambios</CardTitle></CardHeader>
             <CardContent className="space-y-2">
@@ -1298,7 +1337,7 @@ export default function MomentoSeguroPage() {
               ) : history.map((h: any) => (
                 <div key={h.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-border py-2 last:border-0">
                   <div className="min-w-0">
-                    <p className="text-sm font-medium capitalize">{h.action} observación</p>
+                    <p className="text-sm font-medium capitalize">{h.action} registro</p>
                     <p className="text-xs text-muted-foreground">{h.user_name ?? "Sistema"}</p>
                   </div>
                   <p className="text-xs text-muted-foreground">{new Date(h.created_at).toLocaleString("es-CO")}</p>
