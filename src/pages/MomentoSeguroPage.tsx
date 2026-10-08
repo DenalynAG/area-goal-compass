@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+// Momento Seguro: OBSERVAR → REGISTRAR → INTERVENIR → SEGUIR → MEDIR
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAreas, useSubareas, useProfiles } from "@/hooks/useSupabaseData";
@@ -13,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -78,12 +79,18 @@ interface Observation {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  activity_observed: string | null;
+  observation_type: string | null;
+  hazard: string | null;
+  intervention_options: string[] | null;
+  intervention_comments: string | null;
+  action_required: string | null;
 }
 
-const CATEGORY_META: Record<Category, { label: string; icon: any; chip: string }> = {
-  comportamiento_seguro: { label: "Comportamiento seguro", icon: ShieldCheck, chip: "bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]" },
-  oportunidad_mejora: { label: "Oportunidad de mejora", icon: Lightbulb, chip: "bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))]" },
-  comportamiento_inseguro: { label: "Comportamiento inseguro", icon: AlertTriangle, chip: "bg-destructive/15 text-destructive" },
+const CATEGORY_META: Record<Category, { label: string; icon: any; chip: string; dot: string }> = {
+  comportamiento_seguro: { label: "Comportamiento seguro", icon: ShieldCheck, chip: "bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]", dot: "🟢" },
+  oportunidad_mejora: { label: "Oportunidad de mejora", icon: Lightbulb, chip: "bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))]", dot: "🟡" },
+  comportamiento_inseguro: { label: "Comportamiento inseguro", icon: AlertTriangle, chip: "bg-destructive/15 text-destructive", dot: "🔴" },
 };
 
 const RISK_META: Record<RiskLevel, { label: string; chip: string }> = {
@@ -93,11 +100,39 @@ const RISK_META: Record<RiskLevel, { label: string; chip: string }> = {
   critico: { label: "Crítico", chip: "bg-destructive/15 text-destructive" },
 };
 
+// Estados de la acción / seguimiento (se conservan los valores guardados)
 const STATUS_META: Record<Status, { label: string; chip: string }> = {
-  abierta: { label: "Abierta", chip: "bg-muted text-foreground" },
-  en_seguimiento: { label: "En seguimiento", chip: "bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))]" },
-  cerrada: { label: "Cerrada", chip: "bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]" },
+  abierta: { label: "Pendiente", chip: "bg-muted text-foreground" },
+  en_seguimiento: { label: "En proceso", chip: "bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))]" },
+  cerrada: { label: "Cerrado", chip: "bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]" },
 };
+const OVERDUE_META = { label: "Vencido", chip: "bg-destructive/15 text-destructive" };
+
+const OBS_TYPES = [
+  { value: "comportamiento", label: "Comportamiento" },
+  { value: "condicion", label: "Condición" },
+  { value: "ambos", label: "Comportamiento + condición" },
+];
+const obsTypeLabel = (v: string | null) => OBS_TYPES.find((t) => t.value === v)?.label ?? "—";
+
+const HAZARDS = [
+  "Biomecánico", "Locativo", "Mecánico", "Eléctrico", "Químico", "Físico", "Biológico",
+  "Seguridad / público", "Incendio", "Tránsito / movilidad", "Otro",
+];
+
+const RISK_SUGGESTIONS = [
+  "Caída al mismo nivel", "Caída de objetos", "Sobreesfuerzo", "Postura prolongada",
+  "Contacto eléctrico", "Cortes", "Quemaduras", "Exposición a sustancias químicas",
+];
+
+const INTERVENTIONS = [
+  "Se reconoció una buena práctica",
+  "Se realizó retroalimentación",
+  "Se corrigió inmediatamente",
+  "Se acordó una acción de mejora",
+  "Se requiere seguimiento",
+  "No requirió intervención",
+];
 
 const BEHAVIOR_CATEGORIES = [
   "Uso de EPP",
@@ -130,23 +165,41 @@ const CONTRIBUTING_FACTORS = [
 const MONTHS = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
 const MONTH_GOAL = 100;
 
+const todayISO = () => new Date().toISOString().slice(0, 10);
+
+// ¿La observación tiene una acción de gestión asociada?
+const hasAction = (o: Partial<Observation>) =>
+  !!o.followup_required || (o.category !== "comportamiento_seguro" && !!(o.action_required || o.followup_due_date));
+
+// Estado efectivo de la acción, con vencimiento automático
+const actionStatus = (o: Observation): { label: string; chip: string; key: "pendiente" | "en_proceso" | "cerrado" | "vencido" } => {
+  if (o.status === "cerrada") return { ...STATUS_META.cerrada, key: "cerrado" };
+  if (o.followup_due_date && o.followup_due_date < todayISO()) return { ...OVERDUE_META, key: "vencido" };
+  if (o.status === "en_seguimiento") return { ...STATUS_META.en_seguimiento, key: "en_proceso" };
+  return { ...STATUS_META.abierta, key: "pendiente" };
+};
+
 const emptyForm = (): Partial<Observation> => ({
-  observation_date: new Date().toISOString().slice(0, 10),
+  observation_date: todayISO(),
   observation_time: new Date().toTimeString().slice(0, 5),
   category: "comportamiento_seguro",
+  observation_type: "comportamiento",
   risk_level: "bajo",
   status: "abierta",
   description: "",
   contributing_factors: [],
   evidence_urls: [],
+  intervention_options: [],
   followup_required: false,
   hotel_area: null,
   process: "",
+  activity_observed: "",
   is_ambassador: false,
 });
 
 const SUCCESS_MESSAGE =
-  "¡Observación registrada exitosamente! Gracias por fortalecer la cultura preventiva de Oshpitality Group. Cada observación preventiva contribuye a proteger a nuestros colaboradores y huéspedes.";
+  "¡Momento Seguro registrado exitosamente! Gracias por fortalecer la cultura preventiva de Oshpitality Group. Cada Momento Seguro contribuye a proteger a nuestros colaboradores y huéspedes.";
+
 
 function useObservations() {
   return useQuery({
@@ -201,6 +254,9 @@ export default function MomentoSeguroPage() {
   const [fCategory, setFCategory] = useState(NONE);
   const [fRisk, setFRisk] = useState(NONE);
   const [fStatus, setFStatus] = useState(NONE);
+  const [fHazard, setFHazard] = useState(NONE);
+  const [fObsType, setFObsType] = useState(NONE);
+  const [fObserver, setFObserver] = useState(NONE);
   const [fFrom, setFFrom] = useState("");
   const [fTo, setFTo] = useState("");
   const [page, setPage] = useState(1);
@@ -222,27 +278,33 @@ export default function MomentoSeguroPage() {
       if (fCategory !== NONE && o.category !== fCategory) return false;
       if (fRisk !== NONE && o.risk_level !== fRisk) return false;
       if (fStatus !== NONE && o.status !== fStatus) return false;
+      if (fHazard !== NONE && o.hazard !== fHazard) return false;
+      if (fObsType !== NONE && o.observation_type !== fObsType) return false;
+      if (fObserver !== NONE && o.observer_user_id !== fObserver) return false;
       if (fFrom && o.observation_date < fFrom) return false;
       if (fTo && o.observation_date > fTo) return false;
       if (q) {
         const hay = [o.observed_name, o.observer_name, o.description, o.location,
-          o.behavior_category, o.associated_risk, o.process, aLabel]
+          o.behavior_category, o.associated_risk, o.process, o.activity_observed, o.hazard, aLabel]
           .filter(Boolean).join(" ").toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
     });
-  }, [observations, areas, search, fArea, fCategory, fRisk, fStatus, fFrom, fTo]);
+  }, [observations, areas, search, fArea, fCategory, fRisk, fStatus, fHazard, fObsType, fObserver, fFrom, fTo]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const pageItems = filtered.slice((page - 1) * pageSize, page * pageSize);
 
   const [activeTab, setActiveTab] = useState("observaciones");
+  const [detail, setDetail] = useState<Observation | null>(null);
 
   const resetFilters = () => {
     setSearch(""); setFArea(NONE); setFCategory(NONE); setFRisk(NONE); setFStatus(NONE);
+    setFHazard(NONE); setFObsType(NONE); setFObserver(NONE);
     setFFrom(""); setFTo(""); setPage(1);
   };
+
 
   // Indicadores de cultura preventiva
   const indicators = useMemo(() => {
@@ -254,10 +316,10 @@ export default function MomentoSeguroPage() {
     const today = new Date();
     const ym = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
     const monthCount = filtered.filter((o) => (o.observation_date ?? "").startsWith(ym)).length;
-    const overdue = filtered.filter((o) =>
-      o.followup_required && o.status !== "cerrada" && o.followup_due_date &&
-      o.followup_due_date < today.toISOString().slice(0, 10)).length;
-    const pendingFollowups = filtered.filter((o) => o.followup_required && o.status !== "cerrada").length;
+    const overdue = filtered.filter((o) => actionStatus(o).key === "vencido").length;
+    const pendingFollowups = filtered.filter((o) => hasAction(o) && o.status !== "cerrada").length;
+    const improvements = filtered.filter((o) => o.category === "oportunidad_mejora");
+    const improvementsClosed = improvements.filter((o) => o.status === "cerrada").length;
     const ambassadors = filtered.filter((o) => o.is_ambassador).length;
 
     const stats = new Map<string, { total: number; safe: number }>();
@@ -277,6 +339,8 @@ export default function MomentoSeguroPage() {
     return {
       total, safe, improvement: by("oportunidad_mejora"), unsafe: by("comportamiento_inseguro"),
       open, closed, overdue, monthCount, pendingFollowups, ambassadors,
+      improvementsClosed,
+      improvementClosureRate: improvements.length ? Math.round((improvementsClosed / improvements.length) * 100) : 0,
       topAreaName: topArea?.area ?? "—",
       topAreaCount: topArea?.total ?? 0,
       topSafeName: topSafe?.area ?? "—",
@@ -378,6 +442,45 @@ export default function MomentoSeguroPage() {
 
   const RISK_COLORS = ["hsl(var(--success))", "hsl(var(--warning))", "hsl(var(--destructive)/0.65)", "hsl(var(--destructive))"];
 
+  // Peligros identificados
+  const hazardData = useMemo(() => {
+    const map = new Map<string, number>();
+    filtered.forEach((o) => { if (o.hazard) map.set(o.hazard, (map.get(o.hazard) ?? 0) + 1); });
+    return Array.from(map, ([name, total]) => ({ name, total })).sort((a, b) => b.total - a.total);
+  }, [filtered]);
+
+  // Riesgos asociados (texto libre, top 8)
+  const riskAssocData = useMemo(() => {
+    const map = new Map<string, number>();
+    filtered.forEach((o) => {
+      const r = o.associated_risk?.trim();
+      if (r) map.set(r, (map.get(r) ?? 0) + 1);
+    });
+    return Array.from(map, ([name, total]) => ({ name, total })).sort((a, b) => b.total - a.total).slice(0, 8);
+  }, [filtered]);
+
+  // Momentos Seguros por observador
+  const observerData = useMemo(() => {
+    const map = new Map<string, number>();
+    filtered.forEach((o) => {
+      const n = o.observer_name ?? "Sin observador";
+      map.set(n, (map.get(n) ?? 0) + 1);
+    });
+    return Array.from(map, ([name, total]) => ({ name, total })).sort((a, b) => b.total - a.total).slice(0, 8);
+  }, [filtered]);
+
+  // Acciones de mejora por estado (con vencimiento automático)
+  const actionStatusData = useMemo(() => {
+    const counts = { pendiente: 0, en_proceso: 0, cerrado: 0, vencido: 0 };
+    filtered.filter(hasAction).forEach((o) => { counts[actionStatus(o).key] += 1; });
+    return [
+      { name: "Pendientes", total: counts.pendiente, fill: "hsl(var(--muted-foreground))" },
+      { name: "En proceso", total: counts.en_proceso, fill: "hsl(var(--primary))" },
+      { name: "Cerradas", total: counts.cerrado, fill: "#5E8C5B" },
+      { name: "Vencidas", total: counts.vencido, fill: "#DE613E" },
+    ];
+  }, [filtered]);
+
   const canEdit = (o: Observation) =>
     isSuperAdmin || o.created_by === user?.id || o.observer_user_id === user?.id || o.followup_responsible_user_id === user?.id;
 
@@ -437,10 +540,11 @@ export default function MomentoSeguroPage() {
   };
 
   const validate = () => {
-    if (!form.observation_date) return "La fecha de observación es obligatoria";
+    if (!form.observation_date) return "La fecha es obligatoria";
     if (!form.hotel_area) return "Selecciona el área del hotel";
     if (!form.observed_name?.trim() && !form.observed_user_id) return "Indica el colaborador observado";
-    if (!form.category) return "Selecciona la categoría del comportamiento";
+    if (!form.observation_type) return "Indica qué observaste (comportamiento, condición o ambos)";
+    if (!form.category) return "Selecciona el resultado de la observación";
     if (!form.description?.trim() || form.description.trim().length < 15)
       return "La descripción debe tener al menos 15 caracteres";
     if (!form.risk_level) return "Selecciona el nivel de riesgo";
@@ -475,11 +579,17 @@ export default function MomentoSeguroPage() {
         observed_document: form.observed_document?.trim() || null,
         observed_position: form.observed_position?.trim() || null,
         category: form.category,
+        observation_type: form.observation_type || null,
+        activity_observed: form.activity_observed?.trim() || null,
         behavior_category: form.behavior_category || null,
         description: form.description?.trim(),
         contributing_factors: form.contributing_factors ?? [],
+        hazard: form.hazard || null,
         associated_risk: form.associated_risk?.trim() || null,
         risk_level: form.risk_level,
+        intervention_options: form.intervention_options ?? [],
+        intervention_comments: form.intervention_comments?.trim() || null,
+        action_required: form.action_required?.trim() || null,
         evidence_urls: form.evidence_urls ?? [],
         immediate_actions: form.immediate_actions?.trim() || null,
         followup_required: !!form.followup_required,
@@ -495,7 +605,7 @@ export default function MomentoSeguroPage() {
         const { error } = await (supabase as any)
           .from("safe_moment_observations").update(payload).eq("id", editing.id);
         if (error) throw error;
-        toast.success("Observación actualizada");
+        toast.success("Momento Seguro actualizado");
       } else {
         const { error } = await (supabase as any)
           .from("safe_moment_observations").insert({ ...payload, created_by: user?.id ?? null });
@@ -519,7 +629,7 @@ export default function MomentoSeguroPage() {
     const { error } = await (supabase as any)
       .from("safe_moment_observations").delete().eq("id", toDelete.id);
     if (error) { toast.error("No se pudo eliminar"); return; }
-    toast.success("Observación eliminada");
+    toast.success("Momento Seguro eliminado");
     qc.invalidateQueries({ queryKey: ["safe_moment_observations"] });
     qc.invalidateQueries({ queryKey: ["safe_moment_history"] });
     setToDelete(null);
@@ -559,7 +669,7 @@ export default function MomentoSeguroPage() {
             </div>
           </div>
           <Button onClick={openNew} className="w-full sm:w-auto rounded-xl">
-            <Plus className="h-4 w-4 mr-2" /> Nueva observación
+            <Plus className="h-4 w-4 mr-2" /> Nuevo Momento Seguro
           </Button>
         </div>
       </header>
@@ -599,6 +709,15 @@ export default function MomentoSeguroPage() {
                 options={[{ value: NONE, label: "Todos los estados" },
                   ...(Object.keys(STATUS_META) as Status[]).map((s) => ({ value: s, label: STATUS_META[s].label }))]}
                 value={fStatus} onValueChange={(v) => { setFStatus(v); setPage(1); }} placeholder="Estado" />
+              <SearchableSelect
+                options={[{ value: NONE, label: "Todos los peligros" }, ...HAZARDS.map((h) => ({ value: h, label: h }))]}
+                value={fHazard} onValueChange={(v) => { setFHazard(v); setPage(1); }} placeholder="Peligro" />
+              <SearchableSelect
+                options={[{ value: NONE, label: "Todos los tipos" }, ...OBS_TYPES]}
+                value={fObsType} onValueChange={(v) => { setFObsType(v); setPage(1); }} placeholder="Tipo de observación" />
+              <SearchableSelect
+                options={[{ value: NONE, label: "Todos los observadores" }, ...profileOptions]}
+                value={fObserver} onValueChange={(v) => { setFObserver(v); setPage(1); }} placeholder="Observador" />
               <div className="grid grid-cols-2 gap-2 sm:col-span-2">
                 <div>
                   <Label className="text-xs">Desde</Label>
@@ -619,14 +738,16 @@ export default function MomentoSeguroPage() {
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {[
-              { label: "Observaciones preventivas", value: indicators.total, icon: ClipboardList, hint: "Registradas" },
+              { label: "Momentos Seguros registrados", value: indicators.total, icon: ClipboardList, hint: "Registrados" },
               { label: "Comportamientos seguros", value: indicators.safe, icon: ShieldCheck, hint: `${indicators.safeIndex}% del total` },
               { label: "Oportunidades de mejora", value: indicators.improvement, icon: Lightbulb },
               { label: "Comportamientos inseguros", value: indicators.unsafe, icon: AlertTriangle },
               { label: "Observaciones del mes", value: indicators.monthCount, icon: CalendarDays },
-              { label: "Área con más observaciones", value: indicators.topAreaName, icon: Building2, hint: `${indicators.topAreaCount} registros`, small: true },
-              { label: "Área más segura", value: `${indicators.topSafePct}%`, icon: HeartHandshake, hint: indicators.topSafeName },
+              { label: "Área con mayor participación", value: indicators.topAreaName, icon: Building2, hint: `${indicators.topAreaCount} registros`, small: true },
+              { label: "% de comportamientos seguros", value: `${indicators.safeIndex}%`, icon: HeartHandshake, hint: "Del total registrado" },
               { label: "Seguimientos pendientes", value: indicators.pendingFollowups, icon: Timer, hint: `${indicators.overdue} vencidos` },
+              { label: "Seguimientos vencidos", value: indicators.overdue, icon: Timer, hint: "Fecha compromiso superada" },
+              { label: "Oportunidades cerradas", value: indicators.improvementsClosed, icon: CheckCircle2, hint: `${indicators.improvementClosureRate}% de cierre` },
             ].map((k) => {
               const Icon = k.icon;
               return (
@@ -702,6 +823,9 @@ export default function MomentoSeguroPage() {
                               {o.is_ambassador ? "Reconocido" : "Embajador Misión CerOSH"}
                             </Button>
                           )}
+                          <Button variant="ghost" size="icon" onClick={() => setDetail(o)} title="Ver detalle">
+                            <Search className="h-4 w-4" />
+                          </Button>
                           {canEdit(o) && (
                             <Button variant="ghost" size="icon" onClick={() => openEdit(o)} title="Editar">
                               <Pencil className="h-4 w-4" />
@@ -719,16 +843,24 @@ export default function MomentoSeguroPage() {
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-xs text-muted-foreground">
                         {o.process && <p><span className="font-medium text-foreground">Proceso:</span> {o.process}</p>}
+                        {o.activity_observed && <p><span className="font-medium text-foreground">Actividad:</span> {o.activity_observed}</p>}
+                        {o.observation_type && <p><span className="font-medium text-foreground">Tipo de observación:</span> {obsTypeLabel(o.observation_type)}</p>}
                         {o.behavior_category && <p><span className="font-medium text-foreground">Categoría:</span> {o.behavior_category}</p>}
+                        {o.hazard && <p><span className="font-medium text-foreground">Peligro:</span> {o.hazard}</p>}
                         {o.associated_risk && <p><span className="font-medium text-foreground">Riesgo asociado:</span> {o.associated_risk}</p>}
                         {!!o.contributing_factors?.length && (
                           <p className="sm:col-span-2"><span className="font-medium text-foreground">Factores:</span> {o.contributing_factors.join(", ")}</p>
                         )}
+                        {!!o.intervention_options?.length && (
+                          <p className="sm:col-span-2"><span className="font-medium text-foreground">Intervención:</span> {o.intervention_options.join(", ")}</p>
+                        )}
                         {o.immediate_actions && <p className="sm:col-span-2"><span className="font-medium text-foreground">Acción inmediata:</span> {o.immediate_actions}</p>}
-                        {o.followup_required && (
-                          <p className="sm:col-span-2">
-                            <span className="font-medium text-foreground">Seguimiento:</span> {profileName(o.followup_responsible_user_id)}
-                            {o.followup_due_date ? ` · vence ${o.followup_due_date}` : ""}
+                        {o.action_required && <p className="sm:col-span-2"><span className="font-medium text-foreground">Acción requerida:</span> {o.action_required}</p>}
+                        {hasAction(o) && (
+                          <p className="sm:col-span-2 flex items-center gap-2 flex-wrap">
+                            <span><span className="font-medium text-foreground">Seguimiento:</span> {profileName(o.followup_responsible_user_id)}
+                            {o.followup_due_date ? ` · vence ${o.followup_due_date}` : ""}</span>
+                            <Badge className={`${actionStatus(o).chip} border-0`}>{actionStatus(o).label}</Badge>
                           </p>
                         )}
                         <p><span className="font-medium text-foreground">Observador:</span> {o.observer_name ?? profileName(o.observer_user_id)}</p>
@@ -785,8 +917,8 @@ export default function MomentoSeguroPage() {
                 { label: "Oportunidades de mejora", value: indicators.improvement, hint: "Prácticas mejorables detectadas", icon: Lightbulb, tint: "bg-warning/15 text-warning" },
                 { label: "Comportamientos inseguros", value: indicators.unsafe, hint: `${filtered.filter((o) => o.risk_level === "critico").length} de riesgo crítico`, icon: ShieldCheck, tint: "bg-destructive/10 text-destructive" },
                 { label: "Observaciones del mes", value: indicators.monthCount, hint: "Registradas en el mes en curso", icon: ClipboardList, tint: "bg-primary/10 text-primary" },
-                { label: indicators.topAreaName, value: null, bigLabel: true, hint: `${indicators.topAreaCount} registros`, icon: MapPin, tint: "bg-primary/10 text-primary", caption: "Área con más observaciones" },
-                { label: indicators.topSafeName, value: null, bigLabel: true, hint: `${indicators.topSafePct}% de comportamientos seguros`, icon: Sparkles, tint: "bg-success/15 text-success", caption: "Área más segura" },
+                { label: indicators.topAreaName, value: null, bigLabel: true, hint: `${indicators.topAreaCount} registros`, icon: MapPin, tint: "bg-primary/10 text-primary", caption: "Área con mayor participación" },
+                { label: indicators.topSafeName, value: null, bigLabel: true, hint: `${indicators.topSafePct}% de comportamientos seguros`, icon: Sparkles, tint: "bg-success/15 text-success", caption: "Área con mayor índice seguro" },
                 { label: "Cumplimiento de acciones", value: `${indicators.closureRate}%`, hint: "Acciones inmediatas completadas", icon: TrendingUp, tint: "bg-warning/15 text-warning" },
                 { label: "Registros cerrados", value: indicators.closed, hint: `${indicators.open} en gestión`, icon: BarChart3, tint: "bg-primary/10 text-primary" },
               ].map((k: any) => (
@@ -826,7 +958,7 @@ export default function MomentoSeguroPage() {
                   <div className="h-2 rounded-full bg-muted overflow-hidden">
                     <div className="h-full bg-success rounded-full transition-all" style={{ width: `${Math.min(100, (indicators.monthCount / MONTH_GOAL) * 100)}%` }} />
                   </div>
-                  <p className="text-xs text-muted-foreground">Faltan {Math.max(0, MONTH_GOAL - indicators.monthCount)} observaciones preventivas para la meta.</p>
+                  <p className="text-xs text-muted-foreground">Faltan {Math.max(0, MONTH_GOAL - indicators.monthCount)} Momentos Seguros para la meta.</p>
                   <div className="space-y-3 pt-2 border-t border-border">
                     <div>
                       <div className="flex justify-between text-xs mb-1"><span className="text-muted-foreground">Índice de seguridad</span><span className="font-medium">{indicators.safeIndex}%</span></div>
@@ -881,7 +1013,7 @@ export default function MomentoSeguroPage() {
             <h3 className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">Evolución</h3>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <Card className="rounded-2xl shadow-sm">
-                <CardHeader className="pb-0"><CardTitle className="text-sm">Observaciones preventivas por mes</CardTitle></CardHeader>
+                <CardHeader className="pb-0"><CardTitle className="text-sm">Momentos Seguros por mes</CardTitle></CardHeader>
                 <CardContent className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={evolutionData}>
@@ -961,6 +1093,97 @@ export default function MomentoSeguroPage() {
                       </div>
                     </div>
                   ))}
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+
+          {/* PELIGROS Y RIESGOS */}
+          <section className="space-y-3">
+            <h3 className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">Peligros y riesgos</h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <Card className="rounded-2xl shadow-sm">
+                <CardHeader className="pb-0"><CardTitle className="text-sm">Peligros identificados</CardTitle></CardHeader>
+                <CardContent className="h-64">
+                  {hazardData.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center pt-24">Sin datos</p>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={hazardData} layout="vertical" margin={{ left: 20 }}>
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.25} horizontal={false} />
+                        <XAxis type="number" allowDecimals={false} fontSize={11} />
+                        <YAxis type="category" dataKey="name" width={130} fontSize={11} />
+                        <Tooltip />
+                        <Bar dataKey="total" fill="hsl(var(--primary))" radius={[0, 6, 6, 0]} barSize={16} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                </CardContent>
+              </Card>
+              <Card className="rounded-2xl shadow-sm">
+                <CardHeader className="pb-0"><CardTitle className="text-sm">Riesgos asociados</CardTitle></CardHeader>
+                <CardContent className="h-64">
+                  {riskAssocData.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center pt-24">Sin datos</p>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={riskAssocData} layout="vertical" margin={{ left: 20 }}>
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.25} horizontal={false} />
+                        <XAxis type="number" allowDecimals={false} fontSize={11} />
+                        <YAxis type="category" dataKey="name" width={150} fontSize={11} />
+                        <Tooltip />
+                        <Bar dataKey="total" fill="#E59514" radius={[0, 6, 6, 0]} barSize={16} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+
+          {/* PARTICIPACIÓN Y GESTIÓN */}
+          <section className="space-y-3">
+            <h3 className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">Participación y gestión</h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <Card className="rounded-2xl shadow-sm">
+                <CardHeader className="pb-0"><CardTitle className="text-sm">Momentos Seguros por observador</CardTitle></CardHeader>
+                <CardContent className="h-64">
+                  {observerData.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center pt-24">Sin datos</p>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={observerData} layout="vertical" margin={{ left: 20 }}>
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.25} horizontal={false} />
+                        <XAxis type="number" allowDecimals={false} fontSize={11} />
+                        <YAxis type="category" dataKey="name" width={150} fontSize={11} />
+                        <Tooltip />
+                        <Bar dataKey="total" fill="#5E8C5B" radius={[0, 6, 6, 0]} barSize={16} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                </CardContent>
+              </Card>
+              <Card className="rounded-2xl shadow-sm">
+                <CardHeader className="pb-0"><CardTitle className="text-sm">Acciones de mejora por estado</CardTitle></CardHeader>
+                <CardContent className="h-64">
+                  {actionStatusData.every((d) => d.total === 0) ? (
+                    <p className="text-sm text-muted-foreground text-center pt-24">Sin acciones registradas</p>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={actionStatusData}>
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.25} vertical={false} />
+                        <XAxis dataKey="name" fontSize={11} />
+                        <YAxis allowDecimals={false} fontSize={11} />
+                        <Tooltip />
+                        <Bar dataKey="total" radius={[6, 6, 0, 0]} barSize={42}>
+                          {actionStatusData.map((d) => <Cell key={d.name} fill={d.fill} />)}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                  <p className="text-xs text-muted-foreground text-center mt-1">
+                    Cierre de oportunidades: {indicators.improvementClosureRate}% ({indicators.improvementsClosed} de {indicators.improvement})
+                  </p>
                 </CardContent>
               </Card>
             </div>
@@ -1066,7 +1289,46 @@ export default function MomentoSeguroPage() {
         </TabsContent>
 
         {/* HISTORIAL */}
-        <TabsContent value="historial">
+        <TabsContent value="historial" className="space-y-4">
+          <Card>
+            <CardHeader><CardTitle className="text-base">Registros de Momentos Seguros</CardTitle></CardHeader>
+            <CardContent className="space-y-2">
+              {filtered.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-6 text-center">No hay registros con los filtros seleccionados.</p>
+              ) : filtered.map((o) => {
+                const st = actionStatus(o);
+                return (
+                  <div key={o.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-border py-2 last:border-0">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">
+                        {codeOf.get(o.id)} · {o.observed_name ?? "Colaborador"}{o.observed_position ? ` · ${o.observed_position}` : ""}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {o.observation_date}{o.observation_time ? ` ${o.observation_time.slice(0, 5)}` : ""} · {areaLabel(o)}
+                        {o.process ? ` · ${o.process}` : ""}{o.activity_observed ? ` · ${o.activity_observed}` : ""}
+                        {` · ${obsTypeLabel(o.observation_type)}`}
+                        {o.hazard ? ` · Peligro: ${o.hazard}` : ""}{o.associated_risk ? ` · Riesgo: ${o.associated_risk}` : ""}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        Observador: {o.observer_name ?? "—"}
+                        {o.action_required ? ` · Acción: ${o.action_required}` : ""}
+                        {o.followup_responsible_user_id ? ` · Responsable: ${profileName(o.followup_responsible_user_id)}` : ""}
+                        {o.followup_due_date ? ` · Compromiso: ${o.followup_due_date}` : ""}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {hasAction(o) && <Badge className={`${st.chip} border-0`}>{st.label}</Badge>}
+                      <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDetail(o)}>Ver detalle</Button>
+                      {canEdit(o) && (
+                        <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => openEdit(o)}>Actualizar</Button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader><CardTitle className="text-base">Historial de cambios</CardTitle></CardHeader>
             <CardContent className="space-y-2">
@@ -1075,7 +1337,7 @@ export default function MomentoSeguroPage() {
               ) : history.map((h: any) => (
                 <div key={h.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-border py-2 last:border-0">
                   <div className="min-w-0">
-                    <p className="text-sm font-medium capitalize">{h.action} observación</p>
+                    <p className="text-sm font-medium capitalize">{h.action} registro</p>
                     <p className="text-xs text-muted-foreground">{h.user_name ?? "Sistema"}</p>
                   </div>
                   <p className="text-xs text-muted-foreground">{new Date(h.created_at).toLocaleString("es-CO")}</p>
@@ -1092,12 +1354,12 @@ export default function MomentoSeguroPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
               <img src={misionLogo.url} alt="" aria-hidden className="h-8 w-8 rounded-lg object-contain" />
-              {editing ? "Editar observación preventiva" : "Nueva observación preventiva"}
+              {editing ? "Editar Momento Seguro" : "Nuevo Momento Seguro"}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-6">
-            {/* Datos generales */}
+            {/* 1. Datos generales */}
             <section className="space-y-3">
               <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">1. Datos generales</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1117,13 +1379,16 @@ export default function MomentoSeguroPage() {
                     onValueChange={(v) => setField("subarea_id", v === NONE ? null : v)} placeholder="Seleccionar subárea" /></div>
                 <div><Label>Lugar / zona</Label>
                   <Input maxLength={150} value={form.location ?? ""} onChange={(e) => setField("location", e.target.value)} placeholder="Ej. Cocina principal, Bloque B" /></div>
+                <div className="sm:col-span-2"><Label>Actividad observada</Label>
+                  <Input maxLength={150} value={form.activity_observed ?? ""} onChange={(e) => setField("activity_observed", e.target.value)}
+                    placeholder="¿Qué actividad estaba realizando el colaborador? Ej. Limpieza de habitación, montaje de mesa" /></div>
                 <div className="sm:col-span-2"><Label>Observador</Label>
                   <SearchableSelect options={profileOptions} value={form.observer_user_id ?? ""}
                     onValueChange={(v) => setField("observer_user_id", v)} placeholder="Seleccionar observador" /></div>
               </div>
             </section>
 
-            {/* Colaborador observado */}
+            {/* 2. Colaborador observado */}
             <section className="space-y-3">
               <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">2. Colaborador observado</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1146,9 +1411,25 @@ export default function MomentoSeguroPage() {
               </div>
             </section>
 
-            {/* Categoría */}
+            {/* 3. ¿Qué observaste? */}
             <section className="space-y-3">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">3. Categoría del comportamiento</h3>
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">3. ¿Qué observaste?</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {OBS_TYPES.map((t) => {
+                  const active = form.observation_type === t.value;
+                  return (
+                    <button key={t.value} type="button" onClick={() => setField("observation_type", t.value)}
+                      className={`rounded-lg border p-3 text-left text-sm transition-colors ${active ? "border-foreground bg-muted font-medium" : "border-border hover:bg-muted/50"}`}>
+                      {t.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* 4. Resultado de la observación */}
+            <section className="space-y-3">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">4. Resultado de la observación</h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {(Object.keys(CATEGORY_META) as Category[]).map((c) => {
                   const Icon = CATEGORY_META[c].icon;
@@ -1157,63 +1438,140 @@ export default function MomentoSeguroPage() {
                     <button key={c} type="button" onClick={() => setField("category", c)}
                       className={`rounded-lg border p-3 text-left text-sm transition-colors ${active ? "border-foreground bg-muted" : "border-border hover:bg-muted/50"}`}>
                       <Icon className="h-4 w-4 mb-1" />
-                      {CATEGORY_META[c].label}
+                      {CATEGORY_META[c].dot} {CATEGORY_META[c].label}
                     </button>
                   );
                 })}
               </div>
-              <div><Label>Tipo de comportamiento</Label>
+              <div><Label>Tipo de observación</Label>
                 <SearchableSelect options={BEHAVIOR_CATEGORIES.map((b) => ({ value: b, label: b }))}
                   value={form.behavior_category ?? ""} onValueChange={(v) => setField("behavior_category", v)}
                   placeholder="Seleccionar tipo" /></div>
             </section>
 
+            {/* 5. Peligro y riesgo (solo mejora / inseguro) */}
+            {form.category !== "comportamiento_seguro" && (
+              <section className="space-y-3">
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">5. Peligro y riesgo identificado</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div><Label>Peligro identificado</Label>
+                    <SearchableSelect options={HAZARDS.map((h) => ({ value: h, label: h }))}
+                      value={form.hazard ?? ""} onValueChange={(v) => setField("hazard", v)}
+                      placeholder="Seleccionar peligro" /></div>
+                  <div><Label>Riesgo asociado</Label>
+                    <Input maxLength={200} list="risk-suggestions" value={form.associated_risk ?? ""}
+                      onChange={(e) => setField("associated_risk", e.target.value)}
+                      placeholder="Selecciona o escribe el riesgo" />
+                    <datalist id="risk-suggestions">
+                      {RISK_SUGGESTIONS.map((r) => <option key={r} value={r} />)}
+                    </datalist></div>
+                </div>
+                <div>
+                  <Label>Nivel de riesgo *</Label>
+                  <div className="grid grid-cols-4 gap-2 mt-2">
+                    {(Object.keys(RISK_META) as RiskLevel[]).map((r) => (
+                      <button key={r} type="button" onClick={() => setField("risk_level", r)}
+                        className={`rounded-md border py-2 text-xs sm:text-sm transition-colors ${form.risk_level === r ? "border-foreground bg-muted font-medium" : "border-border hover:bg-muted/50"}`}>
+                        {RISK_META[r].label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            )}
+
             {/* Descripción y factores */}
             <section className="space-y-3">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">4. Descripción y factores</h3>
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                {form.category === "comportamiento_seguro" ? "5. Descripción de la buena práctica" : "6. Descripción y factores"}
+              </h3>
               <div><Label>Descripción detallada *</Label>
                 <Textarea rows={4} maxLength={4000} value={form.description ?? ""}
                   onChange={(e) => setField("description", e.target.value)}
-                  placeholder="Describe qué observaste, dónde y en qué contexto" />
+                  placeholder={form.category === "comportamiento_seguro"
+                    ? "Describe la buena práctica observada"
+                    : "Describe qué observaste, dónde y en qué contexto"} />
                 <p className="text-xs text-muted-foreground mt-1">{(form.description ?? "").length}/4000</p></div>
-              <div>
-                <Label>Factores contribuyentes</Label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
-                  {CONTRIBUTING_FACTORS.map((f) => (
-                    <label key={f} className="flex items-center gap-2 text-sm">
-                      <Checkbox checked={(form.contributing_factors ?? []).includes(f)} onCheckedChange={() => toggleFactor(f)} />
-                      {f}
-                    </label>
-                  ))}
+              {form.category !== "comportamiento_seguro" && (
+                <div>
+                  <Label>Factores contribuyentes</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                    {CONTRIBUTING_FACTORS.map((f) => (
+                      <label key={f} className="flex items-center gap-2 text-sm">
+                        <Checkbox checked={(form.contributing_factors ?? []).includes(f)} onCheckedChange={() => toggleFactor(f)} />
+                        {f}
+                      </label>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </section>
 
-            {/* Riesgo */}
+            {/* Intervención realizada */}
             <section className="space-y-3">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">5. Riesgo asociado</h3>
-              <div><Label>Riesgo asociado</Label>
-                <Input maxLength={200} value={form.associated_risk ?? ""} onChange={(e) => setField("associated_risk", e.target.value)}
-                  placeholder="Ej. Caída a distinto nivel, corte con cuchillo" /></div>
-              <div>
-                <Label>Nivel de riesgo *</Label>
-                <div className="grid grid-cols-4 gap-2 mt-2">
-                  {(Object.keys(RISK_META) as RiskLevel[]).map((r) => (
-                    <button key={r} type="button" onClick={() => setField("risk_level", r)}
-                      className={`rounded-md border py-2 text-xs sm:text-sm transition-colors ${form.risk_level === r ? "border-foreground bg-muted font-medium" : "border-border hover:bg-muted/50"}`}>
-                      {RISK_META[r].label}
-                    </button>
-                  ))}
-                </div>
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                {form.category === "comportamiento_seguro" ? "6. Intervención realizada" : "7. Intervención realizada"}
+              </h3>
+              <p className="text-xs text-muted-foreground">¿Qué ocurrió durante el Momento Seguro? Puedes seleccionar varias opciones.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {INTERVENTIONS.map((iv) => (
+                  <label key={iv} className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={(form.intervention_options ?? []).includes(iv)}
+                      onCheckedChange={() => {
+                        const cur = form.intervention_options ?? [];
+                        setField("intervention_options", cur.includes(iv) ? cur.filter((x) => x !== iv) : [...cur, iv]);
+                      }} />
+                    {iv}
+                  </label>
+                ))}
               </div>
+              <div><Label>Comentarios de la intervención</Label>
+                <Input maxLength={300} value={form.intervention_comments ?? ""}
+                  onChange={(e) => setField("intervention_comments", e.target.value)}
+                  placeholder="Comentario corto sobre la intervención" /></div>
             </section>
+
+            {/* Acción / seguimiento (solo mejora / inseguro) */}
+            {form.category !== "comportamiento_seguro" && (
+              <section className="space-y-3">
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">8. Acción / seguimiento</h3>
+                <div><Label>Acción requerida</Label>
+                  <Textarea rows={2} maxLength={1500} value={form.action_required ?? ""}
+                    onChange={(e) => setField("action_required", e.target.value)}
+                    placeholder="¿Qué acción se requiere para gestionar esta observación?" /></div>
+                <div><Label>Acción inmediata / intervención</Label>
+                  <Textarea rows={2} maxLength={1500} value={form.immediate_actions ?? ""}
+                    onChange={(e) => setField("immediate_actions", e.target.value)} /></div>
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox checked={!!form.followup_required} onCheckedChange={(v) => setField("followup_required", !!v)} />
+                  Requiere seguimiento
+                </label>
+                {form.followup_required && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div><Label>Responsable *</Label>
+                      <SearchableSelect options={profileOptions} value={form.followup_responsible_user_id ?? ""}
+                        onValueChange={(v) => setField("followup_responsible_user_id", v)} placeholder="Seleccionar responsable" /></div>
+                    <div><Label>Fecha compromiso *</Label>
+                      <Input type="date" value={form.followup_due_date ?? ""} onChange={(e) => setField("followup_due_date", e.target.value)} /></div>
+                    <div className="sm:col-span-2"><Label>Notas de seguimiento</Label>
+                      <Textarea rows={2} maxLength={1500} value={form.followup_notes ?? ""} onChange={(e) => setField("followup_notes", e.target.value)} /></div>
+                  </div>
+                )}
+                <div><Label>Estado</Label>
+                  <SearchableSelect options={(Object.keys(STATUS_META) as Status[]).map((s) => ({ value: s, label: STATUS_META[s].label }))}
+                    value={form.status ?? "abierta"} onValueChange={(v) => setField("status", v)} placeholder="Estado" /></div>
+              </section>
+            )}
 
             {/* Evidencia */}
             <section className="space-y-3">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">6. Evidencia multimedia</h3>
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                {form.category === "comportamiento_seguro" ? "7. Evidencia (opcional)" : "9. Evidencia"}
+              </h3>
               <Input type="file" multiple accept="image/*,video/*,application/pdf"
                 onChange={(e) => handleUpload(e.target.files)} disabled={uploading} />
-              <p className="text-xs text-muted-foreground">Imágenes, video o PDF. Máximo 10 MB por archivo.</p>
+              <p className="text-xs text-muted-foreground">Fotografía, video o PDF relacionado con la observación. Máximo 10 MB por archivo. No es obligatoria.</p>
               {uploading && <p className="text-xs flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Subiendo...</p>}
               {!!(form.evidence_urls ?? []).length && (
                 <div className="flex flex-wrap gap-2">
@@ -1229,34 +1587,11 @@ export default function MomentoSeguroPage() {
               )}
             </section>
 
-            {/* Acciones y seguimiento */}
-            <section className="space-y-3">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">7. Acciones inmediatas y seguimiento</h3>
-              <div><Label>Acciones inmediatas</Label>
-                <Textarea rows={3} maxLength={1500} value={form.immediate_actions ?? ""} onChange={(e) => setField("immediate_actions", e.target.value)} /></div>
-              <label className="flex items-center gap-2 text-sm">
-                <Checkbox checked={!!form.followup_required} onCheckedChange={(v) => setField("followup_required", !!v)} />
-                Requiere seguimiento
-              </label>
-              {form.followup_required && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div><Label>Responsable *</Label>
-                    <SearchableSelect options={profileOptions} value={form.followup_responsible_user_id ?? ""}
-                      onValueChange={(v) => setField("followup_responsible_user_id", v)} placeholder="Seleccionar responsable" /></div>
-                  <div><Label>Fecha compromiso *</Label>
-                    <Input type="date" value={form.followup_due_date ?? ""} onChange={(e) => setField("followup_due_date", e.target.value)} /></div>
-                  <div className="sm:col-span-2"><Label>Notas de seguimiento</Label>
-                    <Textarea rows={2} maxLength={1500} value={form.followup_notes ?? ""} onChange={(e) => setField("followup_notes", e.target.value)} /></div>
-                </div>
-              )}
-              <div><Label>Estado</Label>
-                <SearchableSelect options={(Object.keys(STATUS_META) as Status[]).map((s) => ({ value: s, label: STATUS_META[s].label }))}
-                  value={form.status ?? "abierta"} onValueChange={(v) => setField("status", v)} placeholder="Estado" /></div>
-            </section>
-
             {/* Firmas */}
             <section className="space-y-3">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">8. Firmas digitales</h3>
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                {form.category === "comportamiento_seguro" ? "8. Firmas digitales" : "10. Firmas digitales"}
+              </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <SignaturePad label="Firma del observador" value={form.signature_observer ?? null}
                   onChange={(v) => setField("signature_observer", v)} />
@@ -1270,9 +1605,102 @@ export default function MomentoSeguroPage() {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
             <Button onClick={save} disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {editing ? "Guardar cambios" : "Registrar observación"}
+              {editing ? "Guardar cambios" : "Registrar Momento Seguro"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* DETAIL DIALOG */}
+      <Dialog open={!!detail} onOpenChange={(o) => { if (!o) setDetail(null); }}>
+        <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{detail ? `${codeOf.get(detail.id)} · Momento Seguro` : ""}</DialogTitle>
+            <DialogDescription>Detalle completo del registro</DialogDescription>
+          </DialogHeader>
+          {detail && (
+            <div className="space-y-4 text-sm">
+              <div className="flex flex-wrap gap-2">
+                <Badge className={`${CATEGORY_META[detail.category as Category].chip} border-0`}>
+                  {CATEGORY_META[detail.category as Category].label}
+                </Badge>
+                <Badge variant="outline">{obsTypeLabel(detail.observation_type)}</Badge>
+                {hasAction(detail) && <Badge className={`${actionStatus(detail).chip} border-0`}>{actionStatus(detail).label}</Badge>}
+                <Badge variant="outline">{STATUS_META[detail.status as Status].label}</Badge>
+                {detail.is_ambassador && (
+                  <Badge className="bg-[#FFF3E0] text-[#B26A00] border-0"><Award className="h-3 w-3 mr-1" />Embajador Misión CerOSH</Badge>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+                <p><span className="text-muted-foreground">Fecha:</span> {detail.observation_date}{detail.observation_time ? ` ${detail.observation_time.slice(0, 5)}` : ""}</p>
+                <p><span className="text-muted-foreground">Área:</span> {areaLabel(detail)}</p>
+                {detail.process && <p><span className="text-muted-foreground">Proceso:</span> {detail.process}</p>}
+                {detail.location && <p><span className="text-muted-foreground">Lugar:</span> {detail.location}</p>}
+                {detail.activity_observed && <p className="sm:col-span-2"><span className="text-muted-foreground">Actividad observada:</span> {detail.activity_observed}</p>}
+                <p><span className="text-muted-foreground">Observador:</span> {detail.observer_name ?? "—"}</p>
+                <p><span className="text-muted-foreground">Colaborador:</span> {detail.observed_name ?? "—"}{detail.observed_position ? ` (${detail.observed_position})` : ""}</p>
+                {detail.behavior_category && <p className="sm:col-span-2"><span className="text-muted-foreground">Tipo de observación:</span> {detail.behavior_category}</p>}
+                {detail.hazard && <p><span className="text-muted-foreground">Peligro:</span> {detail.hazard}</p>}
+                {detail.associated_risk && <p><span className="text-muted-foreground">Riesgo:</span> {detail.associated_risk} ({RISK_META[detail.risk_level as RiskLevel].label})</p>}
+              </div>
+
+              <div>
+                <p className="text-muted-foreground mb-1">Descripción</p>
+                <p className="whitespace-pre-wrap rounded-lg bg-muted/50 p-3">{detail.description}</p>
+              </div>
+
+              {!!detail.contributing_factors?.length && (
+                <div><p className="text-muted-foreground mb-1">Factores contribuyentes</p>
+                  <p>{detail.contributing_factors.join(" · ")}</p></div>
+              )}
+              {!!detail.intervention_options?.length && (
+                <div><p className="text-muted-foreground mb-1">Intervención realizada</p>
+                  <p>{detail.intervention_options.join(" · ")}</p>
+                  {detail.intervention_comments && <p className="text-xs text-muted-foreground mt-1">{detail.intervention_comments}</p>}</div>
+              )}
+              {detail.immediate_actions && (
+                <div><p className="text-muted-foreground mb-1">Acción inmediata</p>
+                  <p className="whitespace-pre-wrap">{detail.immediate_actions}</p></div>
+              )}
+              {detail.action_required && (
+                <div><p className="text-muted-foreground mb-1">Acción requerida</p>
+                  <p className="whitespace-pre-wrap">{detail.action_required}</p></div>
+              )}
+              {detail.followup_required && (
+                <div><p className="text-muted-foreground mb-1">Seguimiento</p>
+                  <p>Responsable: {profileName(detail.followup_responsible_user_id)} · Compromiso: {detail.followup_due_date ?? "—"}</p>
+                  {detail.followup_notes && <p className="text-xs text-muted-foreground mt-1">{detail.followup_notes}</p>}</div>
+              )}
+              {!!detail.evidence_urls?.length && (
+                <div><p className="text-muted-foreground mb-1">Evidencias</p>
+                  <div className="flex flex-wrap gap-2">
+                    {detail.evidence_urls.map((u) => (
+                      <Badge key={u} variant="secondary" className="gap-1">
+                        <Paperclip className="h-3 w-3" />{u.split("/").pop()?.slice(0, 24)}
+                      </Badge>
+                    ))}
+                  </div></div>
+              )}
+              {(detail.signature_observer || detail.signature_observed) && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {detail.signature_observer && (
+                    <div><p className="text-muted-foreground mb-1">Firma del observador</p>
+                      <img src={detail.signature_observer} alt="Firma observador" className="h-20 rounded-md border border-border bg-white" /></div>
+                  )}
+                  {detail.signature_observed && (
+                    <div><p className="text-muted-foreground mb-1">Firma del colaborador</p>
+                      <img src={detail.signature_observed} alt="Firma colaborador" className="h-20 rounded-md border border-border bg-white" /></div>
+                  )}
+                </div>
+              )}
+              {canEdit(detail) && (
+                <div className="flex justify-end">
+                  <Button size="sm" onClick={() => { openEdit(detail); }}>Actualizar seguimiento</Button>
+                </div>
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
