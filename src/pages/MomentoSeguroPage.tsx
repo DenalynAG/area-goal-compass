@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+// Momento Seguro: OBSERVAR → REGISTRAR → INTERVENIR → SEGUIR → MEDIR
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAreas, useSubareas, useProfiles } from "@/hooks/useSupabaseData";
