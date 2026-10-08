@@ -823,6 +823,9 @@ export default function MomentoSeguroPage() {
                               {o.is_ambassador ? "Reconocido" : "Embajador Misión CerOSH"}
                             </Button>
                           )}
+                          <Button variant="ghost" size="icon" onClick={() => setDetail(o)} title="Ver detalle">
+                            <Search className="h-4 w-4" />
+                          </Button>
                           {canEdit(o) && (
                             <Button variant="ghost" size="icon" onClick={() => openEdit(o)} title="Editar">
                               <Pencil className="h-4 w-4" />
