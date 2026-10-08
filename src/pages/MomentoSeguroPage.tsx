@@ -253,6 +253,9 @@ export default function MomentoSeguroPage() {
   const [fCategory, setFCategory] = useState(NONE);
   const [fRisk, setFRisk] = useState(NONE);
   const [fStatus, setFStatus] = useState(NONE);
+  const [fHazard, setFHazard] = useState(NONE);
+  const [fObsType, setFObsType] = useState(NONE);
+  const [fObserver, setFObserver] = useState(NONE);
   const [fFrom, setFFrom] = useState("");
   const [fTo, setFTo] = useState("");
   const [page, setPage] = useState(1);
@@ -274,27 +277,33 @@ export default function MomentoSeguroPage() {
       if (fCategory !== NONE && o.category !== fCategory) return false;
       if (fRisk !== NONE && o.risk_level !== fRisk) return false;
       if (fStatus !== NONE && o.status !== fStatus) return false;
+      if (fHazard !== NONE && o.hazard !== fHazard) return false;
+      if (fObsType !== NONE && o.observation_type !== fObsType) return false;
+      if (fObserver !== NONE && o.observer_user_id !== fObserver) return false;
       if (fFrom && o.observation_date < fFrom) return false;
       if (fTo && o.observation_date > fTo) return false;
       if (q) {
         const hay = [o.observed_name, o.observer_name, o.description, o.location,
-          o.behavior_category, o.associated_risk, o.process, aLabel]
+          o.behavior_category, o.associated_risk, o.process, o.activity_observed, o.hazard, aLabel]
           .filter(Boolean).join(" ").toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
     });
-  }, [observations, areas, search, fArea, fCategory, fRisk, fStatus, fFrom, fTo]);
+  }, [observations, areas, search, fArea, fCategory, fRisk, fStatus, fHazard, fObsType, fObserver, fFrom, fTo]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const pageItems = filtered.slice((page - 1) * pageSize, page * pageSize);
 
   const [activeTab, setActiveTab] = useState("observaciones");
+  const [detail, setDetail] = useState<Observation | null>(null);
 
   const resetFilters = () => {
     setSearch(""); setFArea(NONE); setFCategory(NONE); setFRisk(NONE); setFStatus(NONE);
+    setFHazard(NONE); setFObsType(NONE); setFObserver(NONE);
     setFFrom(""); setFTo(""); setPage(1);
   };
+
 
   // Indicadores de cultura preventiva
   const indicators = useMemo(() => {
