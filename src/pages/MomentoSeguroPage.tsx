@@ -709,6 +709,15 @@ export default function MomentoSeguroPage() {
                 options={[{ value: NONE, label: "Todos los estados" },
                   ...(Object.keys(STATUS_META) as Status[]).map((s) => ({ value: s, label: STATUS_META[s].label }))]}
                 value={fStatus} onValueChange={(v) => { setFStatus(v); setPage(1); }} placeholder="Estado" />
+              <SearchableSelect
+                options={[{ value: NONE, label: "Todos los peligros" }, ...HAZARDS.map((h) => ({ value: h, label: h }))]}
+                value={fHazard} onValueChange={(v) => { setFHazard(v); setPage(1); }} placeholder="Peligro" />
+              <SearchableSelect
+                options={[{ value: NONE, label: "Todos los tipos" }, ...OBS_TYPES]}
+                value={fObsType} onValueChange={(v) => { setFObsType(v); setPage(1); }} placeholder="Tipo de observación" />
+              <SearchableSelect
+                options={[{ value: NONE, label: "Todos los observadores" }, ...profileOptions]}
+                value={fObserver} onValueChange={(v) => { setFObserver(v); setPage(1); }} placeholder="Observador" />
               <div className="grid grid-cols-2 gap-2 sm:col-span-2">
                 <div>
                   <Label className="text-xs">Desde</Label>
