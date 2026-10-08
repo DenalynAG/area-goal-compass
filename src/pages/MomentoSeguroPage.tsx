@@ -315,10 +315,10 @@ export default function MomentoSeguroPage() {
     const today = new Date();
     const ym = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
     const monthCount = filtered.filter((o) => (o.observation_date ?? "").startsWith(ym)).length;
-    const overdue = filtered.filter((o) =>
-      o.followup_required && o.status !== "cerrada" && o.followup_due_date &&
-      o.followup_due_date < today.toISOString().slice(0, 10)).length;
-    const pendingFollowups = filtered.filter((o) => o.followup_required && o.status !== "cerrada").length;
+    const overdue = filtered.filter((o) => actionStatus(o).key === "vencido").length;
+    const pendingFollowups = filtered.filter((o) => hasAction(o) && o.status !== "cerrada").length;
+    const improvements = filtered.filter((o) => o.category === "oportunidad_mejora");
+    const improvementsClosed = improvements.filter((o) => o.status === "cerrada").length;
     const ambassadors = filtered.filter((o) => o.is_ambassador).length;
 
     const stats = new Map<string, { total: number; safe: number }>();
