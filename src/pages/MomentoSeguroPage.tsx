@@ -339,6 +339,8 @@ export default function MomentoSeguroPage() {
     return {
       total, safe, improvement: by("oportunidad_mejora"), unsafe: by("comportamiento_inseguro"),
       open, closed, overdue, monthCount, pendingFollowups, ambassadors,
+      improvementsClosed,
+      improvementClosureRate: improvements.length ? Math.round((improvementsClosed / improvements.length) * 100) : 0,
       topAreaName: topArea?.area ?? "—",
       topAreaCount: topArea?.total ?? 0,
       topSafeName: topSafe?.area ?? "—",
