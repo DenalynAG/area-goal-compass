@@ -1674,7 +1674,13 @@ export default function MomentoSeguroPage() {
               )}
               {!!detail.evidence_urls?.length && (
                 <div><p className="text-muted-foreground mb-1">Evidencias</p>
-                  <EvidencePanel paths={detail.evidence_urls} canDelete={false} onDelete={() => {}} /></div>
+                  <div className="flex flex-wrap gap-2">
+                    {detail.evidence_urls.map((u) => (
+                      <Badge key={u} variant="secondary" className="gap-1">
+                        <Paperclip className="h-3 w-3" />{u.split("/").pop()?.slice(0, 24)}
+                      </Badge>
+                    ))}
+                  </div></div>
               )}
               {(detail.signature_observer || detail.signature_observed) && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
