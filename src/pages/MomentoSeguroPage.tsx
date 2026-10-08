@@ -1229,7 +1229,7 @@ export default function MomentoSeguroPage() {
           </DialogHeader>
 
           <div className="space-y-6">
-            {/* Datos generales */}
+            {/* 1. Datos generales */}
             <section className="space-y-3">
               <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">1. Datos generales</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1249,13 +1249,16 @@ export default function MomentoSeguroPage() {
                     onValueChange={(v) => setField("subarea_id", v === NONE ? null : v)} placeholder="Seleccionar subárea" /></div>
                 <div><Label>Lugar / zona</Label>
                   <Input maxLength={150} value={form.location ?? ""} onChange={(e) => setField("location", e.target.value)} placeholder="Ej. Cocina principal, Bloque B" /></div>
+                <div className="sm:col-span-2"><Label>Actividad observada</Label>
+                  <Input maxLength={150} value={form.activity_observed ?? ""} onChange={(e) => setField("activity_observed", e.target.value)}
+                    placeholder="¿Qué actividad estaba realizando el colaborador? Ej. Limpieza de habitación, montaje de mesa" /></div>
                 <div className="sm:col-span-2"><Label>Observador</Label>
                   <SearchableSelect options={profileOptions} value={form.observer_user_id ?? ""}
                     onValueChange={(v) => setField("observer_user_id", v)} placeholder="Seleccionar observador" /></div>
               </div>
             </section>
 
-            {/* Colaborador observado */}
+            {/* 2. Colaborador observado */}
             <section className="space-y-3">
               <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">2. Colaborador observado</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1278,9 +1281,25 @@ export default function MomentoSeguroPage() {
               </div>
             </section>
 
-            {/* Categoría */}
+            {/* 3. ¿Qué observaste? */}
             <section className="space-y-3">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">3. Categoría del comportamiento</h3>
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">3. ¿Qué observaste?</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {OBS_TYPES.map((t) => {
+                  const active = form.observation_type === t.value;
+                  return (
+                    <button key={t.value} type="button" onClick={() => setField("observation_type", t.value)}
+                      className={`rounded-lg border p-3 text-left text-sm transition-colors ${active ? "border-foreground bg-muted font-medium" : "border-border hover:bg-muted/50"}`}>
+                      {t.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* 4. Resultado de la observación */}
+            <section className="space-y-3">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">4. Resultado de la observación</h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {(Object.keys(CATEGORY_META) as Category[]).map((c) => {
                   const Icon = CATEGORY_META[c].icon;
@@ -1289,63 +1308,140 @@ export default function MomentoSeguroPage() {
                     <button key={c} type="button" onClick={() => setField("category", c)}
                       className={`rounded-lg border p-3 text-left text-sm transition-colors ${active ? "border-foreground bg-muted" : "border-border hover:bg-muted/50"}`}>
                       <Icon className="h-4 w-4 mb-1" />
-                      {CATEGORY_META[c].label}
+                      {CATEGORY_META[c].dot} {CATEGORY_META[c].label}
                     </button>
                   );
                 })}
               </div>
-              <div><Label>Tipo de comportamiento</Label>
+              <div><Label>Tipo de observación</Label>
                 <SearchableSelect options={BEHAVIOR_CATEGORIES.map((b) => ({ value: b, label: b }))}
                   value={form.behavior_category ?? ""} onValueChange={(v) => setField("behavior_category", v)}
                   placeholder="Seleccionar tipo" /></div>
             </section>
 
+            {/* 5. Peligro y riesgo (solo mejora / inseguro) */}
+            {form.category !== "comportamiento_seguro" && (
+              <section className="space-y-3">
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">5. Peligro y riesgo identificado</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div><Label>Peligro identificado</Label>
+                    <SearchableSelect options={HAZARDS.map((h) => ({ value: h, label: h }))}
+                      value={form.hazard ?? ""} onValueChange={(v) => setField("hazard", v)}
+                      placeholder="Seleccionar peligro" /></div>
+                  <div><Label>Riesgo asociado</Label>
+                    <Input maxLength={200} list="risk-suggestions" value={form.associated_risk ?? ""}
+                      onChange={(e) => setField("associated_risk", e.target.value)}
+                      placeholder="Selecciona o escribe el riesgo" />
+                    <datalist id="risk-suggestions">
+                      {RISK_SUGGESTIONS.map((r) => <option key={r} value={r} />)}
+                    </datalist></div>
+                </div>
+                <div>
+                  <Label>Nivel de riesgo *</Label>
+                  <div className="grid grid-cols-4 gap-2 mt-2">
+                    {(Object.keys(RISK_META) as RiskLevel[]).map((r) => (
+                      <button key={r} type="button" onClick={() => setField("risk_level", r)}
+                        className={`rounded-md border py-2 text-xs sm:text-sm transition-colors ${form.risk_level === r ? "border-foreground bg-muted font-medium" : "border-border hover:bg-muted/50"}`}>
+                        {RISK_META[r].label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            )}
+
             {/* Descripción y factores */}
             <section className="space-y-3">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">4. Descripción y factores</h3>
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                {form.category === "comportamiento_seguro" ? "5. Descripción de la buena práctica" : "6. Descripción y factores"}
+              </h3>
               <div><Label>Descripción detallada *</Label>
                 <Textarea rows={4} maxLength={4000} value={form.description ?? ""}
                   onChange={(e) => setField("description", e.target.value)}
-                  placeholder="Describe qué observaste, dónde y en qué contexto" />
+                  placeholder={form.category === "comportamiento_seguro"
+                    ? "Describe la buena práctica observada"
+                    : "Describe qué observaste, dónde y en qué contexto"} />
                 <p className="text-xs text-muted-foreground mt-1">{(form.description ?? "").length}/4000</p></div>
-              <div>
-                <Label>Factores contribuyentes</Label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
-                  {CONTRIBUTING_FACTORS.map((f) => (
-                    <label key={f} className="flex items-center gap-2 text-sm">
-                      <Checkbox checked={(form.contributing_factors ?? []).includes(f)} onCheckedChange={() => toggleFactor(f)} />
-                      {f}
-                    </label>
-                  ))}
+              {form.category !== "comportamiento_seguro" && (
+                <div>
+                  <Label>Factores contribuyentes</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                    {CONTRIBUTING_FACTORS.map((f) => (
+                      <label key={f} className="flex items-center gap-2 text-sm">
+                        <Checkbox checked={(form.contributing_factors ?? []).includes(f)} onCheckedChange={() => toggleFactor(f)} />
+                        {f}
+                      </label>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </section>
 
-            {/* Riesgo */}
+            {/* Intervención realizada */}
             <section className="space-y-3">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">5. Riesgo asociado</h3>
-              <div><Label>Riesgo asociado</Label>
-                <Input maxLength={200} value={form.associated_risk ?? ""} onChange={(e) => setField("associated_risk", e.target.value)}
-                  placeholder="Ej. Caída a distinto nivel, corte con cuchillo" /></div>
-              <div>
-                <Label>Nivel de riesgo *</Label>
-                <div className="grid grid-cols-4 gap-2 mt-2">
-                  {(Object.keys(RISK_META) as RiskLevel[]).map((r) => (
-                    <button key={r} type="button" onClick={() => setField("risk_level", r)}
-                      className={`rounded-md border py-2 text-xs sm:text-sm transition-colors ${form.risk_level === r ? "border-foreground bg-muted font-medium" : "border-border hover:bg-muted/50"}`}>
-                      {RISK_META[r].label}
-                    </button>
-                  ))}
-                </div>
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                {form.category === "comportamiento_seguro" ? "6. Intervención realizada" : "7. Intervención realizada"}
+              </h3>
+              <p className="text-xs text-muted-foreground">¿Qué ocurrió durante el Momento Seguro? Puedes seleccionar varias opciones.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {INTERVENTIONS.map((iv) => (
+                  <label key={iv} className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={(form.intervention_options ?? []).includes(iv)}
+                      onCheckedChange={() => {
+                        const cur = form.intervention_options ?? [];
+                        setField("intervention_options", cur.includes(iv) ? cur.filter((x) => x !== iv) : [...cur, iv]);
+                      }} />
+                    {iv}
+                  </label>
+                ))}
               </div>
+              <div><Label>Comentarios de la intervención</Label>
+                <Input maxLength={300} value={form.intervention_comments ?? ""}
+                  onChange={(e) => setField("intervention_comments", e.target.value)}
+                  placeholder="Comentario corto sobre la intervención" /></div>
             </section>
+
+            {/* Acción / seguimiento (solo mejora / inseguro) */}
+            {form.category !== "comportamiento_seguro" && (
+              <section className="space-y-3">
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">8. Acción / seguimiento</h3>
+                <div><Label>Acción requerida</Label>
+                  <Textarea rows={2} maxLength={1500} value={form.action_required ?? ""}
+                    onChange={(e) => setField("action_required", e.target.value)}
+                    placeholder="¿Qué acción se requiere para gestionar esta observación?" /></div>
+                <div><Label>Acción inmediata / intervención</Label>
+                  <Textarea rows={2} maxLength={1500} value={form.immediate_actions ?? ""}
+                    onChange={(e) => setField("immediate_actions", e.target.value)} /></div>
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox checked={!!form.followup_required} onCheckedChange={(v) => setField("followup_required", !!v)} />
+                  Requiere seguimiento
+                </label>
+                {form.followup_required && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div><Label>Responsable *</Label>
+                      <SearchableSelect options={profileOptions} value={form.followup_responsible_user_id ?? ""}
+                        onValueChange={(v) => setField("followup_responsible_user_id", v)} placeholder="Seleccionar responsable" /></div>
+                    <div><Label>Fecha compromiso *</Label>
+                      <Input type="date" value={form.followup_due_date ?? ""} onChange={(e) => setField("followup_due_date", e.target.value)} /></div>
+                    <div className="sm:col-span-2"><Label>Notas de seguimiento</Label>
+                      <Textarea rows={2} maxLength={1500} value={form.followup_notes ?? ""} onChange={(e) => setField("followup_notes", e.target.value)} /></div>
+                  </div>
+                )}
+                <div><Label>Estado</Label>
+                  <SearchableSelect options={(Object.keys(STATUS_META) as Status[]).map((s) => ({ value: s, label: STATUS_META[s].label }))}
+                    value={form.status ?? "abierta"} onValueChange={(v) => setField("status", v)} placeholder="Estado" /></div>
+              </section>
+            )}
 
             {/* Evidencia */}
             <section className="space-y-3">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">6. Evidencia multimedia</h3>
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                {form.category === "comportamiento_seguro" ? "7. Evidencia (opcional)" : "9. Evidencia"}
+              </h3>
               <Input type="file" multiple accept="image/*,video/*,application/pdf"
                 onChange={(e) => handleUpload(e.target.files)} disabled={uploading} />
-              <p className="text-xs text-muted-foreground">Imágenes, video o PDF. Máximo 10 MB por archivo.</p>
+              <p className="text-xs text-muted-foreground">Fotografía, video o PDF relacionado con la observación. Máximo 10 MB por archivo. No es obligatoria.</p>
               {uploading && <p className="text-xs flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Subiendo...</p>}
               {!!(form.evidence_urls ?? []).length && (
                 <div className="flex flex-wrap gap-2">
@@ -1361,34 +1457,11 @@ export default function MomentoSeguroPage() {
               )}
             </section>
 
-            {/* Acciones y seguimiento */}
-            <section className="space-y-3">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">7. Acciones inmediatas y seguimiento</h3>
-              <div><Label>Acciones inmediatas</Label>
-                <Textarea rows={3} maxLength={1500} value={form.immediate_actions ?? ""} onChange={(e) => setField("immediate_actions", e.target.value)} /></div>
-              <label className="flex items-center gap-2 text-sm">
-                <Checkbox checked={!!form.followup_required} onCheckedChange={(v) => setField("followup_required", !!v)} />
-                Requiere seguimiento
-              </label>
-              {form.followup_required && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div><Label>Responsable *</Label>
-                    <SearchableSelect options={profileOptions} value={form.followup_responsible_user_id ?? ""}
-                      onValueChange={(v) => setField("followup_responsible_user_id", v)} placeholder="Seleccionar responsable" /></div>
-                  <div><Label>Fecha compromiso *</Label>
-                    <Input type="date" value={form.followup_due_date ?? ""} onChange={(e) => setField("followup_due_date", e.target.value)} /></div>
-                  <div className="sm:col-span-2"><Label>Notas de seguimiento</Label>
-                    <Textarea rows={2} maxLength={1500} value={form.followup_notes ?? ""} onChange={(e) => setField("followup_notes", e.target.value)} /></div>
-                </div>
-              )}
-              <div><Label>Estado</Label>
-                <SearchableSelect options={(Object.keys(STATUS_META) as Status[]).map((s) => ({ value: s, label: STATUS_META[s].label }))}
-                  value={form.status ?? "abierta"} onValueChange={(v) => setField("status", v)} placeholder="Estado" /></div>
-            </section>
-
             {/* Firmas */}
             <section className="space-y-3">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">8. Firmas digitales</h3>
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                {form.category === "comportamiento_seguro" ? "8. Firmas digitales" : "10. Firmas digitales"}
+              </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <SignaturePad label="Firma del observador" value={form.signature_observer ?? null}
                   onChange={(v) => setField("signature_observer", v)} />
