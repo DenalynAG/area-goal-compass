@@ -605,7 +605,7 @@ export default function MomentoSeguroPage() {
         const { error } = await (supabase as any)
           .from("safe_moment_observations").update(payload).eq("id", editing.id);
         if (error) throw error;
-        toast.success("Observación actualizada");
+        toast.success("Momento Seguro actualizado");
       } else {
         const { error } = await (supabase as any)
           .from("safe_moment_observations").insert({ ...payload, created_by: user?.id ?? null });
@@ -629,7 +629,7 @@ export default function MomentoSeguroPage() {
     const { error } = await (supabase as any)
       .from("safe_moment_observations").delete().eq("id", toDelete.id);
     if (error) { toast.error("No se pudo eliminar"); return; }
-    toast.success("Observación eliminada");
+    toast.success("Momento Seguro eliminado");
     qc.invalidateQueries({ queryKey: ["safe_moment_observations"] });
     qc.invalidateQueries({ queryKey: ["safe_moment_history"] });
     setToDelete(null);
@@ -669,7 +669,7 @@ export default function MomentoSeguroPage() {
             </div>
           </div>
           <Button onClick={openNew} className="w-full sm:w-auto rounded-xl">
-            <Plus className="h-4 w-4 mr-2" /> Nueva observación
+            <Plus className="h-4 w-4 mr-2" /> Nuevo Momento Seguro
           </Button>
         </div>
       </header>
@@ -729,14 +729,16 @@ export default function MomentoSeguroPage() {
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {[
-              { label: "Observaciones preventivas", value: indicators.total, icon: ClipboardList, hint: "Registradas" },
+              { label: "Momentos Seguros registrados", value: indicators.total, icon: ClipboardList, hint: "Registrados" },
               { label: "Comportamientos seguros", value: indicators.safe, icon: ShieldCheck, hint: `${indicators.safeIndex}% del total` },
               { label: "Oportunidades de mejora", value: indicators.improvement, icon: Lightbulb },
               { label: "Comportamientos inseguros", value: indicators.unsafe, icon: AlertTriangle },
               { label: "Observaciones del mes", value: indicators.monthCount, icon: CalendarDays },
-              { label: "Área con más observaciones", value: indicators.topAreaName, icon: Building2, hint: `${indicators.topAreaCount} registros`, small: true },
-              { label: "Área más segura", value: `${indicators.topSafePct}%`, icon: HeartHandshake, hint: indicators.topSafeName },
+              { label: "Área con mayor participación", value: indicators.topAreaName, icon: Building2, hint: `${indicators.topAreaCount} registros`, small: true },
+              { label: "% de comportamientos seguros", value: `${indicators.safeIndex}%`, icon: HeartHandshake, hint: "Del total registrado" },
               { label: "Seguimientos pendientes", value: indicators.pendingFollowups, icon: Timer, hint: `${indicators.overdue} vencidos` },
+              { label: "Seguimientos vencidos", value: indicators.overdue, icon: Timer, hint: "Fecha compromiso superada" },
+              { label: "Oportunidades cerradas", value: indicators.improvementsClosed, icon: CheckCircle2, hint: `${indicators.improvementClosureRate}% de cierre` },
             ].map((k) => {
               const Icon = k.icon;
               return (
@@ -895,8 +897,8 @@ export default function MomentoSeguroPage() {
                 { label: "Oportunidades de mejora", value: indicators.improvement, hint: "Prácticas mejorables detectadas", icon: Lightbulb, tint: "bg-warning/15 text-warning" },
                 { label: "Comportamientos inseguros", value: indicators.unsafe, hint: `${filtered.filter((o) => o.risk_level === "critico").length} de riesgo crítico`, icon: ShieldCheck, tint: "bg-destructive/10 text-destructive" },
                 { label: "Observaciones del mes", value: indicators.monthCount, hint: "Registradas en el mes en curso", icon: ClipboardList, tint: "bg-primary/10 text-primary" },
-                { label: indicators.topAreaName, value: null, bigLabel: true, hint: `${indicators.topAreaCount} registros`, icon: MapPin, tint: "bg-primary/10 text-primary", caption: "Área con más observaciones" },
-                { label: indicators.topSafeName, value: null, bigLabel: true, hint: `${indicators.topSafePct}% de comportamientos seguros`, icon: Sparkles, tint: "bg-success/15 text-success", caption: "Área más segura" },
+                { label: indicators.topAreaName, value: null, bigLabel: true, hint: `${indicators.topAreaCount} registros`, icon: MapPin, tint: "bg-primary/10 text-primary", caption: "Área con mayor participación" },
+                { label: indicators.topSafeName, value: null, bigLabel: true, hint: `${indicators.topSafePct}% de comportamientos seguros`, icon: Sparkles, tint: "bg-success/15 text-success", caption: "Área con mayor índice seguro" },
                 { label: "Cumplimiento de acciones", value: `${indicators.closureRate}%`, hint: "Acciones inmediatas completadas", icon: TrendingUp, tint: "bg-warning/15 text-warning" },
                 { label: "Registros cerrados", value: indicators.closed, hint: `${indicators.open} en gestión`, icon: BarChart3, tint: "bg-primary/10 text-primary" },
               ].map((k: any) => (
@@ -936,7 +938,7 @@ export default function MomentoSeguroPage() {
                   <div className="h-2 rounded-full bg-muted overflow-hidden">
                     <div className="h-full bg-success rounded-full transition-all" style={{ width: `${Math.min(100, (indicators.monthCount / MONTH_GOAL) * 100)}%` }} />
                   </div>
-                  <p className="text-xs text-muted-foreground">Faltan {Math.max(0, MONTH_GOAL - indicators.monthCount)} observaciones preventivas para la meta.</p>
+                  <p className="text-xs text-muted-foreground">Faltan {Math.max(0, MONTH_GOAL - indicators.monthCount)} Momentos Seguros para la meta.</p>
                   <div className="space-y-3 pt-2 border-t border-border">
                     <div>
                       <div className="flex justify-between text-xs mb-1"><span className="text-muted-foreground">Índice de seguridad</span><span className="font-medium">{indicators.safeIndex}%</span></div>
@@ -991,7 +993,7 @@ export default function MomentoSeguroPage() {
             <h3 className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">Evolución</h3>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <Card className="rounded-2xl shadow-sm">
-                <CardHeader className="pb-0"><CardTitle className="text-sm">Observaciones preventivas por mes</CardTitle></CardHeader>
+                <CardHeader className="pb-0"><CardTitle className="text-sm">Momentos Seguros por mes</CardTitle></CardHeader>
                 <CardContent className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={evolutionData}>
@@ -1202,7 +1204,7 @@ export default function MomentoSeguroPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
               <img src={misionLogo.url} alt="" aria-hidden className="h-8 w-8 rounded-lg object-contain" />
-              {editing ? "Editar observación preventiva" : "Nueva observación preventiva"}
+              {editing ? "Editar Momento Seguro" : "Nuevo Momento Seguro"}
             </DialogTitle>
           </DialogHeader>
 
@@ -1380,7 +1382,7 @@ export default function MomentoSeguroPage() {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
             <Button onClick={save} disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {editing ? "Guardar cambios" : "Registrar observación"}
+              {editing ? "Guardar cambios" : "Registrar Momento Seguro"}
             </Button>
           </DialogFooter>
         </DialogContent>
