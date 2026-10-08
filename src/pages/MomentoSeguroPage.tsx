@@ -1611,6 +1611,93 @@ export default function MomentoSeguroPage() {
         </DialogContent>
       </Dialog>
 
+      {/* DETAIL DIALOG */}
+      <Dialog open={!!detail} onOpenChange={(o) => { if (!o) setDetail(null); }}>
+        <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{detail ? `${codeOf.get(detail.id)} · Momento Seguro` : ""}</DialogTitle>
+            <DialogDescription>Detalle completo del registro</DialogDescription>
+          </DialogHeader>
+          {detail && (
+            <div className="space-y-4 text-sm">
+              <div className="flex flex-wrap gap-2">
+                <Badge className={`${CATEGORY_META[detail.category as Category].chip} border-0`}>
+                  {CATEGORY_META[detail.category as Category].label}
+                </Badge>
+                <Badge variant="outline">{obsTypeLabel(detail.observation_type)}</Badge>
+                {hasAction(detail) && <Badge className={`${actionStatus(detail).chip} border-0`}>{actionStatus(detail).label}</Badge>}
+                <Badge variant="outline">{STATUS_META[detail.status as Status].label}</Badge>
+                {detail.is_ambassador && (
+                  <Badge className="bg-[#FFF3E0] text-[#B26A00] border-0"><Award className="h-3 w-3 mr-1" />Embajador Misión CerOSH</Badge>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+                <p><span className="text-muted-foreground">Fecha:</span> {detail.observation_date}{detail.observation_time ? ` ${detail.observation_time.slice(0, 5)}` : ""}</p>
+                <p><span className="text-muted-foreground">Área:</span> {areaLabel(detail)}</p>
+                {detail.process && <p><span className="text-muted-foreground">Proceso:</span> {detail.process}</p>}
+                {detail.location && <p><span className="text-muted-foreground">Lugar:</span> {detail.location}</p>}
+                {detail.activity_observed && <p className="sm:col-span-2"><span className="text-muted-foreground">Actividad observada:</span> {detail.activity_observed}</p>}
+                <p><span className="text-muted-foreground">Observador:</span> {detail.observer_name ?? "—"}</p>
+                <p><span className="text-muted-foreground">Colaborador:</span> {detail.observed_name ?? "—"}{detail.observed_position ? ` (${detail.observed_position})` : ""}</p>
+                {detail.behavior_category && <p className="sm:col-span-2"><span className="text-muted-foreground">Tipo de observación:</span> {detail.behavior_category}</p>}
+                {detail.hazard && <p><span className="text-muted-foreground">Peligro:</span> {detail.hazard}</p>}
+                {detail.associated_risk && <p><span className="text-muted-foreground">Riesgo:</span> {detail.associated_risk} ({RISK_META[detail.risk_level as RiskLevel].label})</p>}
+              </div>
+
+              <div>
+                <p className="text-muted-foreground mb-1">Descripción</p>
+                <p className="whitespace-pre-wrap rounded-lg bg-muted/50 p-3">{detail.description}</p>
+              </div>
+
+              {!!detail.contributing_factors?.length && (
+                <div><p className="text-muted-foreground mb-1">Factores contribuyentes</p>
+                  <p>{detail.contributing_factors.join(" · ")}</p></div>
+              )}
+              {!!detail.intervention_options?.length && (
+                <div><p className="text-muted-foreground mb-1">Intervención realizada</p>
+                  <p>{detail.intervention_options.join(" · ")}</p>
+                  {detail.intervention_comments && <p className="text-xs text-muted-foreground mt-1">{detail.intervention_comments}</p>}</div>
+              )}
+              {detail.immediate_actions && (
+                <div><p className="text-muted-foreground mb-1">Acción inmediata</p>
+                  <p className="whitespace-pre-wrap">{detail.immediate_actions}</p></div>
+              )}
+              {detail.action_required && (
+                <div><p className="text-muted-foreground mb-1">Acción requerida</p>
+                  <p className="whitespace-pre-wrap">{detail.action_required}</p></div>
+              )}
+              {detail.followup_required && (
+                <div><p className="text-muted-foreground mb-1">Seguimiento</p>
+                  <p>Responsable: {profileName(detail.followup_responsible_user_id)} · Compromiso: {detail.followup_due_date ?? "—"}</p>
+                  {detail.followup_notes && <p className="text-xs text-muted-foreground mt-1">{detail.followup_notes}</p>}</div>
+              )}
+              {!!detail.evidence_urls?.length && (
+                <div><p className="text-muted-foreground mb-1">Evidencias</p>
+                  <EvidencePanel paths={detail.evidence_urls} canDelete={false} onDelete={() => {}} /></div>
+              )}
+              {(detail.signature_observer || detail.signature_observed) && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {detail.signature_observer && (
+                    <div><p className="text-muted-foreground mb-1">Firma del observador</p>
+                      <img src={detail.signature_observer} alt="Firma observador" className="h-20 rounded-md border border-border bg-white" /></div>
+                  )}
+                  {detail.signature_observed && (
+                    <div><p className="text-muted-foreground mb-1">Firma del colaborador</p>
+                      <img src={detail.signature_observed} alt="Firma colaborador" className="h-20 rounded-md border border-border bg-white" /></div>
+                  )}
+                </div>
+              )}
+              {canEdit(detail) && (
+                <div className="flex justify-end">
+                  <Button size="sm" onClick={() => { openEdit(detail); }}>Actualizar seguimiento</Button>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
