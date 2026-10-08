@@ -540,10 +540,11 @@ export default function MomentoSeguroPage() {
   };
 
   const validate = () => {
-    if (!form.observation_date) return "La fecha de observación es obligatoria";
+    if (!form.observation_date) return "La fecha es obligatoria";
     if (!form.hotel_area) return "Selecciona el área del hotel";
     if (!form.observed_name?.trim() && !form.observed_user_id) return "Indica el colaborador observado";
-    if (!form.category) return "Selecciona la categoría del comportamiento";
+    if (!form.observation_type) return "Indica qué observaste (comportamiento, condición o ambos)";
+    if (!form.category) return "Selecciona el resultado de la observación";
     if (!form.description?.trim() || form.description.trim().length < 15)
       return "La descripción debe tener al menos 15 caracteres";
     if (!form.risk_level) return "Selecciona el nivel de riesgo";
