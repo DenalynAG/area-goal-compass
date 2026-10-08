@@ -2234,6 +2234,8 @@ export type Database = {
       }
       safe_moment_observations: {
         Row: {
+          action_required: string | null
+          activity_observed: string | null
           ambassador_at: string | null
           area_id: string | null
           associated_risk: string | null
@@ -2249,13 +2251,17 @@ export type Database = {
           followup_notes: string | null
           followup_required: boolean
           followup_responsible_user_id: string | null
+          hazard: string | null
           hotel_area: string | null
           id: string
           immediate_actions: string | null
+          intervention_comments: string | null
+          intervention_options: string[]
           is_ambassador: boolean
           location: string | null
           observation_date: string
           observation_time: string | null
+          observation_type: string | null
           observed_document: string | null
           observed_name: string | null
           observed_position: string | null
@@ -2271,6 +2277,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          action_required?: string | null
+          activity_observed?: string | null
           ambassador_at?: string | null
           area_id?: string | null
           associated_risk?: string | null
@@ -2286,13 +2294,17 @@ export type Database = {
           followup_notes?: string | null
           followup_required?: boolean
           followup_responsible_user_id?: string | null
+          hazard?: string | null
           hotel_area?: string | null
           id?: string
           immediate_actions?: string | null
+          intervention_comments?: string | null
+          intervention_options?: string[]
           is_ambassador?: boolean
           location?: string | null
           observation_date?: string
           observation_time?: string | null
+          observation_type?: string | null
           observed_document?: string | null
           observed_name?: string | null
           observed_position?: string | null
@@ -2308,6 +2320,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          action_required?: string | null
+          activity_observed?: string | null
           ambassador_at?: string | null
           area_id?: string | null
           associated_risk?: string | null
@@ -2323,13 +2337,17 @@ export type Database = {
           followup_notes?: string | null
           followup_required?: boolean
           followup_responsible_user_id?: string | null
+          hazard?: string | null
           hotel_area?: string | null
           id?: string
           immediate_actions?: string | null
+          intervention_comments?: string | null
+          intervention_options?: string[]
           is_ambassador?: boolean
           location?: string | null
           observation_date?: string
           observation_time?: string | null
+          observation_type?: string | null
           observed_document?: string | null
           observed_name?: string | null
           observed_position?: string | null
