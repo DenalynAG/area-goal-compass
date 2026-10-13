@@ -248,7 +248,7 @@ export default function AppSidebar() {
         (supabase.from('assessment_evaluations' as any) as any).select('id, completed_at, evaluator_user_id').is('completed_at', null),
         (supabase.from('assessment_competency_scores' as any) as any).select('evaluation_id, evaluator_user_id'),
       ]);
-      const byEval = new Map<string, Set<string>>();
+      const byEval = new globalThis.Map<string, Set<string>>();
       ((evs ?? []) as any[]).forEach((e) => {
         const s = new Set<string>();
         if (e.evaluator_user_id) s.add(e.evaluator_user_id);
@@ -262,7 +262,7 @@ export default function AppSidebar() {
   });
   // Per-area pending count. "Mis Assessment" lives in the evaluator's own area.
   const assessmentCountByArea = useMemo(() => {
-    const counts = new Map<string, number>();
+    const counts = new globalThis.Map<string, number>();
     const areasOf = (uid: string) => memberships.filter((m) => m.user_id === uid).map((m) => m.area_id);
     assessmentEvalRows.forEach((row) => {
       const evaluators = isSuperAdmin ? row.evaluators : row.evaluators.filter((u) => u === user?.id);
