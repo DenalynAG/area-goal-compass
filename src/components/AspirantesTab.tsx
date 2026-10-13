@@ -257,6 +257,11 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
       if (editing) {
         const { error } = await supabase.from('assessment_candidates' as any).update(payload).eq('id', editing.id);
         if (error) throw error;
+        if (payload.evaluator_user_id) {
+          await supabase.from('assessment_evaluations' as any)
+            .update({ evaluator_user_id: payload.evaluator_user_id } as any)
+            .eq('candidate_id', editing.id).is('completed_at', null);
+        }
       } else {
         const { data, error } = await supabase
           .from('assessment_candidates' as any)
