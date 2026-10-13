@@ -297,16 +297,19 @@ export default function AppSidebar() {
 
   const navWithAssessments = useMemo(() => {
     if (!myAssessmentAreaIds.length) return filteredNavItems;
+    // Show "Mis Assessments" only inside the evaluator's own area(s), not the aspirants' areas
+    const ownAreaIds = memberships.filter((m) => m.user_id === user?.id).map((m) => m.area_id);
+    if (!ownAreaIds.length) return filteredNavItems;
     const norm = (t: string) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
     return filteredNavItems.map((item) => {
       const areaNameForRoute = AREA_ROUTE_TO_NAME[item.to];
       if (!item.children || !areaNameForRoute) return item;
       const area = areas.find((a) => norm(a.name) === norm(areaNameForRoute));
-      if (!area || !myAssessmentAreaIds.includes(area.id)) return item;
+      if (!area || !ownAreaIds.includes(area.id)) return item;
       const child = { to: `/mis-assessments?area=${area.id}`, icon: ClipboardCheck, label: "Mis Assessments" } as any;
       return { ...item, children: [...item.children, child] };
     });
-  }, [filteredNavItems, myAssessmentAreaIds, areas]);
+  }, [filteredNavItems, myAssessmentAreaIds, areas, memberships, user?.id]);
 
   // Close mobile sidebar on route change
   useEffect(() => {
