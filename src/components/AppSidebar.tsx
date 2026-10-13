@@ -238,19 +238,25 @@ export default function AppSidebar() {
   const visibleMenuKeys = useVisibleMenuKeys();
   const { data: areas = [] } = useAreas();
   const { data: memberships = [] } = useMemberships();
-  const { data: myAssessmentAreaIds = [] } = useQuery({
+  const { data: myAssessmentInfo = { total: 0, pending: 0 } } = useQuery({
     queryKey: ['my_assessment_areas', user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
       const { data: sc } = await (supabase.from('assessment_competency_scores' as any) as any)
         .select('evaluation_id').eq('evaluator_user_id', user!.id);
       const ids = Array.from(new Set(((sc ?? []) as any[]).map((r) => r.evaluation_id)));
-      let q = (supabase.from('assessment_evaluations' as any) as any).select('area_id');
+      let q = (supabase.from('assessment_evaluations' as any) as any).select('id, completed_at');
       q = ids.length ? q.or(`evaluator_user_id.eq.${user!.id},id.in.(${ids.join(',')})`) : q.eq('evaluator_user_id', user!.id);
       const { data } = await q;
-      return Array.from(new Set(((data ?? []) as any[]).map((r) => r.area_id).filter(Boolean))) as string[];
+      const rows = (data ?? []) as any[];
+      return { total: rows.length, pending: rows.filter((r) => !r.completed_at).length };
     },
   });
+  const myAssessmentAreaIds = useMemo(() => {
+    const isLeader = roles.some((r: any) => ['lider_subarea', 'gestor_area', 'admin_area'].includes(r));
+    if (!myAssessmentInfo.total && !isLeader) return [] as string[];
+    return memberships.filter((m) => m.user_id === user?.id).map((m) => m.area_id);
+  }, [myAssessmentInfo.total, roles, memberships, user?.id]);
 
   // Determine which area routes the user is allowed to see
   const allowedAreaRoutes = useMemo(() => {
