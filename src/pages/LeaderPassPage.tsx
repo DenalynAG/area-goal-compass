@@ -11,6 +11,8 @@ import { toast } from 'sonner';
 import { CheckCircle2, Circle, ClipboardList, MessageSquare, Save, Paperclip, Filter, ChevronDown, ChevronUp, Info, ShieldCheck, Download } from 'lucide-react';
 import EvidencePanel from '@/components/EvidencePanel';
 import LeaderPassImportDialog from '@/components/LeaderPassImportDialog';
+import LeaderPassDashboard from '@/components/LeaderPassDashboard';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Activities info is now loaded dynamically from leader_pass_activities table
 
@@ -412,6 +414,12 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
         )}
       </div>
 
+      <Tabs defaultValue="seguimiento" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="seguimiento">Seguimiento</TabsTrigger>
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+        </TabsList>
+        <TabsContent value="seguimiento" className="space-y-6">
       {/* Filters */}
       {canViewOthers && (
         <div className="flex items-center gap-3 flex-wrap bg-card border rounded-xl p-4">
@@ -601,6 +609,18 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
       {activities.length === 0 && (
         <div className="text-center py-12 text-muted-foreground">No hay actividades definidas</div>
       )}
+        </TabsContent>
+        <TabsContent value="dashboard">
+          <LeaderPassDashboard
+            period={selectedPeriod}
+            periodLabel={formatPeriod(selectedPeriod)}
+            activities={activities}
+            areas={areas}
+            subareas={subareas}
+            allowedUserIds={isSuperAdmin ? null : new Set(baseProfiles.map(p => p.id))}
+          />
+        </TabsContent>
+      </Tabs>
 
       {/* Notes dialog */}
       <Dialog open={!!notesDialog} onOpenChange={open => { if (!open) setNotesDialog(null); }}>
