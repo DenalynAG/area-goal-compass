@@ -84,7 +84,7 @@ export default {
   				DEFAULT: 'hsl(var(--card))',
   				foreground: 'hsl(var(--card-foreground))'
   			},
-    			ignfo: {
+    			info: {
     				DEFAULT: 'hsl(var(--info))',
     				foreground: 'hsl(var(--info-foreground))'
     			},
