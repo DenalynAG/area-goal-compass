@@ -1,5 +1,5 @@
 import { useSearchParams } from 'react-router-dom';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -133,6 +133,9 @@ export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { eva
   const [formScores, setFormScores] = useState<Record<string, number | null>>({});
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState(evaluatorMode ? 'planilla' : 'aspirantes');
+  useEffect(() => {
+    if (evaluatorMode && activeTab !== 'planilla') setActiveTab('planilla');
+  }, [evaluatorMode, activeTab]);
 
   // Competency manager state
   const [compOpen, setCompOpen] = useState(false);
@@ -864,13 +867,17 @@ export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { eva
           </Card>
         </TabsContent>
 
-        <TabsContent value="candidatos">
-          <CandidatosTab />
-        </TabsContent>
+        {!evaluatorMode && (
+          <TabsContent value="candidatos">
+            <CandidatosTab />
+          </TabsContent>
+        )}
 
-        <TabsContent value="aspirantes">
-          <AspirantesTab onAssessmentStarted={() => setActiveTab('planilla')} />
-        </TabsContent>
+        {!evaluatorMode && (
+          <TabsContent value="aspirantes">
+            <AspirantesTab onAssessmentStarted={() => setActiveTab('planilla')} />
+          </TabsContent>
+        )}
 
         <TabsContent value="historico" className="space-y-3">
           {historyGroups.length === 0 ? (
