@@ -265,7 +265,7 @@ export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { eva
       );
     }
     return r;
-  }, [rows, filterArea, search, evaluatorMode, compScores, user?.id, areaParam]);
+  }, [rows, filterArea, search, evaluatorMode, compScores, user?.id, areaParam, memberships, isSuperAdmin]);
 
   // Competencies shown as rows in a grid: union of those applicable to its aspirants
   const compsForRows = (rowsIn: Assessment[]) => {
