@@ -147,14 +147,12 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
 
   const activeComps = useMemo(() => competencies.filter(c => c.is_active), [competencies]);
 
-  // Evaluators: leaders / area managers / area admins
+  // Evaluators: any active user can be assigned as evaluator (not restricted by role/cargo)
   const evaluatorOptions = useMemo(() => {
-    const allowed = new Set(['admin_area', 'gestor_area', 'lider_subarea', 'super_admin']);
-    const ids = new Set(userRoles.filter((r: any) => allowed.has(r.role)).map((r: any) => r.user_id));
     return profiles
-      .filter((p: any) => ids.has(p.id))
+      .filter((p: any) => p.is_active !== false)
       .map((p: any) => ({ value: p.id, label: `${p.name}${p.position ? ` · ${p.position}` : ''}` }));
-  }, [profiles, userRoles]);
+  }, [profiles]);
 
   const areaName = (id: string | null) => areas.find(a => a.id === id)?.name ?? '—';
   const subareaName = (id: string | null) => subareas.find(s => s.id === id)?.name ?? '';
