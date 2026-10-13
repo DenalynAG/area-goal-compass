@@ -375,14 +375,14 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
             <div className="flex items-center gap-2 flex-wrap text-xs w-full lg:w-auto lg:ml-auto">
               <span className="hidden lg:block h-6 w-px bg-border shrink-0" />
               {areaLeaderName && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border font-medium bg-info/10 border-info/30">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border font-medium bg-info/20 border-info/45">
                   <span className="w-1.5 h-1.5 rounded-full bg-info shrink-0" />
                   <span className="text-muted-foreground">Responsable del área:</span>
                   <span className="font-bold text-foreground">{areaLeaderName}</span>
                 </span>
               )}
               {subareaLeaderName && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border font-medium bg-success/10 border-success/30">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border font-medium bg-success/20 border-success/45">
                   <span className="w-1.5 h-1.5 rounded-full bg-success shrink-0" />
                   <span className="text-muted-foreground">Responsable de la subárea:</span>
                   <span className="font-bold text-foreground">{subareaLeaderName}</span>
