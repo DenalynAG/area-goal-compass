@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAreas, useSubareas, usePositions, useProfiles } from '@/hooks/useSupabaseData';
+import { useAreas, useSubareas, usePositions, useProfiles, useMemberships } from '@/hooks/useSupabaseData';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -113,12 +113,14 @@ import { COMP_COLORS, compTint } from '@/lib/competencyColors';
 
 
 export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { evaluatorMode?: boolean } = {}) {
-  const { user } = useAuth();
+  const { user, roles } = useAuth();
+  const isSuperAdmin = (roles ?? []).includes('super_admin' as any);
   const qc = useQueryClient();
   const { data: areas = [] } = useAreas();
   const { data: subareas = [] } = useSubareas();
   const { data: positions = [] } = usePositions();
   const { data: profiles = [] } = useProfiles();
+  const { data: memberships = [] } = useMemberships();
   const evaluatorName = (id?: string | null) =>
     id ? (profiles.find(p => p.id === id)?.name ?? 'Sin asignar') : 'Sin asignar';
 
@@ -234,12 +236,26 @@ export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { eva
     );
   }, [positions, form.area_id, form.subarea_id]);
 
-  const isMine = (row: Assessment) =>
-    row.evaluator_user_id === user?.id ||
-    compScores.some(s => s.evaluation_id === row.id && s.evaluator_user_id === user?.id);
+  const evaluatorsOf = (row: Assessment) => {
+    const set = new Set<string>();
+    if (row.evaluator_user_id) set.add(row.evaluator_user_id);
+    compScores.forEach(s => { if (s.evaluation_id === row.id && s.evaluator_user_id) set.add(s.evaluator_user_id); });
+    return Array.from(set);
+  };
+  const isMine = (row: Assessment) => evaluatorsOf(row).includes(user?.id ?? '');
+  const isMemberOfArea = (uid: string, areaId: string) =>
+    memberships.some(m => m.user_id === uid && m.area_id === areaId);
+
+  // Evaluator mode: "Mis Assessment" lives in the evaluator's area.
+  // From an area link: leaders see their own; super admin sees all assessments evaluated by members of that area.
+  const evaluatorRowFilter = (row: Assessment) => {
+    const evs = evaluatorsOf(row);
+    if (isSuperAdmin && areaParam) return evs.some(u => isMemberOfArea(u, areaParam));
+    return evs.includes(user?.id ?? '');
+  };
 
   const filtered = useMemo(() => {
-    let r = evaluatorMode ? rows.filter(isMine) : rows;
+    let r = evaluatorMode ? rows.filter(evaluatorRowFilter) : rows;
     if (filterArea !== 'all') r = r.filter(x => x.area_id === filterArea);
     if (search.trim()) {
       const q = search.toLowerCase();
