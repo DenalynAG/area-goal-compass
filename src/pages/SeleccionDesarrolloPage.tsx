@@ -240,7 +240,6 @@ export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { eva
 
   const filtered = useMemo(() => {
     let r = evaluatorMode ? rows.filter(isMine) : rows;
-    if (evaluatorMode && areaParam) r = r.filter(x => x.area_id === areaParam);
     if (filterArea !== 'all') r = r.filter(x => x.area_id === filterArea);
     if (search.trim()) {
       const q = search.toLowerCase();
