@@ -864,13 +864,17 @@ export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { eva
           </Card>
         </TabsContent>
 
-        <TabsContent value="candidatos">
-          <CandidatosTab />
-        </TabsContent>
+        {!evaluatorMode && (
+          <TabsContent value="candidatos">
+            <CandidatosTab />
+          </TabsContent>
+        )}
 
-        <TabsContent value="aspirantes">
-          <AspirantesTab onAssessmentStarted={() => setActiveTab('planilla')} />
-        </TabsContent>
+        {!evaluatorMode && (
+          <TabsContent value="aspirantes">
+            <AspirantesTab onAssessmentStarted={() => setActiveTab('planilla')} />
+          </TabsContent>
+        )}
 
         <TabsContent value="historico" className="space-y-3">
           {historyGroups.length === 0 ? (
