@@ -15,6 +15,7 @@ type Evaluation = {
   position: string | null;
   weighted_score: number | null;
   evaluation_date: string;
+  is_selected?: boolean | null;
 };
 
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -110,7 +111,7 @@ export default function AssessmentDashboardTab() {
         </Select>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
         <Card className="p-4">
           <p className="text-xs text-muted-foreground">Assessments realizados</p>
           <p className="text-2xl font-bold">{rows.length}</p>
@@ -122,6 +123,10 @@ export default function AssessmentDashboardTab() {
         <Card className="p-4">
           <p className="text-xs text-muted-foreground">Nota ponderada promedio</p>
           <p className="text-2xl font-bold">{avgTotal !== null ? `${avgTotal}%` : '—'}</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-xs text-muted-foreground">Candidatos seleccionados</p>
+          <p className="text-2xl font-bold text-success">{rows.filter(r => r.is_selected).length}</p>
         </Card>
       </div>
 
