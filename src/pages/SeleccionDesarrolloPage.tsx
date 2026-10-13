@@ -15,7 +15,9 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Users, Pencil, Trash2, Search, SlidersHorizontal, ArrowUp, ArrowDown, Table, BarChart3, Eye, EyeOff, History, FileDown } from 'lucide-react';
+import { Users, Pencil, Trash2, Search, SlidersHorizontal, ArrowUp, ArrowDown, Table, BarChart3, Eye, EyeOff, History, FileDown, MessageSquare } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { InfoTip, FASTPOOL_INFO, SELECTED_INFO } from '@/components/InfoTip';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -37,6 +39,8 @@ type Assessment = {
   evaluation_date: string;
   created_by: string | null;
   is_fastpool?: boolean | null;
+  is_selected?: boolean | null;
+  completed_at?: string | null;
 };
 
 type Competency = {
@@ -56,6 +60,9 @@ type CompScore = {
   competency_id: string;
   score: number | null;
   evaluator_user_id?: string | null;
+  observation?: string | null;
+  observation_by?: string | null;
+  observation_at?: string | null;
 };
 
 const SCORE_OPTIONS = [
@@ -206,6 +213,8 @@ export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { eva
 
   const scoreOf = (evaluationId: string, competencyId: string) =>
     compScores.find(s => s.evaluation_id === evaluationId && s.competency_id === competencyId)?.score ?? null;
+  const scoreRowOf = (evaluationId: string, competencyId: string) =>
+    compScores.find(s => s.evaluation_id === evaluationId && s.competency_id === competencyId);
 
   const compEvaluatorOf = (evaluationId: string, competencyId: string) =>
     compScores.find(s => s.evaluation_id === evaluationId && s.competency_id === competencyId)?.evaluator_user_id ?? null;
@@ -278,7 +287,7 @@ export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { eva
       (row.candidate_id && x.id === row.candidate_id) ||
       norm(x.full_name) === norm(row.candidate_name),
     );
-    return c?.status === 'evaluado';
+    return c?.status === 'evaluado' || !!row.completed_at;
   };
 
   const activeGroups = useMemo(
@@ -349,6 +358,10 @@ export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { eva
       'FastPool',
       ...group.rows.map((r: Assessment) => (r.is_fastpool ? 'Sí' : 'No')),
     ]);
+    body.push([
+      'Candidato seleccionado',
+      ...group.rows.map((r: Assessment) => (r.is_selected ? 'Sí' : 'No')),
+    ]);
 
     autoTable(doc, {
       head,
@@ -379,22 +392,53 @@ export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { eva
     toast.success(value ? `${row.candidate_name} agregado a FastPool` : `${row.candidate_name} retirado de FastPool`);
   };
 
+  const candidateOfRow = (row: Assessment) =>
+    candidates.find(x => (row.candidate_id && x.id === row.candidate_id) || norm(x.full_name) === norm(row.candidate_name));
+
+  const toggleSelected = async (row: Assessment, value: boolean) => {
+    qc.setQueryData(['assessment_evaluations'], (old: Assessment[] | undefined) =>
+      (old ?? []).map(r => (r.id === row.id ? { ...r, is_selected: value } : r)),
+    );
+    const { error } = await (supabase.from('assessment_evaluations' as any) as any)
+      .update({ is_selected: value, selected_marked_at: value ? new Date().toISOString() : null })
+      .eq('id', row.id);
+    if (error) {
+      toast.error(error.message);
+      qc.invalidateQueries({ queryKey: ['assessment_evaluations'] });
+      return;
+    }
+    const cand = candidateOfRow(row);
+    if (cand) {
+      const newStatus = value ? 'seleccionado' : (row.completed_at ? 'evaluado' : 'en_evaluacion');
+      await (supabase.from('assessment_candidates' as any) as any).update({ status: newStatus }).eq('id', cand.id);
+      qc.invalidateQueries({ queryKey: ['assessment_candidates'] });
+    }
+    toast.success(value ? `${row.candidate_name} marcado como candidato seleccionado` : `${row.candidate_name} ya no está seleccionado`);
+  };
+
   const completeGroup = async (rowsIn: Assessment[], key: string) => {
-    const names = rowsIn.map(r => r.candidate_name);
-    const ids = rowsIn.map(r => r.candidate_id).filter(Boolean) as string[];
+    const names = rowsIn.filter(r => !r.is_selected).map(r => r.candidate_name);
+    const ids = rowsIn.filter(r => !r.is_selected).map(r => r.candidate_id).filter(Boolean) as string[];
     setCompleting(key);
     try {
+      await (supabase.from('assessment_evaluations' as any) as any)
+        .update({ completed_at: new Date().toISOString() }).in('id', rowsIn.map(r => r.id));
       // Actualizar por id y también por nombre (filas sin candidate_id)
       if (ids.length) {
         const { error } = await (supabase.from('assessment_candidates' as any) as any)
           .update({ status: 'evaluado' }).in('id', ids);
         if (error) throw error;
       }
-      const { error } = await (supabase.from('assessment_candidates' as any) as any)
-        .update({ status: 'evaluado' }).in('full_name', names);
-      if (error) throw error;
+      if (names.length) {
+        const { error } = await (supabase.from('assessment_candidates' as any) as any)
+          .update({ status: 'evaluado' }).in('full_name', names);
+        if (error) throw error;
+      }
 
       // Actualización optimista: limpiar la plantilla de inmediato y pasar a Histórico
+      qc.setQueryData(['assessment_evaluations'], (old: Assessment[] | undefined) =>
+        (old ?? []).map(r => (rowsIn.some(x => x.id === r.id) ? { ...r, completed_at: new Date().toISOString() } : r)),
+      );
       qc.setQueryData(['assessment_candidates'], (old: any[] | undefined) =>
         (old ?? []).map(c =>
           ids.includes(c.id) || names.some(n => norm(n) === norm(c.full_name))
@@ -601,6 +645,60 @@ export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { eva
     qc.invalidateQueries({ queryKey: ['assessment_competencies'] });
   };
 
+  const saveObservation = async (row: Assessment, competencyId: string, text: string) => {
+    const value = text.trim() || null;
+    const payload = { observation: value, observation_by: user?.id ?? null, observation_at: value ? new Date().toISOString() : null };
+    const existing = scoreRowOf(row.id, competencyId);
+    const { error } = existing
+      ? await (supabase.from('assessment_competency_scores' as any) as any)
+          .update(payload).eq('evaluation_id', row.id).eq('competency_id', competencyId)
+      : await (supabase.from('assessment_competency_scores' as any) as any)
+          .upsert({ evaluation_id: row.id, competency_id: competencyId, ...payload }, { onConflict: 'evaluation_id,competency_id' });
+    if (error) { toast.error(error.message); return false; }
+    toast.success(value ? 'Observación guardada' : 'Observación eliminada');
+    qc.invalidateQueries({ queryKey: ['assessment_competency_scores'] });
+    return true;
+  };
+
+  const ObservationButton = ({ row, competencyId }: { row: Assessment; competencyId: string }) => {
+    const current = scoreRowOf(row.id, competencyId)?.observation ?? '';
+    const [open, setOpen] = useState(false);
+    const [text, setText] = useState(current);
+    const [busy, setBusy] = useState(false);
+    return (
+      <Popover open={open} onOpenChange={o => { setOpen(o); if (o) setText(current); }}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            title={current ? 'Ver / editar observación' : 'Agregar observación'}
+            className={`shrink-0 p-0.5 rounded ${current ? 'text-primary bg-primary/15' : 'text-muted-foreground hover:bg-muted'}`}
+          >
+            <MessageSquare className="w-3.5 h-3.5" fill={current ? 'currentColor' : 'none'} />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-72 space-y-2 p-3">
+          <label className="text-xs font-semibold">Observación (opcional)</label>
+          <Textarea
+            rows={3}
+            value={text}
+            onChange={e => setText(e.target.value)}
+            placeholder="Ej.: En la dinámica grupal propuso una solución y coordinó al equipo"
+            className="text-xs"
+          />
+          <div className="flex justify-end gap-2">
+            <Button size="sm" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+            <Button size="sm" disabled={busy} onClick={async () => {
+              setBusy(true);
+              const ok = await saveObservation(row, competencyId, text);
+              setBusy(false);
+              if (ok) setOpen(false);
+            }}>Guardar</Button>
+          </div>
+        </PopoverContent>
+      </Popover>
+    );
+  };
+
   const ScoreCell = ({ row, competencyId, disabled }: { row: Assessment; competencyId: string; disabled?: boolean }) => {
     const val = scoreOf(row.id, competencyId);
     const opt = SCORE_OPTIONS.find(o => o.value === val);
@@ -638,9 +736,12 @@ export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { eva
           ))}
         </SelectContent>
       </Select>
-      <p className="text-[9px] leading-tight text-muted-foreground text-center truncate" title={evaluatorName(compEv)}>
-        {evaluatorName(compEv)}
-      </p>
+      <div className="flex items-center justify-center gap-1">
+        <p className="text-[9px] leading-tight text-muted-foreground text-center truncate" title={evaluatorName(compEv)}>
+          {evaluatorName(compEv)}
+        </p>
+        <ObservationButton row={row} competencyId={competencyId} />
+      </div>
       </div>
     );
   };
@@ -705,14 +806,15 @@ export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { eva
             value="fastpool"
             className="bg-success/10 text-success data-[state=active]:bg-success data-[state=active]:text-success-foreground"
           >
-            FastPool
+            FastPool<InfoTip text={FASTPOOL_INFO} />
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="fastpool" className="space-y-3">
           <Card className="p-0 overflow-hidden">
             <div className="px-4 py-3 border-b bg-muted/20">
-              <h3 className="text-base font-bold leading-tight">Candidatos FastPool</h3>
+              <h3 className="text-base font-bold leading-tight">Candidatos FastPool<InfoTip text={FASTPOOL_INFO} /></h3>
+              <p className="text-xs text-muted-foreground">{FASTPOOL_INFO}</p>
               <p className="text-xs text-muted-foreground">
                 Perfiles marcados como FastPool en la planilla de Assessment · {fastpoolRows.length} candidato(s)
               </p>
@@ -967,13 +1069,26 @@ export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { eva
                   </tr>
                   <tr className={evaluatorMode ? 'hidden' : 'bg-amber-500/5'}>
                     <td className="sticky left-0 z-20 bg-amber-500/10 px-3 py-2 md:px-4 md:py-3 border-r font-semibold text-xs md:text-sm shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
-                      Candidato FastPool
+                      Candidato FastPool<InfoTip text={FASTPOOL_INFO} />
                     </td>
                     {filtered.map(row => (
                       <td key={row.id} className="px-2 py-1.5 md:px-3 md:py-2 border-r text-center">
                         <Checkbox
                           checked={!!row.is_fastpool}
                           onCheckedChange={v => toggleFastpool(row, !!v)}
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                  <tr className={evaluatorMode ? 'hidden' : 'bg-success/5'}>
+                    <td className="sticky left-0 z-20 bg-success/10 px-3 py-2 md:px-4 md:py-3 border-r font-semibold text-xs md:text-sm shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)]">
+                      Candidato seleccionado<InfoTip text={SELECTED_INFO} />
+                    </td>
+                    {filtered.map(row => (
+                      <td key={row.id} className="px-2 py-1.5 md:px-3 md:py-2 border-r text-center">
+                        <Checkbox
+                          checked={!!row.is_selected}
+                          onCheckedChange={v => toggleSelected(row, !!v)}
                         />
                       </td>
                     ))}
@@ -1046,10 +1161,14 @@ export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { eva
                     <span className="text-xs text-muted-foreground">Nota ponderada</span>
                     {scoreBadge(row.weighted_score !== null ? Number(row.weighted_score) : null)}
                   </div>
-                  <label className="flex items-center justify-between gap-2 pt-1 border-t">
-                    <span className="text-xs font-semibold">Candidato FastPool</span>
+                  <div className="flex items-center justify-between gap-2 pt-1 border-t">
+                    <span className="text-xs font-semibold">Candidato FastPool<InfoTip text={FASTPOOL_INFO} /></span>
                     {!evaluatorMode && <Checkbox checked={!!row.is_fastpool} onCheckedChange={v => toggleFastpool(row, !!v)} />}
-                  </label>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold">Candidato seleccionado<InfoTip text={SELECTED_INFO} /></span>
+                    {!evaluatorMode && <Checkbox checked={!!row.is_selected} onCheckedChange={v => toggleSelected(row, !!v)} />}
+                  </div>
                   <p className="text-[10px] md:text-[11px] text-muted-foreground">Fecha: {row.evaluation_date}</p>
                 </div>
               ))}
@@ -1098,11 +1217,21 @@ export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { eva
                       {detailGroup.rows.map(row => {
                         const s = scoreOf(row.id, c.id);
                         const opt = SCORE_OPTIONS.find(o => o.value === s);
+                        const sc = scoreRowOf(row.id, c.id);
                         return (
-                          <td key={row.id} className="px-3 py-2 border-r">
+                          <td key={row.id} className="px-3 py-2 border-r align-top">
                             {opt
                               ? <span className={`inline-flex px-2 py-1 rounded-md border text-xs font-medium ${opt.color}`}>{opt.label}</span>
                               : <span className="text-xs text-muted-foreground">—</span>}
+                            {sc?.observation && (
+                              <p className="mt-1 text-[11px] text-muted-foreground leading-snug">
+                                <span className="font-semibold text-foreground">Observación:</span> {sc.observation}
+                                <span className="block text-[10px]">
+                                  {evaluatorName(sc.observation_by ?? sc.evaluator_user_id)}
+                                  {sc.observation_at ? ` · ${new Date(sc.observation_at).toLocaleDateString('es-CO')}` : ''}
+                                </span>
+                              </p>
+                            )}
                           </td>
                         );
                       })}
@@ -1113,6 +1242,22 @@ export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { eva
                     {detailGroup.rows.map(row => (
                       <td key={row.id} className="px-2 py-1.5 md:px-3 md:py-2 border-r">
                         {scoreBadge(row.weighted_score !== null ? Number(row.weighted_score) : null)}
+                      </td>
+                    ))}
+                  </tr>
+                  <tr>
+                    <td className="px-2 py-1.5 md:px-3 md:py-2 border-r text-xs font-semibold">Candidato FastPool<InfoTip text={FASTPOOL_INFO} /></td>
+                    {detailGroup.rows.map(row => (
+                      <td key={row.id} className="px-2 py-1.5 md:px-3 md:py-2 border-r text-xs">{row.is_fastpool ? 'Sí' : 'No'}</td>
+                    ))}
+                  </tr>
+                  <tr>
+                    <td className="px-2 py-1.5 md:px-3 md:py-2 border-r text-xs font-semibold">Candidato seleccionado<InfoTip text={SELECTED_INFO} /></td>
+                    {detailGroup.rows.map(row => (
+                      <td key={row.id} className="px-2 py-1.5 md:px-3 md:py-2 border-r text-xs">
+                        {row.is_selected
+                          ? <span className="inline-flex px-2 py-0.5 rounded-md text-[11px] font-semibold bg-success text-success-foreground">Seleccionado</span>
+                          : 'No'}
                       </td>
                     ))}
                   </tr>
@@ -1382,8 +1527,10 @@ export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { eva
       <AlertDialog open={!!deleteId} onOpenChange={o => !o && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar evaluación?</AlertDialogTitle>
-            <AlertDialogDescription>Esta acción no se puede deshacer.</AlertDialogDescription>
+            <AlertDialogTitle>Eliminar aspirante</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Seguro que deseas eliminar a {rows.find(r => r.id === deleteId)?.candidate_name ?? 'este aspirante'}? Esta acción no se puede deshacer.
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>

@@ -50,6 +50,7 @@ const STATUSES = [
   { value: 'pendiente', label: 'Pendiente', cls: 'bg-sky-500 text-white border border-sky-600' },
   { value: 'en_evaluacion', label: 'En evaluación', cls: 'bg-amber-400 text-amber-950 border border-amber-500' },
   { value: 'evaluado', label: 'Evaluado', cls: 'bg-emerald-500 text-white border border-emerald-600' },
+  { value: 'seleccionado', label: 'Candidato seleccionado', cls: 'bg-green-700 text-white border border-green-800' },
   { value: 'descartado', label: 'Descartado', cls: 'bg-red-500 text-white border border-red-600' },
 ];
 
@@ -839,9 +840,9 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
       <AlertDialog open={!!deleteId} onOpenChange={o => !o && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar aspirante?</AlertDialogTitle>
+            <AlertDialogTitle>Eliminar aspirante</AlertDialogTitle>
             <AlertDialogDescription>
-              Se eliminará el registro y las competencias asignadas. Esta acción no se puede deshacer.
+              ¿Seguro que deseas eliminar a {candidates.find(c => c.id === deleteId)?.full_name ?? 'este aspirante'}? Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
