@@ -393,22 +393,48 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
         </div>
       )}
 
-      {/* Progress summary */}
-      <div className="bg-card border rounded-xl p-5">
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <p className="text-sm font-semibold">{getProfileName(profiles, targetUserId)}</p>
-            <p className="text-xs text-muted-foreground">{formatPeriod(selectedPeriod)} · {completedCount} de {activities.length} actividades</p>
+      {/* Progress summary + HeadCount + % Part */}
+      {(() => {
+        const activeIds = new Set(profiles.filter((p: any) => p.is_active !== false).map((p: any) => p.id));
+        const ledSubs = new Set(subareas.filter(s => s.leader_user_id === targetUserId).map(s => s.id));
+        const ledAreas = new Set(areas.filter(a => a.leader_user_id === targetUserId).map(a => a.id));
+        const team = new Set<string>();
+        const all = new Set<string>();
+        memberships.forEach(m => {
+          if (!activeIds.has(m.user_id)) return;
+          all.add(m.user_id);
+          if (m.user_id === targetUserId) return;
+          if (ledAreas.has(m.area_id) || (m.subarea_id && ledSubs.has(m.subarea_id))) team.add(m.user_id);
+        });
+        const headCount = team.size;
+        const part = all.size ? Math.round((headCount / all.size) * 100) : 0;
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-4">
+            <div className="bg-card border rounded-xl p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <p className="text-sm font-semibold">{getProfileName(profiles, targetUserId)}</p>
+                  <p className="text-xs text-muted-foreground">{formatPeriod(selectedPeriod)} · {completedCount} de {activities.length} actividades</p>
+                </div>
+                <span className="text-2xl font-bold text-primary">{progress}%</span>
+              </div>
+              <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
+                <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
+              </div>
+            </div>
+            <div className="bg-card border rounded-xl p-5 md:min-w-[160px] flex flex-col justify-center">
+              <p className="text-xs text-muted-foreground uppercase tracking-wide">HeadCount</p>
+              <p className="text-3xl font-bold text-foreground">{headCount}</p>
+              <p className="text-xs text-muted-foreground">colaboradores a cargo</p>
+            </div>
+            <div className="bg-card border rounded-xl p-5 md:min-w-[160px] flex flex-col justify-center">
+              <p className="text-xs text-muted-foreground uppercase tracking-wide">% Part.</p>
+              <p className="text-3xl font-bold text-foreground">{part}%</p>
+              <p className="text-xs text-muted-foreground">de {all.size} colaboradores</p>
+            </div>
           </div>
-          <span className="text-2xl font-bold text-primary">{progress}%</span>
-        </div>
-        <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
-          <div
-            className="h-full bg-primary rounded-full transition-all duration-500"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      </div>
+        );
+      })()}
 
       {/* Activities grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
