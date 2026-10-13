@@ -81,7 +81,6 @@ export default function AspirantesTab({ onAssessmentStarted }: { onAssessmentSta
   const { data: subareas = [] } = useSubareas();
   const { data: positions = [] } = usePositions();
   const { data: profiles = [] } = useProfiles();
-  const { data: userRoles = [] } = useUserRoles();
   const { data: talentPool = [] } = useTalentCandidates();
   const pickTalent = (id: string) => {
     const t = talentPool.find(x => x.id === id);
