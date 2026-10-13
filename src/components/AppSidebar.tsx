@@ -238,31 +238,44 @@ export default function AppSidebar() {
   const visibleMenuKeys = useVisibleMenuKeys();
   const { data: areas = [] } = useAreas();
   const { data: memberships = [] } = useMemberships();
-  const { data: myAssessmentInfo = { total: 0, pending: 0, areaIds: [] as string[] } } = useQuery({
-    queryKey: ['my_assessment_areas', user?.id],
+  const isSuperAdmin = roles.includes("super_admin" as any);
+  // Pending assessments with their evaluators (RLS limits a leader to his own; super admin sees all)
+  const { data: assessmentEvalRows = [] } = useQuery({
+    queryKey: ['my_assessment_areas', user?.id, isSuperAdmin],
     enabled: !!user?.id,
     queryFn: async () => {
-      const { data: sc } = await (supabase.from('assessment_competency_scores' as any) as any)
-        .select('evaluation_id').eq('evaluator_user_id', user!.id);
-      const ids = Array.from(new Set(((sc ?? []) as any[]).map((r) => r.evaluation_id)));
-      let q = (supabase.from('assessment_evaluations' as any) as any).select('id, completed_at, area_id');
-      q = ids.length ? q.or(`evaluator_user_id.eq.${user!.id},id.in.(${ids.join(',')})`) : q.eq('evaluator_user_id', user!.id);
-      const { data } = await q;
-      const rows = (data ?? []) as any[];
-      const areaIds = Array.from(new Set(rows.map((r) => r.area_id).filter(Boolean))) as string[];
-      return { total: rows.length, pending: rows.filter((r) => !r.completed_at).length, areaIds };
+      const [{ data: evs }, { data: sc }] = await Promise.all([
+        (supabase.from('assessment_evaluations' as any) as any).select('id, completed_at, evaluator_user_id').is('completed_at', null),
+        (supabase.from('assessment_competency_scores' as any) as any).select('evaluation_id, evaluator_user_id'),
+      ]);
+      const byEval = new Map<string, Set<string>>();
+      ((evs ?? []) as any[]).forEach((e) => {
+        const s = new Set<string>();
+        if (e.evaluator_user_id) s.add(e.evaluator_user_id);
+        byEval.set(e.id, s);
+      });
+      ((sc ?? []) as any[]).forEach((r) => {
+        if (r.evaluator_user_id && byEval.has(r.evaluation_id)) byEval.get(r.evaluation_id)!.add(r.evaluator_user_id);
+      });
+      return Array.from(byEval.entries()).map(([id, set]) => ({ id, evaluators: Array.from(set) }));
     },
   });
-  const myAssessmentAreaIds = useMemo(() => {
+  // Per-area pending count. "Mis Assessment" lives in the evaluator's own area.
+  const assessmentCountByArea = useMemo(() => {
+    const counts = new Map<string, number>();
+    const areasOf = (uid: string) => memberships.filter((m) => m.user_id === uid).map((m) => m.area_id);
+    assessmentEvalRows.forEach((row) => {
+      const evaluators = isSuperAdmin ? row.evaluators : row.evaluators.filter((u) => u === user?.id);
+      const areaSet = new Set<string>();
+      evaluators.forEach((u) => areasOf(u).forEach((a) => areaSet.add(a)));
+      areaSet.forEach((a) => counts.set(a, (counts.get(a) ?? 0) + 1));
+    });
+    // Leaders always see the option in their own area (even with 0)
     const isLeader = roles.some((r: any) => ['lider_subarea', 'gestor_area', 'admin_area'].includes(r));
-    // Show "Mis Assessment" in every area where the leader has candidates assigned to evaluate
-    const ids = new Set<string>(myAssessmentInfo.areaIds);
-    if (isLeader) {
-      memberships.filter((m) => m.user_id === user?.id).forEach((m) => ids.add(m.area_id));
-    }
-    if (!ids.size && !myAssessmentInfo.total && !isLeader) return [] as string[];
-    return Array.from(ids);
-  }, [myAssessmentInfo, roles, memberships, user?.id]);
+    if (isLeader) areasOf(user?.id ?? '').forEach((a) => { if (!counts.has(a)) counts.set(a, 0); });
+    return counts;
+  }, [assessmentEvalRows, memberships, roles, user?.id, isSuperAdmin]);
+  const myAssessmentAreaIds = useMemo(() => Array.from(assessmentCountByArea.keys()), [assessmentCountByArea]);
 
   // Determine which area routes the user is allowed to see
   const allowedAreaRoutes = useMemo(() => {
