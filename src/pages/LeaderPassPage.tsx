@@ -345,34 +345,47 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
       {canViewOthers && (
         <div className="flex items-center gap-3 flex-wrap bg-card border rounded-xl p-4">
           <Filter className="w-4 h-4 text-muted-foreground shrink-0" />
-          <SearchableSelect
-            value={filterAreaId}
-            onValueChange={v => { setFilterAreaId(v); setFilterSubareaId('all'); setSelectedUserId(''); }}
-            options={[{ value: 'all', label: 'Todas las áreas' }, ...availableAreas.map(a => ({ value: a.id, label: a.name }))]}
-            placeholder="Todas las áreas"
-            searchPlaceholder="Buscar área..."
-            className="w-[180px]"
-          />
-          {filteredSubareas.length > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="editorial-kicker hidden md:inline">Área</span>
             <SearchableSelect
-              value={filterSubareaId}
-              onValueChange={v => { setFilterSubareaId(v); setSelectedUserId(''); }}
-              options={[{ value: 'all', label: 'Todas las subáreas' }, ...filteredSubareas.map(s => ({ value: s.id, label: s.name }))]}
-              placeholder="Todas las subáreas"
-              searchPlaceholder="Buscar subárea..."
-              className="w-[180px]"
+              value={filterAreaId}
+              onValueChange={v => { setFilterAreaId(v); setFilterSubareaId('all'); setSelectedUserId(''); }}
+              options={[{ value: 'all', label: 'Todas las áreas' }, ...availableAreas.map(a => ({ value: a.id, label: a.name }))]}
+              placeholder="Todas las áreas"
+              searchPlaceholder="Buscar área..."
+              className="w-[200px] lg:w-[240px]"
+              contentClassName="w-[320px]"
             />
+          </div>
+          {filteredSubareas.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="editorial-kicker hidden md:inline">Subárea</span>
+              <SearchableSelect
+                value={filterSubareaId}
+                onValueChange={v => { setFilterSubareaId(v); setSelectedUserId(''); }}
+                options={[{ value: 'all', label: 'Todas las subáreas' }, ...filteredSubareas.map(s => ({ value: s.id, label: s.name }))]}
+                placeholder="Todas las subáreas"
+                searchPlaceholder="Buscar subárea..."
+                className="w-[210px] lg:w-[260px]"
+                contentClassName="w-[340px]"
+              />
+            </div>
           )}
           {(areaLeaderName || subareaLeaderName) && (
-            <div className="flex items-center gap-2 flex-wrap text-xs">
+            <div className="flex items-center gap-2 flex-wrap text-xs w-full lg:w-auto lg:ml-auto">
+              <span className="hidden lg:block h-6 w-px bg-border shrink-0" />
               {areaLeaderName && (
-                <span className="px-3 py-1.5 rounded-full bg-accent text-accent-foreground font-medium">
-                  Responsable del área: <span className="font-bold">{areaLeaderName}</span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border font-medium bg-info/15 border-info">
+                  <span className="w-1.5 h-1.5 rounded-full bg-info shrink-0" />
+                  <span className="text-muted-foreground">Responsable del área:</span>
+                  <span className="font-bold text-foreground">{areaLeaderName}</span>
                 </span>
               )}
               {subareaLeaderName && (
-                <span className="px-3 py-1.5 rounded-full bg-accent text-accent-foreground font-medium">
-                  Responsable de la subárea: <span className="font-bold">{subareaLeaderName}</span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border font-medium bg-success/15 border-success">
+                  <span className="w-1.5 h-1.5 rounded-full bg-success shrink-0" />
+                  <span className="text-muted-foreground">Responsable de la subárea:</span>
+                  <span className="font-bold text-foreground">{subareaLeaderName}</span>
                 </span>
               )}
             </div>

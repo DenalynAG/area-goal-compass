@@ -20,6 +20,7 @@ interface SearchableSelectProps {
   placeholder?: string;
   searchPlaceholder?: string;
   className?: string;
+  contentClassName?: string;
   disabled?: boolean;
 }
 
@@ -30,6 +31,7 @@ export function SearchableSelect({
   placeholder = "Seleccionar...",
   searchPlaceholder = "Buscar...",
   className,
+  contentClassName,
   disabled = false,
 }: SearchableSelectProps) {
   const [open, setOpen] = React.useState(false);
@@ -51,6 +53,7 @@ export function SearchableSelect({
           role="combobox"
           aria-expanded={open}
           disabled={disabled}
+          title={selectedLabel ?? placeholder}
           className={cn(
             "justify-between font-normal",
             !selectedLabel && "text-muted-foreground",
@@ -63,7 +66,7 @@ export function SearchableSelect({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+      <PopoverContent className={cn("w-[--radix-popover-trigger-width] p-0", contentClassName)} align="start">
         <div className="flex items-center border-b px-3 py-2 gap-2">
           <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
           <input
