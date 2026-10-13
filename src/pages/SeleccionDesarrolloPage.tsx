@@ -240,7 +240,6 @@ export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { eva
 
   const filtered = useMemo(() => {
     let r = evaluatorMode ? rows.filter(isMine) : rows;
-    if (evaluatorMode && areaParam) r = r.filter(x => x.area_id === areaParam);
     if (filterArea !== 'all') r = r.filter(x => x.area_id === filterArea);
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -757,7 +756,7 @@ export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { eva
             <Users className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-xl md:text-2xl font-bold">{evaluatorMode ? 'Mis Assessments' : 'Selección y Desarrollo'}</h1>
+            <h1 className="text-xl md:text-2xl font-bold">{evaluatorMode ? 'Mis Assessment' : 'Selección y Desarrollo'}</h1>
             <p className="text-sm text-muted-foreground">
               {evaluatorMode ? 'Solo puedes calificar las competencias de los aspirantes que te fueron asignados' : 'Planilla de Evaluación Assessment Center — Aspirantes por área y cargo'}
             </p>
@@ -955,7 +954,7 @@ export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { eva
       ) : activeGroups.length === 0 ? (
         <Card className="p-0 overflow-hidden">
           <div className="py-10 text-center text-muted-foreground text-sm">
-            {evaluatorMode ? 'No tienes aspirantes asignados para evaluar.' : 'No hay convocatorias en evaluación. Las completadas están en el botón "Histórico".'}
+            {evaluatorMode ? 'No tienes assessment asignados por el momento.' : 'No hay convocatorias en evaluación. Las completadas están en el botón "Histórico".'}
           </div>
         </Card>
       ) : (
@@ -995,9 +994,9 @@ export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { eva
                         <div className="flex items-start justify-between gap-1">
                           <div className="space-y-0.5 min-w-0">
                             <p className="font-semibold text-xs md:text-sm leading-tight truncate">{row.candidate_name}</p>
-                            <p className="text-[11px] text-muted-foreground leading-tight">{row.profession ?? '—'}</p>
+                            {!evaluatorMode && <p className="text-[11px] text-muted-foreground leading-tight">{row.profession ?? '—'}</p>}
                             <p className="text-[11px] text-muted-foreground leading-tight">{row.position ?? '—'}</p>
-                            <p className="text-[10px] leading-tight text-foreground/80 mt-1">
+                            <p className={evaluatorMode ? 'hidden' : 'text-[10px] leading-tight text-foreground/80 mt-1'}>
                               <span className="text-muted-foreground">Evalúa: </span>
                               <span className="font-medium">{evaluatorName(row.evaluator_user_id)}</span>
                             </p>
@@ -1121,8 +1120,8 @@ export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { eva
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="font-semibold text-sm truncate">{row.candidate_name}</p>
-                      <p className="text-[11px] text-muted-foreground">{row.profession ?? '—'}</p>
-                      <p className="text-[10px] text-foreground/80">
+                      <p className="text-[11px] text-muted-foreground">{evaluatorMode ? (row.position ?? '—') : (row.profession ?? '—')}</p>
+                      <p className={evaluatorMode ? 'hidden' : 'text-[10px] text-foreground/80'}>
                         <span className="text-muted-foreground">Evalúa: </span>
                         <span className="font-medium">{evaluatorName(row.evaluator_user_id)}</span>
                       </p>
