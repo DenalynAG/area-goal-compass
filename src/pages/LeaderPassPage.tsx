@@ -8,7 +8,7 @@ import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { CheckCircle2, Circle, ClipboardList, MessageSquare, Save, Paperclip, Filter, ChevronDown, ChevronUp, Info, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, Circle, ClipboardList, MessageSquare, Save, Paperclip, Filter, ChevronDown, ChevronUp, Info, ShieldCheck, Download } from 'lucide-react';
 import EvidencePanel from '@/components/EvidencePanel';
 import LeaderPassImportDialog from '@/components/LeaderPassImportDialog';
 
@@ -243,6 +243,71 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
   const completedCount = activities.filter(a => getRecord(a.id)?.completed).length;
   const progress = activities.length > 0 ? Math.round((completedCount / activities.length) * 100) : 0;
 
+  const [exporting, setExporting] = useState(false);
+  const exportExcel = async () => {
+    setExporting(true);
+    try {
+      const { data: recs, error } = await supabase
+        .from('leader_pass_records')
+        .select('user_id,activity_id,completed')
+        .eq('period', selectedPeriod);
+      if (error) throw error;
+      const done = new Set((recs ?? []).filter(r => r.completed).map(r => `${r.user_id}|${r.activity_id}`));
+      const activeIds = new Set(profiles.filter((p: any) => p.is_active !== false).map((p: any) => p.id));
+      const allActive = new Set(memberships.filter(m => activeIds.has(m.user_id)).map(m => m.user_id));
+      const leaderIds = new Set<string>();
+      areas.forEach(a => a.leader_user_id && leaderIds.add(a.leader_user_id));
+      subareas.forEach(s => s.leader_user_id && leaderIds.add(s.leader_user_id));
+      const allowed = new Set(baseProfiles.map(p => p.id));
+      const sortedActs = [...activities].sort((a, b) => a.sort_order - b.sort_order);
+      const rows = Array.from(leaderIds)
+        .filter(id => isSuperAdmin || allowed.has(id))
+        .map(id => {
+          const p: any = profiles.find(x => x.id === id);
+          const ledAreas = areas.filter(a => a.leader_user_id === id);
+          const ledSubs = subareas.filter(s => s.leader_user_id === id);
+          const ledAreaIds = new Set(ledAreas.map(a => a.id));
+          const ledSubIds = new Set(ledSubs.map(s => s.id));
+          const team = new Set<string>();
+          memberships.forEach(m => {
+            if (!activeIds.has(m.user_id) || m.user_id === id) return;
+            if (ledAreaIds.has(m.area_id) || (m.subarea_id && ledSubIds.has(m.subarea_id))) team.add(m.user_id);
+          });
+          const areaNames = ledAreas.length
+            ? ledAreas.map(a => a.name)
+            : Array.from(new Set(ledSubs.map(s => areas.find(a => a.id === s.area_id)?.name).filter(Boolean)));
+          const row: { [k: string]: string | number } = {
+            Cedula: p?.identificacion ?? '',
+            Nombre: p?.name ?? '',
+            Cargo: p?.position ?? '',
+            Area: areaNames.join(', '),
+            Subarea: ledSubs.map(s => s.name).join(', '),
+            HeadCount: team.size,
+            '% Part.': allActive.size ? Math.round((team.size / allActive.size) * 100) : 0,
+          };
+          sortedActs.forEach(a => {
+            row[a.name.replace(/^\d+[.)\-\s]*/, '')] = done.has(`${id}|${a.id}`) ? '100%' : '0%';
+          });
+          const c = sortedActs.filter(a => done.has(`${id}|${a.id}`)).length;
+          row['% Avance Total'] = sortedActs.length ? `${Math.round((c / sortedActs.length) * 100)}%` : '0%';
+          return row;
+        })
+        .sort((a, b) => String(a.Area).localeCompare(String(b.Area)) || String(a.Nombre).localeCompare(String(b.Nombre)));
+      if (rows.length === 0) { toast.error('No hay líderes para exportar'); return; }
+      const XLSX = await import('xlsx');
+      const ws = XLSX.utils.json_to_sheet(rows);
+      ws['!cols'] = Object.keys(rows[0]).map(k => ({ wch: Math.max(12, k.length + 2) }));
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Leader Pass');
+      XLSX.writeFile(wb, `leader_pass_${selectedPeriod}.xlsx`);
+      toast.success(`${rows.length} líderes exportados`);
+    } catch (e: any) {
+      toast.error(e.message ?? 'Error al exportar');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   if (loadingActs) return <div className="flex items-center justify-center py-20 text-muted-foreground">Cargando Leader Pass...</div>;
 
   return (
@@ -261,6 +326,12 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
             <Button variant="outline" size="sm" className="gap-1" onClick={() => setImportOpen(true)}>
               <ShieldCheck className="w-4 h-4" />
               Acciones Admin
+            </Button>
+          )}
+          {canViewOthers && (
+            <Button variant="outline" size="sm" className="gap-1" onClick={exportExcel} disabled={exporting}>
+              <Download className="w-4 h-4" />
+              {exporting ? 'Exportando...' : 'Exportar Excel'}
             </Button>
           )}
           <SearchableSelect
