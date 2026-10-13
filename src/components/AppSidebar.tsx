@@ -310,10 +310,10 @@ export default function AppSidebar() {
       if (!item.children || !areaNameForRoute) return item;
       const area = areas.find((a) => norm(a.name) === norm(areaNameForRoute));
       if (!area || !myAssessmentAreaIds.includes(area.id)) return item;
-      const child = { to: `/mis-assessments?area=${area.id}`, icon: ClipboardCheck, label: "Mis Assessments" } as any;
+      const child = { to: `/mis-assessments`, icon: ClipboardCheck, label: `Mis Assessment (${myAssessmentInfo.pending})` } as any;
       return { ...item, children: [...item.children, child] };
     });
-  }, [filteredNavItems, myAssessmentAreaIds, areas, memberships, user?.id]);
+  }, [filteredNavItems, myAssessmentAreaIds, areas, myAssessmentInfo.pending]);
 
   // Close mobile sidebar on route change
   useEffect(() => {
