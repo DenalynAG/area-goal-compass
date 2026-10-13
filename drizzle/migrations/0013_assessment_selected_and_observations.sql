@@ -1,0 +1,2 @@
+ALTER TABLE public.assessment_evaluations ADD COLUMN IF NOT EXISTS is_selected boolean NOT NULL DEFAULT false, ADD COLUMN IF NOT EXISTS selected_marked_at timestamptz, ADD COLUMN IF NOT EXISTS completed_at timestamptz;
+ALTER TABLE public.assessment_competency_scores ADD COLUMN IF NOT EXISTS observation text, ADD COLUMN IF NOT EXISTS observation_by uuid, ADD COLUMN IF NOT EXISTS observation_at timestamptz;

@@ -440,6 +440,9 @@ export type Database = {
           evaluation_id: string
           evaluator_user_id: string | null
           id: string
+          observation: string | null
+          observation_at: string | null
+          observation_by: string | null
           score: number | null
           updated_at: string
         }
@@ -449,6 +452,9 @@ export type Database = {
           evaluation_id: string
           evaluator_user_id?: string | null
           id?: string
+          observation?: string | null
+          observation_at?: string | null
+          observation_by?: string | null
           score?: number | null
           updated_at?: string
         }
@@ -458,6 +464,9 @@ export type Database = {
           evaluation_id?: string
           evaluator_user_id?: string | null
           id?: string
+          observation?: string | null
+          observation_at?: string | null
+          observation_by?: string | null
           score?: number | null
           updated_at?: string
         }
@@ -483,6 +492,7 @@ export type Database = {
           area_id: string | null
           candidate_id: string | null
           candidate_name: string
+          completed_at: string | null
           created_at: string
           created_by: string | null
           evaluation_date: string
@@ -490,12 +500,14 @@ export type Database = {
           fastpool_marked_at: string | null
           id: string
           is_fastpool: boolean
+          is_selected: boolean
           notes: string | null
           position: string | null
           profession: string | null
           score_creatividad: number | null
           score_pensamiento_analitico: number | null
           score_trabajo_equipo: number | null
+          selected_marked_at: string | null
           subarea_id: string | null
           updated_at: string
           weighted_score: number | null
@@ -504,6 +516,7 @@ export type Database = {
           area_id?: string | null
           candidate_id?: string | null
           candidate_name: string
+          completed_at?: string | null
           created_at?: string
           created_by?: string | null
           evaluation_date?: string
@@ -511,12 +524,14 @@ export type Database = {
           fastpool_marked_at?: string | null
           id?: string
           is_fastpool?: boolean
+          is_selected?: boolean
           notes?: string | null
           position?: string | null
           profession?: string | null
           score_creatividad?: number | null
           score_pensamiento_analitico?: number | null
           score_trabajo_equipo?: number | null
+          selected_marked_at?: string | null
           subarea_id?: string | null
           updated_at?: string
           weighted_score?: number | null
@@ -525,6 +540,7 @@ export type Database = {
           area_id?: string | null
           candidate_id?: string | null
           candidate_name?: string
+          completed_at?: string | null
           created_at?: string
           created_by?: string | null
           evaluation_date?: string
@@ -532,12 +548,14 @@ export type Database = {
           fastpool_marked_at?: string | null
           id?: string
           is_fastpool?: boolean
+          is_selected?: boolean
           notes?: string | null
           position?: string | null
           profession?: string | null
           score_creatividad?: number | null
           score_pensamiento_analitico?: number | null
           score_trabajo_equipo?: number | null
+          selected_marked_at?: string | null
           subarea_id?: string | null
           updated_at?: string
           weighted_score?: number | null
