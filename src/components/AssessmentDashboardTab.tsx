@@ -194,7 +194,7 @@ export default function AssessmentDashboardTab() {
               )}
               {rows.map(r => (
                 <tr key={r.id} className="border-b">
-                  <td className="px-3 py-2 font-medium">{r.candidate_name}</td>
+                  <td className="px-3 py-2 font-medium">{r.candidate_name}{r.is_selected && <span className="ml-2 inline-flex px-1.5 py-0.5 rounded text-[10px] font-semibold bg-success text-success-foreground">Seleccionado</span>}</td>
                   <td className="px-3 py-2">{areaName(r.area_id)}</td>
                   <td className="px-3 py-2">{r.position ?? '—'}</td>
                   <td className="px-3 py-2">{MONTHS[Number(r.evaluation_date.slice(5, 7)) - 1]} {r.evaluation_date.slice(0, 4)}</td>
