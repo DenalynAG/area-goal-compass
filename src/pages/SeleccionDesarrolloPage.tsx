@@ -133,6 +133,9 @@ export default function SeleccionDesarrolloPage({ evaluatorMode = false }: { eva
   const [formScores, setFormScores] = useState<Record<string, number | null>>({});
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState(evaluatorMode ? 'planilla' : 'aspirantes');
+  useEffect(() => {
+    if (evaluatorMode && activeTab !== 'planilla') setActiveTab('planilla');
+  }, [evaluatorMode, activeTab]);
 
   // Competency manager state
   const [compOpen, setCompOpen] = useState(false);
