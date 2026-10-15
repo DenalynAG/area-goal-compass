@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import * as XLSX from 'xlsx';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
-import { useProfiles } from '@/hooks/useSupabaseData';
+import { useProfilesFull } from '@/hooks/useSupabaseData';
 import { Button } from '@/components/ui/button';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -66,7 +66,7 @@ const periodFromFecha = (fecha: unknown): string | null => {
 };
 
 export default function LeaderPassImportDialog({ open, onOpenChange, activities, period, periodOptions }: Props) {
-  const { data: profiles = [] } = useProfiles();
+  const { data: profiles = [] } = useProfilesFull();
   const qc = useQueryClient();
   const [selectedPeriod, setSelectedPeriod] = useState(period);
   const [importing, setImporting] = useState(false);
