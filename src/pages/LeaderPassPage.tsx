@@ -508,7 +508,8 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
             </div>
             <div className="bg-card border rounded-xl p-5 md:min-w-[160px] flex flex-col justify-center">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">Cantidad a evaluar</p>
-              <p className="text-3xl font-bold text-foreground">{Math.ceil(headCount * 0.2)}
+              <p className="text-3xl font-bold text-foreground">{Math.ceil(headCount * 0.2)}</p>
+              <p className="text-xs text-muted-foreground">20% del headcount</p>
             </div>
           </div>
         );
