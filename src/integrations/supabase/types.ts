@@ -1566,6 +1566,8 @@ export type Database = {
           activity_id: string
           completed: boolean
           completed_at: string | null
+          compliance_is_percent: boolean
+          compliance_value: number | null
           created_at: string
           id: string
           notes: string | null
@@ -1577,6 +1579,8 @@ export type Database = {
           activity_id: string
           completed?: boolean
           completed_at?: string | null
+          compliance_is_percent?: boolean
+          compliance_value?: number | null
           created_at?: string
           id?: string
           notes?: string | null
@@ -1588,6 +1592,8 @@ export type Database = {
           activity_id?: string
           completed?: boolean
           completed_at?: string | null
+          compliance_is_percent?: boolean
+          compliance_value?: number | null
           created_at?: string
           id?: string
           notes?: string | null

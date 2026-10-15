@@ -548,6 +548,13 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
                   <span className={`inline-block mt-2 px-2 py-0.5 rounded-full text-[10px] font-medium border ${colorClass}`}>
                     {act.frequency}
                   </span>
+                {(record as any)?.compliance_value != null && (
+                  <span className="ml-2 text-xs font-semibold text-foreground">
+                    Cumplimiento: {(record as any).compliance_is_percent
+                      ? `${Number((record as any).compliance_value).toLocaleString('es', { maximumFractionDigits: 2 })}%`
+                      : Number((record as any).compliance_value).toLocaleString('es', { maximumFractionDigits: 2 })}
+                  </span>
+                )}
                 </div>
               </div>
 
