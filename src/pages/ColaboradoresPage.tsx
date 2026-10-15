@@ -576,7 +576,8 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
   const filtered = areaFilteredProfiles.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
     c.email.toLowerCase().includes(search.toLowerCase()) ||
-    (c.position ?? '').toLowerCase().includes(search.toLowerCase())
+    (c.position ?? '').toLowerCase().includes(search.toLowerCase()) ||
+    ((c as any).identificacion ?? '').toLowerCase().includes(search.toLowerCase())
   );
 
   const PAGE_SIZE = 20;
@@ -612,7 +613,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
 
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input placeholder="Buscar por nombre, correo o cargo..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
+        <Input placeholder="Buscar por cédula, nombre, correo o cargo..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
       </div>
 
       {importing && (
@@ -659,6 +660,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
                     />
                   </th>
                 )}
+                <th className="text-left px-5 py-3 font-medium text-muted-foreground">Cédula</th>
                 <th className="text-left px-5 py-3 font-medium text-muted-foreground">Colaborador</th>
                 <th className="text-left px-5 py-3 font-medium text-muted-foreground">Cargo</th>
                 <th className="text-left px-5 py-3 font-medium text-muted-foreground">Área</th>
@@ -682,6 +684,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
                         />
                       </td>
                     )}
+                    <td className="px-5 py-3 tabular-nums text-muted-foreground">{(c as any).identificacion || '—'}</td>
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-3">
                         {(c as any).avatar ? (
@@ -726,7 +729,7 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
                 );
               })}
               {paginatedFiltered.length === 0 && (
-                <tr><td colSpan={isSuperAdmin ? 8 : 7} className="px-5 py-8 text-center text-muted-foreground">No se encontraron colaboradores</td></tr>
+                <tr><td colSpan={isSuperAdmin ? 9 : 8} className="px-5 py-8 text-center text-muted-foreground">No se encontraron colaboradores</td></tr>
               )}
             </tbody>
           </table>
