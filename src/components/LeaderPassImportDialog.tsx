@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import * as XLSX from 'xlsx';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
-import { useProfiles, useAreas, useSubareas } from '@/hooks/useSupabaseData';
+import { useProfiles } from '@/hooks/useSupabaseData';
 import { Button } from '@/components/ui/button';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -67,8 +67,6 @@ const periodFromFecha = (fecha: unknown): string | null => {
 
 export default function LeaderPassImportDialog({ open, onOpenChange, activities, period, periodOptions }: Props) {
   const { data: profiles = [] } = useProfiles();
-  const { data: areas = [] } = useAreas();
-  const { data: subareas = [] } = useSubareas();
   const qc = useQueryClient();
   const [selectedPeriod, setSelectedPeriod] = useState(period);
   const [importing, setImporting] = useState(false);
@@ -139,9 +137,8 @@ export default function LeaderPassImportDialog({ open, onOpenChange, activities,
         const txtV = String(kV ? textRows[idx]?.[kV] ?? rawV ?? '' : '').trim();
         const isPercent = txtV.includes('%');
         let value: number;
-        if (typeof rawV === 'number') value = isPercent && !String(rawV).includes('%') && Math.abs(rawV) <= 1 && !/\d{2,}/.test(txtV.replace('%','')) ? rawV * 100 : rawV;
+        if (typeof rawV === 'number') value = isPercent && Math.abs(rawV) <= 1 ? Math.round(rawV * 10000) / 100 : rawV;
         else value = Number(txtV.replace('%', '').replace(',', '.'));
-        if (isPercent && typeof rawV === 'number' && Math.abs(rawV) <= 1) value = Math.round(rawV * 10000) / 100;
         if (!isFinite(value) || txtV === '') { fail.push(`Fila ${fila}: valor de cumplimiento inválido`); return; }
         const per = periodFromFecha(kF ? row[kF] : undefined) || selectedPeriod;
         targets.push({ userId, activityId: activity.id, period: per, value, isPercent });
