@@ -576,7 +576,8 @@ export default function ColaboradoresPage({ areaFilterName }: ColaboradoresPageP
   const filtered = areaFilteredProfiles.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
     c.email.toLowerCase().includes(search.toLowerCase()) ||
-    (c.position ?? '').toLowerCase().includes(search.toLowerCase())
+    (c.position ?? '').toLowerCase().includes(search.toLowerCase()) ||
+    ((c as any).identificacion ?? '').toLowerCase().includes(search.toLowerCase())
   );
 
   const PAGE_SIZE = 20;
