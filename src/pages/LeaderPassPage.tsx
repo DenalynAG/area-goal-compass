@@ -617,6 +617,8 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
             activities={activities}
             areas={areas}
             subareas={subareas}
+            profiles={profiles}
+            memberships={memberships}
             allowedUserIds={isSuperAdmin ? null : new Set(baseProfiles.map(p => p.id))}
           />
         </TabsContent>

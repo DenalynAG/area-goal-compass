@@ -9,13 +9,15 @@ interface Props {
   activities: { id: string; name: string; sort_order: number }[];
   areas: any[];
   subareas: any[];
+  profiles: { id: string; name: string; position: string | null; is_active: boolean }[];
+  memberships: { user_id: string; area_id: string; subarea_id: string | null }[];
   allowedUserIds: Set<string> | null;
 }
 
 const colorFor = (p: number) => (p >= 100 ? 'hsl(var(--success))' : p >= 80 ? 'hsl(var(--warning))' : 'hsl(var(--destructive))');
 const clean = (n: string) => n.replace(/^\d+[.)\-\s]*/, '');
 
-export default function LeaderPassDashboard({ period, periodLabel, activities, areas, subareas, allowedUserIds }: Props) {
+export default function LeaderPassDashboard({ period, periodLabel, activities, areas, subareas, profiles, memberships, allowedUserIds }: Props) {
   const { data: recs = [], isLoading } = useQuery({
     queryKey: ['leader_pass_records', 'dashboard', period],
     queryFn: async () => {
@@ -64,8 +66,26 @@ export default function LeaderPassDashboard({ period, periodLabel, activities, a
         return { name: clean(a.name), value: allLeaders.length ? Math.round((c / allLeaders.length) * 100) : 0, c };
       });
 
-    return { byArea, bySub, byAct, leaders: allLeaders.length, overall: pct(allLeaders) };
-  }, [recs, activities, areas, subareas, allowedUserIds]);
+    const collaborators = (ids: (string | null | undefined)[]) => {
+      const uniqueIds = new Set(ids.filter(ok));
+      return profiles.filter(p => p.is_active && uniqueIds.has(p.id))
+        .map(p => ({ id: p.id, name: p.name, position: p.position, value: pct([p.id]) }))
+        .sort((a, b) => a.name.localeCompare(b.name, 'es'));
+    };
+    const groups = areas.map(area => ({
+      id: area.id,
+      name: area.name,
+      collaborators: collaborators([area.leader_user_id, ...memberships.filter(m => m.area_id === area.id && !m.subarea_id).map(m => m.user_id)]),
+      subareas: subareas.filter(s => s.area_id === area.id).map(s => ({
+        id: s.id,
+        name: s.name,
+        value: pct(ok(s.leader_user_id) ? [s.leader_user_id] : []),
+        collaborators: collaborators([s.leader_user_id, ...memberships.filter(m => m.area_id === area.id && m.subarea_id === s.id).map(m => m.user_id)]),
+      })).filter(s => s.collaborators.length > 0),
+    })).filter(a => a.collaborators.length > 0 || a.subareas.length > 0);
+
+    return { byArea, bySub, byAct, groups, leaders: allLeaders.length, overall: pct(allLeaders) };
+  }, [recs, activities, areas, subareas, profiles, memberships, allowedUserIds]);
 
   if (isLoading) return <div className="py-12 text-center text-muted-foreground">Cargando dashboard...</div>;
 
@@ -111,33 +131,37 @@ export default function LeaderPassDashboard({ period, periodLabel, activities, a
       </div>
 
       <div className="bg-card border rounded-xl p-5">
-        <h3 className="text-sm font-semibold mb-3">Avance por subárea</h3>
+        <h3 className="text-sm font-semibold mb-3">Avance por área y subárea</h3>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs uppercase text-muted-foreground border-b">
-                <th className="py-2 pr-4">Subárea</th>
+                <th className="py-2 pr-4">Área / Subárea / Colaborador</th>
                 <th className="py-2 pr-4">Área</th>
                 <th className="py-2 w-1/2">Avance</th>
               </tr>
             </thead>
             <tbody>
-              {stats.bySub.map(s => (
-                <tr key={s.name + s.area} className="border-b last:border-0">
+              {stats.groups.flatMap(area => [
+                <tr key={area.id} className="border-b bg-muted/50">
+                  <td className="py-3 pr-4 font-semibold">{area.name}</td>
+                  <td className="py-3 pr-4 text-muted-foreground">{area.name}</td>
+                  <td className="py-3"><Progress value={stats.byArea.find(a => a.name === area.name)?.value ?? 0} /></td>
+                </tr>,
+                ...area.collaborators.map(p => <CollaboratorRow key={`${area.id}-${p.id}`} collaborator={p} area={area.name} />),
+                ...area.subareas.flatMap(s => [
+                <tr key={s.id} className="border-b last:border-0">
                   <td className="py-2 pr-4 font-medium">{s.name}</td>
-                  <td className="py-2 pr-4 text-muted-foreground">{s.area}</td>
+                  <td className="py-2 pr-4 text-muted-foreground">{area.name}</td>
                   <td className="py-2">
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                        <div className="h-full rounded-full" style={{ width: `${s.value}%`, background: colorFor(s.value) }} />
-                      </div>
-                      <span className="w-10 text-right font-semibold">{s.value}%</span>
-                    </div>
+                    <Progress value={s.value} />
                   </td>
-                </tr>
-              ))}
-              {stats.bySub.length === 0 && (
-                <tr><td colSpan={3} className="py-6 text-center text-muted-foreground">Sin subáreas con responsable</td></tr>
+                </tr>,
+                ...s.collaborators.map(p => <CollaboratorRow key={`${s.id}-${p.id}`} collaborator={p} area={area.name} />),
+                ]),
+              ])}
+              {stats.groups.length === 0 && (
+                <tr><td colSpan={3} className="py-6 text-center text-muted-foreground">Sin colaboradores para mostrar</td></tr>
               )}
             </tbody>
           </table>
@@ -145,4 +169,24 @@ export default function LeaderPassDashboard({ period, periodLabel, activities, a
       </div>
     </div>
   );
+}
+
+function Progress({ value }: { value: number }) {
+  return <div className="flex items-center gap-2">
+    <div className="flex-1 min-w-16 h-2 bg-muted rounded-full overflow-hidden">
+      <div className="h-full rounded-full" style={{ width: `${value}%`, background: colorFor(value) }} />
+    </div>
+    <span className="w-10 shrink-0 text-right font-semibold">{value}%</span>
+  </div>;
+}
+
+function CollaboratorRow({ collaborator, area }: { collaborator: { name: string; position: string | null; value: number }; area: string }) {
+  return <tr className="border-b last:border-0">
+    <td className="py-2 pl-4 pr-4">
+      <p className="font-medium break-words">{collaborator.name}</p>
+      <p className="text-xs text-muted-foreground break-words">{collaborator.position || 'Sin cargo registrado'}</p>
+    </td>
+    <td className="py-2 pr-4 text-muted-foreground">{area}</td>
+    <td className="py-2"><Progress value={collaborator.value} /></td>
+  </tr>;
 }
