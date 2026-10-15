@@ -548,6 +548,13 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
                   <span className={`inline-block mt-2 px-2 py-0.5 rounded-full text-[10px] font-medium border ${colorClass}`}>
                     {act.frequency}
                   </span>
+                {(record as any)?.compliance_value != null && (
+                  <span className="ml-2 text-xs font-semibold text-foreground">
+                    Cumplimiento: {(record as any).compliance_is_percent
+                      ? `${Number((record as any).compliance_value).toLocaleString('es', { maximumFractionDigits: 2 })}%`
+                      : Number((record as any).compliance_value).toLocaleString('es', { maximumFractionDigits: 2 })}
+                  </span>
+                )}
                 </div>
               </div>
 
@@ -575,13 +582,6 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
                   <Paperclip className="w-3 h-3" />
                   Evidencias
                 </Button>
-                {(record as any)?.compliance_value != null && (
-                  <span className="text-xs font-semibold text-foreground">
-                    Cumplimiento: {(record as any).compliance_is_percent
-                      ? `${Number((record as any).compliance_value).toLocaleString('es', { maximumFractionDigits: 2 })}%`
-                      : Number((record as any).compliance_value).toLocaleString('es', { maximumFractionDigits: 2 })}
-                  </span>
-                )}
                 {isCompleted && record?.completed_at && (
                   <span className="text-[10px] text-muted-foreground ml-auto">
                     {new Date(record.completed_at).toLocaleDateString('es')}
