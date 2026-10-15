@@ -75,12 +75,12 @@ export default function LeaderPassDashboard({ period, periodLabel, activities, a
     const groups = areas.map(area => ({
       id: area.id,
       name: area.name,
-      collaborators: collaborators([area.leader_user_id, ...memberships.filter(m => m.area_id === area.id && !m.subarea_id).map(m => m.user_id)]),
+      collaborators: collaborators([area.leader_user_id]),
       subareas: subareas.filter(s => s.area_id === area.id).map(s => ({
         id: s.id,
         name: s.name,
         value: pct(ok(s.leader_user_id) ? [s.leader_user_id] : []),
-        collaborators: collaborators([s.leader_user_id, ...memberships.filter(m => m.area_id === area.id && m.subarea_id === s.id).map(m => m.user_id)]),
+        collaborators: collaborators([s.leader_user_id]),
       })).filter(s => s.collaborators.length > 0),
     })).filter(a => a.collaborators.length > 0 || a.subareas.length > 0);
 
@@ -136,7 +136,7 @@ export default function LeaderPassDashboard({ period, periodLabel, activities, a
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs uppercase text-muted-foreground border-b">
-                <th className="py-2 pr-4">Área / Subárea / Colaborador</th>
+                <th className="py-2 pr-4">Área / Subárea / Líder</th>
                 <th className="py-2 pr-4">Área</th>
                 <th className="py-2 w-1/2">Avance</th>
               </tr>
@@ -161,7 +161,7 @@ export default function LeaderPassDashboard({ period, periodLabel, activities, a
                 ]),
               ])}
               {stats.groups.length === 0 && (
-                <tr><td colSpan={3} className="py-6 text-center text-muted-foreground">Sin colaboradores para mostrar</td></tr>
+                <tr><td colSpan={3} className="py-6 text-center text-muted-foreground">Sin líderes para mostrar</td></tr>
               )}
             </tbody>
           </table>
