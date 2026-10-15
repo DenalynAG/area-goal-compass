@@ -79,11 +79,17 @@ export default function LeaderPassImportDialog({ open, onOpenChange, activities,
 
   const downloadTemplate = () => {
     const exampleDoc = profiles.find(p => p.identificacion)?.identificacion ?? '1234567890';
+    const shortDate = (label: string) => {
+      const m = label.match(/^([A-Za-zÁéíóúñ]+)\.?\s+(\d{4})$/);
+      if (!m) return label;
+      const mi = MONTHS_SHORT.findIndex(m2 => norm(m2) === norm(m[1]));
+      return mi >= 0 ? `01/${String(mi + 1).padStart(2, '0')}/${m[2]}` : label;
+    };
     const fechas = periodOptions.length > 0
-      ? periodOptions.map(p => p.label)
-      : [`${MONTHS_SHORT[new Date().getMonth()]} ${new Date().getFullYear()}`];
+      ? periodOptions.map(p => shortDate(p.label))
+      : [shortDate(`${MONTHS_SHORT[new Date().getMonth()]} ${new Date().getFullYear()}`)];
     const rows = [
-      ['Fecha x Mes', 'Cedula del Responsable Area / Sub Area', 'Actividad de Liderazgo', 'Valor Cumplimiento'],
+      ['Fecha x Mes', 'Identificación Cedula del responsable Área / Sub-Área', 'Actividad de Liderazgo', 'Valor Cumplimiento'],
       ...fechas.flatMap(fecha =>
         sortedActivities.map(a => [fecha, exampleDoc, `${a.sort_order}. ${a.name}`, a.sort_order === 5 ? '100%' : 1])
       ),
@@ -227,7 +233,8 @@ export default function LeaderPassImportDialog({ open, onOpenChange, activities,
           </div>
 
           <div className="rounded-lg border bg-muted/40 p-3 text-xs text-muted-foreground leading-relaxed">
-            Columnas: <strong>Fecha x Mes</strong>, <strong>Cedula del Responsable Area / Sub Area</strong>,
+            Columnas: <strong>Fecha x Mes</strong> (formato fecha corta, ej. 01/09/2026),{' '}
+            <strong>Identificación Cedula del responsable Área / Sub-Área</strong>,
             <strong> Actividad de Liderazgo</strong> y <strong>Valor Cumplimiento</strong> (número o %, ej. 3 o 85%).
             Solo se importan las actividades 1, 2, 3, 4, 5, 6 y 8. Un valor mayor que 0 marca la actividad como cumplida.
           </div>
