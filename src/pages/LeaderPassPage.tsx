@@ -285,7 +285,7 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
             Area: areaNames.join(', '),
             Subarea: ledSubs.map(s => s.name).join(', '),
             HeadCount: team.size,
-            '% Part.': allActive.size ? Math.round((team.size / allActive.size) * 100) : 0,
+            Colaboradores: allActive.size,
           };
           sortedActs.forEach(a => {
             row[a.name.replace(/^\d+[.)\-\s]*/, '')] = done.has(`${id}|${a.id}`) ? '100%' : '0%';
@@ -486,7 +486,6 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
           if (ledAreas.has(m.area_id) || (m.subarea_id && ledSubs.has(m.subarea_id))) team.add(m.user_id);
         });
         const headCount = team.size;
-        const part = all.size ? Math.round((headCount / all.size) * 100) : 0;
         return (
           <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-4">
             <div className="bg-card border rounded-xl p-5">
@@ -507,9 +506,9 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
               <p className="text-xs text-muted-foreground">colaboradores a cargo</p>
             </div>
             <div className="bg-card border rounded-xl p-5 md:min-w-[160px] flex flex-col justify-center">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">% Part.</p>
-              <p className="text-3xl font-bold text-foreground">{part}%</p>
-              <p className="text-xs text-muted-foreground">de {all.size} colaboradores</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide">Colaboradores</p>
+              <p className="text-3xl font-bold text-foreground">{all.size}</p>
+              <p className="text-xs text-muted-foreground">colaboradores activos</p>
             </div>
           </div>
         );
