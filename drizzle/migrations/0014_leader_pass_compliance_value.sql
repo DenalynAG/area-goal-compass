@@ -1,0 +1,1 @@
+ALTER TABLE public.leader_pass_records ADD COLUMN IF NOT EXISTS compliance_value numeric, ADD COLUMN IF NOT EXISTS compliance_is_percent boolean NOT NULL DEFAULT false;
