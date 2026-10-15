@@ -422,7 +422,8 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
         <TabsContent value="seguimiento" className="space-y-6">
       {/* Filters */}
       {canViewOthers && (
-        <div className="flex items-center gap-3 flex-wrap bg-card border rounded-xl p-4">
+        <div className="bg-card border rounded-xl p-4 space-y-3">
+          <div className="flex items-center gap-3 flex-wrap">
           <Filter className="w-4 h-4 text-muted-foreground shrink-0" />
           <div className="flex items-center gap-2">
             <span className="editorial-kicker hidden md:inline">Área</span>
@@ -450,9 +451,9 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
               />
             </div>
           )}
+          </div>
           {(areaLeaderName || subareaLeaderName) && (
-            <div className="flex items-center gap-2 flex-wrap text-xs w-full lg:w-auto lg:ml-auto">
-              <span className="hidden lg:block h-6 w-px bg-border shrink-0" />
+            <div className="flex items-center gap-2 flex-wrap text-xs pt-3 border-t">
               {areaLeaderName && (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border font-medium bg-info/15 border-info">
                   <span className="w-1.5 h-1.5 rounded-full bg-info shrink-0" />
