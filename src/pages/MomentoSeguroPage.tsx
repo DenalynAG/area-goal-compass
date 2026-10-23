@@ -1720,6 +1720,20 @@ export default function MomentoSeguroPage() {
         </DialogContent>
       </Dialog>
 
+      {/* INDICATOR DETAIL MODAL */}
+      <MomentoSeguroIndicatorModal
+        open={!!indicatorModal}
+        onOpenChange={(v) => { if (!v) setIndicatorModal(null); }}
+        title={indicatorModal?.title ?? ""}
+        records={indicatorModal?.records ?? []}
+        codeOf={codeOf}
+        areaLabel={areaLabel}
+        actionStatus={actionStatus}
+        showStateFilter={indicatorModal?.showStateFilter ?? true}
+        summary={indicatorModal?.summary}
+        onViewDetail={(o) => setDetail(o as Observation)}
+      />
+
       {/* DETAIL DIALOG */}
       <Dialog open={!!detail} onOpenChange={(o) => { if (!o) setDetail(null); }}>
         <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
