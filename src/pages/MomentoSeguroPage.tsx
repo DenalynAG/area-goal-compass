@@ -351,6 +351,102 @@ export default function MomentoSeguroPage() {
     };
   }, [filtered, areas]);
 
+  // Detalle interactivo de cada tarjeta de indicadores
+  const [indicatorModal, setIndicatorModal] = useState<
+    | { title: string; records: Observation[]; summary?: ReactNode; showStateFilter?: boolean }
+    | null
+  >(null);
+
+  const openIndicator = (key: string) => {
+    const now = new Date();
+    const ymNow = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const byCat = (c: Category) => filtered.filter((o) => o.category === c);
+    const inArea = (name: string) => filtered.filter((o) => areaLabel(o) === name);
+
+    if (key === "safe") {
+      setIndicatorModal({ title: "Detalle de comportamientos seguros", records: byCat("comportamiento_seguro") });
+    } else if (key === "improvement") {
+      setIndicatorModal({ title: "Detalle de oportunidades de mejora", records: byCat("oportunidad_mejora") });
+    } else if (key === "unsafe") {
+      const recs = byCat("comportamiento_inseguro");
+      const critical = recs.filter((o) => o.risk_level === "critico").length;
+      setIndicatorModal({
+        title: "Detalle de comportamientos inseguros",
+        records: recs,
+        summary: (
+          <p className="text-xs text-muted-foreground">
+            {critical} de {recs.length} registros son de riesgo crítico (columna "Riesgo").
+          </p>
+        ),
+      });
+    } else if (key === "month") {
+      setIndicatorModal({
+        title: "Observaciones del mes",
+        records: filtered.filter((o) => (o.observation_date ?? "").startsWith(ymNow)),
+      });
+    } else if (key === "topArea") {
+      const recs = inArea(indicators.topAreaName);
+      const s = recs.filter((o) => o.category === "comportamiento_seguro").length;
+      const m = recs.filter((o) => o.category === "oportunidad_mejora").length;
+      const i = recs.filter((o) => o.category === "comportamiento_inseguro").length;
+      setIndicatorModal({
+        title: `Área con mayor participación: ${indicators.topAreaName}`,
+        records: recs,
+        summary: (
+          <p className="text-xs text-muted-foreground">
+            {recs.length} registros en total · {s} seguros · {m} oportunidades de mejora · {i} inseguros
+          </p>
+        ),
+      });
+    } else if (key === "topSafe") {
+      const recs = inArea(indicators.topSafeName);
+      const s = recs.filter((o) => o.category === "comportamiento_seguro").length;
+      const m = recs.filter((o) => o.category === "oportunidad_mejora").length;
+      const i = recs.filter((o) => o.category === "comportamiento_inseguro").length;
+      const pct = recs.length ? Math.round((s / recs.length) * 100) : 0;
+      setIndicatorModal({
+        title: `Área con mayor índice seguro: ${indicators.topSafeName}`,
+        records: recs,
+        summary: (
+          <div className="space-y-1">
+            <p className="text-xs text-muted-foreground">
+              {pct}% de comportamientos seguros · {recs.length} observaciones ({s} seguras, {m} de mejora, {i} inseguras)
+            </p>
+            {recs.length < 5 && (
+              <p className="text-xs text-[hsl(var(--warning))]">
+                Muestra baja ({recs.length} {recs.length === 1 ? "observación" : "observaciones"}): interpreta el porcentaje con cautela, no es una medida absoluta de seguridad.
+              </p>
+            )}
+          </div>
+        ),
+      });
+    } else if (key === "closure") {
+      const counts = { pendiente: 0, en_proceso: 0, cerrado: 0, vencido: 0 };
+      filtered.forEach((o) => { counts[actionStatus(o).key] += 1; });
+      setIndicatorModal({
+        title: "Cumplimiento de acciones",
+        records: filtered,
+        summary: (
+          <p className="text-xs text-muted-foreground">
+            {indicators.closureRate}% cerrado sobre {filtered.length} registros · {counts.pendiente} pendientes · {counts.en_proceso} en proceso · {counts.cerrado} cerrados · {counts.vencido} vencidos
+          </p>
+        ),
+      });
+    } else if (key === "closed") {
+      const recs = filtered.filter((o) => o.status === "cerrada");
+      const withAction = recs.filter((o) => hasAction(o)).length;
+      setIndicatorModal({
+        title: "Registros cerrados",
+        records: recs,
+        summary: (
+          <p className="text-xs text-muted-foreground">
+            {withAction} cerrados con acción de seguimiento completada · {recs.length - withAction} cerrados sin seguimiento requerido
+          </p>
+        ),
+      });
+    }
+  };
+
   const monthlyData = useMemo(() => {
     const year = new Date().getFullYear();
     return MONTHS.map((m, i) => {
