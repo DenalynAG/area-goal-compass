@@ -1731,7 +1731,7 @@ export default function MomentoSeguroPage() {
         actionStatus={actionStatus}
         showStateFilter={indicatorModal?.showStateFilter ?? true}
         summary={indicatorModal?.summary}
-        onViewDetail={(o) => setDetail(o as Observation)}
+        onViewDetail={(o) => setDetail(o)}
       />
 
       {/* DETAIL DIALOG */}
