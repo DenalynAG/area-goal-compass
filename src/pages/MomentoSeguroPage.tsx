@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 // Momento Seguro: OBSERVAR → REGISTRAR → INTERVENIR → SEGUIR → MEDIR
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,8 +26,9 @@ import {
   ShieldCheck, AlertTriangle, Lightbulb, Plus, Pencil, Trash2, Search, Filter,
   Paperclip, History, BarChart3, ClipboardList, Loader2, Download, X,
   Trophy, CalendarDays, Building2, HeartHandshake, Timer,
-  TrendingUp, Target, CheckCircle2, ArrowRight, Sparkles, Award, MapPin,
+  TrendingUp, Target, CheckCircle2, ArrowRight, Sparkles, Award, MapPin, ChevronRight,
 } from "lucide-react";
+import MomentoSeguroIndicatorModal from "@/components/MomentoSeguroIndicatorModal";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend,
   PieChart, Pie, Cell, AreaChart, Area, LineChart, Line,
@@ -349,6 +350,102 @@ export default function MomentoSeguroPage() {
       closureRate: total ? Math.round((closed / total) * 100) : 0,
     };
   }, [filtered, areas]);
+
+  // Detalle interactivo de cada tarjeta de indicadores
+  const [indicatorModal, setIndicatorModal] = useState<
+    | { title: string; records: Observation[]; summary?: ReactNode; showStateFilter?: boolean }
+    | null
+  >(null);
+
+  const openIndicator = (key: string) => {
+    const now = new Date();
+    const ymNow = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const byCat = (c: Category) => filtered.filter((o) => o.category === c);
+    const inArea = (name: string) => filtered.filter((o) => areaLabel(o) === name);
+
+    if (key === "safe") {
+      setIndicatorModal({ title: "Detalle de comportamientos seguros", records: byCat("comportamiento_seguro") });
+    } else if (key === "improvement") {
+      setIndicatorModal({ title: "Detalle de oportunidades de mejora", records: byCat("oportunidad_mejora") });
+    } else if (key === "unsafe") {
+      const recs = byCat("comportamiento_inseguro");
+      const critical = recs.filter((o) => o.risk_level === "critico").length;
+      setIndicatorModal({
+        title: "Detalle de comportamientos inseguros",
+        records: recs,
+        summary: (
+          <p className="text-xs text-muted-foreground">
+            {critical} de {recs.length} registros son de riesgo crítico (columna "Riesgo").
+          </p>
+        ),
+      });
+    } else if (key === "month") {
+      setIndicatorModal({
+        title: "Observaciones del mes",
+        records: filtered.filter((o) => (o.observation_date ?? "").startsWith(ymNow)),
+      });
+    } else if (key === "topArea") {
+      const recs = inArea(indicators.topAreaName);
+      const s = recs.filter((o) => o.category === "comportamiento_seguro").length;
+      const m = recs.filter((o) => o.category === "oportunidad_mejora").length;
+      const i = recs.filter((o) => o.category === "comportamiento_inseguro").length;
+      setIndicatorModal({
+        title: `Área con mayor participación: ${indicators.topAreaName}`,
+        records: recs,
+        summary: (
+          <p className="text-xs text-muted-foreground">
+            {recs.length} registros en total · {s} seguros · {m} oportunidades de mejora · {i} inseguros
+          </p>
+        ),
+      });
+    } else if (key === "topSafe") {
+      const recs = inArea(indicators.topSafeName);
+      const s = recs.filter((o) => o.category === "comportamiento_seguro").length;
+      const m = recs.filter((o) => o.category === "oportunidad_mejora").length;
+      const i = recs.filter((o) => o.category === "comportamiento_inseguro").length;
+      const pct = recs.length ? Math.round((s / recs.length) * 100) : 0;
+      setIndicatorModal({
+        title: `Área con mayor índice seguro: ${indicators.topSafeName}`,
+        records: recs,
+        summary: (
+          <div className="space-y-1">
+            <p className="text-xs text-muted-foreground">
+              {pct}% de comportamientos seguros · {recs.length} observaciones ({s} seguras, {m} de mejora, {i} inseguras)
+            </p>
+            {recs.length < 5 && (
+              <p className="text-xs text-[hsl(var(--warning))]">
+                Muestra baja ({recs.length} {recs.length === 1 ? "observación" : "observaciones"}): interpreta el porcentaje con cautela, no es una medida absoluta de seguridad.
+              </p>
+            )}
+          </div>
+        ),
+      });
+    } else if (key === "closure") {
+      const counts = { pendiente: 0, en_proceso: 0, cerrado: 0, vencido: 0 };
+      filtered.forEach((o) => { counts[actionStatus(o).key] += 1; });
+      setIndicatorModal({
+        title: "Cumplimiento de acciones",
+        records: filtered,
+        summary: (
+          <p className="text-xs text-muted-foreground">
+            {indicators.closureRate}% cerrado sobre {filtered.length} registros · {counts.pendiente} pendientes · {counts.en_proceso} en proceso · {counts.cerrado} cerrados · {counts.vencido} vencidos
+          </p>
+        ),
+      });
+    } else if (key === "closed") {
+      const recs = filtered.filter((o) => o.status === "cerrada");
+      const withAction = recs.filter((o) => hasAction(o)).length;
+      setIndicatorModal({
+        title: "Registros cerrados",
+        records: recs,
+        summary: (
+          <p className="text-xs text-muted-foreground">
+            {withAction} cerrados con acción de seguimiento completada · {recs.length - withAction} cerrados sin seguimiento requerido
+          </p>
+        ),
+      });
+    }
+  };
 
   const monthlyData = useMemo(() => {
     const year = new Date().getFullYear();
@@ -913,19 +1010,31 @@ export default function MomentoSeguroPage() {
             <h3 className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">Indicadores clave</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
               {[
-                { label: "Comportamientos seguros", value: indicators.safe, hint: `${indicators.safeIndex}% del total registrado`, icon: CheckCircle2, tint: "bg-success/15 text-success" },
-                { label: "Oportunidades de mejora", value: indicators.improvement, hint: "Prácticas mejorables detectadas", icon: Lightbulb, tint: "bg-warning/15 text-warning" },
-                { label: "Comportamientos inseguros", value: indicators.unsafe, hint: `${filtered.filter((o) => o.risk_level === "critico").length} de riesgo crítico`, icon: ShieldCheck, tint: "bg-destructive/10 text-destructive" },
-                { label: "Observaciones del mes", value: indicators.monthCount, hint: "Registradas en el mes en curso", icon: ClipboardList, tint: "bg-primary/10 text-primary" },
-                { label: indicators.topAreaName, value: null, bigLabel: true, hint: `${indicators.topAreaCount} registros`, icon: MapPin, tint: "bg-primary/10 text-primary", caption: "Área con mayor participación" },
-                { label: indicators.topSafeName, value: null, bigLabel: true, hint: `${indicators.topSafePct}% de comportamientos seguros`, icon: Sparkles, tint: "bg-success/15 text-success", caption: "Área con mayor índice seguro" },
-                { label: "Cumplimiento de acciones", value: `${indicators.closureRate}%`, hint: "Acciones inmediatas completadas", icon: TrendingUp, tint: "bg-warning/15 text-warning" },
-                { label: "Registros cerrados", value: indicators.closed, hint: `${indicators.open} en gestión`, icon: BarChart3, tint: "bg-primary/10 text-primary" },
+                { key: "safe", label: "Comportamientos seguros", value: indicators.safe, hint: `${indicators.safeIndex}% del total registrado`, icon: CheckCircle2, tint: "bg-success/15 text-success" },
+                { key: "improvement", label: "Oportunidades de mejora", value: indicators.improvement, hint: "Prácticas mejorables detectadas", icon: Lightbulb, tint: "bg-warning/15 text-warning" },
+                { key: "unsafe", label: "Comportamientos inseguros", value: indicators.unsafe, hint: `${filtered.filter((o) => o.risk_level === "critico").length} de riesgo crítico`, icon: ShieldCheck, tint: "bg-destructive/10 text-destructive" },
+                { key: "month", label: "Observaciones del mes", value: indicators.monthCount, hint: "Registradas en el mes en curso", icon: ClipboardList, tint: "bg-primary/10 text-primary" },
+                { key: "topArea", label: indicators.topAreaName, value: null, bigLabel: true, hint: `${indicators.topAreaCount} registros`, icon: MapPin, tint: "bg-primary/10 text-primary", caption: "Área con mayor participación" },
+                { key: "topSafe", label: indicators.topSafeName, value: null, bigLabel: true, hint: `${indicators.topSafePct}% de comportamientos seguros`, icon: Sparkles, tint: "bg-success/15 text-success", caption: "Área con mayor índice seguro" },
+                { key: "closure", label: "Cumplimiento de acciones", value: `${indicators.closureRate}%`, hint: "Acciones inmediatas completadas", icon: TrendingUp, tint: "bg-warning/15 text-warning" },
+                { key: "closed", label: "Registros cerrados", value: indicators.closed, hint: `${indicators.open} en gestión`, icon: BarChart3, tint: "bg-primary/10 text-primary" },
               ].map((k: any) => (
-                <Card key={k.caption ?? k.label} className="rounded-2xl shadow-sm">
+                <Card
+                  key={k.key}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openIndicator(k.key)}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openIndicator(k.key); } }}
+                  className="rounded-2xl shadow-sm cursor-pointer transition-all hover:shadow-md hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                >
                   <CardContent className="p-5 space-y-2">
-                    <div className={`h-9 w-9 rounded-xl flex items-center justify-center ${k.tint}`}>
-                      <k.icon className="h-4.5 w-4.5" />
+                    <div className="flex items-start justify-between">
+                      <div className={`h-9 w-9 rounded-xl flex items-center justify-center ${k.tint}`}>
+                        <k.icon className="h-4.5 w-4.5" />
+                      </div>
+                      <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
+                        Ver detalle <ChevronRight className="h-3 w-3" />
+                      </span>
                     </div>
                     {k.bigLabel ? (
                       <p className="text-xl font-semibold leading-tight truncate">{k.label}</p>
@@ -1610,6 +1719,20 @@ export default function MomentoSeguroPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* INDICATOR DETAIL MODAL */}
+      <MomentoSeguroIndicatorModal
+        open={!!indicatorModal}
+        onOpenChange={(v) => { if (!v) setIndicatorModal(null); }}
+        title={indicatorModal?.title ?? ""}
+        records={indicatorModal?.records ?? []}
+        codeOf={codeOf}
+        areaLabel={areaLabel}
+        actionStatus={actionStatus}
+        showStateFilter={indicatorModal?.showStateFilter ?? true}
+        summary={indicatorModal?.summary}
+        onViewDetail={(o) => setDetail(o)}
+      />
 
       {/* DETAIL DIALOG */}
       <Dialog open={!!detail} onOpenChange={(o) => { if (!o) setDetail(null); }}>
