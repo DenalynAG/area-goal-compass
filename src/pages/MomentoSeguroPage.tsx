@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 // Momento Seguro: OBSERVAR → REGISTRAR → INTERVENIR → SEGUIR → MEDIR
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,8 +26,9 @@ import {
   ShieldCheck, AlertTriangle, Lightbulb, Plus, Pencil, Trash2, Search, Filter,
   Paperclip, History, BarChart3, ClipboardList, Loader2, Download, X,
   Trophy, CalendarDays, Building2, HeartHandshake, Timer,
-  TrendingUp, Target, CheckCircle2, ArrowRight, Sparkles, Award, MapPin,
+  TrendingUp, Target, CheckCircle2, ArrowRight, Sparkles, Award, MapPin, ChevronRight,
 } from "lucide-react";
+import MomentoSeguroIndicatorModal from "@/components/MomentoSeguroIndicatorModal";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend,
   PieChart, Pie, Cell, AreaChart, Area, LineChart, Line,
