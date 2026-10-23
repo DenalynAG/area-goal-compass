@@ -1010,19 +1010,31 @@ export default function MomentoSeguroPage() {
             <h3 className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">Indicadores clave</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
               {[
-                { label: "Comportamientos seguros", value: indicators.safe, hint: `${indicators.safeIndex}% del total registrado`, icon: CheckCircle2, tint: "bg-success/15 text-success" },
-                { label: "Oportunidades de mejora", value: indicators.improvement, hint: "Prácticas mejorables detectadas", icon: Lightbulb, tint: "bg-warning/15 text-warning" },
-                { label: "Comportamientos inseguros", value: indicators.unsafe, hint: `${filtered.filter((o) => o.risk_level === "critico").length} de riesgo crítico`, icon: ShieldCheck, tint: "bg-destructive/10 text-destructive" },
-                { label: "Observaciones del mes", value: indicators.monthCount, hint: "Registradas en el mes en curso", icon: ClipboardList, tint: "bg-primary/10 text-primary" },
-                { label: indicators.topAreaName, value: null, bigLabel: true, hint: `${indicators.topAreaCount} registros`, icon: MapPin, tint: "bg-primary/10 text-primary", caption: "Área con mayor participación" },
-                { label: indicators.topSafeName, value: null, bigLabel: true, hint: `${indicators.topSafePct}% de comportamientos seguros`, icon: Sparkles, tint: "bg-success/15 text-success", caption: "Área con mayor índice seguro" },
-                { label: "Cumplimiento de acciones", value: `${indicators.closureRate}%`, hint: "Acciones inmediatas completadas", icon: TrendingUp, tint: "bg-warning/15 text-warning" },
-                { label: "Registros cerrados", value: indicators.closed, hint: `${indicators.open} en gestión`, icon: BarChart3, tint: "bg-primary/10 text-primary" },
+                { key: "safe", label: "Comportamientos seguros", value: indicators.safe, hint: `${indicators.safeIndex}% del total registrado`, icon: CheckCircle2, tint: "bg-success/15 text-success" },
+                { key: "improvement", label: "Oportunidades de mejora", value: indicators.improvement, hint: "Prácticas mejorables detectadas", icon: Lightbulb, tint: "bg-warning/15 text-warning" },
+                { key: "unsafe", label: "Comportamientos inseguros", value: indicators.unsafe, hint: `${filtered.filter((o) => o.risk_level === "critico").length} de riesgo crítico`, icon: ShieldCheck, tint: "bg-destructive/10 text-destructive" },
+                { key: "month", label: "Observaciones del mes", value: indicators.monthCount, hint: "Registradas en el mes en curso", icon: ClipboardList, tint: "bg-primary/10 text-primary" },
+                { key: "topArea", label: indicators.topAreaName, value: null, bigLabel: true, hint: `${indicators.topAreaCount} registros`, icon: MapPin, tint: "bg-primary/10 text-primary", caption: "Área con mayor participación" },
+                { key: "topSafe", label: indicators.topSafeName, value: null, bigLabel: true, hint: `${indicators.topSafePct}% de comportamientos seguros`, icon: Sparkles, tint: "bg-success/15 text-success", caption: "Área con mayor índice seguro" },
+                { key: "closure", label: "Cumplimiento de acciones", value: `${indicators.closureRate}%`, hint: "Acciones inmediatas completadas", icon: TrendingUp, tint: "bg-warning/15 text-warning" },
+                { key: "closed", label: "Registros cerrados", value: indicators.closed, hint: `${indicators.open} en gestión`, icon: BarChart3, tint: "bg-primary/10 text-primary" },
               ].map((k: any) => (
-                <Card key={k.caption ?? k.label} className="rounded-2xl shadow-sm">
+                <Card
+                  key={k.key}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openIndicator(k.key)}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openIndicator(k.key); } }}
+                  className="rounded-2xl shadow-sm cursor-pointer transition-all hover:shadow-md hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                >
                   <CardContent className="p-5 space-y-2">
-                    <div className={`h-9 w-9 rounded-xl flex items-center justify-center ${k.tint}`}>
-                      <k.icon className="h-4.5 w-4.5" />
+                    <div className="flex items-start justify-between">
+                      <div className={`h-9 w-9 rounded-xl flex items-center justify-center ${k.tint}`}>
+                        <k.icon className="h-4.5 w-4.5" />
+                      </div>
+                      <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
+                        Ver detalle <ChevronRight className="h-3 w-3" />
+                      </span>
                     </div>
                     {k.bigLabel ? (
                       <p className="text-xl font-semibold leading-tight truncate">{k.label}</p>
