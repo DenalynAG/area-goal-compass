@@ -29,7 +29,6 @@ export interface IndicatorObservation {
   location: string | null;
   hazard: string | null;
   associated_risk: string | null;
-  [key: string]: unknown;
 }
 
 const CATEGORY_LABEL: Record<string, { label: string; chip: string }> = {
@@ -59,25 +58,25 @@ export interface ActionState {
   key: "pendiente" | "en_proceso" | "cerrado" | "vencido";
 }
 
-interface Props {
+interface Props<T extends IndicatorObservation> {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   title: string;
-  records: IndicatorObservation[];
+  records: T[];
   codeOf: Map<string, string>;
-  areaLabel: (o: IndicatorObservation) => string;
-  actionStatus: (o: IndicatorObservation) => ActionState;
-  onViewDetail: (o: IndicatorObservation) => void;
+  areaLabel: (o: T) => string;
+  actionStatus: (o: T) => ActionState;
+  onViewDetail: (o: T) => void;
   summary?: React.ReactNode;
   showStateFilter?: boolean;
 }
 
 const PAGE_SIZE = 10;
 
-export default function MomentoSeguroIndicatorModal({
+export default function MomentoSeguroIndicatorModal<T extends IndicatorObservation>({
   open, onOpenChange, title, records, codeOf, areaLabel, actionStatus,
   onViewDetail, summary, showStateFilter = true,
-}: Props) {
+}: Props<T>) {
   const [q, setQ] = useState("");
   const [fState, setFState] = useState(NONE);
   const [page, setPage] = useState(1);
