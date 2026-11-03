@@ -963,7 +963,7 @@ export default function MomentoSeguroPage() {
                           <p className="sm:col-span-2 flex items-center gap-2 flex-wrap">
                             <span><span className="font-medium text-foreground">Seguimiento:</span> {profileName(o.followup_responsible_user_id)}
                             {o.followup_due_date ? ` · vence ${o.followup_due_date}` : ""}</span>
-                            <Badge className={`${actionStatus(o).chip} border-0`}>{actionStatus(o).label}</Badge>
+                            {showFollowupBadge(o) && <Badge className={`${actionStatus(o).chip} border-0`}>{actionStatus(o).label}</Badge>}
                           </p>
                         )}
                         <p><span className="font-medium text-foreground">Observador:</span> {o.observer_name ?? profileName(o.observer_user_id)}</p>
