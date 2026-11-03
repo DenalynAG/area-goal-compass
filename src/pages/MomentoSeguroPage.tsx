@@ -180,6 +180,12 @@ const actionStatus = (o: Observation): { label: string; chip: string; key: "pend
   return { ...STATUS_META.abierta, key: "pendiente" };
 };
 
+// Regla: la etiqueta "Pendiente" solo se visualiza cuando el comportamiento NO es seguro.
+const showStatusBadge = (o: Pick<Observation, "category" | "status">) =>
+  o.category !== "comportamiento_seguro" || STATUS_META[o.status]?.label !== "Pendiente";
+const showFollowupBadge = (o: Pick<Observation, "category" | "status" | "followup_due_date">) =>
+  o.category !== "comportamiento_seguro" || actionStatus(o).key !== "pendiente";
+
 const emptyForm = (): Partial<Observation> => ({
   observation_date: todayISO(),
   observation_time: new Date().toTimeString().slice(0, 5),
