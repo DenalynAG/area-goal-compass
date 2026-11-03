@@ -1754,8 +1754,8 @@ export default function MomentoSeguroPage() {
                   {CATEGORY_META[detail.category as Category].label}
                 </Badge>
                 <Badge variant="outline">{obsTypeLabel(detail.observation_type)}</Badge>
-                {hasAction(detail) && <Badge className={`${actionStatus(detail).chip} border-0`}>{actionStatus(detail).label}</Badge>}
-                <Badge variant="outline">{STATUS_META[detail.status as Status].label}</Badge>
+                {hasAction(detail) && showFollowupBadge(detail) && <Badge className={`${actionStatus(detail).chip} border-0`}>{actionStatus(detail).label}</Badge>}
+                {showStatusBadge(detail) && <Badge variant="outline">{STATUS_META[detail.status as Status].label}</Badge>}
                 {detail.is_ambassador && (
                   <Badge className="bg-[#FFF3E0] text-[#B26A00] border-0"><Award className="h-3 w-3 mr-1" />Embajador Misión CerOSH</Badge>
                 )}
