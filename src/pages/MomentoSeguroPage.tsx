@@ -173,7 +173,7 @@ const hasAction = (o: Partial<Observation>) =>
   !!o.followup_required || (o.category !== "comportamiento_seguro" && !!(o.action_required || o.followup_due_date));
 
 // Estado efectivo de la acción, con vencimiento automático
-const actionStatus = (o: Partial<Observation>): { label: string; chip: string; key: "pendiente" | "en_proceso" | "cerrado" | "vencido" } => {
+const actionStatus = (o: Observation): { label: string; chip: string; key: "pendiente" | "en_proceso" | "cerrado" | "vencido" } => {
   if (o.status === "cerrada") return { ...STATUS_META.cerrada, key: "cerrado" };
   if (o.followup_due_date && o.followup_due_date < todayISO()) return { ...OVERDUE_META, key: "vencido" };
   if (o.status === "en_seguimiento") return { ...STATUS_META.en_seguimiento, key: "en_proceso" };
@@ -181,9 +181,9 @@ const actionStatus = (o: Partial<Observation>): { label: string; chip: string; k
 };
 
 // Regla: la etiqueta "Pendiente" solo se visualiza cuando el comportamiento NO es seguro.
-const showStatusBadge = (o: Pick<Observation, "category" | "status">) =>
+const showStatusBadge = (o: Observation) =>
   o.category !== "comportamiento_seguro" || STATUS_META[o.status]?.label !== "Pendiente";
-const showFollowupBadge = (o: Pick<Observation, "category" | "status" | "followup_due_date">) =>
+const showFollowupBadge = (o: Observation) =>
   o.category !== "comportamiento_seguro" || actionStatus(o).key !== "pendiente";
 
 const emptyForm = (): Partial<Observation> => ({
