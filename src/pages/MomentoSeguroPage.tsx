@@ -1432,7 +1432,7 @@ export default function MomentoSeguroPage() {
                       </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      {hasAction(o) && <Badge className={`${st.chip} border-0`}>{st.label}</Badge>}
+                      {hasAction(o) && showFollowupBadge(o) && <Badge className={`${st.chip} border-0`}>{st.label}</Badge>}
                       <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDetail(o)}>Ver detalle</Button>
                       {canEdit(o) && (
                         <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => openEdit(o)}>Actualizar</Button>
