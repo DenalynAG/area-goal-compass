@@ -180,6 +180,12 @@ const actionStatus = (o: Observation): { label: string; chip: string; key: "pend
   return { ...STATUS_META.abierta, key: "pendiente" };
 };
 
+// Regla: la etiqueta "Pendiente" solo se visualiza cuando el comportamiento NO es seguro.
+const showStatusBadge = (o: Observation) =>
+  o.category !== "comportamiento_seguro" || STATUS_META[o.status]?.label !== "Pendiente";
+const showFollowupBadge = (o: Observation) =>
+  o.category !== "comportamiento_seguro" || actionStatus(o).key !== "pendiente";
+
 const emptyForm = (): Partial<Observation> => ({
   observation_date: todayISO(),
   observation_time: new Date().toTimeString().slice(0, 5),
@@ -895,7 +901,7 @@ export default function MomentoSeguroPage() {
                               <CatIcon className="h-3 w-3 mr-1" />{CATEGORY_META[o.category]?.label}
                             </Badge>
                             <Badge className={`${RISK_META[o.risk_level]?.chip} border-0`}>Riesgo {RISK_META[o.risk_level]?.label}</Badge>
-                            <Badge className={`${STATUS_META[o.status]?.chip} border-0`}>{STATUS_META[o.status]?.label}</Badge>
+                            {showStatusBadge(o) && <Badge className={`${STATUS_META[o.status]?.chip} border-0`}>{STATUS_META[o.status]?.label}</Badge>}
                             {o.is_ambassador && (
                               <Badge className="border-0 bg-[hsl(var(--warning)/0.18)] text-[hsl(var(--warning))]">
                                 <Trophy className="h-3 w-3 mr-1" />Embajador Misión CerOSH
@@ -957,7 +963,7 @@ export default function MomentoSeguroPage() {
                           <p className="sm:col-span-2 flex items-center gap-2 flex-wrap">
                             <span><span className="font-medium text-foreground">Seguimiento:</span> {profileName(o.followup_responsible_user_id)}
                             {o.followup_due_date ? ` · vence ${o.followup_due_date}` : ""}</span>
-                            <Badge className={`${actionStatus(o).chip} border-0`}>{actionStatus(o).label}</Badge>
+                            {showFollowupBadge(o) && <Badge className={`${actionStatus(o).chip} border-0`}>{actionStatus(o).label}</Badge>}
                           </p>
                         )}
                         <p><span className="font-medium text-foreground">Observador:</span> {o.observer_name ?? profileName(o.observer_user_id)}</p>
@@ -1353,7 +1359,7 @@ export default function MomentoSeguroPage() {
                           <Badge className={`${CATEGORY_META[o.category]?.chip} border-0`}>
                             <CatIcon className="h-3 w-3 mr-1" />{CATEGORY_META[o.category]?.label}
                           </Badge>
-                          <Badge className={`${STATUS_META[o.status]?.chip} border-0`}>{STATUS_META[o.status]?.label}</Badge>
+                          {showStatusBadge(o) && <Badge className={`${STATUS_META[o.status]?.chip} border-0`}>{STATUS_META[o.status]?.label}</Badge>}
                         </div>
                       </div>
                     </div>
@@ -1383,7 +1389,7 @@ export default function MomentoSeguroPage() {
                             <CatIcon className="h-3 w-3 mr-1" />{CATEGORY_META[o.category]?.label}
                           </Badge>
                           <Badge className={`${RISK_META[o.risk_level]?.chip} border-0`}>Riesgo {RISK_META[o.risk_level]?.label}</Badge>
-                          <Badge className={`${STATUS_META[o.status]?.chip} border-0`}>{STATUS_META[o.status]?.label}</Badge>
+                          {showStatusBadge(o) && <Badge className={`${STATUS_META[o.status]?.chip} border-0`}>{STATUS_META[o.status]?.label}</Badge>}
                         </div>
                       </div>
                       <Button variant="ghost" size="icon" className="shrink-0" onClick={() => { setActiveTab("observaciones"); openEdit(o); }}>
@@ -1426,7 +1432,7 @@ export default function MomentoSeguroPage() {
                       </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      {hasAction(o) && <Badge className={`${st.chip} border-0`}>{st.label}</Badge>}
+                      {hasAction(o) && showFollowupBadge(o) && <Badge className={`${st.chip} border-0`}>{st.label}</Badge>}
                       <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDetail(o)}>Ver detalle</Button>
                       {canEdit(o) && (
                         <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => openEdit(o)}>Actualizar</Button>
@@ -1748,8 +1754,8 @@ export default function MomentoSeguroPage() {
                   {CATEGORY_META[detail.category as Category].label}
                 </Badge>
                 <Badge variant="outline">{obsTypeLabel(detail.observation_type)}</Badge>
-                {hasAction(detail) && <Badge className={`${actionStatus(detail).chip} border-0`}>{actionStatus(detail).label}</Badge>}
-                <Badge variant="outline">{STATUS_META[detail.status as Status].label}</Badge>
+                {hasAction(detail) && showFollowupBadge(detail) && <Badge className={`${actionStatus(detail).chip} border-0`}>{actionStatus(detail).label}</Badge>}
+                {showStatusBadge(detail) && <Badge variant="outline">{STATUS_META[detail.status as Status].label}</Badge>}
                 {detail.is_ambassador && (
                   <Badge className="bg-[#FFF3E0] text-[#B26A00] border-0"><Award className="h-3 w-3 mr-1" />Embajador Misión CerOSH</Badge>
                 )}
