@@ -193,7 +193,7 @@ export default function MomentoSeguroIndicatorModal<T extends IndicatorObservati
                           {risk && <Badge className={`${risk.chip} border-0`}>{risk.label}</Badge>}
                         </td>
                         <td className="px-3 py-2">
-                          <Badge className={`${st.chip} border-0`}>{st.label}</Badge>
+                          {!(o.category === "comportamiento_seguro" && st.key === "pendiente") && <Badge className={`${st.chip} border-0`}>{st.label}</Badge>}
                         </td>
                         <td className="px-3 py-2">
                           <Button
