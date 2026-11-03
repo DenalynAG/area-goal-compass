@@ -1389,7 +1389,7 @@ export default function MomentoSeguroPage() {
                             <CatIcon className="h-3 w-3 mr-1" />{CATEGORY_META[o.category]?.label}
                           </Badge>
                           <Badge className={`${RISK_META[o.risk_level]?.chip} border-0`}>Riesgo {RISK_META[o.risk_level]?.label}</Badge>
-                          <Badge className={`${STATUS_META[o.status]?.chip} border-0`}>{STATUS_META[o.status]?.label}</Badge>
+                          {showStatusBadge(o) && <Badge className={`${STATUS_META[o.status]?.chip} border-0`}>{STATUS_META[o.status]?.label}</Badge>}
                         </div>
                       </div>
                       <Button variant="ghost" size="icon" className="shrink-0" onClick={() => { setActiveTab("observaciones"); openEdit(o); }}>
