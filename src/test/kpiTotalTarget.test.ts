@@ -13,6 +13,12 @@ const measurements = [
 ];
 
 describe('Total KPI target', () => {
+  it('sums February-November monthly targets only for the configured exception', () => {
+    expect(getKpiTotalTarget('repairs', 2026, 200000, [], 'suma')).toBe(2000000);
+  });
+  it('uses saved targets and the base target for missing months in the exception', () => {
+    expect(getKpiTotalTarget('kpi', 2026, 100, measurements, 'suma')).toBe(1000);
+  });
   it('keeps a monthly target of 100 instead of summing repeated monthly targets', () => {
     const repeated = Array.from({ length: 10 }, (_, index) => ({
       kpi_id: 'kpi', period_date: `2026-${String(index + 2).padStart(2, '0')}-01`, target: 100,

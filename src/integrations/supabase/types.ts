@@ -1485,6 +1485,7 @@ export type Database = {
           threshold_green: number
           threshold_red: number
           threshold_yellow: number
+          total_target_method: string
           unit: string | null
           weight_percent: number
         }
@@ -1503,6 +1504,7 @@ export type Database = {
           threshold_green?: number
           threshold_red?: number
           threshold_yellow?: number
+          total_target_method?: string
           unit?: string | null
           weight_percent?: number
         }
@@ -1521,6 +1523,7 @@ export type Database = {
           threshold_green?: number
           threshold_red?: number
           threshold_yellow?: number
+          total_target_method?: string
           unit?: string | null
           weight_percent?: number
         }

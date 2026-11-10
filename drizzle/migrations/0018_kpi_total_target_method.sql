@@ -1,0 +1,3 @@
+ALTER TABLE public.kpis ADD COLUMN total_target_method text NOT NULL DEFAULT 'mensual';
+ALTER TABLE public.kpis ADD CONSTRAINT kpis_total_target_method_valid CHECK (total_target_method IN ('mensual', 'suma'));
+COMMENT ON COLUMN public.kpis.total_target_method IS 'Target aggregation for Total KPI only: monthly target by default, or sum of February-November targets; does not affect actual-value aggregation.';
