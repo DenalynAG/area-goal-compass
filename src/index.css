@@ -107,7 +107,7 @@
     --input: 20 40% 88%;
     --ring: 0 0% 0%;
 
-    --radius: 0.125rem;
+    --radius: 0rem;
 
     /* Sidebar: negro con texto blanco */
     --sidebar-background: 0 0% 0%;              /* #000000 */
@@ -228,4 +228,14 @@
   .editorial-rule {
     @apply h-px w-full bg-border;
   }
+}
+
+/* Rectangular controls stay square even when a page uses pill utilities.
+   Switches and circular identity/status elements keep their native shape. */
+button:not([role="switch"]):not([role="radio"]),
+[role="button"]:not([role="switch"]),
+input:not([type="radio"]):not([type="checkbox"]),
+textarea,
+select {
+  border-radius: var(--radius) !important;
 }

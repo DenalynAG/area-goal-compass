@@ -115,11 +115,16 @@ export default {
   				muted: 'hsl(var(--sidebar-muted))'
   			}
   		},
-  		borderRadius: {
-  			lg: 'var(--radius)',
-  			md: 'calc(var(--radius) - 2px)',
-  			sm: 'calc(var(--radius) - 4px)'
-  		},
+        borderRadius: {
+            DEFAULT: 'var(--radius)',
+            xs: 'var(--radius)',
+            xl: 'var(--radius)',
+            '2xl': 'var(--radius)',
+            '3xl': 'var(--radius)',
+            lg: 'var(--radius)',
+            md: 'var(--radius)',
+            sm: 'var(--radius)'
+        },
   		keyframes: {
   			'accordion-down': {
   				from: {
