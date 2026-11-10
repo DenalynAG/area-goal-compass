@@ -1,3 +1,5 @@
+import { getKpiComplianceLight } from '@/lib/kpiCompliance';
+
 export type AppRole = 'super_admin' | 'admin_area' | 'lider_subarea' | 'gestor_area' | 'colaborador' | 'solo_lectura';
 
 export type ObjectiveStatus = 'borrador' | 'activo' | 'en_riesgo' | 'cerrado' | 'cumplido' | 'no_cumplido';
@@ -74,6 +76,7 @@ export interface KPI {
   threshold_green: number;
   threshold_yellow: number;
   threshold_red: number;
+  inverse_thresholds?: boolean | null;
 }
 
 export interface KPIMeasurement {
@@ -98,34 +101,10 @@ export interface ActivityLog {
 export function getTrafficLight(kpi: KPI): TrafficLight {
   const name = (kpi.name ?? '').toLowerCase();
   const unit = (kpi.unit ?? '').trim();
-
-  // KPIs with unit "#" use inverse thresholds (lower is better).
-  // Verde: current <= threshold_green, Amarillo: == threshold_yellow, Rojo: > threshold_red
-  if (unit === '#') {
-    if (kpi.current_value <= kpi.threshold_green) return 'verde';
-    if (kpi.current_value <= kpi.threshold_yellow) return 'amarillo';
-    return 'rojo';
-  }
-
-  // Savings KPIs (higher real value than target is better).
   const isSavings = ['ahorro', 'ahorros'].some((kw) => name.includes(kw));
-  if (isSavings) {
-    if (kpi.current_value > kpi.target) return 'verde';
-    if (kpi.current_value === kpi.target) return 'amarillo';
-    return 'rojo';
-  }
-
-  // Budget reduction KPIs (lower real value than target is better).
   const isReduction = ['ppto', 'presupuesto', 'reducci', 'gop', 'gasto', 'costo'].some((kw) => name.includes(kw));
-  if (isReduction) {
-    if (kpi.current_value < kpi.target) return 'verde';
-    if (kpi.current_value === kpi.target) return 'amarillo';
-    return 'rojo';
-  }
-
-  if (kpi.current_value >= kpi.threshold_green) return 'verde';
-  if (kpi.current_value >= kpi.threshold_yellow) return 'amarillo';
-  return 'rojo';
+  const inverse = kpi.inverse_thresholds ?? (unit === '#' || (!isSavings && isReduction));
+  return getKpiComplianceLight(kpi.current_value, kpi.target, inverse);
 }
 
 export function getStatusLabel(status: ObjectiveStatus): string {

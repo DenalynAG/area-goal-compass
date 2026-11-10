@@ -24,6 +24,7 @@ import EvidencePanel from '@/components/EvidencePanel';
 import { supabase } from '@/integrations/supabase/client';
 import { logActivity } from '@/lib/activityLog';
 import { getKpiTotalTarget } from '@/lib/kpiTotalTarget';
+import { getKpiComplianceLight, getKpiComplianceRatio } from '@/lib/kpiCompliance';
 import { getConsolidatedIndicatorProgress } from '@/lib/kpiConsolidatedProgress';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -1529,30 +1530,11 @@ function ObjectiveCard({
     toast.success(`Tipo KPI ${inverse ? 'activado (menor es mejor)' : 'desactivado (mayor es mejor)'}`);
   };
 
-  // Compute traffic light from Meta using ±10% bands. Inverse = lower is better.
-  const computeMetaLight = (value: number, target: number, inverse: boolean): 'verde' | 'amarillo' | 'rojo' => {
-    if (!target || target <= 0) return 'rojo';
-    const ratio = value / target;
-    if (inverse) {
-      if (ratio <= 0.90) return 'verde';
-      if (ratio <= 1.10) return 'amarillo';
-      return 'rojo';
-    }
-    if (ratio >= 1.10) return 'verde';
-    if (ratio >= 0.90) return 'amarillo';
-    return 'rojo';
-  };
+  const computeMetaLight = getKpiComplianceLight;
 
   // Performance ratio (%) considering Tipo KPI (inverse means lower is better).
   // For inverse KPIs: perf = target/value * 100 (so a value below target yields >100%).
-  const computePerfRatio = (value: number, target: number, inverse: boolean): number | null => {
-    if (!target || target <= 0) return null;
-    if (inverse) {
-      if (!value || value <= 0) return 200;
-      return (target / value) * 100;
-    }
-    return (value / target) * 100;
-  };
+  const computePerfRatio = getKpiComplianceRatio;
 
   const parseKpiNumber = (raw: string) => {
     const normalized = (raw ?? '').toString().trim().replace(/\s/g, '').replace(/\$/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.');
