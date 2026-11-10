@@ -615,7 +615,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
         </div>
 
         {/* Area header */}
-        <div className="bg-card border rounded-xl shadow-sm px-5 py-4 flex items-center gap-3">
+        <div className="bg-card border-b px-5 py-4 flex items-center gap-3">
           <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center">
             <BarChart3 className="w-4 h-4 text-primary" />
           </div>
@@ -642,7 +642,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
         <div className="space-y-3">
           {/* Direct area objectives */}
           {directAreaObjs.length > 0 && (
-            <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
+            <div className="bg-card border-b overflow-hidden">
               <div className="flex items-center">
                 <button
                   onClick={() => toggleArea(`obj-area-${selectedArea.id}`)}
@@ -674,7 +674,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                     const gKey = `drill-area-${selectedArea.id}-${group.key}`;
                     const gOpen = expandedOwners[gKey] ?? false;
                     return (
-                    <div key={group.key} className="rounded-lg border border-border/60 overflow-hidden">
+                    <div key={group.key} className="border-b border-border/60 overflow-hidden">
                       <button
                         onClick={() => toggleOwner(gKey)}
                         className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted/40 transition-colors text-left"
@@ -723,7 +723,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
             const isSubExpanded = expandedAreas[`obj-sub-${sub.id}`];
 
             return (
-              <div key={sub.id} className="bg-card rounded-xl border shadow-sm overflow-hidden">
+              <div key={sub.id} className="bg-card border-b overflow-hidden">
                 <div className="flex items-center">
                   <button
                     onClick={() => toggleArea(`obj-sub-${sub.id}`)}
@@ -755,7 +755,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                       const gKey = `drill-sub-${sub.id}-${group.key}`;
                       const gOpen = expandedOwners[gKey] ?? false;
                       return (
-                      <div key={group.key} className="rounded-lg border border-border/60 overflow-hidden">
+                      <div key={group.key} className="border-b border-border/60 overflow-hidden">
                         <button
                           onClick={() => toggleOwner(gKey)}
                           className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted/40 transition-colors text-left"
@@ -854,7 +854,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   return (
     <div className="animate-fade-in space-y-8">
       {/* Dashboard — Recursos Humanos */}
-      <section className="bg-card border rounded-xl shadow-sm overflow-hidden">
+      <section className="bg-card border-b overflow-hidden">
         <button
           onClick={() => setDashboardExpanded(!dashboardExpanded)}
           className="w-full px-5 py-4 flex items-center gap-3 hover:bg-muted/30 transition-colors"
@@ -973,7 +973,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
       </section>
 
       {/* Section 1: Global Objectives - Dirección General */}
-      <section className="bg-card border rounded-xl shadow-sm overflow-hidden">
+      <section className="bg-card border-b overflow-hidden">
         <button
           onClick={() => setGlobalExpanded(!globalExpanded)}
           className="w-full px-5 py-4 flex items-center gap-3 hover:bg-muted/30 transition-colors"
@@ -1109,7 +1109,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
         </div>
 
         {importing && importProgress.total > 0 && (
-          <div className="rounded-lg border bg-card p-4 space-y-2">
+          <div className="border-b bg-card p-4 space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="font-medium">Importando objetivos e indicadores...</span>
               <span className="text-muted-foreground tabular-nums">
@@ -1129,7 +1129,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
             const isAreaExpanded = expandedAreas[area.id];
 
             return (
-              <div key={area.id} className="bg-card border rounded-xl shadow-sm overflow-hidden">
+              <div key={area.id} className="bg-card border-b overflow-hidden">
                 <button
                   onClick={() => toggleArea(area.id)}
                   className="w-full px-5 py-4 flex items-center gap-3 hover:bg-muted/30 transition-colors"
@@ -1174,7 +1174,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                             const gKey = `global-area-${area.id}-${group.key}`;
                             const gOpen = expandedOwners[gKey] ?? false;
                             return (
-                            <div key={group.key} className="rounded-lg border border-border/60 overflow-hidden">
+                            <div key={group.key} className="border-b border-border/60 overflow-hidden">
                               <button
                                 onClick={() => toggleOwner(gKey)}
                                 className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted/40 transition-colors text-left"
@@ -1238,7 +1238,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                       const subKpiCount = subObjs.reduce((acc, o) => acc + kpis.filter(k => k.objective_id === o.id).length, 0);
 
                       return (
-                        <div key={sub.id} className="bg-muted/20 rounded-lg border overflow-hidden">
+                        <div key={sub.id} className="bg-muted/20 border-b overflow-hidden">
                           <button
                             onClick={() => toggleArea(subKey)}
                             className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/40 transition-colors text-left"
@@ -1271,7 +1271,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                                 const gKey = `global-sub-${sub.id}-${group.key}`;
                                 const gOpen = expandedOwners[gKey] ?? false;
                                 return (
-                                <div key={group.key} className="rounded-lg border border-border/60 overflow-hidden">
+                                <div key={group.key} className="border-b border-border/60 overflow-hidden">
                                   <button
                                     onClick={() => toggleOwner(gKey)}
                                     className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted/40 transition-colors text-left"
@@ -1721,7 +1721,7 @@ function ObjectiveCard({
       : 'text-danger-bright bg-danger-bright/10 border-danger-bright/40';
 
   return (
-    <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
+    <div className="bg-card border-b overflow-hidden">
       <div className="px-5 py-4 flex items-start gap-4">
         <div className="shrink-0 w-10 h-10 rounded-full bg-muted flex items-center justify-center mt-0.5">
           {index <= 3 ? (
