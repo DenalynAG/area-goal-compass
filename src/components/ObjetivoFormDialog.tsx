@@ -28,6 +28,7 @@ export default function ObjetivoFormDialog({ open, onOpenChange, objective, area
   const [saving, setSaving] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [shortTitle, setShortTitle] = useState('');
   const [scopeType, setScopeType] = useState<'area' | 'subarea'>('area');
   const [scopeId, setScopeId] = useState('');
   const [ownerUserId, setOwnerUserId] = useState('');
@@ -64,6 +65,7 @@ export default function ObjetivoFormDialog({ open, onOpenChange, objective, area
     if (objective) {
       setTitle(objective.title);
       setDescription(objective.description ?? '');
+      setShortTitle((objective as any).short_title ?? '');
       setScopeType(objective.scope_type as 'area' | 'subarea');
       setScopeId(objective.scope_id);
       setOwnerUserId(objective.owner_user_id ?? '');
@@ -93,6 +95,7 @@ export default function ObjetivoFormDialog({ open, onOpenChange, objective, area
     setSaving(true);
     const payload = {
       title: trimmed,
+      short_title: shortTitle.trim().slice(0, 120) || null,
       description: description.trim().slice(0, 1000),
       scope_type: scopeType,
       scope_id: scopeId,
@@ -125,8 +128,12 @@ export default function ObjetivoFormDialog({ open, onOpenChange, objective, area
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label>Título *</Label>
-            <Input value={title} onChange={e => setTitle(e.target.value)} maxLength={200} required />
+            <Label>Título resumido</Label>
+            <Input value={shortTitle} onChange={e => setShortTitle(e.target.value)} maxLength={120} placeholder="Ej. Optimizar presupuesto de Compensación" />
+          </div>
+          <div className="space-y-2">
+            <Label>Objetivo completo *</Label>
+            <Textarea value={title} onChange={e => setTitle(e.target.value)} maxLength={1000} rows={3} required />
           </div>
           <div className="space-y-2">
             <Label>Descripción</Label>

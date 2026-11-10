@@ -1909,6 +1909,7 @@ export type Database = {
           progress_percent: number
           scope_id: string
           scope_type: string
+          short_title: string | null
           start_date: string | null
           status: Database["public"]["Enums"]["objective_status"]
           title: string
@@ -1924,6 +1925,7 @@ export type Database = {
           progress_percent?: number
           scope_id: string
           scope_type: string
+          short_title?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["objective_status"]
           title: string
@@ -1939,6 +1941,7 @@ export type Database = {
           progress_percent?: number
           scope_id?: string
           scope_type?: string
+          short_title?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["objective_status"]
           title?: string

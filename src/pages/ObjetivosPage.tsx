@@ -18,6 +18,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import type { Tables } from '@/integrations/supabase/types';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import ObjetivoFormDialog from '@/components/ObjetivoFormDialog';
 import KPIFormDialog from '@/components/KPIFormDialog';
 import EvidencePanel from '@/components/EvidencePanel';
@@ -388,6 +389,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   };
 
   const elapsedMonths = new Date().getMonth() + 1;
+  const [detailOpen, setDetailOpen] = useState(false);
   // Accumulated average window: only Feb (2) to Nov (11)
   const avgWindowEndTop = Math.min(elapsedMonths, 11);
   const avgWindowMonthsTop = Math.max(0, avgWindowEndTop - 2 + 1);
@@ -1710,6 +1712,7 @@ function ObjectiveCard({
     return roundCompliancePercent(values.reduce((sum, value) => sum + value, 0) / values.length);
   }, [objKpis, obj.progress_percent, relevantMeasurements, selectedMonth]);
 
+  const [detailOpen, setDetailOpen] = useState(false);
   const circumference = 2 * Math.PI * 28;
   const strokeDashoffset = circumference - (Math.min(computedProgress, 100) / 100) * circumference;
   const progressColor = computedProgress >= 100 ? 'hsl(var(--success-bright))' : computedProgress >= 80 ? 'hsl(var(--warning-bright))' : 'hsl(var(--danger-bright))';
@@ -1728,14 +1731,25 @@ function ObjectiveCard({
         </div>
 
         <div className="flex-1 min-w-0 space-y-2">
-          <h3 className="font-semibold">{index}. {obj.title}</h3>
+          <div className="flex items-start gap-3 flex-wrap">
+            <h3 className="font-semibold line-clamp-1 min-w-0 flex-1" title={obj.title}>{index}. {(obj as any).short_title || obj.title}</h3>
+            <button type="button" onClick={() => setDetailOpen(true)} className="text-xs font-medium underline underline-offset-2 text-primary shrink-0">Ver detalles del objetivo</button>
+          </div>
+          <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader><DialogTitle>{index}. {(obj as any).short_title || 'Detalle del objetivo'}</DialogTitle></DialogHeader>
+              <div className="space-y-3 text-sm">
+                <p className="leading-relaxed whitespace-pre-wrap">{obj.title}</p>
+                {obj.description && <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">{obj.description}</p>}
+              </div>
+            </DialogContent>
+          </Dialog>
           {!hideOwner && obj.owner_user_id && (
             <p className="text-xs text-muted-foreground">Responsable: {getProfileName(profiles, obj.owner_user_id)}</p>
           )}
           {!hideOwner && !obj.owner_user_id && obj.scope_type === 'area' && (
             <p className="text-xs text-muted-foreground">Responsable: {getProfileName(profiles, areas.find(a => a.id === obj.scope_id)?.leader_user_id ?? null)}</p>
           )}
-          {obj.description && <p className="text-sm text-muted-foreground leading-relaxed">{obj.description}</p>}
 
           {showAreaTags && otherAreas && otherAreas.length > 0 && (
             <div className="flex items-center gap-2 flex-wrap">
