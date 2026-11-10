@@ -24,7 +24,7 @@ import EvidencePanel from '@/components/EvidencePanel';
 import { supabase } from '@/integrations/supabase/client';
 import { logActivity } from '@/lib/activityLog';
 import { getKpiTotalTarget } from '@/lib/kpiTotalTarget';
-import { getKpiComplianceLight, getKpiComplianceRatio } from '@/lib/kpiCompliance';
+import { getKpiComplianceLight, getKpiComplianceRatio, roundCompliancePercent } from '@/lib/kpiCompliance';
 import { getConsolidatedIndicatorProgress } from '@/lib/kpiConsolidatedProgress';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -420,7 +420,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
     }).filter((v): v is number => v !== null);
 
     if (values.length === 0) return 0;
-    return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
+    return roundCompliancePercent(values.reduce((sum, value) => sum + value, 0) / values.length);
   };
 
   const getAreaProgress = (areaId: string) => {
@@ -435,7 +435,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
 
   const globalProgress = useMemo(() => {
     if (globalObjectives.length === 0) return 0;
-    return Math.round(
+    return roundCompliancePercent(
       globalObjectives.reduce((sum, o) => sum + Math.min(getObjProgress(o), 100), 0) / globalObjectives.length
     );
   }, [globalObjectives, kpis]);
@@ -459,7 +459,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
     if (ms.length === 0) return null;
     const sumValue = ms.reduce((s, m) => s + Number(m.value), 0);
     const accumulated = isFinancialKpi(k) ? sumValue : sumValue / (avgWindowMonthsTop || 1);
-    return k.target > 0 ? Math.round((accumulated / k.target) * 100) : 0;
+    return k.target > 0 ? roundCompliancePercent((accumulated / k.target) * 100) : 0;
   };
 
   const getObjectivesIndicatorProgress = (objs: typeof objectives) =>
@@ -492,7 +492,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
         return k.target > 0 ? (accumulated / k.target) * 100 : 0;
       }).filter((v): v is number => v !== null);
       if (values.length === 0) return 0;
-      return Math.round(values.reduce((s, v) => s + v, 0) / values.length);
+      return roundCompliancePercent(values.reduce((s, v) => s + v, 0) / values.length);
     };
     // Build set of user IDs matching the selected role filter
     const roleUserIds = dashRoleFilter === '__all__'
@@ -505,7 +505,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
       return areas.map(a => {
         const objs = getAreaObjectives(a.id).filter(matchesRole);
         if (!objs.length) return { name: a.name, Objetivos: 0 };
-        const objAvg = Math.round(
+        const objAvg = roundCompliancePercent(
           objs.reduce((s, o) => s + Math.min(objProgress(o), 100), 0) / objs.length,
         );
         return { name: a.name, Objetivos: objAvg };
@@ -517,7 +517,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
       const result: { name: string; Objetivos: number }[] = [];
       const directObjs = objectives.filter(o => o.scope_type === 'area' && o.scope_id === dashAreaId).filter(matchesRole);
       if (directObjs.length) {
-        const objAvg = Math.round(
+        const objAvg = roundCompliancePercent(
           directObjs.reduce((s, o) => s + Math.min(objProgress(o), 100), 0) / directObjs.length,
         );
         result.push({ name: '(Área directa)', Objetivos: objAvg });
@@ -525,7 +525,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
       subs.forEach(s => {
         const objs = objectives.filter(o => o.scope_type === 'subarea' && o.scope_id === s.id).filter(matchesRole);
         if (!objs.length) return;
-        const objAvg = Math.round(
+        const objAvg = roundCompliancePercent(
           objs.reduce((sum, o) => sum + Math.min(objProgress(o), 100), 0) / objs.length,
         );
         result.push({ name: s.name, Objetivos: objAvg });
@@ -1707,7 +1707,7 @@ function ObjectiveCard({
     }).filter((v): v is number => v !== null);
 
     if (values.length === 0) return 0;
-    return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
+    return roundCompliancePercent(values.reduce((sum, value) => sum + value, 0) / values.length);
   }, [objKpis, obj.progress_percent, relevantMeasurements, selectedMonth]);
 
   const circumference = 2 * Math.PI * 28;
@@ -1855,7 +1855,7 @@ function ObjectiveCard({
                 const displayTarget = getKpiMonthTarget(k);
                 const lightTarget = displayTarget;
                 const complianceRatio = monthValue === null ? null : computePerfRatio(Number(monthValue), Number(displayTarget) || 0, Boolean((k as any).inverse_thresholds));
-                const compliancePercent = complianceRatio === null ? null : Math.round(Math.max(0, Math.min(complianceRatio, 200)));
+                const compliancePercent = complianceRatio === null ? null : roundCompliancePercent(Math.max(0, Math.min(complianceRatio, 200)));
                 const weight = (k as any).weight_percent ?? 0;
                 return (
                   <tr key={k.id} className="border-t border-border/50">
@@ -2019,7 +2019,7 @@ function ObjectiveCard({
                       if (ratio === null) return null;
                       return Math.max(0, Math.min(ratio, 200));
                     }).filter((v): v is number => v !== null);
-                    const avg = values.length > 0 ? Math.round(values.reduce((s, v) => s + v, 0) / values.length) : 0;
+                    const avg = values.length > 0 ? roundCompliancePercent(values.reduce((s, v) => s + v, 0) / values.length) : 0;
                     return `${avg}%`;
                   })()}
                 </td>
@@ -2035,7 +2035,7 @@ function ObjectiveCard({
                       if (ratio === null) return null;
                       return Math.max(0, Math.min(ratio, 200));
                     }).filter((v): v is number => v !== null);
-                    const avg = values.length > 0 ? Math.round(values.reduce((s, v) => s + v, 0) / values.length) : 0;
+                    const avg = values.length > 0 ? roundCompliancePercent(values.reduce((s, v) => s + v, 0) / values.length) : 0;
                     const label = avg >= 100 ? 'Alto' : avg >= 80 ? 'Medio' : 'Bajo';
                     const color = avg >= 100 ? 'text-success-bright bg-success-bright/10' : avg >= 80 ? 'text-warning-bright bg-warning-bright/10' : 'text-danger-bright bg-danger-bright/10';
                     return <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${color}`}>{label} ({avg}%)</span>;
