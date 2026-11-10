@@ -4,7 +4,7 @@ import ObjectiveMonthNote from '@/components/ObjectiveMonthNote';
 import { useObjectives, useKPIs, useKPIMeasurements, useAreas, useSubareas, useProfiles, useUserRoles, getProfileName, getAreaNameFromList, useEvidenceCountsByEntity } from '@/hooks/useSupabaseData';
 import { getTrafficLight } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
-import { StatusBadge, ProgressBar, TrafficLightBadge } from '@/components/StatusBadge';
+import { ProgressBar, TrafficLightBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Plus, Target, ChevronRight, ChevronDown, Edit, TrendingUp, Settings, ArrowLeft, BarChart3, Paperclip, Calendar, Upload, Download, Layers, User, Trash2 } from 'lucide-react';
 import {
@@ -622,7 +622,6 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <span className="font-bold text-base">{selectedArea.name}</span>
-              <StatusBadge status={selectedArea.status} />
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
               — Líder: {getProfileName(profiles, selectedArea.leader_user_id)}
@@ -653,7 +652,6 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3">
                       <span className="font-semibold">{selectedArea.name}</span>
-                      <StatusBadge status={selectedArea.status} />
                       <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
                         <Target className="w-3 h-3" />{directAreaObjs.length}
                       </span>
@@ -734,7 +732,6 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-sm">{sub.name}</span>
-                        <StatusBadge status={sub.status} />
                         <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
                           <Target className="w-3 h-3" />{subObjs.length}
                         </span>
@@ -993,7 +990,6 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
           </div>
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
             <span>{globalKpis.length} indicadores</span>
-            <StatusBadge status="activo" />
           </div>
           {isSuperAdmin && (
             <Button size="sm" variant="outline" className="ml-2" onClick={(e) => { e.stopPropagation(); openNew(); }}>
@@ -1151,7 +1147,6 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                   </div>
                   <div className="flex items-center gap-3 text-sm text-muted-foreground">
                     <span>{areaKpisList.length} indicadores</span>
-                    <StatusBadge status={area.status} />
                   </div>
                   <Button size="sm" variant="outline" className="ml-2" onClick={(e) => { e.stopPropagation(); setSelectedAreaId(area.id); }}>
                     Ver detalle
@@ -1248,7 +1243,6 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="font-semibold text-sm">{sub.name}</span>
-                                <StatusBadge status={sub.status} />
                                 <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
                                   <Target className="w-3 h-3" />{subObjs.length}
                                 </span>
