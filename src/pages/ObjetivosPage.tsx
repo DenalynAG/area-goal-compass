@@ -1713,11 +1713,12 @@ function ObjectiveCard({
   }, [objKpis, obj.progress_percent, relevantMeasurements, selectedMonth]);
 
   const [detailOpen, setDetailOpen] = useState(false);
-  const circumference = 2 * Math.PI * 28;
-  const strokeDashoffset = circumference - (Math.min(computedProgress, 100) / 100) * circumference;
-  const progressColor = computedProgress >= 100 ? 'hsl(var(--success-bright))' : computedProgress >= 80 ? 'hsl(var(--warning-bright))' : 'hsl(var(--danger-bright))';
   const progressLabel = computedProgress >= 100 ? 'Alto' : computedProgress >= 80 ? 'Medio' : 'Bajo';
-  const progressLabelClass = computedProgress >= 100 ? 'text-success-bright' : computedProgress >= 80 ? 'text-warning-bright' : 'text-danger-bright';
+  const progressPillClass = computedProgress >= 100
+    ? 'text-success-bright bg-success-bright/10 border-success-bright/40'
+    : computedProgress >= 80
+      ? 'text-warning-bright bg-warning-bright/10 border-warning-bright/40'
+      : 'text-danger-bright bg-danger-bright/10 border-danger-bright/40';
 
   return (
     <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
@@ -1787,28 +1788,12 @@ function ObjectiveCard({
           </div>
         </div>
 
-        {/* Circular progress */}
-        <div className="shrink-0 flex flex-col items-center gap-1">
-          <svg width="64" height="64" viewBox="0 0 64 64" className="-rotate-90">
-            <circle cx="32" cy="32" r="28" stroke="hsl(var(--muted))" strokeWidth="4" fill="none" />
-            <circle
-              cx="32" cy="32" r="28"
-              stroke={progressColor}
-              strokeWidth="4"
-              fill="none"
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
-              strokeLinecap="round"
-              className="transition-all duration-500"
-            />
-          </svg>
-          <span className={`text-lg font-bold -mt-11 ${progressLabelClass}`}>{progressLabel}</span>
-          {selectedMonth === 'total' && (
-            <div className="mt-5 text-center" aria-label="Cumplimiento del objetivo">
-              <span className={`text-sm font-bold tabular-nums ${progressLabelClass}`}>{computedProgress}%</span>
-              <p className="text-[10px] text-muted-foreground">Cumplimiento</p>
-            </div>
-          )}
+        {/* Cumplimiento: % / semáforo */}
+        <div className="shrink-0 flex flex-col items-end gap-1 mt-1" aria-label="Cumplimiento del objetivo">
+          <p className="text-[10px] text-muted-foreground">Cumplimiento</p>
+          <span className={`inline-flex items-center whitespace-nowrap rounded-full border px-3 py-1 text-sm font-bold tabular-nums ${progressPillClass}`}>
+            {computedProgress}% / {progressLabel}
+          </span>
         </div>
 
         {canEdit && (
