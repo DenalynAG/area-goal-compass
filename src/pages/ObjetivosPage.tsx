@@ -1807,6 +1807,12 @@ function ObjectiveCard({
             />
           </svg>
           <span className={`text-lg font-bold -mt-11 ${progressLabelClass}`}>{progressLabel}</span>
+          {selectedMonth === 'total' && (
+            <div className="mt-5 text-center" aria-label="Cumplimiento del objetivo">
+              <span className={`text-sm font-bold tabular-nums ${progressLabelClass}`}>{computedProgress}%</span>
+              <p className="text-[10px] text-muted-foreground">Cumplimiento</p>
+            </div>
+          )}
         </div>
 
         {canEdit && (
@@ -1843,6 +1849,7 @@ function ObjectiveCard({
             </div>
           )}
 
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-xs text-muted-foreground">
@@ -1853,6 +1860,7 @@ function ObjectiveCard({
                 <th className="text-center py-1">Cálculo</th>
                 <th className="text-center py-1">Tipo KPI</th>
                 <th className="text-left py-1">Semáforo</th>
+                {selectedMonth === 'total' && <th className="text-center py-1 px-3 whitespace-nowrap">Cumplimiento %</th>}
                 <th className="text-right py-1"></th>
               </tr>
             </thead>
@@ -1864,6 +1872,8 @@ function ObjectiveCard({
                 // The displayed target also drives the light and overall progress.
                 const displayTarget = getKpiMonthTarget(k);
                 const lightTarget = displayTarget;
+                const complianceRatio = monthValue === null ? null : computePerfRatio(Number(monthValue), Number(displayTarget) || 0, Boolean((k as any).inverse_thresholds));
+                const compliancePercent = complianceRatio === null ? null : Math.round(Math.max(0, Math.min(complianceRatio, 200)));
                 const weight = (k as any).weight_percent ?? 0;
                 return (
                   <tr key={k.id} className="border-t border-border/50">
@@ -1973,6 +1983,11 @@ function ObjectiveCard({
                         : <TrafficLightBadge light={computeMetaLight(Number(displayValue) || 0, Number(lightTarget) || 0, Boolean((k as any).inverse_thresholds))} />
                       }
                     </td>
+                    {isTotalView && (
+                      <td className="py-2 px-3 text-center font-semibold tabular-nums whitespace-nowrap">
+                        {compliancePercent === null ? <span className="text-muted-foreground">—</span> : `${compliancePercent}%`}
+                      </td>
+                    )}
                     <td className="py-2 text-right">
                       <div className="flex items-center justify-end gap-1">
                         <Button variant="ghost" size="icon" className="h-7 w-7 relative" onClick={() => { setKpiEvidenceId(k.id); setKpiEvidenceName(k.name); }}>
@@ -2044,10 +2059,12 @@ function ObjectiveCard({
                     return <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${color}`}>{label} ({avg}%)</span>;
                   })()}
                 </td>
+                {selectedMonth === 'total' && <td className="py-2 px-3 text-center font-bold tabular-nums">{computedProgress}%</td>}
                 <td></td>
               </tr>
             </tfoot>
           </table>
+          </div>
           {selectedMonth !== 'total' && (
             <ObjectiveMonthNote objectiveId={obj.id} period={selectedMonth} periodLabel={getMonthLabel(selectedMonth)} canEdit={Boolean(canEdit || canEditKpi)} />
           )}
