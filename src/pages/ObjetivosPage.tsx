@@ -24,6 +24,7 @@ import EvidencePanel from '@/components/EvidencePanel';
 import { supabase } from '@/integrations/supabase/client';
 import { logActivity } from '@/lib/activityLog';
 import { getKpiTotalTarget } from '@/lib/kpiTotalTarget';
+import { getConsolidatedIndicatorProgress } from '@/lib/kpiConsolidatedProgress';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
@@ -422,11 +423,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   };
 
   const getAreaProgress = (areaId: string) => {
-    const areaObjs = getAreaObjectives(areaId);
-    if (areaObjs.length === 0) return 0;
-    return Math.round(
-      areaObjs.reduce((sum, o) => sum + Math.min(getObjProgress(o), 100), 0) / areaObjs.length
-    );
+    return getObjectivesIndicatorProgress(getAreaObjectives(areaId));
   };
 
   // Global KPIs for Dirección General objectives
@@ -463,6 +460,9 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
     const accumulated = isFinancialKpi(k) ? sumValue : sumValue / (avgWindowMonthsTop || 1);
     return k.target > 0 ? Math.round((accumulated / k.target) * 100) : 0;
   };
+
+  const getObjectivesIndicatorProgress = (objs: typeof objectives) =>
+    getConsolidatedIndicatorProgress(objs.map(o => o.id), kpis, getKpiAchievement);
 
   const dashboardChartData = useMemo(() => {
     // Month-aware progress: if a specific month is selected, restrict the
@@ -630,6 +630,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
               <span className="text-xs font-semibold text-muted-foreground">{areaProgress}%</span>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">{areaObjs.length} obj · {areaKpisList.length} ind</p>
+            <p className="text-xs text-muted-foreground">Consolidado del área y subáreas</p>
           </div>
         </div>
 
@@ -657,6 +658,10 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                       — Líder: {getProfileName(profiles, selectedArea.leader_user_id)}
                     </p>
                   </div>
+                  <div className="shrink-0 flex items-center gap-2">
+                    <ProgressBar value={getObjectivesIndicatorProgress(directAreaObjs)} className="w-20" highThreshold={100} midThreshold={80} />
+                    <span className="text-xs font-semibold text-muted-foreground tabular-nums">{getObjectivesIndicatorProgress(directAreaObjs)}%</span>
+                  </div>
                 </button>
               </div>
               {expandedAreas[`obj-area-${selectedArea.id}`] && (
@@ -679,6 +684,8 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                           {group.objs.length}
                         </span>
                         <div className="flex-1 h-px bg-border" />
+                        <ProgressBar value={getObjectivesIndicatorProgress(group.objs)} className="w-16 shrink-0" highThreshold={100} midThreshold={80} />
+                        <span className="text-xs font-semibold text-muted-foreground tabular-nums shrink-0">{getObjectivesIndicatorProgress(group.objs)}%</span>
                       </button>
                       {gOpen && (
                         <div className="px-3 pb-3 pt-1 space-y-3">
@@ -758,6 +765,8 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                             {group.objs.length}
                           </span>
                           <div className="flex-1 h-px bg-border" />
+                          <ProgressBar value={getObjectivesIndicatorProgress(group.objs)} className="w-16 shrink-0" highThreshold={100} midThreshold={80} />
+                          <span className="text-xs font-semibold text-muted-foreground tabular-nums shrink-0">{getObjectivesIndicatorProgress(group.objs)}%</span>
                         </button>
                         {gOpen && (
                           <div className="px-3 pb-3 pt-1 space-y-3">
@@ -1134,6 +1143,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                       <ProgressBar value={progress} className="flex-1" highThreshold={100} midThreshold={80} />
                       <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">{progress}%</span>
                     </div>
+                    <p className="text-xs text-muted-foreground mt-1">Consolidado del área y subáreas</p>
                   </div>
                   <div className="flex items-center gap-3 text-sm text-muted-foreground">
                     <span>{areaKpisList.length} indicadores</span>
@@ -1174,6 +1184,8 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                                   {group.objs.length}
                                 </span>
                                 <div className="flex-1 h-px bg-border" />
+                                <ProgressBar value={getObjectivesIndicatorProgress(group.objs)} className="w-16 shrink-0" highThreshold={100} midThreshold={80} />
+                                <span className="text-xs font-semibold text-muted-foreground tabular-nums shrink-0">{getObjectivesIndicatorProgress(group.objs)}%</span>
                               </button>
                               {gOpen && (
                                 <div className="px-3 pb-3 pt-1 space-y-3">
@@ -1269,6 +1281,8 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                                       {group.objs.length}
                                     </span>
                                     <div className="flex-1 h-px bg-border" />
+                                    <ProgressBar value={getObjectivesIndicatorProgress(group.objs)} className="w-16 shrink-0" highThreshold={100} midThreshold={80} />
+                                    <span className="text-xs font-semibold text-muted-foreground tabular-nums shrink-0">{getObjectivesIndicatorProgress(group.objs)}%</span>
                                   </button>
                                   {gOpen && (
                                     <div className="px-3 pb-3 pt-1 space-y-3">
