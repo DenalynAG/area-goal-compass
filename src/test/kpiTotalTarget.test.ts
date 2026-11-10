@@ -13,13 +13,19 @@ const measurements = [
 ];
 
 describe('Total KPI target', () => {
-  it('sums saved targets from February through November of the selected year only', () => {
-    expect(getKpiTotalTarget('kpi', 2026, 'suma', measurements)).toBe(300);
+  it('keeps a monthly target of 100 instead of summing repeated monthly targets', () => {
+    const repeated = Array.from({ length: 10 }, (_, index) => ({
+      kpi_id: 'kpi', period_date: `2026-${String(index + 2).padStart(2, '0')}-01`, target: 100,
+    }));
+    expect(getKpiTotalTarget('kpi', 2026, 100, repeated)).toBe(100);
   });
-  it('averages only saved targets, including zero and excluding missing months', () => {
-    expect(getKpiTotalTarget('kpi', 2026, 'promedio', measurements)).toBe(100);
+  it('uses the latest saved monthly target within February through November', () => {
+    expect(getKpiTotalTarget('kpi', 2026, 100, measurements)).toBe(200);
   });
-  it('does not substitute a base target when no monthly targets are saved', () => {
-    expect(getKpiTotalTarget('missing', 2026, 'suma', measurements)).toBeNull();
+  it('shows the base monthly target when no monthly overrides are saved', () => {
+    expect(getKpiTotalTarget('missing', 2026, 9.2, measurements)).toBe(9.2);
+  });
+  it('preserves a saved target of zero', () => {
+    expect(getKpiTotalTarget('kpi', 2026, 100, measurements.slice(0, 4))).toBe(0);
   });
 });

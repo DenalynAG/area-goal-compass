@@ -4,19 +4,18 @@ type TargetMeasurement = {
   target?: number | null;
 };
 
-/** Aggregate only explicitly saved targets in the February–November window. */
+/** Keep one monthly target; never accumulate targets with the real-value method. */
 export function getKpiTotalTarget(
   kpiId: string,
   year: number,
-  method: 'suma' | 'promedio',
+  baseTarget: number,
   measurements: readonly TargetMeasurement[],
-): number | null {
+): number {
   const targets = measurements.filter(m => {
     const [measurementYear, month] = m.period_date.split('-').map(Number);
     return m.kpi_id === kpiId && measurementYear === year && month >= 2 && month <= 11
       && m.target !== null && m.target !== undefined;
-  }).map(m => Number(m.target));
-  if (targets.length === 0) return null;
-  const sum = targets.reduce((total, target) => total + target, 0);
-  return method === 'suma' ? sum : sum / targets.length;
+  }).sort((a, b) => b.period_date.localeCompare(a.period_date));
+  const latestTarget = targets[0]?.target;
+  return latestTarget === null || latestTarget === undefined ? baseTarget : Number(latestTarget);
 }
