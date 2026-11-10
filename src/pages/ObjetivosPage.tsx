@@ -1703,7 +1703,7 @@ function ObjectiveCard({
       const tgt = Number(getKpiMonthTarget(k)) || 0;
       const ratio = computePerfRatio(Number(monthValue), tgt, Boolean((k as any).inverse_thresholds));
       if (ratio === null) return null;
-      return Math.max(0, Math.min(ratio, 200));
+      return roundCompliancePercent(Math.max(0, Math.min(ratio, 200)));
     }).filter((v): v is number => v !== null);
 
     if (values.length === 0) return 0;
@@ -2017,7 +2017,7 @@ function ObjectiveCard({
                       const tgt = Number(getKpiMonthTarget(k)) || 0;
                       const ratio = computePerfRatio(Number(monthValue), tgt, Boolean((k as any).inverse_thresholds));
                       if (ratio === null) return null;
-                      return Math.max(0, Math.min(ratio, 200));
+                      return roundCompliancePercent(Math.max(0, Math.min(ratio, 200)));
                     }).filter((v): v is number => v !== null);
                     const avg = values.length > 0 ? roundCompliancePercent(values.reduce((s, v) => s + v, 0) / values.length) : 0;
                     return `${avg}%`;
@@ -2033,7 +2033,7 @@ function ObjectiveCard({
                       const tgt = Number(getKpiMonthTarget(k)) || 0;
                       const ratio = computePerfRatio(Number(monthValue), tgt, Boolean((k as any).inverse_thresholds));
                       if (ratio === null) return null;
-                      return Math.max(0, Math.min(ratio, 200));
+                      return roundCompliancePercent(Math.max(0, Math.min(ratio, 200)));
                     }).filter((v): v is number => v !== null);
                     const avg = values.length > 0 ? roundCompliancePercent(values.reduce((s, v) => s + v, 0) / values.length) : 0;
                     const label = avg >= 100 ? 'Alto' : avg >= 80 ? 'Medio' : 'Bajo';
