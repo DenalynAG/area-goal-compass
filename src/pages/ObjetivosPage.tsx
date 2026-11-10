@@ -23,6 +23,7 @@ import KPIFormDialog from '@/components/KPIFormDialog';
 import EvidencePanel from '@/components/EvidencePanel';
 import { supabase } from '@/integrations/supabase/client';
 import { logActivity } from '@/lib/activityLog';
+import { getKpiTotalTarget } from '@/lib/kpiTotalTarget';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
@@ -1657,21 +1658,6 @@ function ObjectiveCard({
     toast.success('Meta guardada');
   };
 
-  // Save the base KPI target (used in the "Total KPI" view)
-  const saveKpiBaseTarget = async (kpiId: string, raw: string) => {
-    const trimmed = (raw ?? '').toString().trim();
-    if (trimmed === '') return;
-    const target = parseKpiNumber(trimmed);
-    if (!isFinite(target)) { toast.error('Meta inválida'); return; }
-    const kpi = objKpis.find(k => k.id === kpiId);
-    if (kpi && Number(kpi.target) === target) return;
-    const { error } = await supabase.from('kpis').update({ target } as any).eq('id', kpiId);
-    if (error) { toast.error(`No se pudo actualizar la meta: ${error.message}`); return; }
-    qcLocal.invalidateQueries({ queryKey: ['kpis'] });
-    await logActivity('update', 'kpi_target', kpiId, { target });
-    toast.success('Meta guardada');
-  };
-
   // Get KPI accumulated value up to current month in current year (sum for financial, average otherwise)
   const getKpiAccumulatedAverage = (kpiId: string) => {
     const kpi = objKpis.find(k => k.id === kpiId);
@@ -1691,27 +1677,6 @@ function ObjectiveCard({
     return Math.round(accumulated * 100) / 100;
   };
 
-  // Count measured months in current year up to elapsedMonths (used to scale accumulated target)
-  const getKpiMeasuredMonthsCount = (kpiId: string) => {
-    const elapsed = new Date().getMonth() + 1;
-    const winEnd = Math.min(elapsed, 11);
-    return relevantMeasurements.filter(m => {
-      if (m.kpi_id !== kpiId) return false;
-      const d = new Date(m.period_date);
-      const mo = d.getMonth() + 1;
-      return d.getFullYear() === currentYear && mo >= 2 && mo <= winEnd;
-    }).length;
-  };
-
-  // Accumulated target: for SUM-method KPIs, multiply monthly target by number of measured months.
-  // For AVG-method KPIs the target stays as the monthly target (comparable to the average).
-  const getKpiAccumulatedTarget = (k: any) => {
-    const method = getCalcMethod(k);
-    if (method !== 'suma') return Number(k.target) || 0;
-    const n = getKpiMeasuredMonthsCount(k.id);
-    return (Number(k.target) || 0) * (n > 0 ? n : 1);
-  };
-
   // Get KPI value for a given month (or accumulated average up to date for 'total')
   const getKpiMonthValue = (kpiId: string) => {
     if (selectedMonth === 'total') {
@@ -1723,7 +1688,7 @@ function ObjectiveCard({
 
   // Get per-month target for a KPI (falls back to KPI default target)
   const getKpiMonthTarget = (k: any) => {
-    if (selectedMonth === 'total') return Number(k.target) || 0;
+    if (selectedMonth === 'total') return getKpiTotalTarget(k.id, currentYear, getCalcMethod(k), relevantMeasurements);
     const m = relevantMeasurements.find(m => m.kpi_id === k.id && m.period_date.startsWith(selectedMonth));
     const t = (m as any)?.target;
     return (t === null || t === undefined) ? (Number(k.target) || 0) : Number(t);
@@ -1882,13 +1847,9 @@ function ObjectiveCard({
                 const monthValue = getKpiMonthValue(k.id);
                 const displayValue = monthValue ?? 0;
                 const isTotalView = selectedMonth === 'total';
-                const calcMethod = getCalcMethod(k);
-                const accumulatedTarget = getKpiAccumulatedTarget(k);
-                // Meta column shows the per-month target (or KPI default target if no per-month value set)
+                // The displayed target also drives the light and overall progress.
                 const displayTarget = getKpiMonthTarget(k);
-                // Traffic light still compares against accumulated target on total view (sum method)
-                const lightTarget = isTotalView && calcMethod === 'suma' ? accumulatedTarget : displayTarget;
-                const kpiForLight = { ...k, current_value: displayValue, target: lightTarget };
+                const lightTarget = displayTarget;
                 const weight = (k as any).weight_percent ?? 0;
                 return (
                   <tr key={k.id} className="border-t border-border/50">
@@ -1897,7 +1858,7 @@ function ObjectiveCard({
                       {weight > 0 ? <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-accent/20 text-foreground">{weight}%</span> : <span className="text-muted-foreground">—</span>}
                     </td>
                     <td className="py-2">
-                      {!(canEdit || canEditKpi) ? (
+                      {isTotalView || !(canEdit || canEditKpi) ? (
                         <>{formatKpiValue(displayTarget, k)}</>
                       ) : (
                         <input
@@ -1914,8 +1875,7 @@ function ObjectiveCard({
                             const raw = e.target.value;
                             const orig = displayTarget === null || displayTarget === undefined ? '' : String(displayTarget);
                             if (raw.trim() !== orig.trim() && !(raw.trim() === '' && orig === '')) {
-                              if (isTotalView) saveKpiBaseTarget(k.id, raw);
-                              else saveKpiMonthTarget(k.id, raw);
+                              saveKpiMonthTarget(k.id, raw);
                             } else {
                               e.target.value = formatKpiInputValue(displayTarget, k);
                             }
