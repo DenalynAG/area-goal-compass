@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getKpiComplianceLight, getKpiComplianceRatio, roundCompliancePercent } from '@/lib/kpiCompliance';
+import { getComplianceStatus, getKpiComplianceLight, getKpiComplianceRatio, roundCompliancePercent } from '@/lib/kpiCompliance';
 import { getTrafficLight, type KPI } from '@/types';
 
 describe('Redondeo del % de cumplimiento', () => {
@@ -17,6 +17,21 @@ describe('Redondeo del % de cumplimiento', () => {
 });
 
 describe('Semáforo de todos los KPIs', () => {
+  it('clasifica el promedio y el objetivo de 100% como amarillo / Medio', () => {
+    expect(getComplianceStatus(100)).toEqual({ light: 'amarillo', label: 'Medio' });
+    expect(getComplianceStatus(100).light).toBe(getKpiComplianceLight(200000, 200000, false));
+  });
+  it('clasifica Alto desde 109% para promedio y objetivo', () => {
+    expect(getComplianceStatus(109)).toEqual({ light: 'verde', label: 'Alto' });
+    expect(getComplianceStatus(108.7)).toEqual({ light: 'verde', label: 'Alto' });
+  });
+  it('clasifica Medio entre 90% y 108% para promedio y objetivo', () => {
+    expect(getComplianceStatus(90)).toEqual({ light: 'amarillo', label: 'Medio' });
+    expect(getComplianceStatus(108)).toEqual({ light: 'amarillo', label: 'Medio' });
+  });
+  it('clasifica Bajo por debajo de 90% para promedio y objetivo', () => {
+    expect(getComplianceStatus(89)).toEqual({ light: 'rojo', label: 'Bajo' });
+  });
   it('es verde desde 109% real para indicadores directos', () => {
     expect(getKpiComplianceLight(109, 100, false)).toBe('verde');
     expect(getKpiComplianceLight(110, 100, false)).toBe('verde');

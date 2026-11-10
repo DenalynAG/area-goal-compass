@@ -15,11 +15,15 @@ export function getKpiComplianceRatio(value: number, target: number, inverse: bo
 }
 
 /** El semáforo usa el % redondeado, así la luz coincide con el número visible. */
+export function getComplianceStatus(percent: number): { light: 'verde' | 'amarillo' | 'rojo'; label: 'Alto' | 'Medio' | 'Bajo' } {
+  const rounded = roundCompliancePercent(percent);
+  if (rounded >= 109) return { light: 'verde', label: 'Alto' };
+  if (rounded >= 90) return { light: 'amarillo', label: 'Medio' };
+  return { light: 'rojo', label: 'Bajo' };
+}
+
 export function getKpiComplianceLight(value: number, target: number, inverse: boolean): 'verde' | 'amarillo' | 'rojo' {
   const compliance = getKpiComplianceRatio(value, target, inverse);
   if (compliance === null) return 'rojo';
-  const rounded = roundCompliancePercent(compliance);
-  if (rounded >= 109) return 'verde';
-  if (rounded >= 90) return 'amarillo';
-  return 'rojo';
+  return getComplianceStatus(compliance).light;
 }

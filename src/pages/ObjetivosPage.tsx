@@ -26,7 +26,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { logActivity } from '@/lib/activityLog';
 import { getKpiTotalTarget } from '@/lib/kpiTotalTarget';
 import { getDefaultKpiMonth, isKpiMonthAllowed } from '@/lib/kpiMonths';
-import { getKpiComplianceLight, getKpiComplianceRatio, roundCompliancePercent } from '@/lib/kpiCompliance';
+import { getComplianceStatus, getKpiComplianceLight, getKpiComplianceRatio, roundCompliancePercent } from '@/lib/kpiCompliance';
 import { getConsolidatedIndicatorProgress } from '@/lib/kpiConsolidatedProgress';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -1713,10 +1713,10 @@ function ObjectiveCard({
   }, [objKpis, obj.progress_percent, relevantMeasurements, selectedMonth]);
 
   const [detailOpen, setDetailOpen] = useState(false);
-  const progressLabel = computedProgress >= 100 ? 'Alto' : computedProgress >= 80 ? 'Medio' : 'Bajo';
-  const progressPillClass = computedProgress >= 100
+  const { light: progressLight, label: progressLabel } = getComplianceStatus(computedProgress);
+  const progressPillClass = progressLight === 'verde'
     ? 'text-success-bright bg-success-bright/10 border-success-bright/40'
-    : computedProgress >= 80
+    : progressLight === 'amarillo'
       ? 'text-warning-bright bg-warning-bright/10 border-warning-bright/40'
       : 'text-danger-bright bg-danger-bright/10 border-danger-bright/40';
 
@@ -2039,8 +2039,8 @@ function ObjectiveCard({
                       return roundCompliancePercent(Math.max(0, Math.min(ratio, 200)));
                     }).filter((v): v is number => v !== null);
                     const avg = values.length > 0 ? roundCompliancePercent(values.reduce((s, v) => s + v, 0) / values.length) : 0;
-                    const label = avg >= 100 ? 'Alto' : avg >= 80 ? 'Medio' : 'Bajo';
-                    const color = avg >= 100 ? 'text-success-bright bg-success-bright/10' : avg >= 80 ? 'text-warning-bright bg-warning-bright/10' : 'text-danger-bright bg-danger-bright/10';
+                    const { light, label } = getComplianceStatus(avg);
+                    const color = light === 'verde' ? 'text-success-bright bg-success-bright/10' : light === 'amarillo' ? 'text-warning-bright bg-warning-bright/10' : 'text-danger-bright bg-danger-bright/10';
                     return <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${color}`}>{label} ({avg}%)</span>;
                   })()}
                 </td>

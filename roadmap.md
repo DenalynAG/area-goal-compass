@@ -5,3 +5,4 @@
 - [x] Mostrar porcentajes de cumplimiento por KPI y objetivo en Total KPI sin cambiar cálculos; verificado con datos reales.
 - [x] Corregir Verde / Alto desde 109% real para todos los KPIs; once pruebas y verificación visual con datos reales.
 - [x] Eliminar 197 mediciones de enero y diciembre y bloquear nuevas entradas; 18 pruebas y verificación en pantalla con sesión activa.
+- [x] Unificar los rangos del promedio y de los objetivos con el KPI; ejemplo real de marzo verificado como 100% / Medio en amarillo y 14 pruebas aprobadas.
