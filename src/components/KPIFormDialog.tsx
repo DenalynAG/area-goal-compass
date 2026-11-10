@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { Lock } from "lucide-react";
+import { getAllowedKpiMonths, getDefaultKpiMonth, isKpiMonthAllowed } from '@/lib/kpiMonths';
 
 interface Props {
   open: boolean;
@@ -69,12 +70,7 @@ export default function KPIFormDialog({
   const [thresholdYellow, setThresholdYellow] = useState(0);
   const [thresholdRed, setThresholdRed] = useState(0);
   const [weightPercent, setWeightPercent] = useState(0);
-  const defaultMonth = () => {
-    const now = new Date();
-    // Default to previous month (e.g., July -> June)
-    const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    return `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, "0")}`;
-  };
+  const defaultMonth = getDefaultKpiMonth;
   const [measurementMonth, setMeasurementMonth] = useState(defaultMonth());
 
   const isMonthLocked = useMemo(() => {
@@ -85,7 +81,7 @@ export default function KPIFormDialog({
   }, [measurementMonth, monthLocks]);
 
   // Super Admin can override locks
-  const valueLocked = isMonthLocked && !isSuperAdmin;
+  const valueLocked = !isKpiMonthAllowed(measurementMonth) || (isMonthLocked && !isSuperAdmin);
 
   const [filterAreaId, setFilterAreaId] = useState("all");
   const [filterSubareaId, setFilterSubareaId] = useState("all");
@@ -169,7 +165,7 @@ export default function KPIFormDialog({
       }
     }
     // Set measurement month from prop or default
-    setMeasurementMonth(initialMonth && initialMonth !== "total" ? initialMonth : defaultMonth());
+    setMeasurementMonth(initialMonth && isKpiMonthAllowed(initialMonth) ? initialMonth : defaultMonth());
   }, [kpi, open]);
 
   // Helper: recalcula umbrales desde la Meta (±10%)
@@ -419,36 +415,15 @@ export default function KPIFormDialog({
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Mes de Medición</Label>
-              <Select value={measurementMonth} onValueChange={setMeasurementMonth}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: 12 }, (_, i) => {
-                    const mm = String(i + 1).padStart(2, "0");
-                    const year = new Date().getFullYear();
-                    const labels: Record<string, string> = {
-                      "01": "Ene",
-                      "02": "Feb",
-                      "03": "Mar",
-                      "04": "Abr",
-                      "05": "May",
-                      "06": "Jun",
-                      "07": "Jul",
-                      "08": "Ago",
-                      "09": "Sep",
-                      "10": "Oct",
-                      "11": "Nov",
-                      "12": "Dic",
-                    };
-                    return (
-                      <SelectItem key={mm} value={`${year}-${mm}`}>
-                        {labels[mm]} {year}
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
+              <SearchableSelect
+                value={measurementMonth}
+                onValueChange={setMeasurementMonth}
+                options={getAllowedKpiMonths(new Date().getFullYear()).map(value => ({
+                  value,
+                  label: new Date(`${value}-01T12:00:00`).toLocaleDateString('es-CO', { month: 'short', year: 'numeric' }),
+                }))}
+                searchPlaceholder="Buscar mes..."
+              />
             </div>
             <div className="space-y-2">
               <Label>Valor Real</Label>

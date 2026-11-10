@@ -5,6 +5,7 @@ import { Lock, Unlock, ChevronDown, ChevronRight } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { isKpiMonthAllowed } from '@/lib/kpiMonths';
 
 const MONTH_LABELS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
@@ -30,7 +31,7 @@ export default function KpiMonthLocksSection({ canManage }: { canManage: boolean
   }, [locks, year]);
 
   const toggleMonth = async (month: number, locked: boolean) => {
-    if (!canManage) return;
+    if (!canManage || !isKpiMonthAllowed(`${year}-${String(month).padStart(2, '0')}`)) return;
     setUpdating(`${year}-${month}`);
     const { data: { user } } = await supabase.auth.getUser();
     const existing = locks.find(l => l.year === year && l.month === month);
@@ -69,7 +70,8 @@ export default function KpiMonthLocksSection({ canManage }: { canManage: boolean
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {MONTH_LABELS.map((label, idx) => {
             const month = idx + 1;
-            const locked = yearLocks.get(month) ?? false;
+            const excluded = !isKpiMonthAllowed(`${year}-${String(month).padStart(2, '0')}`);
+            const locked = excluded || (yearLocks.get(month) ?? false);
             const key = `${year}-${month}`;
             return (
               <div key={month} className="flex items-center justify-between gap-3 px-4 py-3 border rounded-lg bg-card">
@@ -82,7 +84,7 @@ export default function KpiMonthLocksSection({ canManage }: { canManage: boolean
                 </div>
                 <Switch
                   checked={locked}
-                  disabled={!canManage || updating === key}
+                  disabled={excluded || !canManage || updating === key}
                   onCheckedChange={(v) => toggleMonth(month, v)}
                 />
               </div>

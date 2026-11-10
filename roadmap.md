@@ -4,3 +4,4 @@
 - [x] Mostrar avance del líder y consolidado de todos los indicadores del área y subáreas; verificado con datos reales y siete pruebas.
 - [x] Mostrar porcentajes de cumplimiento por KPI y objetivo en Total KPI sin cambiar cálculos; verificado con datos reales.
 - [x] Corregir Verde / Alto desde 109% real para todos los KPIs; once pruebas y verificación visual con datos reales.
+- [x] Eliminar 197 mediciones de enero y diciembre y bloquear nuevas entradas; 18 pruebas y verificación en pantalla con sesión activa.

@@ -1,0 +1,1 @@
+ALTER TABLE public.kpi_measurements VALIDATE CONSTRAINT kpi_measurements_allowed_month;

@@ -9,6 +9,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import type { Tables } from "@/integrations/supabase/types";
 import KPIFormDialog from "@/components/KPIFormDialog";
 import { useAuth } from "@/contexts/AuthContext";
+import { isKpiMonthAllowed } from '@/lib/kpiMonths';
 
 export default function IndicadoresPage() {
   const { data: kpis = [], isLoading } = useKPIs();
@@ -82,7 +83,7 @@ export default function IndicadoresPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {kpis.map((kpi) => {
           const obj = objectives.find((o) => o.id === kpi.objective_id);
-          const kpiMeasurements = measurements.filter((m) => m.kpi_id === kpi.id);
+          const kpiMeasurements = measurements.filter((m) => m.kpi_id === kpi.id && isKpiMonthAllowed(m.period_date));
           const chartData = kpiMeasurements.map((m) => ({ period: m.period_date, valor: m.value }));
           const light = getTrafficLight(kpi as any);
           const progress = kpi.target > 0 ? Math.round((kpi.current_value / kpi.target) * 100) : 0;

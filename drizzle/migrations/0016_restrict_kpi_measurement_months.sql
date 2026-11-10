@@ -1,0 +1,1 @@
+ALTER TABLE public.kpi_measurements ADD CONSTRAINT kpi_measurements_allowed_month CHECK (EXTRACT(MONTH FROM period_date) BETWEEN 2 AND 11) NOT VALID;

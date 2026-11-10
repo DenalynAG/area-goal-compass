@@ -25,6 +25,7 @@ import EvidencePanel from '@/components/EvidencePanel';
 import { supabase } from '@/integrations/supabase/client';
 import { logActivity } from '@/lib/activityLog';
 import { getKpiTotalTarget } from '@/lib/kpiTotalTarget';
+import { getDefaultKpiMonth, isKpiMonthAllowed } from '@/lib/kpiMonths';
 import { getKpiComplianceLight, getKpiComplianceRatio, roundCompliancePercent } from '@/lib/kpiCompliance';
 import { getConsolidatedIndicatorProgress } from '@/lib/kpiConsolidatedProgress';
 import { useQueryClient } from '@tanstack/react-query';
@@ -287,7 +288,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
         const monthValues: { month: string; value: number }[] = [];
         for (const [colName, colVal] of Object.entries(row)) {
           const monthNum = monthCols[normalize(colName)];
-          if (monthNum && colVal !== '' && !isNaN(parseFloat(colVal as string))) {
+          if (monthNum && isKpiMonthAllowed(`${currentYear}-${monthNum}`) && colVal !== '' && !isNaN(parseFloat(colVal as string))) {
             monthValues.push({ month: monthNum, value: parseFloat(colVal as string) });
           }
         }
@@ -1439,8 +1440,7 @@ function ObjectiveCard({
   const [kpiEvidenceId, setKpiEvidenceId] = useState<string | null>(null);
   const [kpiEvidenceName, setKpiEvidenceName] = useState('');
   // Default to previous month (e.g., July -> June)
-  const prevMonthDate = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1);
-  const previousMonth = `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth() + 1).padStart(2, '0')}`;
+  const previousMonth = getDefaultKpiMonth();
   const [selectedMonth, setSelectedMonth] = useState<string>(previousMonth);
 
   const { data: kpiEvidenceRows = [] } = useEvidenceCountsByEntity('kpi');
@@ -1459,7 +1459,7 @@ function ObjectiveCard({
 
   // Build months for the current year
   const kpiIds = objKpis.map(k => k.id);
-  const relevantMeasurements = (measurements ?? []).filter(m => kpiIds.includes(m.kpi_id));
+  const relevantMeasurements = (measurements ?? []).filter(m => kpiIds.includes(m.kpi_id) && isKpiMonthAllowed(m.period_date));
   const currentYear = new Date().getFullYear();
   const availableMonths = useMemo(() => {
     const months = Array.from({ length: 12 }, (_, i) => {
@@ -1553,7 +1553,7 @@ function ObjectiveCard({
 
   // Inline-save the "Valor Real" for the currently selected month
   const saveKpiMonthValue = async (kpiId: string, raw: string) => {
-    if (selectedMonth === 'total') return;
+    if (!isKpiMonthAllowed(selectedMonth)) return;
     const trimmed = (raw ?? '').toString().trim();
     const periodDate = `${selectedMonth}-01`;
     let existing = relevantMeasurements.find(
@@ -1605,7 +1605,7 @@ function ObjectiveCard({
 
   // Inline-save the monthly "Meta" for the currently selected month
   const saveKpiMonthTarget = async (kpiId: string, raw: string) => {
-    if (selectedMonth === 'total') return;
+    if (!isKpiMonthAllowed(selectedMonth)) return;
     const trimmed = (raw ?? '').toString().trim();
     const periodDate = `${selectedMonth}-01`;
     let existing = relevantMeasurements.find(
@@ -1815,8 +1815,12 @@ function ObjectiveCard({
             <div className="flex items-center gap-1 mb-3 overflow-x-auto pb-1">
               <Calendar className="w-4 h-4 text-muted-foreground shrink-0 mr-1" />
               {availableMonths.map(ym => (
-                <button
+                <Button
                   key={ym}
+                  variant="ghost"
+                  size="sm"
+                  disabled={ym !== 'total' && !isKpiMonthAllowed(ym)}
+                  title={ym !== 'total' && !isKpiMonthAllowed(ym) ? 'Mes excluido del cálculo de KPI' : undefined}
                   onClick={() => setSelectedMonth(ym)}
                   className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
                     selectedMonth === ym
@@ -1825,7 +1829,7 @@ function ObjectiveCard({
                   }`}
                 >
                   {getMonthLabel(ym)}
-                </button>
+                </Button>
               ))}
             </div>
           )}
