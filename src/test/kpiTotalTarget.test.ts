@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { getKpiTotalTarget } from '@/lib/kpiTotalTarget';
 
 const measurements = [
-  { kpi_id: 'kpi', period_date: '2026-01-01', target: 999 },
+  { kpi_id: 'kpi', period_date: '2026-01-01', target: 300 },
   { kpi_id: 'kpi', period_date: '2026-02-01', target: 100 },
   { kpi_id: 'kpi', period_date: '2026-03-01', target: null },
   { kpi_id: 'kpi', period_date: '2026-04-01', target: 0 },
@@ -13,11 +13,11 @@ const measurements = [
 ];
 
 describe('Total KPI target', () => {
-  it('sums February-November monthly targets only for the configured exception', () => {
-    expect(getKpiTotalTarget('repairs', 2026, 200000, [], 'suma')).toBe(2000000);
+  it('sums January-November monthly targets only for the configured exception', () => {
+    expect(getKpiTotalTarget('repairs', 2026, 200000, [], 'suma')).toBe(2200000);
   });
   it('uses saved targets and the base target for missing months in the exception', () => {
-    expect(getKpiTotalTarget('kpi', 2026, 100, measurements, 'suma')).toBe(1000);
+    expect(getKpiTotalTarget('kpi', 2026, 100, measurements, 'suma')).toBe(1300);
   });
   it('keeps a monthly target of 100 instead of summing repeated monthly targets', () => {
     const repeated = Array.from({ length: 10 }, (_, index) => ({
@@ -25,7 +25,7 @@ describe('Total KPI target', () => {
     }));
     expect(getKpiTotalTarget('kpi', 2026, 100, repeated)).toBe(100);
   });
-  it('uses the latest saved monthly target within February through November', () => {
+  it('uses the latest saved monthly target within January through November', () => {
     expect(getKpiTotalTarget('kpi', 2026, 100, measurements)).toBe(200);
   });
   it('shows the base monthly target when no monthly overrides are saved', () => {

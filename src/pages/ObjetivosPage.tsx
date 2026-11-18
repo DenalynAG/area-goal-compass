@@ -392,7 +392,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
 
   const elapsedMonths = new Date().getMonth() + 1;
   const [detailOpen, setDetailOpen] = useState(false);
-  // Accumulated average window: only Feb (2) to Nov (11)
+  // Accumulated average window: Jan (1) to Nov (11)
   const avgWindowEndTop = 11;
 
   // Financial KPIs (by unit) use SUM accumulated instead of average
@@ -481,9 +481,9 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
 
   const dashboardChartData = useMemo(() => {
     // Month-aware progress: if a specific month is selected, restrict the
-    // accumulated window to Feb..selectedMonth. Otherwise use default window.
-    // Only Feb..Nov counts for the accumulated compliance percentage.
-    const winStart = 2;
+    // accumulated window to Jan..selectedMonth. Otherwise use default window.
+    // Only Jan..Nov counts for the accumulated compliance percentage.
+    const winStart = 1;
     const winCap = 11;
     const monthNum = dashMonth === '__all__' ? null : parseInt(dashMonth, 10);
     const requestedEnd = monthNum ?? avgWindowEndTop;
@@ -868,7 +868,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
           <LayoutDashboard className="w-5 h-5 text-primary" />
           <div className="flex-1 text-left">
             <h1 className="text-base font-bold">Dashboard — Recursos Humanos</h1>
-            <p className="text-xs text-muted-foreground">Cumplimiento acumulado de indicadores por área (Feb–Nov) · Bajo &lt; 80% · Medio 80–99% · Alto ≥ 100%</p>
+            <p className="text-xs text-muted-foreground">Cumplimiento acumulado de indicadores por área (Ene–Nov) · Bajo &lt; 80% · Medio 80–99% · Alto ≥ 100%</p>
           </div>
         </button>
         {dashboardExpanded && (
@@ -946,7 +946,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                       formatter={(v: any) => {
                         const n = Number(v) || 0;
                         const label = n >= 100 ? 'Alto' : n >= 80 ? 'Medio' : 'Bajo';
-                        return [`${n}% · ${label}`, 'Cumplimiento (Feb–Nov)'];
+                        return [`${n}% · ${label}`, 'Cumplimiento (Ene–Nov)'];
                       }}
                       contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }}
                     />
