@@ -26,7 +26,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { logActivity } from '@/lib/activityLog';
 import { getKpiTotalTarget } from '@/lib/kpiTotalTarget';
 import { getKpiActualValue } from '@/lib/kpiActualValue';
-import { useKpiTotalOverrides, findTotalOverride, withOverride } from '@/hooks/useKpiTotalOverrides';
 import { getDefaultKpiMonth, isKpiMonthAllowed } from '@/lib/kpiMonths';
 import { getComplianceStatus, getKpiComplianceLight, getKpiComplianceRatio, roundCompliancePercent } from '@/lib/kpiCompliance';
 import { getConsolidatedIndicatorProgress } from '@/lib/kpiConsolidatedProgress';
@@ -53,7 +52,6 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   const { data: profiles = [] } = useProfiles();
   const { data: userRoles = [] } = useUserRoles();
   const { isSuperAdmin, hasRole } = useAuth();
-  const { data: totalOverrides = [] } = useKpiTotalOverrides();
   const canEditKpi = isSuperAdmin || hasRole('admin_area') || hasRole('gestor_area') || hasRole('lider_subarea');
   const canDownload = isSuperAdmin;
 
@@ -394,7 +392,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
 
   const elapsedMonths = new Date().getMonth() + 1;
   const [detailOpen, setDetailOpen] = useState(false);
-  // Accumulated average window: Jan (1) to Nov (11)
+  // Accumulated average window: only Feb (2) to Nov (11)
   const avgWindowEndTop = 11;
 
   // Financial KPIs (by unit) use SUM accumulated instead of average
@@ -410,10 +408,9 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
 
     const currentYear = new Date().getFullYear();
     const values = objKpis.map(k => {
-      const ov = findTotalOverride(totalOverrides, k.id, currentYear);
-      const accumulated = withOverride(getKpiActualValue(k.id, currentYear, measurements, k.calc_method), ov?.actual);
+      const accumulated = getKpiActualValue(k.id, currentYear, measurements, k.calc_method);
       if (accumulated === null) return null;
-      const target = withOverride(getKpiTotalTarget(k.id, currentYear, Number(k.target), measurements, k.calc_method === 'suma' ? 'suma' : k.total_target_method), ov?.target) ?? 0;
+      const target = getKpiTotalTarget(k.id, currentYear, Number(k.target), measurements, k.calc_method === 'suma' ? 'suma' : k.total_target_method);
       const ratio = getKpiComplianceRatio(accumulated, target, k.inverse_thresholds);
       return ratio === null ? null : roundCompliancePercent(Math.max(0, Math.min(ratio, 200)));
     }).filter((v): v is number => v !== null);
@@ -472,10 +469,9 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   // ───── Dashboard chart data ─────
   const getKpiAchievement = (k: Tables<'kpis'>) => {
     const currentYear = new Date().getFullYear();
-    const ov = findTotalOverride(totalOverrides, k.id, currentYear);
-      const accumulated = withOverride(getKpiActualValue(k.id, currentYear, measurements, k.calc_method), ov?.actual);
+    const accumulated = getKpiActualValue(k.id, currentYear, measurements, k.calc_method);
     if (accumulated === null) return null;
-    const target = withOverride(getKpiTotalTarget(k.id, currentYear, Number(k.target), measurements, k.calc_method === 'suma' ? 'suma' : k.total_target_method), ov?.target) ?? 0;
+    const target = getKpiTotalTarget(k.id, currentYear, Number(k.target), measurements, k.calc_method === 'suma' ? 'suma' : k.total_target_method);
     const ratio = getKpiComplianceRatio(accumulated, target, k.inverse_thresholds);
     return ratio === null ? null : roundCompliancePercent(Math.max(0, Math.min(ratio, 200)));
   };
@@ -485,9 +481,9 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
 
   const dashboardChartData = useMemo(() => {
     // Month-aware progress: if a specific month is selected, restrict the
-    // accumulated window to Jan..selectedMonth. Otherwise use default window.
-    // Only Jan..Nov counts for the accumulated compliance percentage.
-    const winStart = 1;
+    // accumulated window to Feb..selectedMonth. Otherwise use default window.
+    // Only Feb..Nov counts for the accumulated compliance percentage.
+    const winStart = 2;
     const winCap = 11;
     const monthNum = dashMonth === '__all__' ? null : parseInt(dashMonth, 10);
     const requestedEnd = monthNum ?? avgWindowEndTop;
@@ -497,10 +493,9 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
       const objKpis = kpis.filter(k => k.objective_id === obj.id);
       if (objKpis.length === 0) return obj.progress_percent;
       const values = objKpis.map(k => {
-        const ov = dashMonth === '__all__' ? findTotalOverride(totalOverrides, k.id, currentYear) : undefined;
-        const accumulated = withOverride(getKpiActualValue(k.id, currentYear, measurements, k.calc_method, winEnd), ov?.actual);
+        const accumulated = getKpiActualValue(k.id, currentYear, measurements, k.calc_method, winEnd);
         if (accumulated === null) return null;
-        const target = withOverride(getKpiTotalTarget(k.id, currentYear, Number(k.target), measurements, k.calc_method === 'suma' ? 'suma' : k.total_target_method), ov?.target) ?? 0;
+        const target = getKpiTotalTarget(k.id, currentYear, Number(k.target), measurements, k.calc_method === 'suma' ? 'suma' : k.total_target_method);
         const ratio = getKpiComplianceRatio(accumulated, target, k.inverse_thresholds);
         return ratio === null ? null : roundCompliancePercent(Math.max(0, Math.min(ratio, 200)));
       }).filter((v): v is number => v !== null);
@@ -873,7 +868,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
           <LayoutDashboard className="w-5 h-5 text-primary" />
           <div className="flex-1 text-left">
             <h1 className="text-base font-bold">Dashboard — Recursos Humanos</h1>
-            <p className="text-xs text-muted-foreground">Cumplimiento acumulado de indicadores por área (Ene–Nov) · Bajo &lt; 80% · Medio 80–99% · Alto ≥ 100%</p>
+            <p className="text-xs text-muted-foreground">Cumplimiento acumulado de indicadores por área (Feb–Nov) · Bajo &lt; 80% · Medio 80–99% · Alto ≥ 100%</p>
           </div>
         </button>
         {dashboardExpanded && (
@@ -951,7 +946,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                       formatter={(v: any) => {
                         const n = Number(v) || 0;
                         const label = n >= 100 ? 'Alto' : n >= 80 ? 'Medio' : 'Bajo';
-                        return [`${n}% · ${label}`, 'Cumplimiento (Ene–Nov)'];
+                        return [`${n}% · ${label}`, 'Cumplimiento (Feb–Nov)'];
                       }}
                       contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }}
                     />
@@ -1514,47 +1509,6 @@ function ObjectiveCard({
   };
 
   const qcLocal = useQueryClient();
-  const { isSuperAdmin: cardIsSuperAdmin } = useAuth();
-  const { data: cardOverrides = [] } = useKpiTotalOverrides();
-  const saveTotalOverride = async (kpiId: string, field: 'target' | 'actual', raw: string) => {
-    const trimmed = raw.trim();
-    const value = trimmed === '' ? null : parseKpiNumber(trimmed);
-    if (value !== null && !isFinite(value)) { toast.error('Valor inválido'); return; }
-    const existing = findTotalOverride(cardOverrides, kpiId, currentYear);
-    const { data: sessionData } = await supabase.auth.getSession();
-    const { error } = await supabase.from('kpi_total_overrides').upsert({
-      kpi_id: kpiId, year: currentYear,
-      target: field === 'target' ? value : existing?.target ?? null,
-      actual: field === 'actual' ? value : existing?.actual ?? null,
-      updated_by: sessionData?.session?.user?.id ?? null, updated_at: new Date().toISOString(),
-    }, { onConflict: 'kpi_id,year' });
-    if (error) { toast.error(`No se pudo guardar: ${error.message}`); return; }
-    qcLocal.invalidateQueries({ queryKey: ['kpi_total_overrides'] });
-    await logActivity('update', 'kpi_total_override', kpiId, { year: currentYear, field, value });
-    toast.success(value === null ? 'Se volvió al cálculo automático' : 'Valor de Total KPI guardado');
-  };
-  const renderTotalOverrideInput = (k: any, field: 'target' | 'actual', shown: number | null) => {
-    const fixed = findTotalOverride(cardOverrides, k.id, currentYear)?.[field];
-    const isFixed = fixed !== null && fixed !== undefined;
-    return (
-      <input
-        key={`${k.id}-total-${field}-${shown ?? ''}-${isFixed}`}
-        type="text"
-        defaultValue={shown === null ? '' : formatKpiInputValue(shown, k)}
-        placeholder="Sin dato"
-        title={isFixed ? 'Valor fijo (deja vacío para volver al cálculo)' : 'Calculado automáticamente'}
-        onFocus={(e) => { e.target.value = shown === null ? '' : String(shown); e.target.select(); }}
-        onBlur={(e) => {
-          const raw = e.target.value.trim();
-          const orig = shown === null ? '' : String(shown);
-          if (raw === orig || (raw === '' && !isFixed)) { e.target.value = shown === null ? '' : formatKpiInputValue(shown, k); return; }
-          saveTotalOverride(k.id, field, raw);
-        }}
-        onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
-        className={`w-28 border bg-background px-2 py-1 text-sm text-right tabular-nums focus:outline-none focus:ring-2 focus:ring-primary/40 ${isFixed ? 'border-primary font-semibold' : 'border-border'}`}
-      />
-    );
-  };
   const updateCalcMethod = async (kpiId: string, method: 'promedio' | 'suma') => {
     const { error } = await supabase.from('kpis').update({ calc_method: method } as any).eq('id', kpiId);
     if (error) {
@@ -1709,8 +1663,6 @@ function ObjectiveCard({
   // Get KPI accumulated value up to current month in current year (sum for financial, average otherwise)
   const getKpiAccumulatedAverage = (kpiId: string) => {
     const kpi = objKpis.find(k => k.id === kpiId);
-    const fixed = findTotalOverride(cardOverrides, kpiId, currentYear)?.actual;
-    if (fixed !== null && fixed !== undefined) return Number(fixed);
     return getKpiActualValue(kpiId, currentYear, relevantMeasurements, kpi ? getCalcMethod(kpi) : 'promedio');
   };
 
@@ -1725,7 +1677,7 @@ function ObjectiveCard({
 
   // Get per-month target for a KPI (falls back to KPI default target)
   const getKpiMonthTarget = (k: any) => {
-    if (selectedMonth === 'total') return withOverride(getKpiTotalTarget(k.id, currentYear, Number(k.target) || 0, relevantMeasurements, k.calc_method === 'suma' ? 'suma' : k.total_target_method), findTotalOverride(cardOverrides, k.id, currentYear)?.target) ?? 0;
+    if (selectedMonth === 'total') return getKpiTotalTarget(k.id, currentYear, Number(k.target) || 0, relevantMeasurements, k.calc_method === 'suma' ? 'suma' : k.total_target_method);
     const m = relevantMeasurements.find(m => m.kpi_id === k.id && m.period_date.startsWith(selectedMonth));
     const t = (m as any)?.target;
     return (t === null || t === undefined) ? (Number(k.target) || 0) : Number(t);
@@ -1906,7 +1858,7 @@ function ObjectiveCard({
                       {weight > 0 ? <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-accent/20 text-foreground">{weight}%</span> : <span className="text-muted-foreground">—</span>}
                     </td>
                     <td className="py-2">
-                      {isTotalView && cardIsSuperAdmin ? renderTotalOverrideInput(k, 'target', displayTarget) : isTotalView || !(canEdit || canEditKpi) ? (
+                      {isTotalView || !(canEdit || canEditKpi) ? (
                         <>{formatKpiValue(displayTarget, k)}</>
                       ) : (
                         <input
@@ -1940,7 +1892,7 @@ function ObjectiveCard({
                       )}
                     </td>
                     <td className="py-2">
-                      {isTotalView && cardIsSuperAdmin ? renderTotalOverrideInput(k, 'actual', monthValue === null ? null : Number(monthValue)) : isTotalView || !(canEdit || canEditKpi) ? (
+                      {isTotalView || !(canEdit || canEditKpi) ? (
                         monthValue === null
                           ? <span className="text-muted-foreground italic">Sin dato</span>
                           : <>{formatKpiValue(displayValue, k)}</>

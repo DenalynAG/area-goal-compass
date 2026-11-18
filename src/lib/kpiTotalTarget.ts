@@ -1,5 +1,3 @@
-import { KPI_FIRST_MONTH, KPI_LAST_MONTH } from '@/lib/kpiMonths';
-
 type TargetMeasurement = {
   kpi_id: string;
   period_date: string;
@@ -15,7 +13,7 @@ export function getKpiTotalTarget(
   method: string = 'mensual',
 ): number {
   if (method === 'suma') {
-    return Array.from({ length: KPI_LAST_MONTH - KPI_FIRST_MONTH + 1 }, (_, index) => index + KPI_FIRST_MONTH).reduce((sum, month) => {
+    return Array.from({ length: 10 }, (_, index) => index + 2).reduce((sum, month) => {
       const period = `${year}-${String(month).padStart(2, '0')}`;
       const measurement = measurements.find(m => m.kpi_id === kpiId && m.period_date.startsWith(`${period}-`));
       return sum + Number(measurement?.target ?? baseTarget);
@@ -23,7 +21,7 @@ export function getKpiTotalTarget(
   }
   const targets = measurements.filter(m => {
     const [measurementYear, month] = m.period_date.split('-').map(Number);
-    return m.kpi_id === kpiId && measurementYear === year && month >= KPI_FIRST_MONTH && month <= KPI_LAST_MONTH
+    return m.kpi_id === kpiId && measurementYear === year && month >= 2 && month <= 11
       && m.target !== null && m.target !== undefined;
   }).sort((a, b) => b.period_date.localeCompare(a.period_date));
   const latestTarget = targets[0]?.target;

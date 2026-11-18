@@ -134,20 +134,6 @@
       "when": 1794326995797,
       "tag": "0018_kpi_total_target_method",
       "breakpoints": true
-    },
-    {
-      "idx": 19,
-      "version": "7",
-      "when": 1795012271890,
-      "tag": "0019_allow_january_kpi_measurements",
-      "breakpoints": true
-    },
-    {
-      "idx": 20,
-      "version": "7",
-      "when": 1795012903806,
-      "tag": "0020_kpi_total_overrides",
-      "breakpoints": true
     }
   ]
 }
