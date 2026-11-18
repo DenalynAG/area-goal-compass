@@ -423,6 +423,28 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
     return getObjectivesIndicatorProgress(getAreaObjectives(areaId));
   };
 
+  // Total KPI compliance averaged across objectives (uncapped, matches each objective's "X% / Alto" pill)
+  const getObjectivesTotalCompliance = (objs: typeof objectives) => {
+    if (objs.length === 0) return null;
+    return roundCompliancePercent(objs.reduce((s, o) => s + getObjProgress(o), 0) / objs.length);
+  };
+
+  const renderTotalCompliancePill = (objs: typeof objectives) => {
+    const value = getObjectivesTotalCompliance(objs);
+    if (value === null) return null;
+    const { light, label } = getComplianceStatus(value);
+    const cls = light === 'verde'
+      ? 'text-success-bright bg-success-bright/10 border-success-bright/40'
+      : light === 'amarillo'
+        ? 'text-warning-bright bg-warning-bright/10 border-warning-bright/40'
+        : 'text-danger-bright bg-danger-bright/10 border-danger-bright/40';
+    return (
+      <span className={`text-[10px] font-semibold px-1.5 py-0.5 border tabular-nums shrink-0 ${cls}`}>
+        {value}% / {label}
+      </span>
+    );
+  };
+
   // Global KPIs for Dirección General objectives
   const globalKpis = useMemo(() => {
     const objIds = globalObjectives.map(o => o.id);
@@ -614,6 +636,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
             <div className="flex items-center gap-2">
               <ProgressBar value={areaProgress} className="w-24" highThreshold={100} midThreshold={80} />
               <span className="text-xs font-semibold text-muted-foreground">{areaProgress}%</span>
+              {renderTotalCompliancePill(areaObjs)}
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">{areaObjs.length} obj · {areaKpisList.length} ind</p>
             <p className="text-xs text-muted-foreground">Consolidado del área y subáreas</p>
@@ -646,6 +669,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                   <div className="shrink-0 flex items-center gap-2">
                     <ProgressBar value={getObjectivesIndicatorProgress(directAreaObjs)} className="w-20" highThreshold={100} midThreshold={80} />
                     <span className="text-xs font-semibold text-muted-foreground tabular-nums">{getObjectivesIndicatorProgress(directAreaObjs)}%</span>
+                    {renderTotalCompliancePill(directAreaObjs)}
                   </div>
                 </button>
               </div>
@@ -670,7 +694,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                         </span>
                         <div className="flex-1 h-px bg-border" />
                         <ProgressBar value={getObjectivesIndicatorProgress(group.objs)} className="w-16 shrink-0" highThreshold={100} midThreshold={80} />
-                        <span className="text-xs font-semibold text-muted-foreground tabular-nums shrink-0">{getObjectivesIndicatorProgress(group.objs)}%</span>
+                        <span className="text-xs font-semibold text-muted-foreground tabular-nums shrink-0">{getObjectivesIndicatorProgress(group.objs)}%</span>{renderTotalCompliancePill(group.objs)}
                       </button>
                       {gOpen && (
                         <div className="px-3 pb-3 pt-1 space-y-3">
@@ -726,6 +750,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                     <div className="shrink-0 flex items-center gap-2 mr-2">
                       <ProgressBar value={subProgress} className="w-20" highThreshold={100} midThreshold={80} />
                       <span className="text-xs font-semibold text-muted-foreground">{subProgress}%</span>
+                      {renderTotalCompliancePill(subObjs)}
                     </div>
                   </button>
                 </div>
@@ -750,7 +775,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                           </span>
                           <div className="flex-1 h-px bg-border" />
                           <ProgressBar value={getObjectivesIndicatorProgress(group.objs)} className="w-16 shrink-0" highThreshold={100} midThreshold={80} />
-                          <span className="text-xs font-semibold text-muted-foreground tabular-nums shrink-0">{getObjectivesIndicatorProgress(group.objs)}%</span>
+                          <span className="text-xs font-semibold text-muted-foreground tabular-nums shrink-0">{getObjectivesIndicatorProgress(group.objs)}%</span>{renderTotalCompliancePill(group.objs)}
                         </button>
                         {gOpen && (
                           <div className="px-3 pb-3 pt-1 space-y-3">
@@ -1125,6 +1150,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                     <div className="mt-2 flex items-center gap-2">
                       <ProgressBar value={progress} className="flex-1" highThreshold={100} midThreshold={80} />
                       <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">{progress}%</span>
+                      {renderTotalCompliancePill(areaObjs)}
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">Consolidado del área y subáreas</p>
                   </div>
@@ -1167,7 +1193,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                                 </span>
                                 <div className="flex-1 h-px bg-border" />
                                 <ProgressBar value={getObjectivesIndicatorProgress(group.objs)} className="w-16 shrink-0" highThreshold={100} midThreshold={80} />
-                                <span className="text-xs font-semibold text-muted-foreground tabular-nums shrink-0">{getObjectivesIndicatorProgress(group.objs)}%</span>
+                                <span className="text-xs font-semibold text-muted-foreground tabular-nums shrink-0">{getObjectivesIndicatorProgress(group.objs)}%</span>{renderTotalCompliancePill(group.objs)}
                               </button>
                               {gOpen && (
                                 <div className="px-3 pb-3 pt-1 space-y-3">
@@ -1240,6 +1266,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                             <div className="shrink-0 flex items-center gap-2">
                               <ProgressBar value={subProgress} className="w-20" highThreshold={100} midThreshold={80} />
                               <span className="text-xs font-semibold text-muted-foreground">{subProgress}%</span>
+                      {renderTotalCompliancePill(subObjs)}
                             </div>
                           </button>
                           {isSubExpanded && (
@@ -1263,7 +1290,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                                     </span>
                                     <div className="flex-1 h-px bg-border" />
                                     <ProgressBar value={getObjectivesIndicatorProgress(group.objs)} className="w-16 shrink-0" highThreshold={100} midThreshold={80} />
-                                    <span className="text-xs font-semibold text-muted-foreground tabular-nums shrink-0">{getObjectivesIndicatorProgress(group.objs)}%</span>
+                                    <span className="text-xs font-semibold text-muted-foreground tabular-nums shrink-0">{getObjectivesIndicatorProgress(group.objs)}%</span>{renderTotalCompliancePill(group.objs)}
                                   </button>
                                   {gOpen && (
                                     <div className="px-3 pb-3 pt-1 space-y-3">
