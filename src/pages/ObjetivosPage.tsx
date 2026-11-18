@@ -1723,11 +1723,10 @@ function ObjectiveCard({
     return (t === null || t === undefined) ? (Number(k.target) || 0) : Number(t);
   };
 
-  // Cumplimiento % de la fila: en Total KPI usa Real Revisión / Meta Revisión
-  // cuando ambos datos existen; si faltan, conserva el cálculo habitual.
+  // Revisión y datos habituales comparten la regla normal/inversa del KPI.
   const getKpiRowCompliance = (k: any): number | null => {
     if (selectedMonth === 'total') {
-      const reviewPercent = getReviewCompliancePercent(k.review_target, k.review_actual);
+      const reviewPercent = getReviewCompliancePercent(k.review_target, k.review_actual, Boolean(k.inverse_thresholds));
       if (reviewPercent !== null) return reviewPercent;
     }
     const monthValue = getKpiMonthValue(k.id);
