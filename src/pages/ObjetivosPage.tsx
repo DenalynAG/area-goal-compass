@@ -410,7 +410,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
     const values = objKpis.map(k => {
       const accumulated = getKpiActualValue(k.id, currentYear, measurements, k.calc_method);
       if (accumulated === null) return null;
-      const target = getKpiTotalTarget(k.id, currentYear, Number(k.target), measurements, k.total_target_method);
+      const target = getKpiTotalTarget(k.id, currentYear, Number(k.target), measurements, k.calc_method === 'suma' ? 'suma' : k.total_target_method);
       const ratio = getKpiComplianceRatio(accumulated, target, k.inverse_thresholds);
       return ratio === null ? null : roundCompliancePercent(Math.max(0, Math.min(ratio, 200)));
     }).filter((v): v is number => v !== null);
@@ -471,7 +471,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
     const currentYear = new Date().getFullYear();
     const accumulated = getKpiActualValue(k.id, currentYear, measurements, k.calc_method);
     if (accumulated === null) return null;
-    const target = getKpiTotalTarget(k.id, currentYear, Number(k.target), measurements, k.total_target_method);
+    const target = getKpiTotalTarget(k.id, currentYear, Number(k.target), measurements, k.calc_method === 'suma' ? 'suma' : k.total_target_method);
     const ratio = getKpiComplianceRatio(accumulated, target, k.inverse_thresholds);
     return ratio === null ? null : roundCompliancePercent(Math.max(0, Math.min(ratio, 200)));
   };
@@ -495,7 +495,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
       const values = objKpis.map(k => {
         const accumulated = getKpiActualValue(k.id, currentYear, measurements, k.calc_method, winEnd);
         if (accumulated === null) return null;
-        const target = getKpiTotalTarget(k.id, currentYear, Number(k.target), measurements, k.total_target_method);
+        const target = getKpiTotalTarget(k.id, currentYear, Number(k.target), measurements, k.calc_method === 'suma' ? 'suma' : k.total_target_method);
         const ratio = getKpiComplianceRatio(accumulated, target, k.inverse_thresholds);
         return ratio === null ? null : roundCompliancePercent(Math.max(0, Math.min(ratio, 200)));
       }).filter((v): v is number => v !== null);
@@ -1677,7 +1677,7 @@ function ObjectiveCard({
 
   // Get per-month target for a KPI (falls back to KPI default target)
   const getKpiMonthTarget = (k: any) => {
-    if (selectedMonth === 'total') return getKpiTotalTarget(k.id, currentYear, Number(k.target) || 0, relevantMeasurements, k.total_target_method);
+    if (selectedMonth === 'total') return getKpiTotalTarget(k.id, currentYear, Number(k.target) || 0, relevantMeasurements, k.calc_method === 'suma' ? 'suma' : k.total_target_method);
     const m = relevantMeasurements.find(m => m.kpi_id === k.id && m.period_date.startsWith(selectedMonth));
     const t = (m as any)?.target;
     return (t === null || t === undefined) ? (Number(k.target) || 0) : Number(t);
