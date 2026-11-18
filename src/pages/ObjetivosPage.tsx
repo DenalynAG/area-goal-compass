@@ -2046,9 +2046,13 @@ function ObjectiveCard({
                       </div>
                     </td>
                     <td className="py-2">
-                      {monthValue === null
-                        ? <span className="text-muted-foreground">—</span>
-                        : <TrafficLightBadge light={computeMetaLight(Number(displayValue) || 0, Number(lightTarget) || 0, Boolean((k as any).inverse_thresholds))} />
+                      {isTotalView
+                        ? (compliancePercent === null
+                            ? <span className="text-muted-foreground">—</span>
+                            : <TrafficLightBadge light={getComplianceStatus(compliancePercent).light} />)
+                        : (monthValue === null
+                            ? <span className="text-muted-foreground">—</span>
+                            : <TrafficLightBadge light={computeMetaLight(Number(displayValue) || 0, Number(lightTarget) || 0, Boolean((k as any).inverse_thresholds))} />)
                       }
                     </td>
                     {isTotalView && (
