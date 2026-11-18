@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ObjectiveMonthNote from '@/components/ObjectiveMonthNote';
 import { useObjectives, useKPIs, useKPIMeasurements, useAreas, useSubareas, useProfiles, useUserRoles, getProfileName, getAreaNameFromList, useEvidenceCountsByEntity } from '@/hooks/useSupabaseData';
@@ -438,9 +438,14 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   };
 
   // Total KPI compliance averaged across objectives (uncapped, matches each objective's "X% / Alto" pill)
+  const [cardProgress, setCardProgress] = useState<Record<string, number>>({});
+  const handleCardProgress = useCallback((id: string, value: number) => {
+    setCardProgress(prev => (prev[id] === value ? prev : { ...prev, [id]: value }));
+  }, []);
+  // Promedia exactamente el valor que muestra la etiqueta de cada objetivo (según su mes seleccionado)
   const getObjectivesTotalCompliance = (objs: typeof objectives) => {
     if (objs.length === 0) return null;
-    return roundCompliancePercent(objs.reduce((s, o) => s + getObjProgress(o), 0) / objs.length);
+    return roundCompliancePercent(objs.reduce((s, o) => s + (cardProgress[o.id] ?? getObjProgress(o)), 0) / objs.length);
   };
 
   const renderTotalCompliancePill = (objs: typeof objectives) => {
@@ -716,7 +721,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                             const objKpis2 = kpis.filter(k => k.objective_id === obj.id);
                             const isOpen = expandedObj[obj.id];
                             return (
-                              <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
+                              <ObjectiveCard onProgressChange={handleCardProgress} key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
                                 onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={(month) => openNewKPI(obj.id, month)} onEditKPI={(k, month) => openEditKPI(k, month)}
                                 onDelete={() => setObjToDelete(obj)} onDeleteKPI={(k) => setKpiToDelete(k)}
                                 profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin} canEditReview={canEditReview} />
@@ -797,7 +802,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                               const objKpis2 = kpis.filter(k => k.objective_id === obj.id);
                               const isOpen = expandedObj[obj.id];
                               return (
-                                <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
+                                <ObjectiveCard onProgressChange={handleCardProgress} key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
                                   onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={(month) => openNewKPI(obj.id, month)} onEditKPI={(k, month) => openEditKPI(k, month)}
                                   onDelete={() => setObjToDelete(obj)} onDeleteKPI={(k) => setKpiToDelete(k)}
                                   profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin} canEditReview={canEditReview} />
@@ -1027,7 +1032,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
               const objKpis = kpis.filter(k => k.objective_id === obj.id);
               const isOpen = expandedObj[obj.id];
               return (
-                <ObjectiveCard
+                <ObjectiveCard onProgressChange={handleCardProgress}
                   key={obj.id}
                   obj={obj}
                   index={idx + 1}
@@ -1216,7 +1221,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                                     const objKpis = kpis.filter(k => k.objective_id === obj.id);
                                     const isOpen = expandedObj[obj.id];
                                     return (
-                                      <ObjectiveCard
+                                      <ObjectiveCard onProgressChange={handleCardProgress}
                                         key={obj.id}
                                         obj={obj}
                                         index={idx + 1}
@@ -1313,7 +1318,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                                         const objKpis = kpis.filter(k => k.objective_id === obj.id);
                                         const isOpen = expandedObj[obj.id];
                                         return (
-                                          <ObjectiveCard
+                                          <ObjectiveCard onProgressChange={handleCardProgress}
                                             key={obj.id}
                                             obj={obj}
                                             index={idx + 1}
@@ -1431,8 +1436,9 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
 
 // Reusable objective card with circular progress
 function ObjectiveCard({
-  obj, index, objKpis, isOpen, onToggle, onEdit, onNewKPI, onEditKPI, onDelete, onDeleteKPI, profiles, areas, subareas, measurements, showAreaTags, otherAreas, canEdit = false, canEditKpi = false, canDelete = false, canEditReview = false, hideOwner = false, hideExtras = false,
+  obj, index, objKpis, isOpen, onToggle, onEdit, onNewKPI, onEditKPI, onDelete, onDeleteKPI, profiles, areas, subareas, measurements, showAreaTags, otherAreas, canEdit = false, canEditKpi = false, canDelete = false, canEditReview = false, hideOwner = false, hideExtras = false, onProgressChange,
 }: {
+  onProgressChange?: (id: string, value: number) => void;
   obj: Tables<'objectives'>;
   index: number;
   objKpis: Tables<'kpis'>[];
@@ -1753,6 +1759,7 @@ function ObjectiveCard({
     return roundCompliancePercent(values.reduce((sum, value) => sum + value, 0) / values.length);
   }, [objKpis, obj.progress_percent, relevantMeasurements, selectedMonth]);
 
+  useEffect(() => { onProgressChange?.(obj.id, computedProgress); }, [onProgressChange, obj.id, computedProgress]);
   const [detailOpen, setDetailOpen] = useState(false);
   const { light: progressLight, label: progressLabel } = getComplianceStatus(computedProgress);
   const progressPillClass = progressLight === 'verde'
