@@ -422,9 +422,9 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
     const values = objKpis.map(k => {
       const reviewPercent = getReviewCompliancePercent((k as any).review_target, (k as any).review_actual, Boolean(k.inverse_thresholds));
       if (reviewPercent !== null) return reviewPercent;
-      const accumulated = getKpiActualValue(k.id, currentYear, measurements, k.calc_method);
+      const accumulated = getKpiActualValue(k.id, currentYear, measurements, k.calc_method, 11, 1);
       if (accumulated === null) return null;
-      const target = getKpiTotalTarget(k.id, currentYear, Number(k.target), measurements, k.calc_method === 'suma' ? 'suma' : k.total_target_method);
+      const target = getKpiTotalTarget(k.id, currentYear, Number(k.target), measurements, k.calc_method === 'suma' ? 'suma' : k.total_target_method, 1);
       const ratio = getKpiComplianceRatio(accumulated, target, k.inverse_thresholds);
       return ratio === null ? null : roundCompliancePercent(Math.max(0, Math.min(ratio, 200)));
     }).filter((v): v is number => v !== null);
