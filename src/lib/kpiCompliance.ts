@@ -14,11 +14,14 @@ export function getKpiComplianceRatio(value: number, target: number, inverse: bo
   return (value / target) * 100;
 }
 
-/** El semáforo usa el % redondeado, así la luz coincide con el número visible. */
+/**
+ * Semáforo de la etiqueta: ≥109 Verde / Alto, 100–108 Amarillo / Medio,
+ * ≤99 Rojo / Bajo. Usa el % redondeado, así la luz coincide con el número visible.
+ */
 export function getComplianceStatus(percent: number): { light: 'verde' | 'amarillo' | 'rojo'; label: 'Alto' | 'Medio' | 'Bajo' } {
   const rounded = roundCompliancePercent(percent);
   if (rounded >= 109) return { light: 'verde', label: 'Alto' };
-  if (rounded >= 90) return { light: 'amarillo', label: 'Medio' };
+  if (rounded >= 100) return { light: 'amarillo', label: 'Medio' };
   return { light: 'rojo', label: 'Bajo' };
 }
 

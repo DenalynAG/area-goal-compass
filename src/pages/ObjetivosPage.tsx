@@ -880,7 +880,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
           <LayoutDashboard className="w-5 h-5 text-primary" />
           <div className="flex-1 text-left">
             <h1 className="text-base font-bold">Dashboard — Recursos Humanos</h1>
-            <p className="text-xs text-muted-foreground">Cumplimiento acumulado de indicadores por área (Feb–Nov) · Bajo &lt; 80% · Medio 80–99% · Alto ≥ 100%</p>
+            <p className="text-xs text-muted-foreground">Cumplimiento acumulado de indicadores por área (Feb–Nov) · Bajo ≤ 99% · Medio 100–108% · Alto ≥ 109%</p>
           </div>
         </button>
         {dashboardExpanded && (
@@ -957,7 +957,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                     <Tooltip
                       formatter={(v: any) => {
                         const n = Number(v) || 0;
-                        const label = n >= 100 ? 'Alto' : n >= 80 ? 'Medio' : 'Bajo';
+                        const { label } = getComplianceStatus(n);
                         return [`${n}% · ${label}`, 'Cumplimiento (Feb–Nov)'];
                       }}
                       contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }}
@@ -966,8 +966,9 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                     <Bar dataKey="Objetivos" radius={[0, 4, 4, 0]}>
                       {dashboardChartData.map((entry: any, index: number) => {
                         const v = Number(entry.Objetivos) || 0;
-                        // Regla de cumplimiento: Alto ≥ 100 (verde brillante), Medio ≥ 80 (ámbar brillante), Bajo < 80 (rojo brillante).
-                        const color = v >= 100 ? '#22c55e' : v >= 80 ? '#f59e0b' : '#ef4444';
+                        // Mismo semáforo de la etiqueta: ≥109 verde, 100–108 ámbar, ≤99 rojo.
+                        const light = getComplianceStatus(v).light;
+                        const color = light === 'verde' ? '#22c55e' : light === 'amarillo' ? '#f59e0b' : '#ef4444';
                         return <Cell key={`cell-${index}`} fill={color} />;
                       })}
                       <LabelList
@@ -975,7 +976,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                         position="right"
                         formatter={(v: any) => {
                           const n = Number(v) || 0;
-                          const label = n >= 100 ? 'Alto' : n >= 80 ? 'Medio' : 'Bajo';
+                          const { label } = getComplianceStatus(n);
                           return `${n}% · ${label}`;
                         }}
                         style={{ fontSize: 11, fill: 'hsl(var(--foreground))' }}

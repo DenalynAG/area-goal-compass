@@ -25,11 +25,13 @@ describe('Semáforo de todos los KPIs', () => {
     expect(getComplianceStatus(109)).toEqual({ light: 'verde', label: 'Alto' });
     expect(getComplianceStatus(108.7)).toEqual({ light: 'verde', label: 'Alto' });
   });
-  it('clasifica Medio entre 90% y 108% para promedio y objetivo', () => {
-    expect(getComplianceStatus(90)).toEqual({ light: 'amarillo', label: 'Medio' });
+  it('clasifica Medio entre 100% y 108% para promedio y objetivo', () => {
+    expect(getComplianceStatus(100)).toEqual({ light: 'amarillo', label: 'Medio' });
     expect(getComplianceStatus(108)).toEqual({ light: 'amarillo', label: 'Medio' });
   });
-  it('clasifica Bajo por debajo de 90% para promedio y objetivo', () => {
+  it('clasifica Bajo en 99% o menos para promedio y objetivo', () => {
+    expect(getComplianceStatus(99)).toEqual({ light: 'rojo', label: 'Bajo' });
+    expect(getComplianceStatus(90)).toEqual({ light: 'rojo', label: 'Bajo' });
     expect(getComplianceStatus(89)).toEqual({ light: 'rojo', label: 'Bajo' });
   });
   it('es verde desde 109% real para indicadores directos', () => {
@@ -45,9 +47,9 @@ describe('Semáforo de todos los KPIs', () => {
     expect(getKpiComplianceLight(309812438, 340725764, true)).toBe('verde');
   });
   it('usa el valor redondeado para decidir amarillo y rojo', () => {
-    expect(getKpiComplianceLight(89.6, 100, false)).toBe('amarillo');
-    expect(getKpiComplianceLight(89.5, 100, false)).toBe('rojo');
-    expect(getKpiComplianceLight(89, 100, false)).toBe('rojo');
+    expect(getKpiComplianceLight(99.6, 100, false)).toBe('amarillo');
+    expect(getKpiComplianceLight(99.5, 100, false)).toBe('rojo');
+    expect(getKpiComplianceLight(90, 100, false)).toBe('rojo');
     expect(getKpiComplianceLight(100, 0, false)).toBe('rojo');
   });
   it('aplica la misma regla en el listado de indicadores', () => {
