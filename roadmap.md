@@ -7,3 +7,4 @@
 - [x] Eliminar 197 mediciones de enero y diciembre y bloquear nuevas entradas; 18 pruebas y verificación en pantalla con sesión activa.
 - [x] Unificar los rangos del promedio y de los objetivos con el KPI; ejemplo real de marzo verificado como 100% / Medio en amarillo y 14 pruebas aprobadas.
 - [x] Aplicar bordes rectos globales a cajas y botones; verificados en escritorio y móvil, con interruptores conservados.
+- [x] Corregir promedio Total KPI y consolidados mediante fechas de calendario; 30 pruebas aprobadas y Booking verificado en Bogotá: 8,76, 95%, Amarillo / Medio, sin modificar mediciones.

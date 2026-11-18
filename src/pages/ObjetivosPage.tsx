@@ -25,6 +25,7 @@ import EvidencePanel from '@/components/EvidencePanel';
 import { supabase } from '@/integrations/supabase/client';
 import { logActivity } from '@/lib/activityLog';
 import { getKpiTotalTarget } from '@/lib/kpiTotalTarget';
+import { getKpiActualValue } from '@/lib/kpiActualValue';
 import { getDefaultKpiMonth, isKpiMonthAllowed } from '@/lib/kpiMonths';
 import { getComplianceStatus, getKpiComplianceLight, getKpiComplianceRatio, roundCompliancePercent } from '@/lib/kpiCompliance';
 import { getConsolidatedIndicatorProgress } from '@/lib/kpiConsolidatedProgress';
@@ -392,9 +393,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   const elapsedMonths = new Date().getMonth() + 1;
   const [detailOpen, setDetailOpen] = useState(false);
   // Accumulated average window: only Feb (2) to Nov (11)
-  const avgWindowEndTop = Math.min(elapsedMonths, 11);
-  const avgWindowMonthsTop = Math.max(0, avgWindowEndTop - 2 + 1);
-  const inAvgWindowTop = (mo: number) => mo >= 2 && mo <= avgWindowEndTop;
+  const avgWindowEndTop = 11;
 
   // Financial KPIs (by unit) use SUM accumulated instead of average
   const isFinancialKpi = (k: { unit?: string | null }) => {
@@ -409,17 +408,11 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
 
     const currentYear = new Date().getFullYear();
     const values = objKpis.map(k => {
-      const kpiMeasurements = measurements.filter(m => {
-        if (m.kpi_id !== k.id) return false;
-        const measurementDate = new Date(m.period_date);
-        return measurementDate.getFullYear() === currentYear && inAvgWindowTop(measurementDate.getMonth() + 1);
-      });
-
-      if (kpiMeasurements.length === 0) return null;
-
-      const sumValue = kpiMeasurements.reduce((sum, m) => sum + Number(m.value), 0);
-      const accumulated = isFinancialKpi(k) ? sumValue : sumValue / (avgWindowMonthsTop || 1);
-      return k.target > 0 ? (accumulated / k.target) * 100 : 0;
+      const accumulated = getKpiActualValue(k.id, currentYear, measurements, k.calc_method);
+      if (accumulated === null) return null;
+      const target = getKpiTotalTarget(k.id, currentYear, Number(k.target), measurements, k.total_target_method);
+      const ratio = getKpiComplianceRatio(accumulated, target, k.inverse_thresholds);
+      return ratio === null ? null : roundCompliancePercent(Math.max(0, Math.min(ratio, 200)));
     }).filter((v): v is number => v !== null);
 
     if (values.length === 0) return 0;
@@ -441,7 +434,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
     return roundCompliancePercent(
       globalObjectives.reduce((sum, o) => sum + Math.min(getObjProgress(o), 100), 0) / globalObjectives.length
     );
-  }, [globalObjectives, kpis]);
+  }, [globalObjectives, kpis, measurements]);
 
   // Get areas that the objectives reference (as tags)
   const getObjectiveAreaTags = (obj: Tables<'objectives'>) => {
@@ -454,15 +447,11 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   // ───── Dashboard chart data ─────
   const getKpiAchievement = (k: Tables<'kpis'>) => {
     const currentYear = new Date().getFullYear();
-    const ms = measurements.filter(m => {
-      if (m.kpi_id !== k.id) return false;
-      const d = new Date(m.period_date);
-      return d.getFullYear() === currentYear && inAvgWindowTop(d.getMonth() + 1);
-    });
-    if (ms.length === 0) return null;
-    const sumValue = ms.reduce((s, m) => s + Number(m.value), 0);
-    const accumulated = isFinancialKpi(k) ? sumValue : sumValue / (avgWindowMonthsTop || 1);
-    return k.target > 0 ? roundCompliancePercent((accumulated / k.target) * 100) : 0;
+    const accumulated = getKpiActualValue(k.id, currentYear, measurements, k.calc_method);
+    if (accumulated === null) return null;
+    const target = getKpiTotalTarget(k.id, currentYear, Number(k.target), measurements, k.total_target_method);
+    const ratio = getKpiComplianceRatio(accumulated, target, k.inverse_thresholds);
+    return ratio === null ? null : roundCompliancePercent(Math.max(0, Math.min(ratio, 200)));
   };
 
   const getObjectivesIndicatorProgress = (objs: typeof objectives) =>
@@ -477,22 +466,16 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
     const monthNum = dashMonth === '__all__' ? null : parseInt(dashMonth, 10);
     const requestedEnd = monthNum ?? avgWindowEndTop;
     const winEnd = Math.min(Math.max(requestedEnd, winStart), winCap);
-    const winLen = Math.max(0, winEnd - winStart + 1);
-    const inWin = (mo: number) => mo >= winStart && mo <= winEnd;
     const currentYear = new Date().getFullYear();
     const objProgress = (obj: Tables<'objectives'>) => {
       const objKpis = kpis.filter(k => k.objective_id === obj.id);
       if (objKpis.length === 0) return obj.progress_percent;
       const values = objKpis.map(k => {
-        const ms = measurements.filter(m => {
-          if (m.kpi_id !== k.id) return false;
-          const d = new Date(m.period_date);
-          return d.getFullYear() === currentYear && inWin(d.getMonth() + 1);
-        });
-        if (ms.length === 0) return null;
-        const sumValue = ms.reduce((s, m) => s + Number(m.value), 0);
-        const accumulated = isFinancialKpi(k) ? sumValue : sumValue / (winLen || 1);
-        return k.target > 0 ? (accumulated / k.target) * 100 : 0;
+        const accumulated = getKpiActualValue(k.id, currentYear, measurements, k.calc_method, winEnd);
+        if (accumulated === null) return null;
+        const target = getKpiTotalTarget(k.id, currentYear, Number(k.target), measurements, k.total_target_method);
+        const ratio = getKpiComplianceRatio(accumulated, target, k.inverse_thresholds);
+        return ratio === null ? null : roundCompliancePercent(Math.max(0, Math.min(ratio, 200)));
       }).filter((v): v is number => v !== null);
       if (values.length === 0) return 0;
       return roundCompliancePercent(values.reduce((s, v) => s + v, 0) / values.length);
@@ -1653,20 +1636,7 @@ function ObjectiveCard({
   // Get KPI accumulated value up to current month in current year (sum for financial, average otherwise)
   const getKpiAccumulatedAverage = (kpiId: string) => {
     const kpi = objKpis.find(k => k.id === kpiId);
-    const elapsed = new Date().getMonth() + 1;
-    const winEnd = Math.min(elapsed, 11);
-    const winMonths = Math.max(0, winEnd - 2 + 1);
-    const kpiMeasurements = relevantMeasurements.filter(m => {
-      if (m.kpi_id !== kpiId) return false;
-      const measurementDate = new Date(m.period_date);
-      const mo = measurementDate.getMonth() + 1;
-      return measurementDate.getFullYear() === currentYear && mo >= 2 && mo <= winEnd;
-    });
-    if (kpiMeasurements.length === 0) return null;
-    const sumValue = kpiMeasurements.reduce((sum, m) => sum + Number(m.value), 0);
-    const method = kpi ? getCalcMethod(kpi) : 'promedio';
-    const accumulated = method === 'suma' ? sumValue : sumValue / (winMonths || 1);
-    return Math.round(accumulated * 100) / 100;
+    return getKpiActualValue(kpiId, currentYear, relevantMeasurements, kpi ? getCalcMethod(kpi) : 'promedio');
   };
 
   // Get KPI value for a given month (or accumulated average up to date for 'total')
