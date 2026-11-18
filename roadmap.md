@@ -8,3 +8,7 @@
 - [x] Unificar los rangos del promedio y de los objetivos con el KPI; ejemplo real de marzo verificado como 100% / Medio en amarillo y 14 pruebas aprobadas.
 - [x] Aplicar bordes rectos globales a cajas y botones; verificados en escritorio y móvil, con interruptores conservados.
 - [x] Corregir promedio Total KPI y consolidados mediante fechas de calendario; 30 pruebas aprobadas y Booking verificado en Bogotá: 8,76, 95%, Amarillo / Medio, sin modificar mediciones.
+
+## Pendiente
+- [ ] Habilitar mes de enero en KPIs e incluirlo en Total KPI (Promedio y Suma) — pedido 18 nov 2026
+- [ ] Verificar en pantalla columnas Meta Revisión / Real Revisión en Total KPI

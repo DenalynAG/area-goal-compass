@@ -28,8 +28,9 @@ import { getKpiTotalTarget } from '@/lib/kpiTotalTarget';
 import { getKpiActualValue } from '@/lib/kpiActualValue';
 import { getDefaultKpiMonth, isKpiMonthAllowed } from '@/lib/kpiMonths';
 import { getComplianceStatus, getKpiComplianceLight, getKpiComplianceRatio, roundCompliancePercent } from '@/lib/kpiCompliance';
+import { getReviewCompliancePercent } from '@/lib/kpiReview';
 import { getConsolidatedIndicatorProgress } from '@/lib/kpiConsolidatedProgress';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import { cn } from '@/lib/utils';
@@ -51,9 +52,20 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   const { data: subareas = [] } = useSubareas();
   const { data: profiles = [] } = useProfiles();
   const { data: userRoles = [] } = useUserRoles();
-  const { isSuperAdmin, hasRole } = useAuth();
+  const { isSuperAdmin, hasRole, user } = useAuth();
   const canEditKpi = isSuperAdmin || hasRole('admin_area') || hasRole('gestor_area') || hasRole('lider_subarea');
   const canDownload = isSuperAdmin;
+  // Meta Revisión / Real Revisión (Total KPI): solo Super Admin y RRHH
+  const { data: isHR = false } = useQuery({
+    queryKey: ['is_hr', user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('is_hr', { _user_id: user!.id });
+      if (error) return false;
+      return Boolean(data);
+    },
+  });
+  const canEditReview = isSuperAdmin || isHR;
 
   const [searchParams, setSearchParams] = useSearchParams();
   const qc = useQueryClient();
@@ -705,7 +717,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                               <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
                                 onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={(month) => openNewKPI(obj.id, month)} onEditKPI={(k, month) => openEditKPI(k, month)}
                                 onDelete={() => setObjToDelete(obj)} onDeleteKPI={(k) => setKpiToDelete(k)}
-                                profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin} />
+                                profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin} canEditReview={canEditReview} />
                             );
                           })}
                         </div>
@@ -786,7 +798,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                                 <ObjectiveCard key={obj.id} obj={obj} index={idx + 1} objKpis={objKpis2} isOpen={isOpen}
                                   onToggle={() => toggleObj(obj.id)} onEdit={() => openEdit(obj)} onNewKPI={(month) => openNewKPI(obj.id, month)} onEditKPI={(k, month) => openEditKPI(k, month)}
                                   onDelete={() => setObjToDelete(obj)} onDeleteKPI={(k) => setKpiToDelete(k)}
-                                  profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin} />
+                                  profiles={profiles} areas={areas} subareas={subareas} measurements={measurements} canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin} canEditReview={canEditReview} />
                               );
                             })}
                           </div>
@@ -1030,7 +1042,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                   measurements={measurements}
                   showAreaTags
                   otherAreas={otherAreas}
-                  canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin}
+                  canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin} canEditReview={canEditReview}
                   hideOwner={!isSuperAdmin}
                   hideExtras={!isSuperAdmin}
                 />
@@ -1217,7 +1229,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                                         areas={areas}
                                         subareas={subareas}
                                         measurements={measurements}
-                                        canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin}
+                                        canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin} canEditReview={canEditReview}
                                       />
                                     );
                                   })}
@@ -1314,7 +1326,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                                             areas={areas}
                                             subareas={subareas}
                                             measurements={measurements}
-                                            canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin}
+                                            canEdit={isSuperAdmin} canEditKpi={canEditKpi} canDelete={isSuperAdmin} canEditReview={canEditReview}
                                           />
                                         );
                                       })}
@@ -1416,7 +1428,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
 
 // Reusable objective card with circular progress
 function ObjectiveCard({
-  obj, index, objKpis, isOpen, onToggle, onEdit, onNewKPI, onEditKPI, onDelete, onDeleteKPI, profiles, areas, subareas, measurements, showAreaTags, otherAreas, canEdit = false, canEditKpi = false, canDelete = false, hideOwner = false, hideExtras = false,
+  obj, index, objKpis, isOpen, onToggle, onEdit, onNewKPI, onEditKPI, onDelete, onDeleteKPI, profiles, areas, subareas, measurements, showAreaTags, otherAreas, canEdit = false, canEditKpi = false, canDelete = false, canEditReview = false, hideOwner = false, hideExtras = false,
 }: {
   obj: Tables<'objectives'>;
   index: number;
@@ -1436,6 +1448,7 @@ function ObjectiveCard({
   otherAreas?: Tables<'areas'>[];
   canEdit?: boolean;
   canEditKpi?: boolean;
+  canEditReview?: boolean;
   canDelete?: boolean;
   hideOwner?: boolean;
   hideExtras?: boolean;
@@ -1660,6 +1673,33 @@ function ObjectiveCard({
     toast.success('Meta guardada');
   };
 
+  // Inline-save "Meta Revisión" / "Real Revisión" (solo Total KPI; Super Admin y RRHH)
+  const saveKpiReviewField = async (kpiId: string, field: 'review_target' | 'review_actual', raw: string) => {
+    const trimmed = (raw ?? '').toString().trim();
+    const kpi = objKpis.find(k => k.id === kpiId) as any;
+    const current = kpi?.[field];
+
+    if (trimmed === '') {
+      if (current === null || current === undefined) return;
+      const { error } = await supabase.from('kpis').update({ [field]: null } as any).eq('id', kpiId);
+      if (error) { toast.error(`No se pudo actualizar: ${error.message}`); return; }
+      qcLocal.invalidateQueries({ queryKey: ['kpis'] });
+      await logActivity('update', 'kpi_review', kpiId, { field, value: null });
+      toast.success('Dato de revisión restablecido');
+      return;
+    }
+
+    const value = parseKpiNumber(trimmed);
+    if (!isFinite(value)) { toast.error('Valor inválido'); return; }
+    if (Number(current) === value) return;
+
+    const { error } = await supabase.from('kpis').update({ [field]: value } as any).eq('id', kpiId);
+    if (error) { toast.error(`No se pudo guardar: ${error.message}`); return; }
+    qcLocal.invalidateQueries({ queryKey: ['kpis'] });
+    await logActivity('update', 'kpi_review', kpiId, { field, value });
+    toast.success('Dato de revisión guardado');
+  };
+
   // Get KPI accumulated value up to current month in current year (sum for financial, average otherwise)
   const getKpiAccumulatedAverage = (kpiId: string) => {
     const kpi = objKpis.find(k => k.id === kpiId);
@@ -1683,6 +1723,21 @@ function ObjectiveCard({
     return (t === null || t === undefined) ? (Number(k.target) || 0) : Number(t);
   };
 
+  // Cumplimiento % de la fila: en Total KPI usa Real Revisión / Meta Revisión
+  // cuando ambos datos existen; si faltan, conserva el cálculo habitual.
+  const getKpiRowCompliance = (k: any): number | null => {
+    if (selectedMonth === 'total') {
+      const reviewPercent = getReviewCompliancePercent(k.review_target, k.review_actual);
+      if (reviewPercent !== null) return reviewPercent;
+    }
+    const monthValue = getKpiMonthValue(k.id);
+    if (monthValue === null) return null;
+    const tgt = Number(getKpiMonthTarget(k)) || 0;
+    const ratio = computePerfRatio(Number(monthValue), tgt, Boolean((k as any).inverse_thresholds));
+    if (ratio === null) return null;
+    return roundCompliancePercent(Math.max(0, Math.min(ratio, 200)));
+  };
+
   // Progress: accumulated average up to date / target
   const elapsedMonths = new Date().getMonth() + 1;
   const computedProgress = useMemo(() => {
@@ -1690,14 +1745,7 @@ function ObjectiveCard({
 
     // Match the "Promedio General" (Valor Real) shown in the footer for the selected month
     // so the circle reflects the same semáforo del mes seleccionado.
-    const values = objKpis.map(k => {
-      const monthValue = getKpiMonthValue(k.id);
-      if (monthValue === null) return null;
-      const tgt = Number(getKpiMonthTarget(k)) || 0;
-      const ratio = computePerfRatio(Number(monthValue), tgt, Boolean((k as any).inverse_thresholds));
-      if (ratio === null) return null;
-      return roundCompliancePercent(Math.max(0, Math.min(ratio, 200)));
-    }).filter((v): v is number => v !== null);
+    const values = objKpis.map(k => getKpiRowCompliance(k)).filter((v): v is number => v !== null);
 
     if (values.length === 0) return 0;
     return roundCompliancePercent(values.reduce((sum, value) => sum + value, 0) / values.length);
@@ -1833,6 +1881,8 @@ function ObjectiveCard({
                 <th className="text-center py-1">Peso %</th>
                 <th className="text-left py-1">Meta</th>
                 <th className="text-left py-1">Valor Real</th>
+                {selectedMonth === 'total' && <th className="text-left py-1 whitespace-nowrap">Meta Revisión</th>}
+                {selectedMonth === 'total' && <th className="text-left py-1 whitespace-nowrap">Real Revisión</th>}
                 <th className="text-center py-1">Cálculo</th>
                 <th className="text-center py-1">Tipo KPI</th>
                 <th className="text-left py-1">Semáforo</th>
@@ -1848,8 +1898,7 @@ function ObjectiveCard({
                 // The displayed target also drives the light and overall progress.
                 const displayTarget = getKpiMonthTarget(k);
                 const lightTarget = displayTarget;
-                const complianceRatio = monthValue === null ? null : computePerfRatio(Number(monthValue), Number(displayTarget) || 0, Boolean((k as any).inverse_thresholds));
-                const compliancePercent = complianceRatio === null ? null : roundCompliancePercent(Math.max(0, Math.min(complianceRatio, 200)));
+                const compliancePercent = getKpiRowCompliance(k);
                 const weight = (k as any).weight_percent ?? 0;
                 return (
                   <tr key={k.id} className="border-t border-border/50">
@@ -1932,6 +1981,49 @@ function ObjectiveCard({
                         })()
                       )}
                     </td>
+                    {isTotalView && (['review_target', 'review_actual'] as const).map(field => {
+                      const reviewValue = (k as any)[field] as number | null | undefined;
+                      const hasReviewValue = reviewValue !== null && reviewValue !== undefined;
+                      if (!canEditReview) {
+                        return (
+                          <td key={field} className="py-2">
+                            {hasReviewValue ? <>{formatKpiValue(Number(reviewValue), k)}</> : <span className="text-muted-foreground">—</span>}
+                          </td>
+                        );
+                      }
+                      return (
+                        <td key={field} className="py-2">
+                          <input
+                            key={`${k.id}-${field}-${reviewValue ?? ''}`}
+                            type="text"
+                            inputMode={isFinancialKpi(k) ? 'numeric' : 'decimal'}
+                            defaultValue={formatKpiInputValue(reviewValue, k)}
+                            placeholder="—"
+                            onFocus={(e) => {
+                              e.target.value = hasReviewValue ? String(reviewValue) : '';
+                              e.target.select();
+                            }}
+                            onBlur={(e) => {
+                              const raw = e.target.value;
+                              const orig = hasReviewValue ? String(reviewValue) : '';
+                              if (raw.trim() !== orig.trim() && !(raw.trim() === '' && orig === '')) {
+                                saveKpiReviewField(k.id, field, raw);
+                              } else {
+                                e.target.value = formatKpiInputValue(reviewValue, k);
+                              }
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                              if (e.key === 'Escape') {
+                                (e.target as HTMLInputElement).value = formatKpiInputValue(reviewValue, k);
+                                (e.target as HTMLInputElement).blur();
+                              }
+                            }}
+                            className="w-24 rounded-md border border-border bg-background px-2 py-1 text-sm text-right tabular-nums focus:outline-none focus:ring-2 focus:ring-primary/40"
+                          />
+                        </td>
+                      );
+                    })}
                     <td className="py-2 text-center">
                       <select
                         value={getCalcMethod(k)}
@@ -2005,30 +2097,18 @@ function ObjectiveCard({
                 <td></td>
                 <td className="py-2 font-bold text-sm">
                   {(() => {
-                    const values = objKpis.map(k => {
-                      const monthValue = getKpiMonthValue(k.id);
-                      if (monthValue === null) return null;
-                      const tgt = Number(getKpiMonthTarget(k)) || 0;
-                      const ratio = computePerfRatio(Number(monthValue), tgt, Boolean((k as any).inverse_thresholds));
-                      if (ratio === null) return null;
-                      return roundCompliancePercent(Math.max(0, Math.min(ratio, 200)));
-                    }).filter((v): v is number => v !== null);
+                    const values = objKpis.map(k => getKpiRowCompliance(k)).filter((v): v is number => v !== null);
                     const avg = values.length > 0 ? roundCompliancePercent(values.reduce((s, v) => s + v, 0) / values.length) : 0;
                     return `${avg}%`;
                   })()}
                 </td>
+                {selectedMonth === 'total' && <td></td>}
+                {selectedMonth === 'total' && <td></td>}
                 <td></td>
                 <td></td>
                 <td className="py-2">
                   {(() => {
-                    const values = objKpis.map(k => {
-                      const monthValue = getKpiMonthValue(k.id);
-                      if (monthValue === null) return null;
-                      const tgt = Number(getKpiMonthTarget(k)) || 0;
-                      const ratio = computePerfRatio(Number(monthValue), tgt, Boolean((k as any).inverse_thresholds));
-                      if (ratio === null) return null;
-                      return roundCompliancePercent(Math.max(0, Math.min(ratio, 200)));
-                    }).filter((v): v is number => v !== null);
+                    const values = objKpis.map(k => getKpiRowCompliance(k)).filter((v): v is number => v !== null);
                     const avg = values.length > 0 ? roundCompliancePercent(values.reduce((s, v) => s + v, 0) / values.length) : 0;
                     const { light, label } = getComplianceStatus(avg);
                     const color = light === 'verde' ? 'text-success-bright bg-success-bright/10' : light === 'amarillo' ? 'text-warning-bright bg-warning-bright/10' : 'text-danger-bright bg-danger-bright/10';

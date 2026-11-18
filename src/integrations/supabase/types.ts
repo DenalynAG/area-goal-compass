@@ -1519,6 +1519,8 @@ export type Database = {
           inverse_thresholds: boolean
           name: string
           objective_id: string
+          review_actual: number | null
+          review_target: number | null
           target: number
           threshold_green: number
           threshold_red: number
@@ -1538,6 +1540,8 @@ export type Database = {
           inverse_thresholds?: boolean
           name: string
           objective_id: string
+          review_actual?: number | null
+          review_target?: number | null
           target?: number
           threshold_green?: number
           threshold_red?: number
@@ -1557,6 +1561,8 @@ export type Database = {
           inverse_thresholds?: boolean
           name?: string
           objective_id?: string
+          review_actual?: number | null
+          review_target?: number | null
           target?: number
           threshold_green?: number
           threshold_red?: number
