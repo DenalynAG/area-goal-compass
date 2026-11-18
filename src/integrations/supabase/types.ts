@@ -1469,6 +1469,44 @@ export type Database = {
         }
         Relationships: []
       }
+      kpi_total_overrides: {
+        Row: {
+          actual: number | null
+          id: string
+          kpi_id: string
+          target: number | null
+          updated_at: string
+          updated_by: string | null
+          year: number
+        }
+        Insert: {
+          actual?: number | null
+          id?: string
+          kpi_id: string
+          target?: number | null
+          updated_at?: string
+          updated_by?: string | null
+          year: number
+        }
+        Update: {
+          actual?: number | null
+          id?: string
+          kpi_id?: string
+          target?: number | null
+          updated_at?: string
+          updated_by?: string | null
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kpi_total_overrides_kpi_id_fkey"
+            columns: ["kpi_id"]
+            isOneToOne: false
+            referencedRelation: "kpis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kpis: {
         Row: {
           baseline: number

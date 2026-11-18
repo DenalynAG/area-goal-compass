@@ -6,4 +6,4 @@
 - KPI row traffic lights and displayed compliance share the same performance-ratio helper, including inverse indicators; objective and general-average labels use the same percentage-status helper to prevent conflicting classifications.
 - KPI month eligibility uses a shared helper for forms, inline saves, imports and lock controls, with a database CHECK constraint as the final guard against excluded periods.
 - Actual KPI aggregation uses calendar-string month matching, never local Date parsing, so Bogotá cannot shift first-of-month records; Total averages ten January–November months and dashboard cutoffs share the helper.
-- Rectangular radii resolve through the global radius token; global control selectors cover legacy pill buttons while preserving native switch and radio shapes.
+- Rectangular radii resolve through the global radius token; global control selectors cover legacy pill buttons while preserving native switch and radio shapes.- Total KPI meta and actual can be replaced by Super Admin fixed per-year values stored separately; RLS restricts writes to super_admin and clearing a value restores the calculation.
