@@ -1716,31 +1716,31 @@ function ObjectiveCard({
   };
 
   // Get KPI value for a given month (or accumulated average up to date for 'total')
-  const getKpiMonthValue = (kpiId: string, month: string = selectedMonth) => {
-    if (month === 'total') {
+  const getKpiMonthValue = (kpiId: string) => {
+    if (selectedMonth === 'total') {
       return getKpiAccumulatedAverage(kpiId);
     }
-    const m = relevantMeasurements.find(m => m.kpi_id === kpiId && m.period_date.startsWith(month));
+    const m = relevantMeasurements.find(m => m.kpi_id === kpiId && m.period_date.startsWith(selectedMonth));
     return m ? m.value : null;
   };
 
   // Get per-month target for a KPI (falls back to KPI default target)
-  const getKpiMonthTarget = (k: any, month: string = selectedMonth) => {
-    if (month === 'total') return getKpiTotalTarget(k.id, currentYear, Number(k.target) || 0, relevantMeasurements, k.calc_method === 'suma' ? 'suma' : k.total_target_method, 1);
-    const m = relevantMeasurements.find(m => m.kpi_id === k.id && m.period_date.startsWith(month));
+  const getKpiMonthTarget = (k: any) => {
+    if (selectedMonth === 'total') return getKpiTotalTarget(k.id, currentYear, Number(k.target) || 0, relevantMeasurements, k.calc_method === 'suma' ? 'suma' : k.total_target_method, 1);
+    const m = relevantMeasurements.find(m => m.kpi_id === k.id && m.period_date.startsWith(selectedMonth));
     const t = (m as any)?.target;
     return (t === null || t === undefined) ? (Number(k.target) || 0) : Number(t);
   };
 
   // Revisión y datos habituales comparten la regla normal/inversa del KPI.
-  const getKpiRowCompliance = (k: any, month: string = selectedMonth): number | null => {
-    if (month === 'total') {
+  const getKpiRowCompliance = (k: any): number | null => {
+    if (selectedMonth === 'total') {
       const reviewPercent = getReviewCompliancePercent(k.review_target, k.review_actual, Boolean(k.inverse_thresholds));
       if (reviewPercent !== null) return reviewPercent;
     }
-    const monthValue = getKpiMonthValue(k.id, month);
+    const monthValue = getKpiMonthValue(k.id);
     if (monthValue === null) return null;
-    const tgt = Number(getKpiMonthTarget(k, month)) || 0;
+    const tgt = Number(getKpiMonthTarget(k)) || 0;
     const ratio = computePerfRatio(Number(monthValue), tgt, Boolean((k as any).inverse_thresholds));
     if (ratio === null) return null;
     return roundCompliancePercent(Math.max(0, Math.min(ratio, 200)));
@@ -1759,14 +1759,7 @@ function ObjectiveCard({
     return roundCompliancePercent(values.reduce((sum, value) => sum + value, 0) / values.length);
   }, [objKpis, obj.progress_percent, relevantMeasurements, selectedMonth]);
 
-  // El cumplimiento general siempre usa el Total KPI de cada objetivo, sin importar el mes seleccionado.
-  const totalProgress = useMemo(() => {
-    if (objKpis.length === 0) return obj.progress_percent;
-    const values = objKpis.map(k => getKpiRowCompliance(k, 'total')).filter((v): v is number => v !== null);
-    if (values.length === 0) return 0;
-    return roundCompliancePercent(values.reduce((sum, value) => sum + value, 0) / values.length);
-  }, [objKpis, obj.progress_percent, relevantMeasurements]);
-  useEffect(() => { onProgressChange?.(obj.id, totalProgress); }, [onProgressChange, obj.id, totalProgress]);
+  useEffect(() => { onProgressChange?.(obj.id, computedProgress); }, [onProgressChange, obj.id, computedProgress]);
   const [detailOpen, setDetailOpen] = useState(false);
   const { light: progressLight, label: progressLabel } = getComplianceStatus(computedProgress);
   const progressPillClass = progressLight === 'verde'
