@@ -9,6 +9,5 @@
 - [x] Aplicar bordes rectos globales a cajas y botones; verificados en escritorio y móvil, con interruptores conservados.
 - [x] Corregir promedio Total KPI y consolidados mediante fechas de calendario; 30 pruebas aprobadas y Booking verificado en Bogotá: 8,76, 95%, Amarillo / Medio, sin modificar mediciones.
 
-## Pendiente
-- [ ] Habilitar mes de enero en KPIs e incluirlo en Total KPI (Promedio y Suma) — pedido 18 nov 2026
-- [ ] Verificar en pantalla columnas Meta Revisión / Real Revisión en Total KPI
+- [x] Agregar Meta Revisión y Real Revisión en Total KPI (solo Super Admin y RRHH editan; Cumplimiento % = Real Revisión / Meta Revisión con respaldo al cálculo habitual); verificado en pantalla: 150% con 100/150.
+- [x] Habilitar enero en KPIs e incluirlo en Total KPI (promedio divide entre 11, suma acumula ene–nov); dashboard de áreas sigue feb–nov; diciembre sigue bloqueado; 40 pruebas aprobadas y verificado en pantalla (Ene habilitado, Dic bloqueado).

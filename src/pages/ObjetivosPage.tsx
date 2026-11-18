@@ -1703,7 +1703,7 @@ function ObjectiveCard({
   // Get KPI accumulated value up to current month in current year (sum for financial, average otherwise)
   const getKpiAccumulatedAverage = (kpiId: string) => {
     const kpi = objKpis.find(k => k.id === kpiId);
-    return getKpiActualValue(kpiId, currentYear, relevantMeasurements, kpi ? getCalcMethod(kpi) : 'promedio');
+    return getKpiActualValue(kpiId, currentYear, relevantMeasurements, kpi ? getCalcMethod(kpi) : 'promedio', 11, 1);
   };
 
   // Get KPI value for a given month (or accumulated average up to date for 'total')
@@ -1717,7 +1717,7 @@ function ObjectiveCard({
 
   // Get per-month target for a KPI (falls back to KPI default target)
   const getKpiMonthTarget = (k: any) => {
-    if (selectedMonth === 'total') return getKpiTotalTarget(k.id, currentYear, Number(k.target) || 0, relevantMeasurements, k.calc_method === 'suma' ? 'suma' : k.total_target_method);
+    if (selectedMonth === 'total') return getKpiTotalTarget(k.id, currentYear, Number(k.target) || 0, relevantMeasurements, k.calc_method === 'suma' ? 'suma' : k.total_target_method, 1);
     const m = relevantMeasurements.find(m => m.kpi_id === k.id && m.period_date.startsWith(selectedMonth));
     const t = (m as any)?.target;
     return (t === null || t === undefined) ? (Number(k.target) || 0) : Number(t);

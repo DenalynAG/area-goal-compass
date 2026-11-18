@@ -141,6 +141,20 @@
       "when": 1795013807242,
       "tag": "0019_kpi_review_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1795014122888,
+      "tag": "0020_allow_january_kpi_measurements",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1795014423092,
+      "tag": "0021_kpi_review_guard_service_context",
+      "breakpoints": true
     }
   ]
 }

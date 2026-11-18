@@ -34,4 +34,12 @@ describe('Total KPI target', () => {
   it('preserves a saved target of zero', () => {
     expect(getKpiTotalTarget('kpi', 2026, 100, measurements.slice(0, 4))).toBe(0);
   });
+  it('includes January in the summed target when startMonth is 1 (Total KPI)', () => {
+    expect(getKpiTotalTarget('kpi', 2026, 100, measurements, 'suma', 1)).toBe(1999);
+  });
+  it('includes a saved January target as latest monthly target when startMonth is 1', () => {
+    const janOnly = [{ kpi_id: 'kpi', period_date: '2026-01-01', target: 999 }];
+    expect(getKpiTotalTarget('kpi', 2026, 100, janOnly, 'mensual', 1)).toBe(999);
+    expect(getKpiTotalTarget('kpi', 2026, 100, janOnly)).toBe(100);
+  });
 });
