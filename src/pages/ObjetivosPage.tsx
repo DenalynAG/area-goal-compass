@@ -89,7 +89,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
   const [dashRoleFilter, setDashRoleFilter] = useState<string>('__all__');
   // Default dashboard month to previous month (e.g., July -> June)
   const defaultDashMonth = String(new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).getMonth() + 1).padStart(2, '0');
-  const [dashMonth, setDashMonth] = useState<string>(defaultDashMonth);
+  const [dashMonth, setDashMonth] = useState<string>('__all__');
   const [expandedAreas, setExpandedAreas] = useState<Record<string, boolean>>({});
   const toggleArea = (id: string) => setExpandedAreas(prev => ({ ...prev, [id]: !prev[id] }));
   const [expandedOwners, setExpandedOwners] = useState<Record<string, boolean>>({});
@@ -509,9 +509,13 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
     const winEnd = Math.min(Math.max(requestedEnd, winStart), winCap);
     const currentYear = new Date().getFullYear();
     const objProgress = (obj: Tables<'objectives'>) => {
+      // Sin mes: misma etiqueta de cumplimiento que muestra cada objetivo (Total KPI)
+      if (monthNum === null) return cardProgress[obj.id] ?? getObjProgress(obj);
       const objKpis = kpis.filter(k => k.objective_id === obj.id);
       if (objKpis.length === 0) return obj.progress_percent;
       const values = objKpis.map(k => {
+        const reviewPercent = getReviewCompliancePercent((k as any).review_target, (k as any).review_actual, Boolean(k.inverse_thresholds));
+        if (reviewPercent !== null) return reviewPercent;
         const accumulated = getKpiActualValue(k.id, currentYear, measurements, k.calc_method, winEnd);
         if (accumulated === null) return null;
         const target = getKpiTotalTarget(k.id, currentYear, Number(k.target), measurements, k.calc_method === 'suma' ? 'suma' : k.total_target_method);
@@ -533,7 +537,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
         const objs = getAreaObjectives(a.id).filter(matchesRole);
         if (!objs.length) return { name: a.name, Objetivos: 0 };
         const objAvg = roundCompliancePercent(
-          objs.reduce((s, o) => s + Math.min(objProgress(o), 100), 0) / objs.length,
+          objs.reduce((s, o) => s + objProgress(o), 0) / objs.length,
         );
         return { name: a.name, Objetivos: objAvg };
       }).filter(d => d.Objetivos > 0);
@@ -545,7 +549,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
       const directObjs = objectives.filter(o => o.scope_type === 'area' && o.scope_id === dashAreaId).filter(matchesRole);
       if (directObjs.length) {
         const objAvg = roundCompliancePercent(
-          directObjs.reduce((s, o) => s + Math.min(objProgress(o), 100), 0) / directObjs.length,
+          directObjs.reduce((s, o) => s + objProgress(o), 0) / directObjs.length,
         );
         result.push({ name: '(Área directa)', Objetivos: objAvg });
       }
@@ -553,7 +557,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
         const objs = objectives.filter(o => o.scope_type === 'subarea' && o.scope_id === s.id).filter(matchesRole);
         if (!objs.length) return;
         const objAvg = roundCompliancePercent(
-          objs.reduce((sum, o) => sum + Math.min(objProgress(o), 100), 0) / objs.length,
+          objs.reduce((sum, o) => sum + objProgress(o), 0) / objs.length,
         );
         result.push({ name: s.name, Objetivos: objAvg });
       });
@@ -564,10 +568,10 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
     return objs.map(o => {
       return {
         name: o.title.length > 40 ? o.title.slice(0, 40) + '…' : o.title,
-        Objetivos: Math.min(objProgress(o), 100),
+        Objetivos: objProgress(o),
       };
     });
-  }, [dashAreaId, dashSubareaId, dashRoleFilter, dashMonth, userRoles, areas, subareas, objectives, kpis, measurements, avgWindowEndTop]);
+  }, [cardProgress, dashAreaId, dashSubareaId, dashRoleFilter, dashMonth, userRoles, areas, subareas, objectives, kpis, measurements, avgWindowEndTop]);
 
   const dashSubareaOptions = useMemo(() => {
     if (dashAreaId === '__all__') return [];
@@ -653,8 +657,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
           </div>
           <div className="shrink-0 text-right">
             <div className="flex items-center gap-2">
-              <ProgressBar value={areaProgress} className="w-24" highThreshold={100} midThreshold={80} />
-              <span className="text-xs font-semibold text-muted-foreground">{areaProgress}%</span>
+              <ProgressBar value={Math.min(getObjectivesTotalCompliance(areaObjs) ?? 0, 100)} className="w-24" highThreshold={109} midThreshold={100} />
               {renderTotalCompliancePill(areaObjs)}
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">{areaObjs.length} obj · {areaKpisList.length} ind</p>
@@ -686,8 +689,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                     </p>
                   </div>
                   <div className="shrink-0 flex items-center gap-2">
-                    <ProgressBar value={getObjectivesIndicatorProgress(directAreaObjs)} className="w-20" highThreshold={100} midThreshold={80} />
-                    <span className="text-xs font-semibold text-muted-foreground tabular-nums">{getObjectivesIndicatorProgress(directAreaObjs)}%</span>
+                    <ProgressBar value={Math.min(getObjectivesTotalCompliance(directAreaObjs) ?? 0, 100)} className="w-20" highThreshold={109} midThreshold={100} />
                     {renderTotalCompliancePill(directAreaObjs)}
                   </div>
                 </button>
@@ -712,8 +714,8 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                           {group.objs.length}
                         </span>
                         <div className="flex-1 h-px bg-border" />
-                        <ProgressBar value={getObjectivesIndicatorProgress(group.objs)} className="w-16 shrink-0" highThreshold={100} midThreshold={80} />
-                        <span className="text-xs font-semibold text-muted-foreground tabular-nums shrink-0">{getObjectivesIndicatorProgress(group.objs)}%</span>{renderTotalCompliancePill(group.objs)}
+                        <ProgressBar value={Math.min(getObjectivesTotalCompliance(group.objs) ?? 0, 100)} className="w-16 shrink-0" highThreshold={109} midThreshold={100} />
+                        {renderTotalCompliancePill(group.objs)}
                       </button>
                       {gOpen && (
                         <div className="px-3 pb-3 pt-1 space-y-3">
@@ -767,8 +769,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                       </p>
                     </div>
                     <div className="shrink-0 flex items-center gap-2 mr-2">
-                      <ProgressBar value={subProgress} className="w-20" highThreshold={100} midThreshold={80} />
-                      <span className="text-xs font-semibold text-muted-foreground">{subProgress}%</span>
+                      <ProgressBar value={Math.min(getObjectivesTotalCompliance(subObjs) ?? 0, 100)} className="w-20" highThreshold={109} midThreshold={100} />
                       {renderTotalCompliancePill(subObjs)}
                     </div>
                   </button>
@@ -793,8 +794,8 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                             {group.objs.length}
                           </span>
                           <div className="flex-1 h-px bg-border" />
-                          <ProgressBar value={getObjectivesIndicatorProgress(group.objs)} className="w-16 shrink-0" highThreshold={100} midThreshold={80} />
-                          <span className="text-xs font-semibold text-muted-foreground tabular-nums shrink-0">{getObjectivesIndicatorProgress(group.objs)}%</span>{renderTotalCompliancePill(group.objs)}
+                          <ProgressBar value={Math.min(getObjectivesTotalCompliance(group.objs) ?? 0, 100)} className="w-16 shrink-0" highThreshold={109} midThreshold={100} />
+                          {renderTotalCompliancePill(group.objs)}
                         </button>
                         {gOpen && (
                           <div className="px-3 pb-3 pt-1 space-y-3">
@@ -959,13 +960,13 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={dashboardChartData} layout="vertical" margin={{ top: 10, right: 40, left: 10, bottom: 10 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} stroke="hsl(var(--muted-foreground))" />
+                    <XAxis type="number" domain={[0, (max: number) => Math.max(100, Math.ceil(max / 10) * 10)]} tickFormatter={(v) => `${v}%`} stroke="hsl(var(--muted-foreground))" />
                     <YAxis type="category" dataKey="name" width={180} stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 12 }} />
                     <Tooltip
                       formatter={(v: any) => {
                         const n = Number(v) || 0;
                         const { label } = getComplianceStatus(n);
-                        return [`${n}% · ${label}`, 'Cumplimiento (Feb–Nov)'];
+                        return [`${n}% · ${label}`, 'Cumplimiento'];
                       }}
                       contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }}
                     />
@@ -1012,8 +1013,8 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
               {globalObjectives.length} objetivo{globalObjectives.length !== 1 ? 's' : ''} estratégico{globalObjectives.length !== 1 ? 's' : ''} · {globalProgress}%
             </p>
             <div className="mt-2 flex items-center gap-2">
-              <ProgressBar value={globalProgress} className="flex-1" highThreshold={100} midThreshold={80} />
-              <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">{globalProgress}%</span>
+              <ProgressBar value={Math.min(getObjectivesTotalCompliance(globalObjectives) ?? 0, 100)} className="flex-1" highThreshold={109} midThreshold={100} />
+              {renderTotalCompliancePill(globalObjectives)}
             </div>
           </div>
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
@@ -1168,8 +1169,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                       {progress}%
                     </p>
                     <div className="mt-2 flex items-center gap-2">
-                      <ProgressBar value={progress} className="flex-1" highThreshold={100} midThreshold={80} />
-                      <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">{progress}%</span>
+                      <ProgressBar value={Math.min(getObjectivesTotalCompliance(areaObjs) ?? 0, 100)} className="flex-1" highThreshold={109} midThreshold={100} />
                       {renderTotalCompliancePill(areaObjs)}
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">Consolidado del área y subáreas</p>
@@ -1212,8 +1212,8 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                                   {group.objs.length}
                                 </span>
                                 <div className="flex-1 h-px bg-border" />
-                                <ProgressBar value={getObjectivesIndicatorProgress(group.objs)} className="w-16 shrink-0" highThreshold={100} midThreshold={80} />
-                                <span className="text-xs font-semibold text-muted-foreground tabular-nums shrink-0">{getObjectivesIndicatorProgress(group.objs)}%</span>{renderTotalCompliancePill(group.objs)}
+                                <ProgressBar value={Math.min(getObjectivesTotalCompliance(group.objs) ?? 0, 100)} className="w-16 shrink-0" highThreshold={109} midThreshold={100} />
+                                {renderTotalCompliancePill(group.objs)}
                               </button>
                               {gOpen && (
                                 <div className="px-3 pb-3 pt-1 space-y-3">
@@ -1284,8 +1284,7 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                               )}
                             </div>
                             <div className="shrink-0 flex items-center gap-2">
-                              <ProgressBar value={subProgress} className="w-20" highThreshold={100} midThreshold={80} />
-                              <span className="text-xs font-semibold text-muted-foreground">{subProgress}%</span>
+                              <ProgressBar value={Math.min(getObjectivesTotalCompliance(subObjs) ?? 0, 100)} className="w-20" highThreshold={109} midThreshold={100} />
                       {renderTotalCompliancePill(subObjs)}
                             </div>
                           </button>
@@ -1309,8 +1308,8 @@ export default function ObjetivosPage({ areaFilterName }: ObjetivosPageProps = {
                                       {group.objs.length}
                                     </span>
                                     <div className="flex-1 h-px bg-border" />
-                                    <ProgressBar value={getObjectivesIndicatorProgress(group.objs)} className="w-16 shrink-0" highThreshold={100} midThreshold={80} />
-                                    <span className="text-xs font-semibold text-muted-foreground tabular-nums shrink-0">{getObjectivesIndicatorProgress(group.objs)}%</span>{renderTotalCompliancePill(group.objs)}
+                                    <ProgressBar value={Math.min(getObjectivesTotalCompliance(group.objs) ?? 0, 100)} className="w-16 shrink-0" highThreshold={109} midThreshold={100} />
+                                    {renderTotalCompliancePill(group.objs)}
                                   </button>
                                   {gOpen && (
                                     <div className="px-3 pb-3 pt-1 space-y-3">
@@ -1467,7 +1466,7 @@ function ObjectiveCard({
   const [kpiEvidenceName, setKpiEvidenceName] = useState('');
   // Default to previous month (e.g., July -> June)
   const previousMonth = getDefaultKpiMonth();
-  const [selectedMonth, setSelectedMonth] = useState<string>(previousMonth);
+  const [selectedMonth, setSelectedMonth] = useState<string>('total');
 
   const { data: kpiEvidenceRows = [] } = useEvidenceCountsByEntity('kpi');
   const { data: objEvidenceRows = [] } = useEvidenceCountsByEntity('objective');
