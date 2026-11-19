@@ -11,3 +11,5 @@
 
 - [x] Agregar Meta Revisión y Real Revisión en Total KPI (solo Super Admin y RRHH editan; Cumplimiento % = Real Revisión / Meta Revisión con respaldo al cálculo habitual); verificado en pantalla: 150% con 100/150.
 - [x] Habilitar enero en KPIs e incluirlo en Total KPI (promedio divide entre 11, suma acumula ene–nov); dashboard de áreas sigue feb–nov; diciembre sigue bloqueado; 40 pruebas aprobadas y verificado en pantalla (Ene habilitado, Dic bloqueado).
+
+- [x] Barras de cumplimiento con el mismo color de la etiqueta (Alto = verde); 13 pruebas y verificación en pantalla: 114%, 110% y 143% en verde.
