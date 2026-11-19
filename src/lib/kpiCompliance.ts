@@ -30,3 +30,14 @@ export function getKpiComplianceLight(value: number, target: number, inverse: bo
   if (compliance === null) return 'rojo';
   return getComplianceStatus(compliance).light;
 }
+
+/**
+ * Color de la barra de progreso: sale del mismo semáforo de la etiqueta, así una
+ * barra nunca queda en amarillo cuando su etiqueta dice «Alto» (verde).
+ */
+export function getComplianceBarClass(percent: number): string {
+  const { light } = getComplianceStatus(percent);
+  if (light === 'verde') return 'bg-success-bright';
+  if (light === 'amarillo') return 'bg-warning-bright';
+  return 'bg-danger-bright';
+}

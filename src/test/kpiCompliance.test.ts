@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getComplianceStatus, getKpiComplianceLight, getKpiComplianceRatio, roundCompliancePercent } from '@/lib/kpiCompliance';
+import { getComplianceBarClass, getComplianceStatus, getKpiComplianceLight, getKpiComplianceRatio, roundCompliancePercent } from '@/lib/kpiCompliance';
 import { getTrafficLight, type KPI } from '@/types';
 
 describe('Redondeo del % de cumplimiento', () => {
@@ -56,5 +56,26 @@ describe('Semáforo de todos los KPIs', () => {
     const kpi: KPI = { id: 'k', objective_id: 'o', name: 'Indicador', definition: '', unit: '%', frequency: 'mensual', baseline: 0, target: 100, current_value: 109, threshold_green: 120, threshold_yellow: 80, threshold_red: 0, inverse_thresholds: false };
     expect(getTrafficLight(kpi)).toBe('verde');
     expect(getTrafficLight({ ...kpi, target: 109, current_value: 100, inverse_thresholds: true })).toBe('verde');
+  });
+});
+
+describe('Color de la barra de progreso', () => {
+  it('pone la barra en verde cuando la etiqueta dice Alto', () => {
+    expect(getComplianceBarClass(114)).toBe('bg-success-bright');
+    expect(getComplianceBarClass(110)).toBe('bg-success-bright');
+    expect(getComplianceBarClass(109)).toBe('bg-success-bright');
+    expect(getComplianceBarClass(143)).toBe('bg-success-bright');
+  });
+  it('pone la barra en amarillo en Medio y en rojo en Bajo', () => {
+    expect(getComplianceBarClass(103)).toBe('bg-warning-bright');
+    expect(getComplianceBarClass(100)).toBe('bg-warning-bright');
+    expect(getComplianceBarClass(95)).toBe('bg-danger-bright');
+    expect(getComplianceBarClass(99)).toBe('bg-danger-bright');
+  });
+  it('coincide siempre con el semáforo de la etiqueta', () => {
+    for (const v of [0, 89, 95, 99, 100, 103, 108, 108.7, 109, 114, 143, 200]) {
+      const expected = { verde: 'bg-success-bright', amarillo: 'bg-warning-bright', rojo: 'bg-danger-bright' }[getComplianceStatus(v).light];
+      expect(getComplianceBarClass(v)).toBe(expected);
+    }
   });
 });

@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import { getComplianceBarClass } from '@/lib/kpiCompliance';
 import { ObjectiveStatus, Priority, TrafficLight } from '@/types';
 
 interface StatusBadgeProps {
@@ -45,13 +46,18 @@ export function ProgressBar({
   className,
   highThreshold = 70,
   midThreshold = 40,
+  compliance = false,
 }: {
   value: number;
   className?: string;
   highThreshold?: number;
   midThreshold?: number;
+  /** true = usa el semáforo de cumplimiento (≥109 verde, 100–108 amarillo, ≤99 rojo) */
+  compliance?: boolean;
 }) {
-  const color = value >= highThreshold ? 'bg-success-bright' : value >= midThreshold ? 'bg-warning-bright' : 'bg-danger-bright';
+  const color = compliance
+    ? getComplianceBarClass(value)
+    : value >= highThreshold ? 'bg-success-bright' : value >= midThreshold ? 'bg-warning-bright' : 'bg-danger-bright';
   return (
     <div className={cn('w-full bg-muted rounded-full h-2', className)}>
       <div className={cn('h-2 rounded-full transition-all', color)} style={{ width: `${Math.min(100, value)}%` }} />
