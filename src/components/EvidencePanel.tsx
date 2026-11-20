@@ -64,7 +64,17 @@ function EvidenceImagePreview({ filePath, fileName }: { filePath: string; fileNa
 export default function EvidencePanel({ entityType, entityId, entityName, open, onOpenChange, period }: Props) {
   const { user, profile, isSuperAdmin, hasRole } = useAuth();
   const qc = useQueryClient();
-  const { data: evidences = [], isLoading } = useEvidences(entityType, entityId, period);
+  const isTotal = period === 'total';
+  const { data: rawEvidences = [], isLoading } = useEvidences(entityType, entityId, isTotal ? undefined : period);
+  const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const periodLabel = (p: string | null) => {
+    if (!p || p === 'total') return 'Total KPI';
+    const m = /^(\d{4})-(\d{2})/.exec(p);
+    return m ? `${MONTHS[Number(m[2]) - 1]} ${m[1]}` : p;
+  };
+  const evidences = isTotal
+    ? [...rawEvidences].sort((a, b) => (a.period ?? '').localeCompare(b.period ?? '') || b.created_at.localeCompare(a.created_at))
+    : rawEvidences;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [reviewingId, setReviewingId] = useState<string | null>(null);
@@ -202,15 +212,24 @@ export default function EvidencePanel({ entityType, entityId, entityName, open, 
             <p className="text-sm text-muted-foreground text-center py-6">No hay evidencias cargadas</p>
           )}
 
-          {evidences.map(ev => {
+          {isTotal && evidences.length > 0 && (
+            <p className="text-xs font-medium text-muted-foreground">Total de archivos: {evidences.length}</p>
+          )}
+          {evidences.map((ev, idx) => {
             const category = getFileCategory(ev.file_type);
             const IconComp = FILE_ICONS[category] ?? FileText;
             const statusConf = STATUS_CONFIG[ev.status] ?? STATUS_CONFIG.pendiente;
             const StatusIcon = statusConf.icon;
             const isReviewing = reviewingId === ev.id;
 
+            const showHeader = isTotal && (idx === 0 || evidences[idx - 1].period !== ev.period);
+            const groupCount = isTotal ? evidences.filter(e => e.period === ev.period).length : 0;
             return (
-              <div key={ev.id} className="border rounded-lg p-3 space-y-2">
+              <div key={ev.id} className="space-y-2">
+              {showHeader && (
+                <p className="text-xs font-semibold pt-2 border-b pb-1">{periodLabel(ev.period)} · {groupCount} archivo{groupCount === 1 ? '' : 's'}</p>
+              )}
+              <div className="border rounded-lg p-3 space-y-2">
                 <div className="flex items-start gap-3">
                   <IconComp className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
@@ -275,6 +294,7 @@ export default function EvidencePanel({ entityType, entityId, entityName, open, 
                     <Trash2 className="w-3 h-3" /> Eliminar
                   </Button>
                 )}
+              </div>
               </div>
             );
           })}

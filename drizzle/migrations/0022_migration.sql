@@ -1,0 +1,2 @@
+CREATE POLICY "Authenticated read kpi objective evidences" ON public.evidences FOR SELECT TO authenticated USING (entity_type IN ('kpi','objective'));
+CREATE POLICY "Authenticated read kpi objective evidence files" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'evidencias' AND (storage.foldername(name))[1] IN ('kpi','objective'));
