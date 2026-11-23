@@ -1,0 +1,14 @@
+DROP POLICY IF EXISTS "Authenticated can delete candidate competencies" ON public.assessment_candidate_competencies;
+CREATE POLICY "HR admins delete candidate competencies" ON public.assessment_candidate_competencies FOR DELETE TO authenticated USING (public.has_role(auth.uid(),'super_admin') OR public.is_hr(auth.uid()));
+DROP POLICY IF EXISTS "Authenticated can delete candidates" ON public.assessment_candidates;
+CREATE POLICY "HR admins delete candidates" ON public.assessment_candidates FOR DELETE TO authenticated USING (public.has_role(auth.uid(),'super_admin') OR public.is_hr(auth.uid()));
+DROP POLICY IF EXISTS "tc select" ON public.talent_candidates;
+CREATE POLICY "tc select" ON public.talent_candidates FOR SELECT TO authenticated USING (public.has_role(auth.uid(),'super_admin') OR public.is_hr(auth.uid()));
+DROP POLICY IF EXISTS "Authenticated can delete it asset inventory" ON public.it_asset_inventory;
+CREATE POLICY "Creators admins delete it asset inventory" ON public.it_asset_inventory FOR DELETE TO authenticated USING (created_by = auth.uid() OR public.has_role(auth.uid(),'super_admin') OR public.has_role(auth.uid(),'admin_area'));
+DROP POLICY IF EXISTS "Authenticated can delete recurring providers" ON public.recurring_providers;
+CREATE POLICY "Creators security delete recurring providers" ON public.recurring_providers FOR DELETE TO authenticated USING (created_by = auth.uid() OR public.has_role(auth.uid(),'super_admin') OR public.is_seguridad_fisica(auth.uid()));
+DROP POLICY IF EXISTS "Authenticated can update provider assets" ON public.provider_assets;
+CREATE POLICY "Creators security update provider assets" ON public.provider_assets FOR UPDATE TO authenticated USING (created_by = auth.uid() OR public.has_role(auth.uid(),'super_admin') OR public.has_role(auth.uid(),'admin_area') OR public.is_seguridad_fisica(auth.uid())) WITH CHECK (created_by = auth.uid() OR public.has_role(auth.uid(),'super_admin') OR public.has_role(auth.uid(),'admin_area') OR public.is_seguridad_fisica(auth.uid()));
+DROP POLICY IF EXISTS "Authenticated can insert provider assets" ON public.provider_assets;
+CREATE POLICY "Authenticated can insert own provider assets" ON public.provider_assets FOR INSERT TO authenticated WITH CHECK (created_by = auth.uid());
