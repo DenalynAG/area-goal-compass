@@ -2264,6 +2264,115 @@ export type Database = {
           },
         ]
       }
+      recruitment_candidates: {
+        Row: {
+          application_date: string
+          code: string
+          created_at: string
+          created_by: string | null
+          hire_date: string | null
+          id: string
+          name: string
+          stage: string | null
+          status: string
+          updated_at: string
+          vacancy_id: string
+        }
+        Insert: {
+          application_date?: string
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          hire_date?: string | null
+          id?: string
+          name: string
+          stage?: string | null
+          status?: string
+          updated_at?: string
+          vacancy_id: string
+        }
+        Update: {
+          application_date?: string
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          hire_date?: string | null
+          id?: string
+          name?: string
+          stage?: string | null
+          status?: string
+          updated_at?: string
+          vacancy_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recruitment_candidates_vacancy_id_fkey"
+            columns: ["vacancy_id"]
+            isOneToOne: false
+            referencedRelation: "recruitment_vacancies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recruitment_vacancies: {
+        Row: {
+          area_id: string | null
+          city: string | null
+          closing_date: string | null
+          code: string
+          created_at: string
+          created_by: string | null
+          id: string
+          opening_date: string
+          position: string
+          positions_required: number
+          requesting_leader_id: string | null
+          status: string
+          updated_at: string
+          vacancy_type: string
+        }
+        Insert: {
+          area_id?: string | null
+          city?: string | null
+          closing_date?: string | null
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          opening_date?: string
+          position: string
+          positions_required?: number
+          requesting_leader_id?: string | null
+          status?: string
+          updated_at?: string
+          vacancy_type?: string
+        }
+        Update: {
+          area_id?: string | null
+          city?: string | null
+          closing_date?: string | null
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          opening_date?: string
+          position?: string
+          positions_required?: number
+          requesting_leader_id?: string | null
+          status?: string
+          updated_at?: string
+          vacancy_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recruitment_vacancies_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recurring_providers: {
         Row: {
           arl: string | null

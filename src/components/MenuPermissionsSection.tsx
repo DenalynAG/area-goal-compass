@@ -77,6 +77,7 @@ const MENU_LABELS: Record<string, string> = {
   '/osh-people': 'RRHH · OSH People',
   '/mision-cerosh': 'RRHH · Misión CerOSH',
   '/seleccion-desarrollo': 'RRHH · Selección y Desarrollo',
+  '/osh-recruitment': 'RRHH · OSH Recruitment',
   '/tecnologia': 'Tecnología',
   '/tecnologia/colaboradores': 'Tecnología · Colaboradores',
   '/tecnologia/objetivos': 'Tecnología · Objetivos',
@@ -97,7 +98,7 @@ const MENU_GROUPS = [
   { label: 'Contraloría', keys: ['/contraloria', '/contraloria/colaboradores', '/contraloria/objetivos', '/contraloria/leader-pass', '/contraloria/calidad', '/contraloria/evaluaciones', '/contraloria/mision-cerosh'] },
   { label: 'Mercadeo', keys: ['/mercadeo', '/mercadeo/colaboradores', '/mercadeo/objetivos', '/mercadeo/leader-pass', '/mercadeo/calidad', '/mercadeo/evaluaciones', '/mercadeo/mision-cerosh'] },
   { label: 'Operaciones', keys: ['/operaciones', '/operaciones/colaboradores', '/operaciones/glowingdesk', '/operaciones/housekeeping', '/operaciones/housekeeping/comfort-map', '/operaciones/mantenimiento', '/operaciones/seguridad', '/operaciones/seguridad/control-acceso', '/operaciones/seguridad/control-activos', '/operaciones/objetivos', '/operaciones/leader-pass', '/operaciones/calidad', '/operaciones/evaluaciones', '/operaciones/mision-cerosh'] },
-  { label: 'Recursos Humanos', keys: ['/rrhh', '/estructura', '/colaboradores', '/objetivos', '/leader-pass', '/calidad/auditorias', '/evaluaciones', '/osh-people', '/mision-cerosh', '/seleccion-desarrollo'] },
+  { label: 'Recursos Humanos', keys: ['/rrhh', '/estructura', '/colaboradores', '/objetivos', '/leader-pass', '/calidad/auditorias', '/evaluaciones', '/osh-people', '/mision-cerosh', '/seleccion-desarrollo', '/osh-recruitment'] },
   { label: 'Tecnología', keys: ['/tecnologia', '/tecnologia/colaboradores', '/tecnologia/objetivos', '/tecnologia/leader-pass', '/tecnologia/calidad', '/tecnologia/evaluaciones', '/tecnologia/mision-cerosh'] },
 ];
 

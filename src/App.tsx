@@ -30,6 +30,7 @@ import AreaModulePage, { SubareaControlAccesoPage } from "@/pages/AreaModulePage
 import OshPeoplePage from "@/pages/OshPeoplePage";
 import MisionCeroshPage from "@/pages/MisionCeroshPage";
 import SeleccionDesarrolloPage from "@/pages/SeleccionDesarrolloPage";
+import OshRecruitmentPage from "@/pages/OshRecruitmentPage";
 import MomentoSeguroPage from "@/pages/MomentoSeguroPage";
 import NotFound from "./pages/NotFound";
 
@@ -59,6 +60,7 @@ function ProtectedRoutes() {
         <Route path="/osh-people" element={<OshPeoplePage />} />
         <Route path="/mision-cerosh" element={<MisionCeroshPage />} />
         <Route path="/seleccion-desarrollo" element={<SeleccionDesarrolloPage />} />
+        <Route path="/osh-recruitment" element={<OshRecruitmentPage />} />
         <Route path="/mis-assessments" element={<SeleccionDesarrolloPage evaluatorMode />} />
         <Route path="/momento-seguro" element={<MomentoSeguroPage />} />
         <Route path="/organigrama" element={<OrganigramaPage />} />

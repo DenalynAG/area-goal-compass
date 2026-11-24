@@ -169,6 +169,13 @@
       "when": 1795475414985,
       "tag": "0023_tighten_candidate_provider_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1795535808855,
+      "tag": "0024_osh_recruitment",
+      "breakpoints": true
     }
   ]
 }
