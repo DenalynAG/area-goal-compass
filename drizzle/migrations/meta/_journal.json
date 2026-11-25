@@ -176,6 +176,13 @@
       "when": 1795535808855,
       "tag": "0024_osh_recruitment",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1795613240483,
+      "tag": "0025_recruitment_approval_subarea_link",
+      "breakpoints": true
     }
   ]
 }

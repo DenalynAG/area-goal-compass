@@ -29,6 +29,7 @@ export interface TalentCandidate {
   direccion: string | null;
   anos_experiencia: number | null;
   notes: string | null;
+  recruitment_vacancy_id?: string | null;
   created_at: string;
 }
 
@@ -48,13 +49,18 @@ export function useTalentCandidates() {
 
 const empty = {
   full_name: '', document_id: '', phone: '', email: '', profession: '', university: '',
-  salario_aspiracion: '', fecha_nacimiento: '', nivel_ingles: NONE, direccion: '', anos_experiencia: '', notes: '',
+  salario_aspiracion: '', fecha_nacimiento: '', nivel_ingles: NONE, direccion: '', anos_experiencia: '', notes: '', recruitment_vacancy_id: NONE,
 };
 
 export default function CandidatosTab() {
   const qc = useQueryClient();
   const { user } = useAuth();
   const { data: rows = [], isLoading } = useTalentCandidates();
+  const { data: vacancies = [] } = useQuery({
+    queryKey: ['recruitment_vacancies'],
+    queryFn: async () => { const { data } = await (supabase as any).from('recruitment_vacancies').select('*').order('created_at', { ascending: false }); return (data ?? []) as any[]; },
+  });
+  const vacOptions = [{ value: NONE, label: 'Sin vacante' }, ...vacancies.filter(v => v.approval_status === 'aprobada' && v.status === 'activa').map(v => ({ value: v.id, label: `${v.code} · ${v.position}` }))];
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<TalentCandidate | null>(null);
@@ -76,7 +82,7 @@ export default function CandidatosTab() {
       profession: r.profession ?? '', university: r.university ?? '',
       salario_aspiracion: r.salario_aspiracion?.toString() ?? '', fecha_nacimiento: r.fecha_nacimiento ?? '',
       nivel_ingles: r.nivel_ingles ?? NONE, direccion: r.direccion ?? '',
-      anos_experiencia: r.anos_experiencia?.toString() ?? '', notes: r.notes ?? '',
+      anos_experiencia: r.anos_experiencia?.toString() ?? '', notes: r.notes ?? '', recruitment_vacancy_id: r.recruitment_vacancy_id ?? NONE,
     });
     setOpen(true);
   };
@@ -98,6 +104,7 @@ export default function CandidatosTab() {
       direccion: form.direccion.trim() || null,
       anos_experiencia: form.anos_experiencia ? Number(form.anos_experiencia) : null,
       notes: form.notes.trim() || null,
+      recruitment_vacancy_id: form.recruitment_vacancy_id === NONE ? null : form.recruitment_vacancy_id,
     };
     const t = (supabase as any).from('talent_candidates');
     const { error } = editing
@@ -108,6 +115,7 @@ export default function CandidatosTab() {
     toast.success(editing ? 'Candidato actualizado' : 'Candidato registrado');
     setOpen(false);
     qc.invalidateQueries({ queryKey: ['talent_candidates'] });
+    qc.invalidateQueries({ queryKey: ['recruitment_candidates'] });
   };
 
   const remove = async () => {
@@ -193,6 +201,11 @@ export default function CandidatosTab() {
               </div>
               <div className="space-y-1.5"><label className="text-sm font-medium">Años de experiencia</label><Input type="number" min="0" step="any" value={form.anos_experiencia} onChange={f('anos_experiencia')} /></div>
               <div className="space-y-1.5"><label className="text-sm font-medium">Dirección</label><Input value={form.direccion} onChange={f('direccion')} /></div>
+              <div className="space-y-1.5 sm:col-span-2">
+                <label className="text-sm font-medium">Vacante en OSH Recruitment</label>
+                <SearchableSelect options={vacOptions} value={form.recruitment_vacancy_id} onValueChange={v => setForm(s => ({ ...s, recruitment_vacancy_id: v }))} />
+                <p className="text-xs text-muted-foreground">Si eliges una vacante, el candidato se agrega automáticamente a OSH Recruitment.</p>
+              </div>
               <div className="space-y-1.5 sm:col-span-2"><label className="text-sm font-medium">Notas</label><Textarea value={form.notes} onChange={f('notes')} rows={2} /></div>
             </div>
             <DialogFooter>

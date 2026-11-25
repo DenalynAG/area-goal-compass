@@ -2275,6 +2275,7 @@ export type Database = {
           name: string
           stage: string | null
           status: string
+          talent_candidate_id: string | null
           updated_at: string
           vacancy_id: string
         }
@@ -2288,6 +2289,7 @@ export type Database = {
           name: string
           stage?: string | null
           status?: string
+          talent_candidate_id?: string | null
           updated_at?: string
           vacancy_id: string
         }
@@ -2301,10 +2303,18 @@ export type Database = {
           name?: string
           stage?: string | null
           status?: string
+          talent_candidate_id?: string | null
           updated_at?: string
           vacancy_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "recruitment_candidates_talent_candidate_id_fkey"
+            columns: ["talent_candidate_id"]
+            isOneToOne: true
+            referencedRelation: "talent_candidates"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "recruitment_candidates_vacancy_id_fkey"
             columns: ["vacancy_id"]
@@ -2316,6 +2326,9 @@ export type Database = {
       }
       recruitment_vacancies: {
         Row: {
+          approval_status: string
+          approved_at: string | null
+          approved_by: string | null
           area_id: string | null
           city: string | null
           closing_date: string | null
@@ -2326,12 +2339,17 @@ export type Database = {
           opening_date: string
           position: string
           positions_required: number
+          rejection_reason: string | null
           requesting_leader_id: string | null
           status: string
+          subarea_id: string | null
           updated_at: string
           vacancy_type: string
         }
         Insert: {
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           area_id?: string | null
           city?: string | null
           closing_date?: string | null
@@ -2342,12 +2360,17 @@ export type Database = {
           opening_date?: string
           position: string
           positions_required?: number
+          rejection_reason?: string | null
           requesting_leader_id?: string | null
           status?: string
+          subarea_id?: string | null
           updated_at?: string
           vacancy_type?: string
         }
         Update: {
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           area_id?: string | null
           city?: string | null
           closing_date?: string | null
@@ -2358,8 +2381,10 @@ export type Database = {
           opening_date?: string
           position?: string
           positions_required?: number
+          rejection_reason?: string | null
           requesting_leader_id?: string | null
           status?: string
+          subarea_id?: string | null
           updated_at?: string
           vacancy_type?: string
         }
@@ -2369,6 +2394,13 @@ export type Database = {
             columns: ["area_id"]
             isOneToOne: false
             referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recruitment_vacancies_subarea_id_fkey"
+            columns: ["subarea_id"]
+            isOneToOne: false
+            referencedRelation: "subareas"
             referencedColumns: ["id"]
           },
         ]
@@ -2755,6 +2787,7 @@ export type Database = {
           notes: string | null
           phone: string | null
           profession: string | null
+          recruitment_vacancy_id: string | null
           salario_aspiracion: number | null
           university: string | null
           updated_at: string
@@ -2773,6 +2806,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           profession?: string | null
+          recruitment_vacancy_id?: string | null
           salario_aspiracion?: number | null
           university?: string | null
           updated_at?: string
@@ -2791,11 +2825,20 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           profession?: string | null
+          recruitment_vacancy_id?: string | null
           salario_aspiracion?: number | null
           university?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "talent_candidates_recruitment_vacancy_id_fkey"
+            columns: ["recruitment_vacancy_id"]
+            isOneToOne: false
+            referencedRelation: "recruitment_vacancies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_menu_overrides: {
         Row: {
