@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/types';
+import { fetchAllRows } from '@/lib/fetchAllRows';
 
 export function useAreas() {
   return useQuery({
@@ -206,9 +207,7 @@ export function useEvidences(entityType?: string, entityId?: string, period?: st
           q = q.eq('period', period);
         }
       }
-      const { data, error } = await q;
-      if (error) throw error;
-      return data as Evidence[];
+      return await fetchAllRows<Evidence>((from, to) => q.order('id').range(from, to));
     },
   });
 }
@@ -217,12 +216,12 @@ export function useEvidenceCountsByEntity(entityType: string) {
   return useQuery({
     queryKey: ['evidence-counts', entityType],
     queryFn: async () => {
-      const { data, error } = await supabase
+      return await fetchAllRows<{ entity_id: string; period: string | null }>((from, to) => supabase
         .from('evidences')
         .select('entity_id,period')
-        .eq('entity_type', entityType);
-      if (error) throw error;
-      return (data ?? []) as { entity_id: string; period: string | null }[];
+        .eq('entity_type', entityType)
+        .order('id')
+        .range(from, to));
     },
   });
 }
