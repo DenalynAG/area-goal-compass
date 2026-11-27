@@ -13,3 +13,5 @@
 - [x] Habilitar enero en KPIs e incluirlo en Total KPI (promedio divide entre 11, suma acumula ene–nov); dashboard de áreas sigue feb–nov; diciembre sigue bloqueado; 40 pruebas aprobadas y verificado en pantalla (Ene habilitado, Dic bloqueado).
 
 - [x] Barras de cumplimiento con el mismo color de la etiqueta (Alto = verde); 13 pruebas y verificación en pantalla: 114%, 110% y 143% en verde.
+
+- [x] Leader Pass: enero–diciembre de 2026 disponibles; plantilla de 84 filas verificada, edición de enero guardada/leída/restaurada y 15 pruebas aprobadas.

@@ -8,3 +8,4 @@
 - Actual KPI aggregation uses calendar-string month matching, never local Date parsing, so Bogotá cannot shift first-of-month records; Total KPI averages eleven January–November months (startMonth=1) while dashboard area compliance cutoffs stay February–November (default startMonth=2) through the same helper.
 - Rectangular radii resolve through the global radius token; global control selectors cover legacy pill buttons while preserving native switch and radio shapes.
 - Evidence lists and counters read all API pages in stable order through fetchAllRows, so monthly and total counts never truncate at the response row limit.
+- Leader Pass shares full-year period and template helpers; imports store canonical YYYY-MM keys so historical edits and monthly reads address the same records.

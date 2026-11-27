@@ -12,6 +12,7 @@ import { CheckCircle2, Circle, ClipboardList, MessageSquare, Save, Paperclip, Fi
 import EvidencePanel from '@/components/EvidencePanel';
 import LeaderPassImportDialog from '@/components/LeaderPassImportDialog';
 import LeaderPassDashboard from '@/components/LeaderPassDashboard';
+import { getLeaderPassPeriods } from '@/lib/leaderPassPeriods';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Activities info is now loaded dynamically from leader_pass_activities table
@@ -62,16 +63,6 @@ function useLeaderPassRecords(period: string, userId?: string) {
       return data as Record[];
     },
   });
-}
-
-function getPeriodOptions() {
-  const options: string[] = [];
-  const now = new Date();
-  for (let i = -3; i <= 3; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-    options.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
-  }
-  return options;
 }
 
 function formatPeriod(p: string) {
@@ -138,7 +129,8 @@ export default function LeaderPassPage({ areaFilterName }: LeaderPassPageProps =
     if (!selectedUserId && user?.id) setSelectedUserId(user.id);
   }, [user?.id, selectedUserId]);
 
-  const periods = useMemo(() => getPeriodOptions(), []);
+  const selectedYear = Number(selectedPeriod.slice(0, 4));
+  const periods = useMemo(() => getLeaderPassPeriods(selectedYear), [selectedYear]);
 
   // For super admin / admin_area, show a user selector
   const canViewOthers = isSuperAdmin || hasRole('admin_area');

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -8,6 +8,7 @@ import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { Download, Upload, Loader2, ShieldCheck } from 'lucide-react';
+import { getLeaderPassImportPeriod, getLeaderPassTemplateRows } from '@/lib/leaderPassPeriods';
 
 interface Activity {
   id: string;
@@ -32,43 +33,15 @@ const norm = (v: unknown) =>
 
 const ALLOWED_ORDERS = [1, 2, 3, 4, 5, 6, 8];
 
-const MONTHS_SHORT = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-
 const stripOrder = (name: string) => norm(name).replace(/^\d+[\.\)\-\s]*/, '').trim();
-
-const periodFromFecha = (fecha: unknown): string | null => {
-  if (fecha === undefined || fecha === null || fecha === '') return null;
-  let d: Date | null = null;
-  if (fecha instanceof Date) d = fecha;
-  else if (typeof fecha === 'number') {
-    const parsed = XLSX.SSF.parse_date_code(fecha);
-    if (parsed) d = new Date(parsed.y, parsed.m - 1, parsed.d);
-  } else {
-    const s = String(fecha).trim();
-    const m = s.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/) || s.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
-    if (m) {
-      const [y, mo] = m[1].length === 4 ? [m[1], m[2]] : [m[3], m[2]];
-      d = new Date(Number(y), Number(mo) - 1, 1);
-    } else {
-      const txt = s.match(/^([A-Za-zÁéíóúñ]+)\.?\s+(\d{4})$/);
-      if (txt) {
-        const mi = MONTHS_SHORT.findIndex(m2 => norm(m2) === norm(txt[1]));
-        if (mi >= 0) d = new Date(Number(txt[2]), mi, 1);
-      }
-      if (!d) {
-        const t = new Date(s);
-        if (!isNaN(t.getTime())) d = t;
-      }
-    }
-  }
-  if (!d || isNaN(d.getTime())) return null;
-  return `${MONTHS_SHORT[d.getMonth()]} ${d.getFullYear()}`;
-};
 
 export default function LeaderPassImportDialog({ open, onOpenChange, activities, period, periodOptions }: Props) {
   const { data: profiles = [] } = useProfilesFull();
   const qc = useQueryClient();
   const [selectedPeriod, setSelectedPeriod] = useState(period);
+  useEffect(() => {
+    if (open) setSelectedPeriod(period);
+  }, [open, period]);
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<{ ok: number; fail: string[] } | null>(null);
 
@@ -79,21 +52,8 @@ export default function LeaderPassImportDialog({ open, onOpenChange, activities,
 
   const downloadTemplate = () => {
     const exampleDoc = profiles.find(p => p.identificacion)?.identificacion ?? '1234567890';
-    const shortDate = (label: string) => {
-      const m = label.match(/^([A-Za-zÁéíóúñ]+)\.?\s+(\d{4})$/);
-      if (!m) return label;
-      const mi = MONTHS_SHORT.findIndex(m2 => norm(m2) === norm(m[1]));
-      return mi >= 0 ? `01/${String(mi + 1).padStart(2, '0')}/${m[2]}` : label;
-    };
-    const fechas = periodOptions.length > 0
-      ? periodOptions.map(p => shortDate(p.label))
-      : [shortDate(`${MONTHS_SHORT[new Date().getMonth()]} ${new Date().getFullYear()}`)];
-    const rows = [
-      ['Fecha x Mes', 'Identificación Cedula del responsable Área / Sub-Área', 'Actividad de Liderazgo', 'Valor Cumplimiento'],
-      ...fechas.flatMap(fecha =>
-        sortedActivities.map(a => [fecha, exampleDoc, `${a.sort_order}. ${a.name}`, a.sort_order === 5 ? '100%' : 1])
-      ),
-    ];
+    const year = Number(selectedPeriod.slice(0, 4));
+    const rows = getLeaderPassTemplateRows(year, String(exampleDoc), sortedActivities);
     const ws = XLSX.utils.aoa_to_sheet(rows);
     ws['!cols'] = [{ wch: 14 }, { wch: 36 }, { wch: 40 }, { wch: 18 }];
     const wb = XLSX.utils.book_new();
@@ -146,7 +106,7 @@ export default function LeaderPassImportDialog({ open, onOpenChange, activities,
         if (typeof rawV === 'number') value = isPercent && Math.abs(rawV) <= 1 ? Math.round(rawV * 10000) / 100 : rawV;
         else value = Number(txtV.replace('%', '').replace(',', '.'));
         if (!isFinite(value) || txtV === '') { fail.push(`Fila ${fila}: valor de cumplimiento inválido`); return; }
-        const per = periodFromFecha(kF ? row[kF] : undefined) || selectedPeriod;
+        const per = getLeaderPassImportPeriod(kF ? row[kF] : undefined) || selectedPeriod;
         targets.push({ userId, activityId: activity.id, period: per, value, isPercent });
       });
 
@@ -189,10 +149,12 @@ export default function LeaderPassImportDialog({ open, onOpenChange, activities,
           if (error) throw error;
         }
         for (const i of items.filter(i => existingMap.has(`${i.userId}|${i.activityId}`))) {
+          const recordId = existingMap.get(`${i.userId}|${i.activityId}`);
+          if (!recordId) continue;
           const { error } = await supabase
             .from('leader_pass_records')
             .update({ completed: i.value > 0, completed_at: i.value > 0 ? now : null, compliance_value: i.value, compliance_is_percent: i.isPercent })
-            .eq('id', existingMap.get(`${i.userId}|${i.activityId}`)!);
+            .eq('id', recordId);
           if (error) throw error;
         }
         applied += items.length;
